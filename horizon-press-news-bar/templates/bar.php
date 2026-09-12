@@ -26,9 +26,6 @@ $hprnb_classes = array(
 if ( ! empty( $hprnb_settings['show_thumbnail'] ) ) {
 	$hprnb_classes[] = 'hprnb-bar--has-thumbs';
 }
-if ( ! empty( $hprnb_settings['show_separator'] ) ) {
-	$hprnb_classes[] = 'hprnb-bar--has-sep';
-}
 if ( ! empty( $hprnb_settings['show_relative_time'] ) ) {
 	$hprnb_classes[] = 'hprnb-bar--has-time';
 }

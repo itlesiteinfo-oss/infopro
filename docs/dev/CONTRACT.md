@@ -138,6 +138,7 @@ show_thumbnail: bool false
 thumbnail_size: key thumbnail
 show_separator: bool false
 separator_char: text "•" (max_length 8, allow_empty false)
+separator_after_last: bool true   (ignored unless show_separator; CSS class only, never in the cache key)
 ticker_enabled: bool false
 ticker_mode: enum marquee [marquee,rotate,manual]
 ticker_speed: int 60 [10,300]       (px per second)
@@ -239,7 +240,7 @@ array(
 
 ```php
 const KEY_PREFIX = 'hprnb_bar_';
-const PAYLOAD_KEYS = [ 'label_text','label_position','window_value','window_unit','categories_include','categories_exclude','tags_include','content_exclude_post_ids','max_items','orderby','layout_mode','show_relative_time','relative_time_max_hours','show_thumbnail','thumbnail_size','show_separator','separator_char','ticker_enabled','ticker_mode','ticker_speed','rotate_interval','pause_on_hover','close_button','remember_dismiss','dismiss_duration_hours' ];
+const PAYLOAD_KEYS = [ 'label_text','label_position','window_value','window_unit','categories_include','categories_exclude','tags_include','content_exclude_post_ids','max_items','orderby','layout_mode','show_relative_time','relative_time_max_hours','show_thumbnail','thumbnail_size','ticker_enabled','ticker_mode','ticker_speed','rotate_interval','pause_on_hover','close_button','remember_dismiss','dismiss_duration_hours' ];
 
 public static function epoch(): string;                       // get_option( EPOCH_OPTION ); creates one (wp_generate_uuid4(), autoload true) if missing/invalid
 public static function hash( array $settings ): string;       // md5( wp_json_encode( [ subset of PAYLOAD_KEYS in fixed order, determine_locale(), HPRNB_VERSION ] ) )
@@ -250,7 +251,7 @@ public static function set( array $settings, array $payload ): void; // set_tran
 public static function is_valid( $payload ): bool;            // array with version === HPRNB_VERSION, int generated_at, int count, array items, string html
 ```
 
-Colours, sizes and z-index are **not** part of the hash (CSS variables on the root).
+Colours, sizes, z-index and the separator settings (`show_separator`, `separator_char`, `separator_after_last`) are **not** part of the hash: they are CSS variables / classes on the root, assembled outside the cache.
 
 Payload shape (also the REST body minus `items`):
 
@@ -305,7 +306,7 @@ public static function relative_time_label( int $timestamp, array $settings, ?in
 
 ```html
 <div id="hprnb-root"
-     class="hprnb-root hprnb-device-all hprnb-root--reserve"      <!-- device class + hprnb-root--reserve|hprnb-root--overlay -->
+     class="hprnb-root hprnb-device-all hprnb-root--reserve hprnb-bar--sep hprnb-bar--sep-loop"      <!-- device class + hprnb-root--reserve|overlay + hprnb-bar--sep (show_separator) + hprnb-bar--sep-loop (separator_after_last && show_separator) -->
      data-hprnb-generated="1757600000"
      data-hprnb-stale="180"                                       <!-- (int) apply_filters( 'hprnb_stale_threshold', $settings['stale_threshold'], $settings ) -->
      data-hprnb-endpoint="https://site/wp-json/hprnb/v1/items"    <!-- hybrid mode only -->
@@ -313,7 +314,7 @@ public static function relative_time_label( int $timestamp, array $settings, ?in
      data-hprnb-js="https://site/.../hprnb-bar.min.js?ver=1.0.0"   <!-- hybrid mode only and only when needs_interactive_js() -->
      data-hprnb-layout="reserve"
      data-hprnb-empty="0"                                          <!-- "1" when count 0; then also the `hidden` attribute -->
-     style="--hprnb-bg:#B00000;--hprnb-fg:#FFFFFF;--hprnb-label-bg:#8F0000;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-font-size:14px;--hprnb-height:44px;--hprnb-z:99990">
+     style="--hprnb-bg:#B00000;--hprnb-fg:#FFFFFF;--hprnb-label-bg:#8F0000;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-font-size:14px;--hprnb-height:44px;--hprnb-z:99990;--hprnb-sep:'•'">
   ...payload html (the aside) or nothing...
 </div>
 ```
@@ -338,7 +339,7 @@ public static function relative_time_label( int $timestamp, array $settings, ?in
             <span class="hprnb-bar__title">Titre</span>
             <time class="hprnb-bar__time" datetime="2026-09-11T15:04:00+01:00" data-hprnb-ts="1757600000" data-hprnb-abs="11 septembre 2026 15:04">2 hours ago</time>  <!-- only when show_relative_time -->
           </a>
-          <span class="hprnb-bar__sep" aria-hidden="true">•</span>   <!-- only when show_separator; CSS hides it on :last-child -->
+          <!-- no separator element: the separator is the CSS pseudo-element .hprnb-bar__item::after driven by root classes -->
         </li>
       </ul>
     </div>
@@ -355,7 +356,7 @@ public static function relative_time_label( int $timestamp, array $settings, ?in
 
 Aside class list: `hprnb-bar`, `hprnb-bar--label-{start|end}`, `hprnb-bar--{reserve|overlay}`,
 `hprnb-bar--ticker-{none|marquee|rotate|manual}`, plus `hprnb-bar--has-thumbs` when
-show_thumbnail, `hprnb-bar--has-sep` when show_separator, `hprnb-bar--has-time` when
+show_thumbnail, `hprnb-bar--has-time` when
 show_relative_time. All SVGs are inline, `aria-hidden="true" focusable="false"`, 24×24
 viewBox, `fill="none" stroke="currentColor" stroke-width="2"`. The toggle button contains two
 SVGs: `<svg class="hprnb-bar__icon hprnb-bar__icon--pause">` and
@@ -557,7 +558,7 @@ Data passed from PHP via `wp_localize_script( 'hprnb-admin', 'hprnbAdmin', { res
 - Viewport: `flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin;` (and `::-webkit-scrollbar { height: 0 }` for a discreet bar).
 - List: `display:flex; gap: 1.25em; margin:0; padding:0 1em; list-style:none; white-space:nowrap; align-items:center`.
 - Item/link: single line, `text-overflow: ellipsis` with `max-width: 60vw` per title on mobile; link colour inherits; `:hover` colour `var(--hprnb-hover)` with underline; `:focus-visible { outline: 2px solid currentColor; outline-offset: 2px }`.
-- Sep: `.hprnb-bar__sep` `margin-inline-start: 1.25em; opacity:.7`; `.hprnb-bar__item:last-child .hprnb-bar__sep { display:none }`.
+- Separator (pseudo-element, no DOM): `.hprnb-bar--sep .hprnb-bar__item:not(:last-child)::after, .hprnb-bar--sep-loop .hprnb-bar__item:last-child::after { content: var(--hprnb-sep, '•'); margin-inline-start: 1.25em; opacity: .7 }` (+ `content: … / ""` under `@supports`); `.hprnb-bar--ticker-rotate .hprnb-bar__item::after { content: none }`; no margin-inline-end.
 - Thumb: `.hprnb-bar__thumb { block-size: calc(var(--hprnb-height) - 12px); inline-size: auto; aspect-ratio: 1; object-fit: cover; border-radius: 2px; margin-inline-end: .5em; vertical-align: middle }`.
 - Time: `.hprnb-bar__time { opacity:.8; margin-inline-start:.5em; font-size:.85em }`.
 - Buttons: `.hprnb-bar__btn { min-inline-size:44px; min-block-size:44px; background:transparent; border:0; color:inherit; cursor:pointer; display:inline-flex; align-items:center; justify-content:center }` + focus-visible outline; `[disabled] { opacity:.4; cursor:default }`.

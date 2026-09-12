@@ -2,7 +2,7 @@
 
 Extension WordPress affichant une **barre d’actualités fixe en bas du site**, alimentée par les articles publiés dans une **fenêtre temporelle glissante** (par défaut : les dernières 24 heures), filtrés par catégories, étiquettes et exclusions.
 
-- Version : **1.0.0**
+- Version : **1.1.0**
 - WordPress : **6.6 minimum** (testé sur 7.1)
 - PHP : **8.0 à 8.4** (8.3+ recommandé ; PHP 8.0 n’est plus maintenu par PHP.net, une mise à niveau est conseillée)
 - Licence : GPL-2.0-or-later
@@ -78,6 +78,7 @@ Toutes les valeurs sont validées par un schéma unique (`Settings::schema()`), 
 | `thumbnail_size` | clé | `thumbnail` | taille d’image WordPress existante |
 | `show_separator` | booléen | `false` | |
 | `separator_char` | texte | `•` | 8 caractères max, jamais vide |
+| `separator_after_last` | booléen | `true` | sans effet si `show_separator` est faux |
 | `show_relative_time` | booléen | `false` | |
 | `relative_time_max_hours` | entier | `48` | 1–720 |
 
@@ -131,7 +132,7 @@ Il n’existe pas de mode « REST seul ».
 ## 5. Cache serveur et invalidation
 
 - Primitive : **API Transients** (`hprnb_bar_{epoch}_{hash}`), jamais autoloadée, jamais de table personnalisée.
-- Le hash dépend des réglages qui influent sur la sélection, l’ordre, le label et le markup, de la locale (`determine_locale()`) et de la version de l’extension. Couleurs, tailles et z-index passent par des variables CSS et ne créent pas de nouveau payload.
+- Le hash dépend des réglages qui influent sur la sélection, l’ordre, le label et le markup, de la locale (`determine_locale()`) et de la version de l’extension. Couleurs, tailles, z-index et réglages du séparateur (`show_separator`, `separator_char`, `separator_after_last`) passent par des variables et classes CSS sur `#hprnb-root` et ne créent pas de nouveau payload.
 - Le payload contient l’`<aside>` complet rendu par le `Renderer` (source unique du HTML pour le SSR, le REST, le shortcode et l’aperçu). Un résultat vide est mis en cache également.
 - TTL : `cache_ttl` (30–600 s, défaut 120 s), filtrable via `hprnb_cache_ttl`. Le TTL est court car un article peut sortir de la fenêtre sans aucun événement WordPress.
 - Invalidation par **rotation d’epoch** : `hprnb_cache_epoch` reçoit un nouvel UUID ; les anciens transients deviennent inaccessibles et expirent naturellement (au plus 600 s). Déclencheurs : passage vers / hors `publish`, modification d’un article publié, corbeille / restauration / suppression, changement de catégorie ou d’étiquette, suppression d’un terme, changement d’image mise en avant, enregistrement / import / réinitialisation des réglages, changement de thème, désactivation. Une garde statique limite l’opération à une fois par requête PHP. La table `wp_options` n’est jamais parcourue pour supprimer des transients.
@@ -174,6 +175,10 @@ Appareils : si `show_on_desktop` et `show_on_mobile` sont tous deux faux, aucun 
 
 - `reserve` (défaut) : la classe `hprnb-reserve` est ajoutée au `<body>` quand une barre est réellement visible ; le CSS réserve `padding-block-end: calc(var(--hprnb-height) + env(safe-area-inset-bottom))`, donc la barre ne recouvre jamais le contenu.
 - `overlay` : aucune réservation. **La barre peut recouvrir un élément fixe d’un thème ou d’une autre extension** (barre de cookies, bouton de retour en haut…).
+
+## 9 bis. Séparateur
+
+Le séparateur entre articles est un **pseudo-élément CSS** (`.hprnb-bar__item::after`), jamais un élément du DOM : le caractère vient de la variable `--hprnb-sep` et l’activation des classes `hprnb-bar--sep` / `hprnb-bar--sep-loop` portées par `#hprnb-root`, assemblé hors cache. `separator_after_last` (actif par défaut, sans effet si `show_separator` est faux) répète le même séparateur après le dernier article, de sorte que la jonction dernier → premier (boucle du marquee) soit identique aux autres ; en mode `rotate` aucun séparateur n’est affiché. Ces trois réglages n’entrent pas dans la clé de cache.
 
 ## 10. Ticker (optionnel)
 

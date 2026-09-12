@@ -1,6 +1,6 @@
 # Cahier des charges FINAL AUDITÉ — Plugin WordPress « Horizon Press News Bar »
 
-> **Version 2.0 — 11 septembre 2026**  
+> **Version 2.1 — 12 septembre 2026** (2.0 du 11 septembre 2026 + ajout du réglage `separator_after_last` et séparateur en pseudo-élément CSS)  
 > **Statut : FINAL / prêt à remettre à Claude Code**  
 > **Objectif : obtenir en une seule exécution un plugin WordPress installable, testé, documenté et prêt pour la production.**
 
@@ -127,7 +127,7 @@ La V1 doit être **plus petite et plus prédictible** qu’un plugin généralis
 | Slug | `horizon-press-news-bar` |
 | Dossier | `horizon-press-news-bar/` |
 | Fichier principal | `horizon-press-news-bar.php` |
-| Version V1 | `1.0.0` |
+| Version V1 | `1.0.0` (livrée) — `1.1.0` avec `separator_after_last` |
 | Namespace | `HorizonPress\NewsBar` |
 | Préfixe PHP/options | `hprnb_` |
 | Préfixe CSS | `hprnb-` |
@@ -156,7 +156,7 @@ Ne pas utiliser une API apparue après le minimum WordPress déclaré sans repli
 /**
  * Plugin Name:       Horizon Press News Bar
  * Description:       Barre d'actualités récentes, fixe en bas de page, filtrée par fenêtre temporelle et catégories.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 6.6
  * Requires PHP:      8.1
  * Author:            Horizon Press
@@ -207,6 +207,7 @@ Désactivées par défaut :
 - heure relative ;
 - miniature ;
 - séparateur ;
+- séparateur après le dernier article (`separator_after_last`, actif par défaut mais sans effet tant que le séparateur est désactivé) ;
 - ticker ;
 - pause au survol ;
 - bouton fermer ;
@@ -284,6 +285,7 @@ Après activation :
 
   "show_separator": false,
   "separator_char": "•",
+  "separator_after_last": true,
 
   "ticker_enabled": false,
   "ticker_mode": "marquee",
@@ -564,6 +566,8 @@ Format :
 
 Les couleurs, tailles et z-index ne doivent pas forcer un nouveau payload : elles passent par CSS variables.
 
+Le séparateur est également un pur sujet CSS : `show_separator`, `separator_char` et `separator_after_last` se traduisent par des classes (`hprnb-bar--sep`, `hprnb-bar--sep-loop`) et une variable (`--hprnb-sep`) portées par `#hprnb-root`, assemblé hors cache. Ces trois clés **n’entrent pas** dans le hash ; les y ajouter fragmenterait le cache sans raison.
+
 ## 9.3 Payload
 
 ```php
@@ -713,7 +717,8 @@ Le root porte :
 - URL JS interactif ;
 - `count/empty` ;
 - classes d’affichage desktop/mobile ;
-- variables CSS visuelles dans son attribut `style`.
+- variables CSS visuelles dans son attribut `style` (dont `--hprnb-sep`) ;
+- classes de séparateur `hprnb-bar--sep` et `hprnb-bar--sep-loop`.
 
 Les variables CSS présentes sur le root doivent permettre à une barre injectée plus tard d’hériter immédiatement :
 
@@ -875,7 +880,7 @@ Structure de référence :
 ```html
 <div
   id="hprnb-root"
-  class="hprnb-root hprnb-device-all"
+  class="hprnb-root hprnb-device-all hprnb-bar--sep hprnb-bar--sep-loop"
   data-hprnb-generated="1757600000"
   data-hprnb-stale="180"
   data-hprnb-endpoint="..."
@@ -889,6 +894,7 @@ Structure de référence :
     --hprnb-font-size:14px;
     --hprnb-height:44px;
     --hprnb-z:99990;
+    --hprnb-sep:'•';
   "
 >
   <aside
@@ -930,6 +936,7 @@ Structure de référence :
 - aucune heure inactive ;
 - aucun bouton inutile ;
 - aucun HTML dupliqué entre PHP et JS ;
+- aucun élément DOM pour le séparateur : pseudo-élément CSS `::after` uniquement, masqué des lecteurs d’écran ;
 - aucun `aria-live` autre que `off`.
 
 ---
@@ -1030,6 +1037,30 @@ Ticker désactivé :
 - liens restent accessibles ;
 - aucun JS nécessaire.
 
+## 15.7 Séparateur
+
+Le séparateur entre articles est un **pseudo-élément CSS** `::after` sur `.hprnb-bar__item` ; aucun élément DOM, aucune modification du HTML des `<li>`.
+
+- caractère : variable `--hprnb-sep` (chaîne CSS) portée par `#hprnb-root`, valeur par défaut `'•'` ;
+- activation : classe `hprnb-bar--sep` sur `#hprnb-root` (`show_separator = true`) ;
+- séparateur après le dernier article : classe `hprnb-bar--sep-loop` sur `#hprnb-root` (`separator_after_last = true`, ignorée côté serveur si `show_separator = false`) ;
+- sélecteurs :
+
+```css
+.hprnb-bar--sep .hprnb-bar__item:not(:last-child)::after,
+.hprnb-bar--sep-loop .hprnb-bar__item:last-child::after {
+    content: var(--hprnb-sep, '•');
+    margin-inline-start: 1.25em;
+    opacity: .7;
+}
+```
+
+- même `--hprnb-sep`, même opacité, même `margin-inline-start` pour le séparateur final ; **aucun** `margin-inline-end` (ni espace superflu en fin de ligne, ni débordement horizontal) ;
+- le contenu généré est masqué des lecteurs d’écran (`content: … / ""` lorsque la syntaxe est prise en charge) ;
+- mode `marquee` : la liste est dupliquée ; la jonction clone → original affiche **exactement un** séparateur lorsque `hprnb-bar--sep-loop` est présente (zéro sinon), jamais deux ;
+- mode `rotate` : aucun séparateur affiché, dernier compris (`.hprnb-bar--ticker-rotate .hprnb-bar__item::after { content: none }`) ;
+- mode `manual` et liste statique : le séparateur final s’affiche si l’option est active, sans défilement horizontal parasite de la page.
+
 ---
 
 # 16. TICKER OPTIONNEL
@@ -1061,7 +1092,8 @@ Modes :
 - intervalle configurable ;
 - pause quand document caché ;
 - pause au focus systématique ;
-- les items cachés utilisent `hidden`.
+- les items cachés utilisent `hidden` ;
+- aucun séparateur (dernier compris) : il n’a aucun sens sur un item isolé.
 
 ## 16.3 Manual
 
@@ -1338,6 +1370,7 @@ Pas d’endpoint async supplémentaire en V1.
 - reserve/overlay ;
 - miniature ;
 - séparateur ;
+- séparateur après le dernier article (`separator_after_last`, libellé « Afficher le séparateur après le dernier article (boucle continue) », placé juste sous le caractère de séparation, grisé tant que le séparateur est désactivé) ;
 - heure relative.
 
 Aucun champ CSS libre.
@@ -1378,7 +1411,7 @@ Exemples :
 - taille ;
 - label ;
 - position ;
-- séparateur ;
+- séparateur, caractère de séparation et séparateur après le dernier article (bascule immédiate, purement visuelle, aucun appel serveur) ;
 - options d’apparence.
 
 Pour les critères de contenu, fournir un bouton :
@@ -1800,7 +1833,10 @@ Minimum PHPUnit / WordPress test suite pour :
 - REST count 0 ;
 - ETag/304 si implémenté ;
 - import liste blanche ;
-- shortcode anti-double.
+- shortcode anti-double ;
+- séparateur : classes `hprnb-bar--sep` / `hprnb-bar--sep-loop` sur le root, aucun élément DOM, `--hprnb-sep` échappée ;
+- `separator_after_last` ignoré si `show_separator = false` ;
+- `show_separator`, `separator_char` et `separator_after_last` absents de la clé de cache.
 
 Si l’environnement permet Playwright :
 
@@ -1817,7 +1853,8 @@ Scénarios :
 - pause/play ;
 - close ;
 - reduced motion ;
-- injection hybride.
+- injection hybride ;
+- séparateur de boucle : 4 modes (statique, marquee, rotate, manual) × LTR/RTL × option activée/désactivée ; jonction clone → original du marquee avec exactement un séparateur ; aucun séparateur en mode rotate ; aucun débordement horizontal.
 
 Les tests de développement peuvent vivre hors du dossier inclus dans le ZIP final.
 
@@ -1887,7 +1924,8 @@ Avant ZIP final, vérifier au minimum :
 - hover ;
 - focus ;
 - document hidden ;
-- reduced motion.
+- reduced motion ;
+- séparateur après le dernier article : jonction marquee identique aux autres jonctions.
 
 ### Responsive
 
@@ -2154,7 +2192,8 @@ mode hybrid:
 - aucune donnée privée REST ;
 - aucune table SQL ;
 - aucun cron ;
-- aucune dépendance externe.
+- aucune dépendance externe ;
+- `show_separator`, `separator_char` et `separator_after_last` n’entrent jamais dans la clé de cache (classes et variable CSS sur le root).
 
 ---
 

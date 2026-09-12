@@ -27,7 +27,8 @@ final class Cache {
 
 	/**
 	 * Settings that change the selection, the order, the markup or the label.
-	 * Colours, sizes and z-index are CSS variables and do not change the payload.
+	 * Colours, sizes, z-index and the separator settings (show_separator, separator_char,
+	 * separator_after_last) are CSS variables / classes on the root and never change the payload.
 	 */
 	const PAYLOAD_KEYS = array(
 		'label_text',
@@ -45,8 +46,6 @@ final class Cache {
 		'relative_time_max_hours',
 		'show_thumbnail',
 		'thumbnail_size',
-		'show_separator',
-		'separator_char',
 		'ticker_enabled',
 		'ticker_mode',
 		'ticker_speed',

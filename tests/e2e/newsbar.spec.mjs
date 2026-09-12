@@ -393,14 +393,93 @@ test( 'close button: hides the bar, moves focus, remember uses localStorage and 
 } );
 
 test( 'relative time and separator', async ( { page } ) => {
-	setSettings( { show_relative_time: true, show_separator: true, separator_char: '|' } );
+	setSettings( { show_relative_time: true, show_separator: true, separator_char: '|', separator_after_last: false } );
 	await page.goto( '/' );
 	const times = page.locator( 'time.hprnb-bar__time' );
 	expect( await times.count() ).toBeGreaterThan( 0 );
 	await expect( times.first() ).toHaveAttribute( 'data-hprnb-ts', /^\d+$/ );
 	await expect( times.first() ).toHaveText( /ago|now/ );
-	expect( await page.locator( '.hprnb-bar__sep' ).first().textContent() ).toBe( '|' );
-	expect( await page.locator( '.hprnb-bar__item:last-child .hprnb-bar__sep' ).evaluate( ( el ) => getComputedStyle( el ).display ) ).toBe( 'none' );
+	expect( await page.locator( '.hprnb-bar__sep' ).count() ).toBe( 0 );
+	const seps = await separators( page, '.hprnb-bar__item' );
+	expect( seps.length ).toBeGreaterThan( 1 );
+	expect( seps.slice( 0, -1 ).every( ( s ) => s === '|' ) ).toBe( true );
+	expect( seps[ seps.length - 1 ] ).toBeNull();
+} );
+
+/** Text of the ::after separator of each matched element (null when none). */
+async function separators( page, selector ) {
+	return page.evaluate( ( sel ) => Array.from( document.querySelectorAll( sel ) ).map( ( el ) => {
+		const c = getComputedStyle( el, '::after' ).content;
+		if ( ! c || c === 'none' || c === 'normal' ) {
+			return null;
+		}
+		return c.split( ' / ' )[ 0 ].replace( /^["']|["']$/g, '' );
+	} ), selector );
+}
+
+test( 'separator after the last post: 4 modes × LTR/RTL × on/off', async ( { page } ) => {
+	const ORIGINAL = '.hprnb-bar__list:not(.hprnb-bar__list--clone) .hprnb-bar__item';
+	const CLONE = '.hprnb-bar__list--clone .hprnb-bar__item';
+	await page.setViewportSize( { width: 375, height: 667 } );
+	for ( const mode of [ 'static', 'marquee', 'rotate', 'manual' ] ) {
+		for ( const rtl of [ false, true ] ) {
+			for ( const loop of [ true, false ] ) {
+				const label = `${ mode } ${ rtl ? 'RTL' : 'LTR' } loop=${ loop }`;
+				setSettings( {
+					show_separator: true,
+					separator_char: '|',
+					separator_after_last: loop,
+					ticker_enabled: mode !== 'static',
+					ticker_mode: mode === 'static' ? 'marquee' : mode,
+					label_text: rtl ? 'آخر الأخبار' : 'TOUTE L’ACTUALITÉ',
+				} );
+				await page.goto( rtl ? '/?hprnb_rtl=1' : '/' );
+				const aside = page.locator( '#hprnb-root .hprnb-bar' );
+				await expect( aside ).toBeVisible();
+				expect( await aside.evaluate( ( el ) => getComputedStyle( el ).direction ), label ).toBe( rtl ? 'rtl' : 'ltr' );
+				const root = page.locator( '#hprnb-root' );
+				await expect( root ).toHaveClass( /hprnb-bar--sep(\s|$)/ );
+				if ( loop ) {
+					await expect( root ).toHaveClass( /hprnb-bar--sep-loop/ );
+				} else {
+					await expect( root ).not.toHaveClass( /hprnb-bar--sep-loop/ );
+				}
+				expect( await page.locator( '.hprnb-bar__sep' ).count(), label ).toBe( 0 );
+				expect( await noHorizontalOverflow( page ), label ).toBe( true );
+
+				const seps = await separators( page, ORIGINAL );
+				expect( seps.length, label ).toBeGreaterThan( 1 );
+				if ( mode === 'rotate' ) {
+					expect( seps.every( ( s ) => s === null ), label ).toBe( true );
+					continue;
+				}
+				expect( seps.slice( 0, -1 ).every( ( s ) => s === '|' ), label ).toBe( true );
+				expect( seps[ seps.length - 1 ], label ).toBe( loop ? '|' : null );
+
+				if ( mode === 'marquee' ) {
+					await expect( aside ).toHaveClass( /hprnb-bar--marquee-on/ );
+					const cloneSeps = await separators( page, CLONE );
+					expect( cloneSeps, label ).toEqual( seps );
+					// Junction original → clone: exactly one separator when looping, none otherwise.
+					const junction = ( seps[ seps.length - 1 ] === '|' ? 1 : 0 ) + ( await page.evaluate( () => {
+						const first = document.querySelector( '.hprnb-bar__list--clone .hprnb-bar__item' );
+						const c = getComputedStyle( first, '::before' ).content;
+						return c && c !== 'none' && c !== 'normal' ? 1 : 0;
+					} ) );
+					expect( junction, label ).toBe( loop ? 1 : 0 );
+					// The wrap junction uses the same spacing as any other junction: no list padding while scrolling.
+					expect( await page.locator( '.hprnb-bar__list' ).first().evaluate( ( el ) => getComputedStyle( el ).paddingInlineStart ), label ).toBe( '0px' );
+					const gaps = await page.evaluate( () => [ getComputedStyle( document.querySelector( '.hprnb-bar__track' ) ).columnGap, getComputedStyle( document.querySelector( '.hprnb-bar__list' ) ).columnGap ] );
+					expect( gaps[ 0 ], label ).toBe( gaps[ 1 ] );
+				}
+			}
+		}
+	}
+	// Separator off: after_last is ignored, no class at all.
+	setSettings( { show_separator: false, separator_after_last: true } );
+	await page.goto( '/' );
+	await expect( page.locator( '#hprnb-root' ) ).not.toHaveClass( /hprnb-bar--sep/ );
+	expect( ( await separators( page, ORIGINAL ) ).every( ( s ) => s === null ) ).toBe( true );
 } );
 
 test( 'php mode and empty states', async ( { page } ) => {
@@ -468,6 +547,25 @@ test( 'admin: settings page, live preview, contrast warning, save, export, impor
 	expect( await page.locator( '#hprnb-preview-root .hprnb-bar' ).evaluate( ( el ) => getComputedStyle( el ).backgroundColor ) ).toBe( 'rgb(17, 34, 51)' );
 	await page.check( '#hprnb-field-label-position-start' );
 	await expect( page.locator( '#hprnb-preview-root .hprnb-bar' ) ).toHaveClass( /hprnb-bar--label-start/ );
+
+	// Separator toggles are visual only and follow the dependency rule.
+	const previewRoot = page.locator( '#hprnb-preview-root' );
+	const dependentRow = page.locator( 'tr[data-hprnb-depends="show_separator"]' );
+	await expect( dependentRow ).toHaveClass( /hprnb-row--inactive/ );
+	await expect( previewRoot ).not.toHaveClass( /hprnb-bar--sep/ );
+	await page.check( '#hprnb-field-show-separator' );
+	await expect( dependentRow ).not.toHaveClass( /hprnb-row--inactive/ );
+	await expect( previewRoot ).toHaveClass( /hprnb-bar--sep-loop/ );
+	await page.fill( '#hprnb-field-separator-char', '|' );
+	expect( await previewRoot.evaluate( ( el ) => el.style.getPropertyValue( '--hprnb-sep' ) ) ).toBe( "'|'" );
+	const previewSeps = await separators( page, '#hprnb-preview-root .hprnb-bar__item' );
+	expect( previewSeps.every( ( s ) => s === '|' ) ).toBe( true );
+	await page.uncheck( '#hprnb-field-separator-after-last' );
+	await expect( previewRoot ).not.toHaveClass( /hprnb-bar--sep-loop/ );
+	await expect( previewRoot ).toHaveClass( /hprnb-bar--sep(\s|$)/ );
+	await page.uncheck( '#hprnb-field-show-separator' );
+	await expect( previewRoot ).not.toHaveClass( /hprnb-bar--sep/ );
+	await expect( dependentRow ).toHaveClass( /hprnb-row--inactive/ );
 	expect( previews ).toHaveLength( 0 );
 
 	// Contrast warning (never blocks saving).

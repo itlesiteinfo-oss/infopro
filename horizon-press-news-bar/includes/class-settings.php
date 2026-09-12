@@ -184,6 +184,10 @@ final class Settings {
 				'max_length'  => 8,
 				'allow_empty' => false,
 			),
+			'separator_after_last'     => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
 			'ticker_enabled'           => array(
 				'type'    => 'bool',
 				'default' => false,

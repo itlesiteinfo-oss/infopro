@@ -32,7 +32,4 @@ $hprnb_thumb = ( ! empty( $hprnb_settings['show_thumbnail'] ) && ! empty( $hprnb
 		<time class="hprnb-bar__time" datetime="<?php echo esc_attr( $hprnb_item['datetime'] ); ?>" data-hprnb-ts="<?php echo (int) $hprnb_item['timestamp']; ?>" data-hprnb-abs="<?php echo esc_attr( $hprnb_item['date_label'] ); ?>"><?php echo esc_html( Renderer::relative_time_label( (int) $hprnb_item['timestamp'], $hprnb_settings ) ); ?></time>
 		<?php endif; ?>
 	</a>
-	<?php if ( ! empty( $hprnb_settings['show_separator'] ) ) : ?>
-	<span class="hprnb-bar__sep" aria-hidden="true"><?php echo esc_html( $hprnb_settings['separator_char'] ); ?></span>
-	<?php endif; ?>
 </li>

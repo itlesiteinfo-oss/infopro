@@ -73,6 +73,13 @@ class Cache_Test extends HPRNB_Test_Case {
 		$ticker = Settings::sanitize( array_merge( $settings, array( 'ticker_enabled' => true ) ) );
 		$this->assertNotSame( $key, Cache::key( $ticker ) );
 
+		// The separator is a CSS concern on the root: none of its settings may fragment the cache.
+		$separator = Settings::sanitize( array_merge( $settings, array( 'show_separator' => true, 'separator_char' => '|', 'separator_after_last' => false ) ) );
+		$this->assertSame( $key, Cache::key( $separator ), 'show_separator / separator_char / separator_after_last never enter the cache key.' );
+		$this->assertNotContains( 'separator_after_last', Cache::PAYLOAD_KEYS );
+		$this->assertNotContains( 'show_separator', Cache::PAYLOAD_KEYS );
+		$this->assertNotContains( 'separator_char', Cache::PAYLOAD_KEYS );
+
 		add_filter( 'locale', static fn() => 'fr_FR' );
 		$this->assertNotSame( $key, Cache::key( $settings ), 'The locale is part of the key.' );
 	}

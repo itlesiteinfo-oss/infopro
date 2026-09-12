@@ -25,6 +25,7 @@
   "thumbnail_size": "thumbnail",
   "show_separator": false,
   "separator_char": "•",
+  "separator_after_last": true,
   "ticker_enabled": false,
   "ticker_mode": "marquee",
   "ticker_speed": 60,

@@ -76,11 +76,13 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$html = Renderer::bar( array( $item, $this->item( array( 'id' => 2 ) ) ), $settings );
 
 		$this->assertStringContainsString( '<img class="hprnb-bar__thumb" src="https://example.org/t.jpg" width="150" height="100" loading="lazy" decoding="async" alt="">', $html );
-		$this->assertStringContainsString( '<span class="hprnb-bar__sep" aria-hidden="true">|</span>', $html );
+		$this->assertStringNotContainsString( 'hprnb-bar__sep', $html, 'The separator is a CSS pseudo-element, never markup.' );
+		$this->assertStringNotContainsString( '>|<', $html );
 		$this->assertStringContainsString( '<time class="hprnb-bar__time" datetime="2026-09-11T15:04:00+00:00" data-hprnb-ts="', $html );
 		$this->assertStringContainsString( 'data-hprnb-abs="11 September 2026 15:04"', $html );
 		$this->assertStringContainsString( 'hour ago</time>', $html );
-		$this->assertStringContainsString( 'hprnb-bar--has-thumbs hprnb-bar--has-sep hprnb-bar--has-time', $html );
+		$this->assertStringContainsString( 'hprnb-bar--has-thumbs hprnb-bar--has-time', $html );
+		$this->assertStringNotContainsString( 'hprnb-bar--has-sep', $html );
 		$this->assertSame( 1, substr_count( $html, 'hprnb-bar__thumb' ), 'Second item has no thumb.' );
 	}
 
@@ -144,9 +146,9 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$this->assertStringStartsWith( '<div id="hprnb-root" class="hprnb-root hprnb-device-all hprnb-root--reserve" data-hprnb-generated="1757600000" data-hprnb-stale="180" data-hprnb-layout="reserve" data-hprnb-empty="0"', $root );
 		$this->assertStringContainsString( 'data-hprnb-endpoint="' . esc_url( rest_url( 'hprnb/v1/items' ) ) . '"', $root );
 		$this->assertStringContainsString( 'data-hprnb-css="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=1.0.0"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=1.1.0"', $root );
 		$this->assertStringNotContainsString( 'data-hprnb-js', $root, 'No interactive script needed by default.' );
-		$this->assertStringContainsString( 'style="--hprnb-bg:#B00000;--hprnb-fg:#FFFFFF;--hprnb-label-bg:#8F0000;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-font-size:14px;--hprnb-height:44px;--hprnb-z:99990"', $root );
+		$this->assertStringContainsString( 'style="--hprnb-bg:#B00000;--hprnb-fg:#FFFFFF;--hprnb-label-bg:#8F0000;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-font-size:14px;--hprnb-height:44px;--hprnb-z:99990;--hprnb-sep:&#039;•&#039;"', $root );
 		$this->assertStringNotContainsString( ' hidden', $root );
 		$this->assertStringContainsString( '<aside', $root );
 		$this->assertStringEndsWith( '</aside></div>', $root );
@@ -163,7 +165,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$hybrid_js = $this->with_settings( array( 'close_button' => true, 'show_on_desktop' => false ) );
 		$root = Renderer::root( Renderer::payload( array( $this->item() ), $hybrid_js ), $hybrid_js );
 		$this->assertStringContainsString( 'data-hprnb-js="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=1.0.0"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=1.1.0"', $root );
 		$this->assertStringContainsString( 'hprnb-hide-desktop', $root );
 
 		add_filter( 'hprnb_stale_threshold', static fn() => 900 );
@@ -209,6 +211,39 @@ class Renderer_Test extends HPRNB_Test_Case {
 				rmdir( $theme_dir );
 			}
 		}
+	}
+
+	public function test_separator_is_css_only_on_the_root() {
+		$payload = Renderer::payload( array( $this->item(), $this->item( array( 'id' => 2 ) ) ), Settings::get() );
+
+		// Default: separator off → no class at all, even though separator_after_last defaults to true.
+		$root = Renderer::root( $payload, Settings::get() );
+		$this->assertTrue( Settings::get()['separator_after_last'] );
+		$this->assertStringNotContainsString( 'hprnb-bar--sep', $root );
+		$this->assertSame( array(), Renderer::separator_classes( Settings::get() ) );
+
+		// Separator on + after last (default): both classes, no markup.
+		$on   = $this->with_settings( array( 'show_separator' => true, 'separator_char' => '|' ) );
+		$root = Renderer::root( Renderer::payload( array( $this->item() ), $on ), $on );
+		$this->assertMatchesRegularExpression( '/class="hprnb-root [^"]*hprnb-bar--sep hprnb-bar--sep-loop[^"]*"/', $root );
+		$this->assertStringContainsString( "--hprnb-sep:&#039;|&#039;", $root );
+		$this->assertStringNotContainsString( 'hprnb-bar__sep', $root );
+		$this->assertSame( array( 'hprnb-bar--sep', 'hprnb-bar--sep-loop' ), Renderer::separator_classes( $on ) );
+
+		// Separator on, not after last.
+		$no_loop = $this->with_settings( array( 'show_separator' => true, 'separator_after_last' => false ) );
+		$this->assertSame( array( 'hprnb-bar--sep' ), Renderer::separator_classes( $no_loop ) );
+		$this->assertStringNotContainsString( 'hprnb-bar--sep-loop', Renderer::root( $payload, $no_loop ) );
+
+		// after_last is ignored server-side when the separator is off.
+		$off = $this->with_settings( array( 'show_separator' => false, 'separator_after_last' => true ) );
+		$this->assertSame( array(), Renderer::separator_classes( $off ) );
+
+		// The CSS string is escaped.
+		$this->assertSame( "'a\\'b\\\\c'", Renderer::css_string( "a'b\\c" ) );
+		$this->assertSame( "'•'", Renderer::css_string( '•' ) );
+		$tricky = $this->with_settings( array( 'show_separator' => true, 'separator_char' => "'" ) );
+		$this->assertStringContainsString( "--hprnb-sep:&#039;\\&#039;&#039;", Renderer::root( $payload, $tricky ) );
 	}
 
 	public function test_icons() {

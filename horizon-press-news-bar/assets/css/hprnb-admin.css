@@ -39,6 +39,11 @@
 	padding-block: 6px;
 }
 
+.hprnb-row--inactive th,
+.hprnb-row--inactive td {
+	opacity: .5;
+}
+
 .hprnb-radio,
 .hprnb-check {
 	display: block;

@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,10 +65,16 @@ A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `h
 
 == Changelog ==
 
+= 1.1.0 =
+* New setting "Separator after the last post" (`separator_after_last`, on by default): the separator is now a CSS pseudo-element driven by classes on the root container, so the last → first junction (marquee wrap) matches every other junction. Separator settings no longer fragment the server cache. No separator is shown in rotate mode.
+
 = 1.0.0 =
 * Initial release: sliding-window news bar, transient cache, hybrid mode, REST endpoint, shortcode, settings page with live preview, import / export, accessible optional ticker, RTL and i18n.
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+Separator rendering moved to CSS; theme template overrides of item.php no longer need a separator element.
 
 = 1.0.0 =
 Initial release.

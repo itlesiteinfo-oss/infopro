@@ -34,7 +34,12 @@
 		z_index: '--hprnb-z'
 	};
 	var PX_KEYS = { font_size: true, bar_height: true };
-	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true };
+	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, show_separator: true, separator_char: true, separator_after_last: true };
+
+	/** Single-quoted CSS string literal, mirroring Renderer::css_string(). */
+	function cssString( value ) {
+		return "'" + String( value ).replace( /\\/g, '\\\\' ).replace( /'/g, "\\'" ) + "'";
+	}
 
 	/* ------------------------------------------------------------------ */
 	/* Form → nested settings object                                       */
@@ -134,6 +139,12 @@
 			previewRoot.style.setProperty( VISUAL_VARS[ key ], PX_KEYS[ key ] ? parseInt( value, 10 ) + 'px' : value );
 		} );
 
+		// Separator: classes + custom property on the root, exactly like the front-end root.
+		var showSep = valueOf( 'show_separator' ) === '1';
+		previewRoot.classList.toggle( 'hprnb-bar--sep', showSep );
+		previewRoot.classList.toggle( 'hprnb-bar--sep-loop', showSep && valueOf( 'separator_after_last' ) === '1' );
+		previewRoot.style.setProperty( '--hprnb-sep', cssString( valueOf( 'separator_char' ) || '•' ) );
+
 		var aside = previewRoot.querySelector( '.hprnb-bar' );
 		if ( ! aside ) {
 			return;
@@ -151,12 +162,20 @@
 			labelText.textContent = valueOf( 'label_text' );
 		}
 
-		var showSep = valueOf( 'show_separator' ) === '1';
-		Array.prototype.forEach.call( aside.querySelectorAll( '.hprnb-bar__sep' ), function ( sep ) {
-			sep.hidden = ! showSep;
-			if ( showSep ) {
-				sep.textContent = valueOf( 'separator_char' ) || sep.textContent;
-			}
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Dependent fields (greyed out, never disabled: their value is kept)  */
+	/* ------------------------------------------------------------------ */
+
+	function updateDependencies() {
+		Array.prototype.forEach.call( form.querySelectorAll( 'tr[data-hprnb-depends]' ), function ( row ) {
+			var master = form.querySelector( '[name="hprnb_settings[' + row.getAttribute( 'data-hprnb-depends' ) + ']"]' );
+			var active = ! master || master.type !== 'checkbox' || master.checked;
+			row.classList.toggle( 'hprnb-row--inactive', ! active );
+			Array.prototype.forEach.call( row.querySelectorAll( 'input, select' ), function ( input ) {
+				input.setAttribute( 'aria-disabled', active ? 'false' : 'true' );
+			} );
 		} );
 	}
 
@@ -267,6 +286,7 @@
 		}
 		applyVisual();
 		updateContrast();
+		updateDependencies();
 		if ( key === 'window_unit' ) {
 			updateWindowBounds();
 		}
@@ -410,5 +430,6 @@
 
 	updateWindowBounds();
 	updateContrast();
+	updateDependencies();
 	applyVisual();
 })();

@@ -24,6 +24,7 @@
 	--hprnb-font-size: 14px;
 	--hprnb-height: 44px;
 	--hprnb-z: 99990;
+	--hprnb-sep: '•';
 	--hprnb-track: 0px;
 	--hprnb-duration: 30s;
 	display: block;
@@ -177,15 +178,31 @@
 	text-underline-offset: .15em;
 }
 
-/* Separator (only rendered when enabled); hidden after the last item. */
-.hprnb-bar__sep {
+/* Separator: a CSS pseudo-element driven by root classes (no DOM, never cached).
+ * .hprnb-bar--sep      → between items;
+ * .hprnb-bar--sep-loop → also after the last item, so the last → first junction
+ *                        (marquee wrap) looks like every other junction.
+ * No margin-inline-end: the final separator adds no trailing space or overflow. */
+.hprnb-bar--sep .hprnb-bar__item:not(:last-child)::after,
+.hprnb-bar--sep-loop .hprnb-bar__item:last-child::after {
+	content: var(--hprnb-sep, '•');
 	flex: none;
 	margin-inline-start: 1.25em;
 	opacity: .7;
 }
 
-.hprnb-bar__item:last-child .hprnb-bar__sep {
-	display: none;
+/* Hidden from assistive technology where the alt-text syntax is supported. */
+@supports (content: "a" / "b") {
+	.hprnb-bar--sep .hprnb-bar__item:not(:last-child)::after,
+	.hprnb-bar--sep-loop .hprnb-bar__item:last-child::after {
+		content: var(--hprnb-sep, '•') / "";
+	}
+}
+
+/* Rotate shows one item at a time: a separator makes no sense there (last item included). */
+.hprnb-bar--sep .hprnb-bar--ticker-rotate .hprnb-bar__item::after,
+.hprnb-bar--sep-loop .hprnb-bar--ticker-rotate .hprnb-bar__item::after {
+	content: none;
 }
 
 /* Thumbnail sized from the bar height (square, cropped). */
@@ -311,6 +328,11 @@
 
 .hprnb-bar--marquee-on .hprnb-bar__viewport {
 	overflow: hidden;
+}
+
+/* While scrolling, the list edges carry no padding so the wrap junction (track gap) equals the item gap. */
+.hprnb-bar--marquee-on .hprnb-bar__list {
+	padding-inline: 0;
 }
 
 .hprnb-bar--marquee-on .hprnb-bar__track {

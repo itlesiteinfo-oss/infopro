@@ -365,6 +365,14 @@ final class Settings_Page {
 					'size'      => 4,
 				),
 			),
+			'separator_after_last'     => array(
+				'section' => 'appearance',
+				'type'    => 'checkbox',
+				'label'   => __( 'Separator after the last post', 'horizon-press-news-bar' ),
+				'text'    => __( 'Show the separator after the last post (continuous loop).', 'horizon-press-news-bar' ),
+				'desc'    => __( 'Makes the last → first junction identical to every other junction, for example when the marquee wraps. Only applies when the separator is enabled.', 'horizon-press-news-bar' ),
+				'depends' => 'show_separator',
+			),
 			'show_relative_time'       => array(
 				'section' => 'appearance',
 				'type'    => 'checkbox',
@@ -574,7 +582,7 @@ final class Settings_Page {
 		echo '<table class="form-table" role="presentation"><tbody>';
 		foreach ( $fields as $key => $field ) {
 			$id = 'hprnb-field-' . str_replace( '_', '-', $key );
-			echo '<tr class="hprnb-row hprnb-row--' . esc_attr( $field['type'] ) . '">';
+			echo '<tr class="hprnb-row hprnb-row--' . esc_attr( $field['type'] ) . '"' . ( ! empty( $field['depends'] ) ? ' data-hprnb-depends="' . esc_attr( $field['depends'] ) . '"' : '' ) . '>';
 			echo '<th scope="row">';
 			if ( in_array( $field['type'], array( 'text', 'number', 'select', 'color', 'ids' ), true ) ) {
 				echo '<label for="' . esc_attr( $id ) . '">' . esc_html( $field['label'] ) . '</label>';

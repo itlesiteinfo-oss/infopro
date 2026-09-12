@@ -91,6 +91,9 @@ final class Renderer {
 			self::device_class( $settings ),
 			'hprnb-root--' . ( 'overlay' === $settings['layout_mode'] ? 'overlay' : 'reserve' ),
 		);
+		foreach ( self::separator_classes( $settings ) as $class ) {
+			$classes[] = $class;
+		}
 
 		$attributes = array(
 			'id'                   => 'hprnb-root',
@@ -134,7 +137,7 @@ final class Renderer {
 	 */
 	public static function root_style( array $settings ): string {
 		return sprintf(
-			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-font-size:%6$dpx;--hprnb-height:%7$dpx;--hprnb-z:%8$d',
+			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-font-size:%6$dpx;--hprnb-height:%7$dpx;--hprnb-z:%8$d;--hprnb-sep:%9$s',
 			self::color( $settings['bg_color'], '#B00000' ),
 			self::color( $settings['text_color'], '#FFFFFF' ),
 			self::color( $settings['label_bg_color'], '#8F0000' ),
@@ -142,8 +145,37 @@ final class Renderer {
 			self::color( $settings['link_hover_color'], '#FFFFFF' ),
 			(int) $settings['font_size'],
 			(int) $settings['bar_height'],
-			(int) $settings['z_index']
+			(int) $settings['z_index'],
+			self::css_string( isset( $settings['separator_char'] ) ? (string) $settings['separator_char'] : '•' )
 		);
+	}
+
+	/**
+	 * Root classes driving the CSS separator pseudo-element (never part of the cached markup).
+	 *
+	 * @param array $settings Settings.
+	 * @return string[] hprnb-bar--sep when enabled, plus hprnb-bar--sep-loop when the separator follows the last item.
+	 */
+	public static function separator_classes( array $settings ): array {
+		if ( empty( $settings['show_separator'] ) ) {
+			return array();
+		}
+		$classes = array( 'hprnb-bar--sep' );
+		if ( ! empty( $settings['separator_after_last'] ) ) {
+			$classes[] = 'hprnb-bar--sep-loop';
+		}
+		return $classes;
+	}
+
+	/**
+	 * Single-quoted CSS string literal (used for the --hprnb-sep custom property).
+	 *
+	 * @param string $text Text (already sanitized).
+	 * @return string
+	 */
+	public static function css_string( string $text ): string {
+		$text = str_replace( array( "\r", "\n" ), '', $text );
+		return "'" . str_replace( array( '\\', "'" ), array( '\\\\', "\\'" ), $text ) . "'";
 	}
 
 	/**
