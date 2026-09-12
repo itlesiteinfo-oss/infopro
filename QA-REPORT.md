@@ -1,6 +1,8 @@
 # Rapport de recette — Horizon Press News Bar 1.0.0
 
-Date : 12 septembre 2026 — Livrable : `dist/horizon-press-news-bar.zip` (51 fichiers, 109 631 octets).
+Date : 12 septembre 2026 — Livrable : `dist/horizon-press-news-bar.zip` (51 fichiers).
+
+> **Addendum (même jour)** : à la demande du client (serveur de production en PHP 8.0.30), le prérequis PHP a été abaissé de 8.1 à **8.0** (`Requires PHP: 8.0`, `HPRNB_MIN_PHP`). Aucune syntaxe propre à PHP 8.1+ n’est utilisée ; PHPCompatibilityWP 8.0–8.4 : 0 erreur ; PHPCS et PHPUnit (123 tests) rejoués sans régression. L’exécution réelle reste sur PHP 8.4 uniquement ; PHP 8.0 n’étant plus maintenu, une mise à niveau vers 8.3+ est recommandée.
 
 Ce rapport ne mentionne comme « réussi » que ce qui a **réellement été exécuté** dans l’environnement décrit ci-dessous. Les points non exécutables sont listés explicitement en fin de document.
 
@@ -26,7 +28,7 @@ Réseau sortant : `wordpress.org` et `api.github.com` sont bloqués par la polit
 |---|---|---|
 | Syntaxe PHP | `php -l` sur les 24 fichiers PHP du plugin | **0 erreur** |
 | WordPress Coding Standards | `phpcs --standard=phpcs.xml.dist horizon-press-news-bar` (règles `WordPress` + `PHPCompatibilityWP`, préfixes `hprnb`, text domain) | **0 erreur, 0 avertissement** |
-| Compatibilité PHP 8.1 → 8.4 | `phpcs --standard=PHPCompatibilityWP --runtime-set testVersion 8.1-8.4` | **0 erreur** (6 avertissements « fichier minifié non analysable » sur les `.min.css/.min.js`, sans objet) |
+| Compatibilité PHP 8.0 → 8.4 | `phpcs --standard=PHPCompatibilityWP --runtime-set testVersion 8.0-8.4` | **0 erreur** (6 avertissements « fichier minifié non analysable » sur les `.min.css/.min.js`, sans objet) |
 | Plugin Check 2.1.0 | `wp plugin check horizon-press-news-bar` (contrôles statiques et runtime, plugin actif) | **0 erreur**, 2 avertissements acceptés : (a) `load_plugin_textdomain()` « discouraged » pour les extensions hébergées sur WordPress.org — extension privée avec fichiers locaux, appel sur `init` conformément au cahier des charges ; (b) `post__not_in` (règle VIP) — uniquement ajouté lorsque l’administrateur exclut des articles, jamais un tableau vide |
 | Règles statiques du cahier des charges (test PHPUnit `Static_Rules_Test`) | scan de tous les fichiers PHP/JS/CSS livrés | aucun `eval`, `extract`, `$_REQUEST`, `RAND()`, `wp_is_mobile`, cron, `dbDelta`, `wp_remote_*`, `add_image_size`, autoload `'yes'/'no'` ; garde `ABSPATH` partout ; aucun `console.log`, jQuery, `eval`, URL externe dans le JS ; aucun `@import`/URL externe en CSS ; `get_option( 'hprnb_settings' )` uniquement dans `class-settings.php` ; budgets d’assets respectés ; traductions chargées sur `init` |
 | Journal `debug.log` (`WP_DEBUG = true`) | pendant toute la recette (front, admin, REST, WP-CLI, e2e) | **0 fatal, 0 warning, 0 notice, 0 deprecated** provenant du plugin (seules entrées : WP-CLI/Mustache sur PHP 8.4 et échecs de connexion à wordpress.org, hors périmètre) |
@@ -135,7 +137,7 @@ Légende : ✅ exécuté et conforme · ⚠️ exécuté avec réserve · ⛔ no
 
 ## 6. Tests non exécutés / non exécutables
 
-- **PHP 8.1, 8.2, 8.3** : aucun binaire disponible dans le conteneur (téléchargements bloqués). Compatibilité vérifiée **statiquement** (PHPCompatibilityWP 8.1–8.4, 0 erreur) et exécution réelle sur PHP 8.4 uniquement.
+- **PHP 8.0, 8.1, 8.2, 8.3** : aucun binaire disponible dans le conteneur (téléchargements bloqués). Compatibilité vérifiée **statiquement** (PHPCompatibilityWP 8.0–8.4, 0 erreur) et exécution réelle sur PHP 8.4 uniquement.
 - **MySQL / MariaDB** : aucun serveur disponible ; toute la recette tourne sur SQLite (couche officielle de l’équipe Performance WordPress). Le plugin n’utilise aucune requête SQL manuelle (WP_Query, options, transients uniquement).
 - **Firefox et WebKit** : navigateurs Playwright non téléchargeables ; recette navigateur sur Chromium seulement. Safari iOS non testé.
 - **Object cache persistant** (Redis/Memcached) : non disponible ; comportement « 0 SQL propre au plugin sur hit » non mesuré.

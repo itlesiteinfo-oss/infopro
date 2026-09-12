@@ -114,7 +114,7 @@ final class Settings_Page {
 		if ( 3 === strlen( $hex ) ) {
 			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
 		}
-		if ( 6 !== strlen( $hex ) || ! ctype_xdigit( $hex ) ) {
+		if ( 6 !== strlen( $hex ) || ! preg_match( '/^[0-9a-fA-F]{6}$/', $hex ) ) {
 			return 0.0;
 		}
 		$channels = array();

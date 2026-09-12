@@ -3,7 +3,7 @@ Contributors: horizonpress
 Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
-Requires PHP: 8.1
+Requires PHP: 8.0
 Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -39,7 +39,7 @@ Main features:
 2. Activate the plugin.
 3. Open Settings → News Bar.
 
-The plugin requires PHP 8.1 and WordPress 6.6; below these versions it refuses to activate with a clear message.
+The plugin requires PHP 8.0 (8.3 or newer recommended) and WordPress 6.6; below these versions it refuses to activate with a clear message.
 
 == Frequently Asked Questions ==
 

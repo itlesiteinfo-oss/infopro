@@ -8,7 +8,7 @@
 	<arg name="colors"/>
 	<arg value="sp"/>
 	<config name="minimum_wp_version" value="6.6"/>
-	<config name="testVersion" value="8.1-"/>
+	<config name="testVersion" value="8.0-"/>
 	<rule ref="WordPress">
 		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
 		<exclude name="Generic.Arrays.DisallowShortArraySyntax"/>

@@ -4,6 +4,10 @@ Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr
 
 ## [1.0.0] — 2026-09-12
 
+### Modifié
+
+- Prérequis PHP abaissé de 8.1 à **8.0** à la demande du client (serveur de production en PHP 8.0.30) ; aucune syntaxe propre à PHP 8.1+ n’est utilisée, compatibilité vérifiée avec PHPCompatibilityWP 8.0–8.4.
+
 ### Ajouté
 
 - Barre d’actualités fixe en bas de page alimentée par une fenêtre temporelle glissante (minutes / heures / jours) calculée en UTC sur `post_date_gmt`.

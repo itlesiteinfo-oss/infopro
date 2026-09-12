@@ -5,7 +5,7 @@
  * Description:       Barre d'actualités récentes, fixe en bas de page, filtrée par fenêtre temporelle et catégories.
  * Version:           1.0.0
  * Requires at least: 6.6
- * Requires PHP:      8.1
+ * Requires PHP:      8.0
  * Author:            Horizon Press
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -23,7 +23,7 @@ define( 'HPRNB_PATH', plugin_dir_path( __FILE__ ) );
 define( 'HPRNB_URL', plugin_dir_url( __FILE__ ) );
 define( 'HPRNB_BASENAME', plugin_basename( __FILE__ ) );
 define( 'HPRNB_MIN_WP', '6.6' );
-define( 'HPRNB_MIN_PHP', '8.1' );
+define( 'HPRNB_MIN_PHP', '8.0' );
 define( 'HPRNB_SCHEMA_VERSION', 1 );
 
 /**

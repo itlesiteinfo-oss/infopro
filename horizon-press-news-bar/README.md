@@ -4,7 +4,7 @@ Extension WordPress affichant une **barre d’actualités fixe en bas du site**,
 
 - Version : **1.0.0**
 - WordPress : **6.6 minimum** (testé sur 7.1)
-- PHP : **8.1 à 8.4** (8.3+ recommandé)
+- PHP : **8.0 à 8.4** (8.3+ recommandé ; PHP 8.0 n’est plus maintenu par PHP.net, une mise à niveau est conseillée)
 - Licence : GPL-2.0-or-later
 - Text domain : `horizon-press-news-bar` (français fourni)
 
@@ -32,7 +32,7 @@ Ce n’est **jamais** « les articles du jour », « depuis minuit », « les X 
 2. Activer l’extension. L’activation crée les options `hprnb_settings`, `hprnb_cache_epoch` et `hprnb_schema_version`. Aucun flush des permaliens, aucune table, aucun cron, aucune redirection.
 3. Régler la barre dans **Réglages → Barre d’actualités** (capacité `manage_options`).
 
-Si PHP ou WordPress est trop ancien, l’extension refuse de s’activer avec un message clair et ne provoque jamais d’erreur fatale.
+Si PHP (< 8.0) ou WordPress (< 6.6) est trop ancien, l’extension refuse de s’activer avec un message clair et ne provoque jamais d’erreur fatale.
 
 Sur un multisite, les réglages sont propres à chaque site ; il n’y a pas d’interface réseau. Une activation réseau initialise les 500 premiers sites ; les autres reçoivent les valeurs par défaut à la volée.
 
@@ -261,4 +261,4 @@ La désactivation conserve les réglages et fait tourner l’epoch de cache.
 - La compatibilité WPML / Polylang n’est pas garantie sans test réel.
 - Le mode `overlay` peut recouvrir un élément fixe tiers.
 - Le micro-script anti-flash ne couvre pas une barre insérée uniquement par shortcode sur une page non éligible à l’affichage automatique (la barre reste masquée par le script interactif dès son exécution).
-- Testé sur PHP 8.4 dans l’environnement de recette ; la compatibilité 8.1–8.3 est vérifiée statiquement (PHPCompatibilityWP).
+- Testé sur PHP 8.4 dans l’environnement de recette ; la compatibilité 8.0–8.3 est vérifiée statiquement (PHPCompatibilityWP).

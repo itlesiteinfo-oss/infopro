@@ -81,7 +81,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 		$this->assertSame( 'Horizon Press News Bar', $data['Name'] );
 		$this->assertSame( '1.0.0', $data['Version'] );
 		$this->assertSame( '6.6', $data['RequiresWP'] );
-		$this->assertSame( '8.1', $data['RequiresPHP'] );
+		$this->assertSame( '8.0', $data['RequiresPHP'] );
 		$this->assertSame( 'horizon-press-news-bar', $data['TextDomain'] );
 		$this->assertSame( '/languages', $data['DomainPath'] );
 		$license = get_file_data( HPRNB_FILE, array( 'License' => 'License' ) );
