@@ -1,0 +1,644 @@
+msgid ""
+msgstr ""
+"Content-Transfer-Encoding: 8bit\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: fr_FR\n"
+"Language-Team: Français\n"
+"Last-Translator: Horizon Press\n"
+"MIME-Version: 1.0\n"
+"PO-Revision-Date: 2026-09-12 11:09+0000\n"
+"POT-Creation-Date: 2026-09-12 11:09+0000\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Project-Id-Version: Horizon Press News Bar 1.0.0\n"
+"Report-Msgid-Bugs-To: https://horizonpress.example/news-bar\n"
+"X-Domain: horizon-press-news-bar\n"
+"X-Generator: bin/build-i18n.php\n"
+
+#. translators: 1: minimum PHP version, 2: minimum WordPress version.
+#: horizon-press-news-bar/horizon-press-news-bar.php:51
+msgid "Horizon Press News Bar requires PHP %1$s or newer and WordPress %2$s or newer. The plugin has been left inactive."
+msgstr "Horizon Press News Bar nécessite PHP %1$s ou plus récent et WordPress %2$s ou plus récent. L’extension est restée inactive."
+
+#: horizon-press-news-bar/horizon-press-news-bar.php:81
+#: horizon-press-news-bar/includes/class-activator.php:36
+msgid "Plugin activation error"
+msgstr "Erreur d’activation de l’extension"
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:54
+#: horizon-press-news-bar/includes/admin/class-admin.php:55
+msgid "News Bar"
+msgstr "Barre d’actualités"
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:116
+msgid "Restore every setting to its default value? This cannot be undone."
+msgstr "Restaurer tous les réglages à leur valeur par défaut ? Cette action est irréversible."
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:117
+msgid "Refreshing the preview…"
+msgstr "Actualisation de l’aperçu…"
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:118
+msgid "The preview could not be refreshed."
+msgstr "L’aperçu n’a pas pu être actualisé."
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:119
+msgid "Preview updated."
+msgstr "Aperçu actualisé."
+
+#. translators: %s: contrast ratio, e.g. "3.1:1".
+#: horizon-press-news-bar/includes/admin/class-admin.php:121
+msgid "Low contrast (%s). WCAG AA recommends at least 4.5:1 for text."
+msgstr "Contraste faible (%s). Les WCAG AA recommandent au moins 4,5:1 pour le texte."
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:165
+msgid "Settings imported."
+msgstr "Réglages importés."
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:169
+msgid "Settings imported. The file contains category, tag or post IDs: check that they exist on this site, IDs differ between sites."
+msgstr "Réglages importés. Le fichier contient des identifiants de catégories, d’étiquettes ou d’articles : vérifiez qu’ils existent sur ce site, les identifiants diffèrent d’un site à l’autre."
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:173
+msgid "Import failed: no file was received or the upload failed."
+msgstr "Import impossible : aucun fichier reçu ou téléversement en échec."
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:177
+msgid "Import failed: the file exceeds 256 KB."
+msgstr "Import impossible : le fichier dépasse 256 Ko."
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:181
+msgid "Import failed: only .json files are accepted."
+msgstr "Import impossible : seuls les fichiers .json sont acceptés."
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:185
+msgid "Import failed: the file is not valid JSON."
+msgstr "Import impossible : le fichier n’est pas un JSON valide."
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:189
+msgid "Import failed: the file is not a Horizon Press News Bar export or its schema version is not supported."
+msgstr "Import impossible : le fichier n’est pas un export Horizon Press News Bar ou sa version de schéma n’est pas prise en charge."
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:193
+msgid "Settings restored to their defaults."
+msgstr "Réglages restaurés à leurs valeurs par défaut."
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:197
+msgid "Reset cancelled: tick the confirmation box first."
+msgstr "Réinitialisation annulée : cochez d’abord la case de confirmation."
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:201
+#: horizon-press-news-bar/includes/admin/class-import-export.php:185
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:154
+msgid "You are not allowed to do this."
+msgstr "Vous n’avez pas l’autorisation de faire cela."
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:216
+msgid "Settings"
+msgstr "Réglages"
+
+#. translators: %s: contrast ratio, e.g. "3.1:1".
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:71
+msgid "Text / background contrast is %s, below the 4.5:1 recommended by WCAG AA."
+msgstr "Le contraste texte / fond est de %s, sous le 4,5:1 recommandé par les WCAG AA."
+
+#. translators: %s: contrast ratio, e.g. "3.1:1".
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:76
+msgid "Label text / label background contrast is %s, below the 4.5:1 recommended by WCAG AA."
+msgstr "Le contraste texte du label / fond du label est de %s, sous le 4,5:1 recommandé par les WCAG AA."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:80
+msgid "Settings saved."
+msgstr "Réglages enregistrés."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:144
+msgid "No post matches these criteria. The bar will not be displayed on the site."
+msgstr "Aucun article ne correspond à ces critères. La barre ne sera pas affichée sur le site."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:160
+msgid "Horizon Press News Bar"
+msgstr "Horizon Press News Bar"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:167
+msgid "Save settings"
+msgstr "Enregistrer les réglages"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:185
+msgid "General"
+msgstr "Général"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:188
+msgid "Content"
+msgstr "Contenu"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:189
+msgid "Posts are selected when they are published, inside the sliding time window (never \"since midnight\") and match the filters below. Only the publication date counts, never the modification date."
+msgstr "Les articles sont sélectionnés s’ils sont publiés, dans la fenêtre temporelle glissante (jamais « depuis minuit ») et s’ils correspondent aux filtres ci-dessous. Seule la date de publication compte, jamais la date de modification."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:192
+msgid "Appearance"
+msgstr "Apparence"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:195
+msgid "Behavior"
+msgstr "Comportement"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:198
+msgid "Visibility"
+msgstr "Visibilité"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:201
+msgid "Advanced"
+msgstr "Avancé"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:223
+msgid "Enable the news bar"
+msgstr "Activer la barre d’actualités"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:224
+msgid "Display the bar on the public site."
+msgstr "Afficher la barre sur le site public."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:229
+msgid "Label"
+msgstr "Label"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:230
+msgid "Short text shown next to the headlines. Leave empty to hide the label."
+msgstr "Texte court affiché à côté des titres. Laissez vide pour masquer le label."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:236
+msgid "Label position"
+msgstr "Position du label"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:238
+msgid "Start of the line"
+msgstr "Début de ligne"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:239
+msgid "End of the line"
+msgstr "Fin de ligne"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:241
+msgid "\"End\" is the right side in left-to-right languages and the left side in right-to-left languages."
+msgstr "« Fin » correspond à la droite dans les langues de gauche à droite et à la gauche dans les langues de droite à gauche."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:246
+msgid "Time window"
+msgstr "Fenêtre temporelle"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:247
+msgid "Sliding window ending now: at 16:20 with 24 hours, posts published since yesterday 16:20 are eligible. Minutes: 1–1440, hours: 1–720, days: 1–30."
+msgstr "Fenêtre glissante se terminant maintenant : à 16:20 avec 24 heures, les articles publiés depuis la veille 16:20 sont éligibles. Minutes : 1–1440, heures : 1–720, jours : 1–30."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:253
+msgid "Categories"
+msgstr "Catégories"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:254
+msgid "No selection means every category."
+msgstr "Aucune sélection signifie toutes les catégories."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:259
+msgid "Maximum number of posts"
+msgstr "Nombre maximum d’articles"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:264
+msgid "Order"
+msgstr "Ordre"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:266
+msgid "Newest first"
+msgstr "Du plus récent au plus ancien"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:267
+msgid "Oldest first"
+msgstr "Du plus ancien au plus récent"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:274
+msgid "Excluded categories"
+msgstr "Catégories exclues"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:280
+msgid "Tags"
+msgstr "Étiquettes"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:281
+msgid "When at least one tag is selected, only posts having one of these tags are eligible."
+msgstr "Lorsqu’au moins une étiquette est sélectionnée, seuls les articles portant l’une de ces étiquettes sont éligibles."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:286
+msgid "Excluded post IDs"
+msgstr "Identifiants d’articles exclus"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:287
+msgid "Comma-separated post IDs that must never appear in the bar."
+msgstr "Identifiants d’articles séparés par des virgules qui ne doivent jamais apparaître dans la barre."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:292
+msgid "Background colour"
+msgstr "Couleur de fond"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:297
+msgid "Text colour"
+msgstr "Couleur du texte"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:303
+msgid "Label background colour"
+msgstr "Couleur de fond du label"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:308
+msgid "Label text colour"
+msgstr "Couleur du texte du label"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:314
+msgid "Link hover colour"
+msgstr "Couleur des liens au survol"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:319
+msgid "Font size (px)"
+msgstr "Taille de police (px)"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:324
+msgid "Bar height (px)"
+msgstr "Hauteur de la barre (px)"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:329
+msgid "z-index"
+msgstr "z-index"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:334
+msgid "Layout"
+msgstr "Disposition"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:336
+msgid "Reserve — pushes the page content up so the bar never covers it (default)"
+msgstr "Réserve — décale le contenu de la page pour que la barre ne le recouvre jamais (défaut)"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:337
+msgid "Overlay — floats over the page; may cover a fixed element of the theme or of another plugin"
+msgstr "Superposition — flotte au-dessus de la page ; peut recouvrir un élément fixe du thème ou d’une autre extension"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:343
+msgid "Thumbnails"
+msgstr "Miniatures"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:344
+msgid "Show the featured image next to each headline."
+msgstr "Afficher l’image mise en avant à côté de chaque titre."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:349
+msgid "Thumbnail size"
+msgstr "Taille de miniature"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:351
+msgid "An existing WordPress image size; no new size is generated."
+msgstr "Une taille d’image WordPress existante ; aucune nouvelle taille n’est générée."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:356
+msgid "Separator"
+msgstr "Séparateur"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:357
+msgid "Show a separator between headlines."
+msgstr "Afficher un séparateur entre les titres."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:362
+msgid "Separator character"
+msgstr "Caractère de séparation"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:371
+msgid "Relative time"
+msgstr "Heure relative"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:372
+msgid "Show \"2 hours ago\" after each headline (refreshed every minute in the browser)."
+msgstr "Afficher « il y a 2 heures » après chaque titre (actualisé chaque minute dans le navigateur)."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:377
+msgid "Relative time limit (hours)"
+msgstr "Limite de l’heure relative (heures)"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:378
+msgid "Beyond this age the absolute date is shown instead."
+msgstr "Au-delà de cet âge, la date absolue est affichée à la place."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:383
+msgid "Ticker"
+msgstr "Défilement"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:384
+msgid "Animate the headlines. Marquee and rotate always come with a keyboard-accessible Pause / Play button and stop when the visitor prefers reduced motion."
+msgstr "Animer les titres. Les modes défilement continu et rotation s’accompagnent toujours d’un bouton Pause / Lecture accessible au clavier et s’arrêtent lorsque le visiteur préfère réduire les animations."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:389
+msgid "Ticker mode"
+msgstr "Mode de défilement"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:391
+msgid "Marquee — continuous scrolling"
+msgstr "Défilement continu (marquee)"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:392
+msgid "Rotate — one headline at a time"
+msgstr "Rotation — un titre à la fois"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:393
+msgid "Manual — previous / next buttons, no automatic motion"
+msgstr "Manuel — boutons précédent / suivant, aucun mouvement automatique"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:399
+msgid "Marquee speed (px/s)"
+msgstr "Vitesse du défilement (px/s)"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:404
+msgid "Rotate interval (ms)"
+msgstr "Intervalle de rotation (ms)"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:409
+msgid "Pause on hover"
+msgstr "Pause au survol"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:410
+msgid "Extra comfort option; the Pause / Play button remains the accessible control."
+msgstr "Option de confort supplémentaire ; le bouton Pause / Lecture reste la commande accessible."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:415
+msgid "Close button"
+msgstr "Bouton fermer"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:416
+msgid "Let visitors close the bar."
+msgstr "Permettre aux visiteurs de fermer la barre."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:421
+msgid "Remember closing"
+msgstr "Mémoriser la fermeture"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:422
+msgid "Keep the bar closed for the duration below (stored in the browser localStorage, no cookie)."
+msgstr "Garder la barre fermée pendant la durée ci-dessous (stockée dans le localStorage du navigateur, sans cookie)."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:427
+msgid "Closing duration (hours)"
+msgstr "Durée de fermeture (heures)"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:432
+msgid "Desktop"
+msgstr "Ordinateur"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:433
+msgid "Show the bar on screens of 768 px and wider."
+msgstr "Afficher la barre sur les écrans de 768 px et plus."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:438
+msgid "Mobile"
+msgstr "Mobile"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:439
+msgid "Show the bar on screens narrower than 768 px (CSS only, no device detection)."
+msgstr "Afficher la barre sur les écrans de moins de 768 px (CSS uniquement, sans détection d’appareil)."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:444
+msgid "Scope"
+msgstr "Portée"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:446
+msgid "Everywhere"
+msgstr "Partout"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:447
+msgid "Only the contexts ticked below"
+msgstr "Uniquement les contextes cochés ci-dessous"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:453
+msgid "Contexts"
+msgstr "Contextes"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:455
+msgid "Front page"
+msgstr "Page d’accueil"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:456
+msgid "Blog home"
+msgstr "Page des articles"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:457
+msgid "Single post"
+msgstr "Article seul"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:458
+msgid "Page"
+msgstr "Page"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:459
+msgid "Category archive"
+msgstr "Archive de catégorie"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:460
+msgid "Tag archive"
+msgstr "Archive d’étiquette"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:461
+msgid "Other archives"
+msgstr "Autres archives"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:462
+msgid "Search results"
+msgstr "Résultats de recherche"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:463
+msgid "404 page"
+msgstr "Page 404"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:465
+msgid "The bar is never shown in wp-admin, feeds, embeds, previews, the login page, sitemaps, AMP pages, REST, AJAX or cron requests."
+msgstr "La barre n’est jamais affichée dans wp-admin, les flux, les contenus embarqués, les prévisualisations, la page de connexion, les plans de site, les pages AMP ni les requêtes REST, AJAX ou cron."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:470
+msgid "Excluded page / post IDs"
+msgstr "Identifiants de pages / articles exclus"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:471
+msgid "Comma-separated IDs of pages or posts on which the bar must not appear."
+msgstr "Identifiants de pages ou d’articles, séparés par des virgules, sur lesquels la barre ne doit pas apparaître."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:476
+msgid "Render mode"
+msgstr "Mode de rendu"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:478
+msgid "Hybrid (recommended) — server rendering plus a conditional REST refresh when a page cache served a stale bar"
+msgstr "Hybride (recommandé) — rendu serveur plus un rafraîchissement REST conditionnel lorsqu’un cache de page a servi une barre obsolète"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:479
+msgid "PHP — server rendering only, no freshness check (diagnostics or sites without a long page cache)"
+msgstr "PHP — rendu serveur uniquement, sans contrôle de fraîcheur (diagnostic ou sites sans cache de page long)"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:485
+msgid "Server cache TTL (seconds)"
+msgstr "Durée du cache serveur (secondes)"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:486
+msgid "30 to 600 seconds. Kept short because a post can leave the window without any WordPress event."
+msgstr "30 à 600 secondes. Volontairement court, car un article peut sortir de la fenêtre sans aucun événement WordPress."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:491
+msgid "Stale threshold (seconds)"
+msgstr "Seuil d’obsolescence (secondes)"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:492
+msgid "Hybrid mode: a server-rendered bar older than this triggers at most one REST request per page load."
+msgstr "Mode hybride : une barre rendue par le serveur plus ancienne que ce seuil déclenche au plus une requête REST par chargement de page."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:497
+msgid "Automatic display"
+msgstr "Affichage automatique"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:498
+msgid "Insert the bar automatically in the footer of eligible pages."
+msgstr "Insérer automatiquement la barre dans le pied de page des pages éligibles."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:503
+msgid "Shortcode"
+msgstr "Shortcode"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:504
+msgid "Allow [hprnb_news_bar]. Only one bar is ever rendered per page."
+msgstr "Autoriser [hprnb_news_bar]. Une seule barre est rendue par page."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:509
+msgid "Uninstall"
+msgstr "Désinstallation"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:510
+msgid "Delete the plugin settings when the plugin is uninstalled. Posts, media and terms are never touched."
+msgstr "Supprimer les réglages de l’extension lors de sa désinstallation. Les articles, médias et termes ne sont jamais touchés."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:558
+msgid "Advanced filters"
+msgstr "Filtres avancés"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:710
+msgid "Window value"
+msgstr "Valeur de la fenêtre"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:714
+msgid "Window unit"
+msgstr "Unité de la fenêtre"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:716
+msgid "minutes"
+msgstr "minutes"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:717
+msgid "hours"
+msgstr "heures"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:718
+msgid "days"
+msgstr "jours"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:775
+msgid "No term available."
+msgstr "Aucun terme disponible."
+
+#. translators: %s: field label.
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:786
+msgid "Filter: %s"
+msgstr "Filtrer : %s"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:787
+msgid "Filter…"
+msgstr "Filtrer…"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:789
+msgid "Select all"
+msgstr "Tout sélectionner"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:790
+msgid "Deselect all"
+msgstr "Tout désélectionner"
+
+#. translators: %d: maximum number of terms listed.
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:807
+msgid "Only the first %d terms are listed."
+msgstr "Seuls les %d premiers termes sont listés."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:823
+msgid "Tools"
+msgstr "Outils"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:826
+msgid "Export"
+msgstr "Export"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:828
+msgid "Download settings (JSON)"
+msgstr "Télécharger les réglages (JSON)"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:829
+msgid "The file contains the settings only, never posts or personal data."
+msgstr "Le fichier contient uniquement les réglages, jamais d’articles ni de données personnelles."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:833
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:839
+msgid "Import"
+msgstr "Import"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:840
+msgid "JSON file exported by this plugin, 256 KB maximum. Unknown keys are ignored; category, tag and post IDs may differ between sites."
+msgstr "Fichier JSON exporté par cette extension, 256 Ko maximum. Les clés inconnues sont ignorées ; les identifiants de catégories, d’étiquettes et d’articles peuvent différer d’un site à l’autre."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:845
+msgid "Reset"
+msgstr "Réinitialisation"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:850
+msgid "I understand that every setting will be restored to its default value."
+msgstr "Je comprends que tous les réglages seront restaurés à leur valeur par défaut."
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:851
+msgid "Restore defaults"
+msgstr "Restaurer les valeurs par défaut"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:870
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:871
+msgid "Preview"
+msgstr "Aperçu"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:882
+msgid "Refresh preview posts"
+msgstr "Actualiser les articles de l’aperçu"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:885
+msgid "Colours, sizes and label update instantly. Content criteria are applied by \"Refresh preview posts\" (also triggered automatically shortly after a change). Nothing is saved until you click \"Save settings\"."
+msgstr "Les couleurs, tailles et le label se mettent à jour instantanément. Les critères de contenu sont appliqués par « Actualiser les articles de l’aperçu » (également déclenché automatiquement peu après un changement). Rien n’est enregistré tant que vous ne cliquez pas sur « Enregistrer les réglages »."
+
+#. translators: %s: human-readable time difference, e.g. "2 hours".
+#: horizon-press-news-bar/includes/class-renderer.php:250
+msgid "%s ago"
+msgstr "il y a %s"
+
+#: horizon-press-news-bar/templates/bar.php:41
+msgid "Latest news"
+msgstr "Dernières actualités"
+
+#: horizon-press-news-bar/templates/bar.php:61
+msgid "Previous"
+msgstr "Précédent"
+
+#: horizon-press-news-bar/templates/bar.php:62
+msgid "Next"
+msgstr "Suivant"
+
+#: horizon-press-news-bar/templates/bar.php:65
+msgid "Pause"
+msgstr "Pause"
+
+#: horizon-press-news-bar/templates/bar.php:65
+msgid "Play"
+msgstr "Lecture"
+
+#: horizon-press-news-bar/templates/bar.php:68
+msgid "Close the news bar"
+msgstr "Fermer la barre d’actualités"

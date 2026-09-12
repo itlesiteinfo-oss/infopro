@@ -1,0 +1,218 @@
+<?php
+/**
+ * Renderer: markup, escaping, options, root, templates.
+ *
+ * @package HorizonPress\NewsBar\Tests
+ */
+
+use HorizonPress\NewsBar\Renderer;
+use HorizonPress\NewsBar\Settings;
+
+class Renderer_Test extends HPRNB_Test_Case {
+
+	private function item( array $overrides = array() ): array {
+		return array_merge(
+			array(
+				'id'         => 1,
+				'title'      => 'Hello',
+				'url'        => 'https://example.org/hello/',
+				'timestamp'  => time() - 3600,
+				'datetime'   => '2026-09-11T15:04:00+00:00',
+				'date_label' => '11 September 2026 15:04',
+				'thumb'      => null,
+			),
+			$overrides
+		);
+	}
+
+	public function test_zero_items_render_nothing() {
+		$this->assertSame( '', Renderer::bar( array(), Settings::get() ) );
+		$payload = Renderer::payload( array(), Settings::get() );
+		$this->assertSame( 0, $payload['count'] );
+		$this->assertSame( '', $payload['html'] );
+		$this->assertSame( HPRNB_VERSION, $payload['version'] );
+	}
+
+	public function test_default_markup() {
+		$html = Renderer::bar( array( $this->item() ), Settings::get() );
+
+		$this->assertStringStartsWith( '<aside class="hprnb-bar hprnb-bar--label-end hprnb-bar--reserve hprnb-bar--ticker-none"', $html );
+		$this->assertStringContainsString( 'role="region"', $html );
+		$this->assertStringContainsString( 'aria-label="Latest news"', $html );
+		$this->assertStringContainsString( 'aria-live="off"', $html );
+		$this->assertStringContainsString( 'dir="auto"', $html );
+		$this->assertStringContainsString( '<p class="hprnb-bar__label"><span class="hprnb-bar__label-text">TOUTE L’ACTUALITÉ</span></p>', $html );
+		$this->assertStringContainsString( '<ul class="hprnb-bar__list">', $html );
+		$this->assertStringContainsString( '<li class="hprnb-bar__item">', $html );
+		$this->assertStringContainsString( '<a class="hprnb-bar__link" href="https://example.org/hello/">', $html );
+		$this->assertStringContainsString( '<span class="hprnb-bar__title">Hello</span>', $html );
+		$this->assertStringNotContainsString( 'hprnb-bar__thumb', $html );
+		$this->assertStringNotContainsString( 'hprnb-bar__time', $html );
+		$this->assertStringNotContainsString( 'hprnb-bar__sep', $html );
+		$this->assertStringNotContainsString( 'hprnb-bar__controls', $html );
+		$this->assertStringNotContainsString( '<button', $html );
+		$this->assertSame( 1, substr_count( $html, 'aria-live=' ) );
+		$this->assertStringEndsWith( '</aside>', trim( $html ) );
+	}
+
+	public function test_empty_label_and_start_position() {
+		$settings = $this->with_settings( array( 'label_text' => '', 'label_position' => 'start', 'layout_mode' => 'overlay' ) );
+		$html     = Renderer::bar( array( $this->item() ), $settings );
+		$this->assertStringNotContainsString( 'hprnb-bar__label', $html );
+		$this->assertStringContainsString( 'hprnb-bar--label-start', $html );
+		$this->assertStringContainsString( 'hprnb-bar--overlay', $html );
+	}
+
+	public function test_optional_features_render_only_when_enabled() {
+		$settings = $this->with_settings(
+			array(
+				'show_thumbnail'     => true,
+				'show_separator'     => true,
+				'separator_char'     => '|',
+				'show_relative_time' => true,
+			)
+		);
+		$item = $this->item( array( 'thumb' => array( 'url' => 'https://example.org/t.jpg', 'width' => 150, 'height' => 100 ) ) );
+		$html = Renderer::bar( array( $item, $this->item( array( 'id' => 2 ) ) ), $settings );
+
+		$this->assertStringContainsString( '<img class="hprnb-bar__thumb" src="https://example.org/t.jpg" width="150" height="100" loading="lazy" decoding="async" alt="">', $html );
+		$this->assertStringContainsString( '<span class="hprnb-bar__sep" aria-hidden="true">|</span>', $html );
+		$this->assertStringContainsString( '<time class="hprnb-bar__time" datetime="2026-09-11T15:04:00+00:00" data-hprnb-ts="', $html );
+		$this->assertStringContainsString( 'data-hprnb-abs="11 September 2026 15:04"', $html );
+		$this->assertStringContainsString( 'hour ago</time>', $html );
+		$this->assertStringContainsString( 'hprnb-bar--has-thumbs hprnb-bar--has-sep hprnb-bar--has-time', $html );
+		$this->assertSame( 1, substr_count( $html, 'hprnb-bar__thumb' ), 'Second item has no thumb.' );
+	}
+
+	public function test_controls() {
+		$marquee = Renderer::bar( array( $this->item() ), $this->with_settings( array( 'ticker_enabled' => true, 'ticker_mode' => 'marquee', 'pause_on_hover' => true ) ) );
+		$this->assertStringContainsString( 'data-hprnb-ticker="marquee"', $marquee );
+		$this->assertStringContainsString( 'data-hprnb-hover="1"', $marquee );
+		$this->assertStringContainsString( 'class="hprnb-bar__btn hprnb-bar__btn--toggle" aria-label="Pause" data-hprnb-label-pause="Pause" data-hprnb-label-play="Play"', $marquee );
+		$this->assertStringContainsString( 'hprnb-bar__icon--pause', $marquee );
+		$this->assertStringContainsString( 'hprnb-bar__icon--play', $marquee );
+		$this->assertStringNotContainsString( 'hprnb-bar__btn--prev', $marquee );
+		$this->assertStringNotContainsString( 'hprnb-bar__btn--close', $marquee );
+
+		$rotate = Renderer::bar( array( $this->item() ), $this->with_settings( array( 'ticker_enabled' => true, 'ticker_mode' => 'rotate', 'rotate_interval' => 3000 ) ) );
+		$this->assertStringContainsString( 'hprnb-bar__btn--toggle', $rotate );
+		$this->assertStringContainsString( 'data-hprnb-interval="3000"', $rotate );
+
+		$manual = Renderer::bar( array( $this->item() ), $this->with_settings( array( 'ticker_enabled' => true, 'ticker_mode' => 'manual' ) ) );
+		$this->assertStringContainsString( 'hprnb-bar__btn--prev" aria-label="Previous" disabled>', $manual );
+		$this->assertStringContainsString( 'hprnb-bar__btn--next" aria-label="Next">', $manual );
+		$this->assertStringNotContainsString( 'hprnb-bar__btn--toggle', $manual );
+
+		$close = Renderer::bar( array( $this->item() ), $this->with_settings( array( 'close_button' => true, 'remember_dismiss' => true, 'dismiss_duration_hours' => 6 ) ) );
+		$this->assertStringContainsString( 'hprnb-bar__btn--close" aria-label="Close the news bar">', $close );
+		$this->assertStringContainsString( 'data-hprnb-remember="1" data-hprnb-dismiss-hours="6"', $close );
+		$this->assertStringContainsString( 'focusable="false"', $close );
+
+		$off = Renderer::bar( array( $this->item() ), $this->with_settings( array( 'ticker_mode' => 'marquee', 'ticker_enabled' => false ) ) );
+		$this->assertStringContainsString( 'data-hprnb-ticker="none"', $off );
+		$this->assertStringNotContainsString( '<button', $off );
+	}
+
+	public function test_escaping_of_titles_urls_and_label() {
+		$settings = $this->with_settings( array( 'label_text' => 'A & B <script>x</script>', 'show_separator' => true, 'separator_char' => '<b>' ) );
+		$item     = $this->item( array( 'title' => 'Tom & "Jerry" <script>alert(1)</script>', 'url' => 'javascript:alert(1)' ) );
+		$html     = Renderer::bar( array( $item ), $settings );
+
+		$this->assertStringNotContainsString( '<script', $html );
+		$this->assertStringContainsString( 'Tom &amp; &quot;Jerry&quot; &lt;script&gt;alert(1)&lt;/script&gt;', $html );
+		$this->assertStringNotContainsString( 'javascript:', $html );
+		$this->assertStringContainsString( '<span class="hprnb-bar__label-text">A &amp; B</span>', $html );
+		$this->assertStringNotContainsString( '<b>', $html );
+	}
+
+	public function test_filters_and_actions() {
+		$fired = array();
+		add_action( 'hprnb_before_bar', static function () use ( &$fired ) { $fired[] = 'before'; } );
+		add_action( 'hprnb_after_bar', static function () use ( &$fired ) { $fired[] = 'after'; } );
+		add_filter( 'hprnb_bar_html', static fn( $html ) => '<!-- filtered -->' . $html );
+
+		$html = Renderer::bar( array( $this->item() ), Settings::get() );
+		$this->assertSame( array( 'before', 'after' ), $fired );
+		$this->assertStringStartsWith( '<!-- filtered --><aside', $html );
+	}
+
+	public function test_root_markup_hybrid_and_php() {
+		$settings = Settings::get();
+		$payload  = Renderer::payload( array( $this->item() ), $settings, 1757600000 );
+		$root     = Renderer::root( $payload, $settings );
+
+		$this->assertStringStartsWith( '<div id="hprnb-root" class="hprnb-root hprnb-device-all hprnb-root--reserve" data-hprnb-generated="1757600000" data-hprnb-stale="180" data-hprnb-layout="reserve" data-hprnb-empty="0"', $root );
+		$this->assertStringContainsString( 'data-hprnb-endpoint="' . esc_url( rest_url( 'hprnb/v1/items' ) ) . '"', $root );
+		$this->assertStringContainsString( 'data-hprnb-css="', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=1.0.0"', $root );
+		$this->assertStringNotContainsString( 'data-hprnb-js', $root, 'No interactive script needed by default.' );
+		$this->assertStringContainsString( 'style="--hprnb-bg:#B00000;--hprnb-fg:#FFFFFF;--hprnb-label-bg:#8F0000;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-font-size:14px;--hprnb-height:44px;--hprnb-z:99990"', $root );
+		$this->assertStringNotContainsString( ' hidden', $root );
+		$this->assertStringContainsString( '<aside', $root );
+		$this->assertStringEndsWith( '</aside></div>', $root );
+		$this->assertSame( 1, substr_count( $root, 'id="hprnb-root"' ) );
+
+		$php = $this->with_settings( array( 'render_mode' => 'php', 'show_on_mobile' => false, 'close_button' => true, 'stale_threshold' => 300 ) );
+		$root = Renderer::root( Renderer::payload( array( $this->item() ), $php ), $php );
+		$this->assertStringNotContainsString( 'data-hprnb-endpoint', $root );
+		$this->assertStringNotContainsString( 'data-hprnb-css', $root );
+		$this->assertStringNotContainsString( 'data-hprnb-js', $root );
+		$this->assertStringContainsString( 'hprnb-hide-mobile', $root );
+		$this->assertStringContainsString( 'data-hprnb-stale="300"', $root );
+
+		$hybrid_js = $this->with_settings( array( 'close_button' => true, 'show_on_desktop' => false ) );
+		$root = Renderer::root( Renderer::payload( array( $this->item() ), $hybrid_js ), $hybrid_js );
+		$this->assertStringContainsString( 'data-hprnb-js="', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=1.0.0"', $root );
+		$this->assertStringContainsString( 'hprnb-hide-desktop', $root );
+
+		add_filter( 'hprnb_stale_threshold', static fn() => 900 );
+		$this->assertStringContainsString( 'data-hprnb-stale="900"', Renderer::root( $payload, Settings::get() ) );
+	}
+
+	public function test_needs_interactive_js() {
+		$this->assertFalse( Renderer::needs_interactive_js( Settings::defaults() ) );
+		$this->assertTrue( Renderer::needs_interactive_js( array_merge( Settings::defaults(), array( 'ticker_enabled' => true ) ) ) );
+		$this->assertTrue( Renderer::needs_interactive_js( array_merge( Settings::defaults(), array( 'close_button' => true ) ) ) );
+		$this->assertTrue( Renderer::needs_interactive_js( array_merge( Settings::defaults(), array( 'show_relative_time' => true ) ) ) );
+	}
+
+	public function test_relative_time_label() {
+		$settings = array_merge( Settings::defaults(), array( 'relative_time_max_hours' => 48 ) );
+		$now      = 1757600000;
+		update_option( 'date_format', 'Y-m-d' );
+		update_option( 'time_format', 'H:i' );
+
+		$this->assertSame( '2 hours ago', Renderer::relative_time_label( $now - 2 * HOUR_IN_SECONDS, $settings, $now ) );
+		$this->assertSame( '10 seconds ago', Renderer::relative_time_label( $now - 10, $settings, $now ) );
+		$this->assertSame( '1 minute ago', Renderer::relative_time_label( $now - 60, $settings, $now ) );
+		$this->assertSame( wp_date( 'Y-m-d H:i', $now - 3 * DAY_IN_SECONDS ), Renderer::relative_time_label( $now - 3 * DAY_IN_SECONDS, $settings, $now ) );
+		$this->assertSame( wp_date( 'Y-m-d H:i', $now + 60 ), Renderer::relative_time_label( $now + 60, $settings, $now ), 'Future timestamps fall back to the absolute date.' );
+	}
+
+	public function test_theme_template_override() {
+		$theme_dir     = get_stylesheet_directory();
+		$theme_existed = is_dir( $theme_dir );
+		$dir           = trailingslashit( $theme_dir ) . 'horizon-press-news-bar';
+		mkdir( $dir, 0777, true );
+		file_put_contents( $dir . '/item.php', '<?php defined( "ABSPATH" ) || exit; ?><li class="hprnb-bar__item custom-item"><a class="hprnb-bar__link" href="<?php echo esc_url( $context["item"]["url"] ); ?>"><?php echo esc_html( $context["item"]["title"] ); ?></a></li>' );
+
+		try {
+			$this->assertSame( $dir . '/item.php', Renderer::locate_template( 'item' ) );
+			$this->assertSame( HPRNB_PATH . 'templates/bar.php', Renderer::locate_template( 'bar' ) );
+			$html = Renderer::bar( array( $this->item() ), Settings::get() );
+			$this->assertStringContainsString( 'custom-item', $html );
+		} finally {
+			unlink( $dir . '/item.php' );
+			rmdir( $dir );
+			if ( ! $theme_existed ) {
+				rmdir( $theme_dir );
+			}
+		}
+	}
+
+	public function test_icons() {
+		$this->assertStringContainsString( 'aria-hidden="true"', Renderer::icon( 'close' ) );
+		$this->assertSame( '', Renderer::icon( 'nope' ) );
+	}
+}

@@ -1,0 +1,26 @@
+{
+  "name": "horizon-press/news-bar-dev",
+  "description": "Development tooling for the Horizon Press News Bar WordPress plugin (not shipped).",
+  "type": "project",
+  "license": "GPL-2.0-or-later",
+  "require-dev": {
+    "phpunit/phpunit": "^9.6",
+    "yoast/phpunit-polyfills": "^1.1",
+    "squizlabs/php_codesniffer": "3.13.5",
+    "wp-coding-standards/wpcs": "~3.4.1",
+    "phpcompatibility/phpcompatibility-wp": "~2.1.3",
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+    "gettext/gettext": "^5.7",
+    "gettext/php-scanner": "^2.0"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  },
+  "scripts": {
+    "lint": "for f in $(find horizon-press-news-bar -name '*.php'); do php -l $f || exit 1; done",
+    "phpcs": "phpcs --standard=phpcs.xml.dist",
+    "test": "phpunit -c tests/phpunit/phpunit.xml.dist"
+  }
+}

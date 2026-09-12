@@ -1,0 +1,74 @@
+=== Horizon Press News Bar ===
+Contributors: horizonpress
+Tags: news, ticker, breaking news, bar, headlines
+Requires at least: 6.6
+Tested up to: 7.1
+Requires PHP: 8.1
+Stable tag: 1.0.0
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
+A fixed bottom news bar showing the posts published inside a sliding time window, filtered by categories, tags and exclusions.
+
+== Description ==
+
+Horizon Press News Bar displays a fixed bar at the bottom of the site with the posts published inside a sliding time window (the last 24 hours by default), filtered by categories, tags and exclusions.
+
+**Business rule:** a post is shown when it is published **and** inside the time window **and** matches the content filters. Never "since midnight", never the modification date, never a random order. When no post matches, no visible bar is rendered at all.
+
+Main features:
+
+* sliding window in minutes, hours or days, computed in UTC on `post_date_gmt`;
+* included / excluded categories, tags, excluded posts, maximum number of items, chronological order;
+* colours, font size, height, z-index, customisable label at the start or the end of the line;
+* "reserve" layout (page content is pushed up) or "overlay" layout;
+* server cache built on transients with epoch-based invalidation, TTL between 30 and 600 seconds;
+* hybrid mode: server rendering plus a conditional REST refresh that survives page caches;
+* public endpoint `GET /wp-json/hprnb/v1/items` with ETag and 304 support;
+* `[hprnb_news_bar]` shortcode with a single-render guarantee;
+* visibility rules per context and per post or page ID;
+* optional features, disabled by default: relative time, thumbnails, separator, ticker (marquee, rotate, manual), pause on hover, close button, remembered dismissal;
+* mandatory Pause / Play button for any automatic animation, `prefers-reduced-motion` support, 44×44 targets, named region, `aria-live="off"`;
+* live preview in the settings page, JSON import / export, reset;
+* RTL support and internationalisation (French translation bundled);
+* no external dependency, no outbound network request, no telemetry, no jQuery, no custom table, no cron.
+
+== Installation ==
+
+1. Upload the `horizon-press-news-bar` folder to `/wp-content/plugins/`, or install the ZIP from Plugins → Add New.
+2. Activate the plugin.
+3. Open Settings → News Bar.
+
+The plugin requires PHP 8.1 and WordPress 6.6; below these versions it refuses to activate with a clear message.
+
+== Frequently Asked Questions ==
+
+= The bar does not show up =
+
+Check that at least one post is published inside the configured time window and matches the filters. The preview on the settings page says "No post matches these criteria" in that case. Also check the scope (Visibility section) and the ID exclusions.
+
+= A page cache serves an outdated bar =
+
+The hybrid mode (default) compares the age of the server-rendered HTML with the stale threshold and performs at most one REST request per page load to refresh the bar. No cache-plugin specific setting is needed.
+
+= The bar covers an element of my theme =
+
+Use the "reserve" layout (default). In "overlay" mode the bar may cover a fixed element of a theme or of another plugin.
+
+= Can I add custom CSS? =
+
+Not from the settings page (there is deliberately no free CSS field). Every class starts with `hprnb-` and colours / sizes are CSS variables: use your theme stylesheet, or override the templates in `{theme}/horizon-press-news-bar/`.
+
+= Where is the data stored? =
+
+A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
+
+== Changelog ==
+
+= 1.0.0 =
+* Initial release: sliding-window news bar, transient cache, hybrid mode, REST endpoint, shortcode, settings page with live preview, import / export, accessible optional ticker, RTL and i18n.
+
+== Upgrade Notice ==
+
+= 1.0.0 =
+Initial release.

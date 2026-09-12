@@ -1,0 +1,10 @@
+node_modules/
+vendor
+vendor/
+tests/e2e/.playwright/
+tests/e2e/test-results/
+tests/e2e/playwright-report/
+*.log
+.DS_Store
+.idea/
+.vscode/

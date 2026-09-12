@@ -1,0 +1,15 @@
+{
+  "name": "horizon-press-news-bar-dev",
+  "private": true,
+  "description": "Development tooling for the Horizon Press News Bar WordPress plugin (not shipped).",
+  "type": "module",
+  "scripts": {
+    "build:assets": "node bin/build-assets.mjs",
+    "test:e2e": "playwright test -c tests/e2e/playwright.config.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "axe-core": "^4.13.0",
+    "esbuild": "^0.25.0"
+  }
+}
