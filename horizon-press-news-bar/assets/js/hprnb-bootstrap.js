@@ -91,6 +91,10 @@
 			if (mobileHeight) {
 				document.body.style.setProperty('--hprnb-m-height', mobileHeight);
 			}
+			var peek = root.style.getPropertyValue('--hprnb-peek');
+			if (peek) {
+				document.body.style.setProperty('--hprnb-peek', peek);
+			}
 			document.body.classList.add('hprnb-reserve');
 		}
 

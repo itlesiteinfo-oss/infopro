@@ -19,6 +19,7 @@ through `languages/horizon-press-news-bar-fr_FR.po/.mo`.
 - No translation function may run before the `init` hook.
 - Every executable PHP file starts with an `ABSPATH` guard (`defined( 'ABSPATH' ) || exit;`).
 - `wp_is_mobile()` is never used. Device visibility is CSS only (768px fixed breakpoint).
+- Contract with the theme and other plugins (v2): `--hprnb-offset` on `<body>` (visible height: 40 desktop, 76 / 40 mobile, 0 while hidden), `body.hprnb-is-collapsed`, `body.hprnb-kbd`, `body.hprnb-theme-offset`, `document` event `hprnb:state` with `{ mobile, collapsed, height, offset }`, `window.hprnbBar.state()`. Nothing foreign is ever inserted in the bar.
 - Escaping at output: `esc_html()`, `esc_attr()`, `esc_url()`; colours validated with
   `sanitize_hex_color()` at input; IDs with `absint()`.
 - No `console.log` in production JS. All `localStorage`/`sessionStorage` access in `try/catch`.
@@ -149,22 +150,31 @@ remember_dismiss: bool false
 dismiss_duration_hours: int 24 [1,720]
 show_on_desktop: bool true
 show_on_mobile: bool true
+accent_color: color #CE3029                                 (progress line, hover underline)
+align_container: bool true                                  (content aligned on the site container)
+max_width: int 1230 [960,1920]
+gutter: int 15 [0,40]
+theme_offset: bool true                                     (Jannah fixed elements moved above the bar; body.hprnb-theme-offset)
 desktop_layout: enum inline [inline,stacked]              (label in front of the headline / on its own row)
 desktop_label_style: enum strip [strip,pill,hidden]
 desktop_label_dot: bool false
 desktop_show_counter: bool false                            (rotate mode)
 desktop_lines: int 1 [1,4]                                  (headline lines; the bar height follows)
 desktop_show_progress: bool true                            (rotate mode)
-mobile_layout: enum stacked [stacked,inline]                (inline = label in front of the headline, always first on a phone)
+mobile_layout: enum flow [flow,stacked,inline]              (flow = v2 card: pill floating at the head of the two-line headline, rotation only; inline = label first)
 mobile_label_style: enum pill [pill,strip,hidden]
 mobile_label_dot: bool false
 mobile_show_counter: bool true
 mobile_lines: int 2 [1,4]
+mobile_bar_height: int 76 [64,96]                           (flow card height; grows with the lines)
 mobile_font_size: int 16 [12,24]
 mobile_ticker_mode: enum rotate [inherit,static,marquee,rotate,manual]   (only presentation key in the cache hash: it drives the buttons in the markup)
 mobile_show_progress: bool true
 mobile_swipe: bool true
 mobile_hide_on_scroll: bool true
+mobile_peek: enum headline [headline,label]                 (collapsed strip: pill + first line, or pill only)
+mobile_deep_collapse: bool true                             (start collapsed when landing further than 120px down)
+mobile_kbd_hide: bool true                                  (slide away while a form field is active)
 mobile_show_separator: bool false
 mobile_custom_colors: bool true
 mobile_bg_color: color #141414
@@ -326,6 +336,9 @@ public static function mobile_ticker( array $settings ): string;        // effec
 public static function profile( array $settings, string $p ): array;    // 'd'|'m' → {layout, label, dot, counter, lines (1 in marquee), progress, mode, font_size, collapse, swipe}
 public static function profile_data( array $settings, string $p ): array;   // {layout, lines, counter, progress [, swipe, collapse]} serialised in data-hprnb-desktop / data-hprnb-mobile
 public static function profile_lines( array $settings, string $p ): int;
+public static function flow_metrics( array $settings ): array;         // {line, height, pad, peek}: line = round(font × 1.625), height = max(mobile_bar_height, lines × line + 12), peek = pad + line + 2
+public static function peek_height( array $settings ): int;            // collapsed strip: flow → peek, stacked → 36, inline → bar height
+public static function mobile_controls( array $settings ): int;        // buttons under 768px (pause/prev-next + close), never below 1 (--hprnb-m-ctrls)
 public static function profile_height( array $settings, string $p ): int;   // max( bar_height, lines × ceil( font × 1.3 ) + 12 [+ 22 + 4 when stacked] ) — STRIP_HEIGHT / ROW_GAP / BLOCK_PAD / LINE_HEIGHT
 public static function root_classes( array $settings ): array;           // hprnb-root, device, layout, separator (hprnb-bar--sep[-loop]), per profile hprnb-root--{d|m}-{inline|stacked}, hprnb-root--d-end, -label-{pill|strip|hidden}, -dot, -wrap; hprnb-root--m-sep[-loop], -m-colors, -m-collapse
 public static function relative_time_label( int $timestamp, array $settings, ?int $now = null ): string; // within relative_time_max_hours: sprintf( __( '%s ago' ), human_time_diff( $ts, $now ) ), else wp_date( date_format . ' ' . time_format, $ts )

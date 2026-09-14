@@ -29,17 +29,24 @@
 		label_bg_color: '--hprnb-label-bg',
 		label_text_color: '--hprnb-label-fg',
 		link_hover_color: '--hprnb-hover',
+		accent_color: '--hprnb-accent',
 		font_size: '--hprnb-font-size',
+		max_width: '--hprnb-max',
+		gutter: '--hprnb-gutter',
 		z_index: '--hprnb-z'
 	};
-	var PX_KEYS = { font_size: true };
+	var PX_KEYS = { font_size: true, max_width: true, gutter: true };
 	var MOBILE_VARS = { mobile_bg_color: '--hprnb-m-bg', mobile_text_color: '--hprnb-m-fg', mobile_accent_color: '--hprnb-m-accent', mobile_label_text_color: '--hprnb-m-label-fg', mobile_font_size: '--hprnb-m-font-size' };
-	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, bar_height: true, show_separator: true, separator_char: true, separator_after_last: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
+	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, bar_height: true, align_container: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_bar_height: true, mobile_peek: true, mobile_deep_collapse: true, mobile_kbd_hide: true, theme_offset: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
 	/* Row height of the stacked label strip, row gap, block padding and title line-height: mirrors Renderer::profile_height(). */
 	var STRIP = 22;
 	var ROW_GAP = 4;
 	var BLOCK_PAD = 12;
 	var LINE_HEIGHT = 1.3;
+	/* Mobile flow card: Renderer::FLOW_LINE / FLOW_PAD / PEEK_EXTRA. */
+	var FLOW_LINE = 1.625;
+	var FLOW_PAD = 6;
+	var PEEK_EXTRA = 2;
 	var reinitTimer = null;
 
 	/** Restarts the interactive script on the preview root (rotation, progress, marquee…). */
@@ -168,7 +175,16 @@
 		var mobile = ( p === 'm' );
 		var prefix = mobile ? 'mobile_' : 'desktop_';
 		var mode = effectiveMode( p );
-		var layout = valueOf( prefix + 'layout' ) === 'stacked' ? 'stacked' : 'inline';
+		var layout = valueOf( prefix + 'layout' ) || ( mobile ? 'flow' : 'inline' );
+		if ( layout !== 'stacked' && layout !== 'inline' && layout !== 'flow' ) {
+			layout = mobile ? 'flow' : 'inline';
+		}
+		if ( ! mobile && layout === 'flow' ) {
+			layout = 'inline';
+		}
+		if ( layout === 'flow' && mode !== 'rotate' ) {
+			layout = 'stacked';
+		}
 		var label = valueOf( prefix + 'label_style' ) || ( mobile ? 'pill' : 'strip' );
 		var lines = Math.max( 1, Math.min( 4, parseInt( valueOf( prefix + 'lines' ), 10 ) || ( mobile ? 2 : 1 ) ) );
 		return {
@@ -180,9 +196,20 @@
 			progress: mode === 'rotate' && valueOf( prefix + 'show_progress' ) === '1',
 			mode: mode,
 			fontSize: parseInt( valueOf( mobile ? 'mobile_font_size' : 'font_size' ), 10 ) || ( mobile ? 16 : 14 ),
-			collapse: mobile && layout === 'stacked' && valueOf( 'mobile_hide_on_scroll' ) === '1',
-			swipe: mobile && mode === 'rotate' && valueOf( 'mobile_swipe' ) === '1'
+			collapse: mobile && layout !== 'inline' && valueOf( 'mobile_hide_on_scroll' ) === '1',
+			swipe: mobile && mode === 'rotate' && valueOf( 'mobile_swipe' ) === '1',
+			peek: valueOf( 'mobile_peek' ) === 'label' ? 'label' : 'headline',
+			deep: mobile && layout !== 'inline' && valueOf( 'mobile_deep_collapse' ) === '1',
+			kbd: mobile && valueOf( 'mobile_kbd_hide' ) === '1'
 		};
+	}
+
+	/** Mobile flow card metrics (mirrors Renderer::flow_metrics()). */
+	function flowMetrics( profile ) {
+		var line = Math.round( profile.fontSize * FLOW_LINE );
+		var height = Math.max( parseInt( valueOf( 'mobile_bar_height' ), 10 ) || 76, profile.lines * line + 2 * FLOW_PAD );
+		var pad = Math.floor( ( height - profile.lines * line ) / 2 );
+		return { line: line, height: height, pad: pad, peek: pad + line + PEEK_EXTRA };
 	}
 
 	function applyVisual() {
@@ -212,26 +239,48 @@
 			}
 		} );
 		var labelEnd = valueOf( 'label_position' ) !== 'start';
-		var minHeight = parseInt( valueOf( 'bar_height' ), 10 ) || 44;
+		var minHeight = parseInt( valueOf( 'bar_height' ), 10 ) || 40;
+		previewRoot.classList.toggle( 'hprnb-root--align', valueOf( 'align_container' ) === '1' );
+		previewRoot.classList.toggle( 'hprnb-root--peek-label', valueOf( 'mobile_peek' ) === 'label' );
 		[ 'd', 'm' ].forEach( function ( p ) {
 			var profile = computeProfile( p );
 			var cls = previewRoot.classList;
 			cls.toggle( 'hprnb-root--' + p + '-inline', profile.layout === 'inline' );
 			cls.toggle( 'hprnb-root--' + p + '-stacked', profile.layout === 'stacked' );
+			cls.toggle( 'hprnb-root--' + p + '-flow', profile.layout === 'flow' );
 			cls.toggle( 'hprnb-root--' + p + '-end', p === 'd' && profile.layout === 'inline' && labelEnd );
 			[ 'pill', 'strip', 'hidden' ].forEach( function ( style ) {
 				cls.toggle( 'hprnb-root--' + p + '-label-' + style, profile.label === style );
 			} );
 			cls.toggle( 'hprnb-root--' + p + '-dot', profile.dot );
-			cls.toggle( 'hprnb-root--' + p + '-wrap', profile.lines > 1 );
-			var height = profile.lines * Math.ceil( profile.fontSize * LINE_HEIGHT ) + BLOCK_PAD + ( profile.layout === 'stacked' ? STRIP + ROW_GAP : 0 );
-			height = Math.max( minHeight, height );
+			cls.toggle( 'hprnb-root--' + p + '-wrap', profile.lines > 1 && profile.layout !== 'flow' );
+			var height;
+			if ( profile.layout === 'flow' ) {
+				var flow = flowMetrics( profile );
+				height = flow.height;
+				previewRoot.style.setProperty( '--hprnb-m-line', flow.line + 'px' );
+				previewRoot.style.setProperty( '--hprnb-m-pad', flow.pad + 'px' );
+				previewRoot.style.setProperty( '--hprnb-peek', flow.peek + 'px' );
+			} else {
+				height = profile.lines * Math.ceil( profile.fontSize * LINE_HEIGHT ) + BLOCK_PAD + ( profile.layout === 'stacked' ? STRIP + ROW_GAP : 0 );
+				height = Math.max( minHeight, height );
+				if ( p === 'm' ) {
+					previewRoot.style.setProperty( '--hprnb-peek', ( profile.layout === 'stacked' ? 36 : height ) + 'px' );
+				}
+			}
+			if ( p === 'm' ) {
+				var ctrls = ( valueOf( 'close_button' ) === '1' ? 1 : 0 ) + ( profile.mode === 'marquee' || profile.mode === 'rotate' ? 1 : ( profile.mode === 'manual' ? 2 : 0 ) );
+				previewRoot.style.setProperty( '--hprnb-m-ctrls', String( Math.max( 1, ctrls ) ) );
+			}
 			previewRoot.style.setProperty( p === 'm' ? '--hprnb-m-height' : '--hprnb-height', height + 'px' );
 			previewRoot.style.setProperty( p === 'm' ? '--hprnb-m-lines' : '--hprnb-d-lines', String( profile.lines ) );
 			var data = { layout: profile.layout, lines: profile.lines, counter: profile.counter, progress: profile.progress };
 			if ( p === 'm' ) {
 				data.swipe = profile.swipe;
 				data.collapse = profile.collapse;
+				data.peek = profile.peek;
+				data.deep = profile.deep;
+				data.kbd = profile.kbd;
 			}
 			previewRoot.setAttribute( p === 'm' ? 'data-hprnb-mobile' : 'data-hprnb-desktop', JSON.stringify( data ) );
 			Array.prototype.forEach.call( document.querySelectorAll( '.hprnb-height-hint[data-hprnb-height="' + p + '"]' ), function ( hint ) {
@@ -541,6 +590,143 @@
 	tabs.forEach( function ( tab ) {
 		tab.addEventListener( 'click', function () {
 			selectDevice( tab.getAttribute( 'data-hprnb-device' ) );
+		} );
+	} );
+
+	/* ------------------------------------------------------------------ */
+	/* Tabs (progressive: every panel is visible without this script)     */
+	/* ------------------------------------------------------------------ */
+
+	var tabBar = document.querySelector( '.hprnb-tabs' );
+	var tabButtons = tabBar ? Array.prototype.slice.call( tabBar.querySelectorAll( '[data-hprnb-tab]' ) ) : [];
+	var panels = Array.prototype.slice.call( document.querySelectorAll( '[data-hprnb-panel]' ) );
+	var resetTabButton = document.getElementById( 'hprnb-reset-tab' );
+	var currentTab = '';
+
+	function selectTab( key, focus ) {
+		if ( ! tabButtons.length ) {
+			return;
+		}
+		var found = tabButtons.some( function ( b ) {
+			return b.getAttribute( 'data-hprnb-tab' ) === key;
+		} );
+		if ( ! found ) {
+			key = tabButtons[ 0 ].getAttribute( 'data-hprnb-tab' );
+		}
+		currentTab = key;
+		tabButtons.forEach( function ( b ) {
+			var active = b.getAttribute( 'data-hprnb-tab' ) === key;
+			b.classList.toggle( 'is-active', active );
+			b.setAttribute( 'aria-selected', active ? 'true' : 'false' );
+			b.tabIndex = active ? 0 : -1;
+			if ( active && focus ) {
+				b.focus();
+			}
+		} );
+		panels.forEach( function ( panel ) {
+			panel.hidden = panel.getAttribute( 'data-hprnb-panel' ) !== key;
+		} );
+		try {
+			window.localStorage.setItem( 'hprnb_admin_tab', key );
+		} catch ( e ) {
+			// Storage unavailable: the tab is simply not remembered.
+		}
+		if ( window.history && window.history.replaceState ) {
+			window.history.replaceState( null, '', '#' + key );
+		}
+	}
+
+	if ( tabButtons.length ) {
+		tabBar.hidden = false;
+		if ( resetTabButton ) {
+			resetTabButton.hidden = false;
+		}
+		tabButtons.forEach( function ( b, index ) {
+			b.addEventListener( 'click', function () {
+				selectTab( b.getAttribute( 'data-hprnb-tab' ), false );
+			} );
+			b.addEventListener( 'keydown', function ( event ) {
+				var delta = event.key === 'ArrowRight' ? 1 : ( event.key === 'ArrowLeft' ? -1 : 0 );
+				if ( ! delta ) {
+					return;
+				}
+				event.preventDefault();
+				var next = tabButtons[ ( index + delta + tabButtons.length ) % tabButtons.length ];
+				selectTab( next.getAttribute( 'data-hprnb-tab' ), true );
+			} );
+		} );
+		var initial = ( window.location.hash || '' ).replace( '#', '' );
+		if ( ! initial ) {
+			try {
+				initial = window.localStorage.getItem( 'hprnb_admin_tab' ) || '';
+			} catch ( e ) {
+				initial = '';
+			}
+		}
+		// A settings error mentioning a field opens its tab.
+		selectTab( initial, false );
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* "Reset this tab" and colour presets (nothing is saved)              */
+	/* ------------------------------------------------------------------ */
+
+	function setFieldValue( el, value ) {
+		if ( el.type === 'checkbox' ) {
+			el.checked = !! value;
+		} else if ( el.type === 'radio' ) {
+			el.checked = String( el.value ) === String( value );
+		} else {
+			el.value = value === null || typeof value === 'undefined' ? '' : ( Array.isArray( value ) ? value.join( ', ' ) : String( value ) );
+		}
+		el.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+		el.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+	}
+
+	function resetPanel( panel ) {
+		var defaults = cfg.defaults || {};
+		Array.prototype.forEach.call( panel.querySelectorAll( '[name^="hprnb_settings["]' ), function ( el ) {
+			var path = pathOf( el.name );
+			if ( ! path ) {
+				return;
+			}
+			var key = path[ 0 ];
+			if ( ! Object.prototype.hasOwnProperty.call( defaults, key ) ) {
+				return;
+			}
+			var value = defaults[ key ];
+			if ( path.length > 1 && path[ 1 ] !== '' ) {
+				value = value && typeof value === 'object' ? value[ path[ 1 ] ] : undefined;
+			} else if ( path.length > 1 && path[ 1 ] === '' ) {
+				value = Array.isArray( value ) && value.map( String ).indexOf( String( el.value ) ) !== -1;
+			}
+			setFieldValue( el, value );
+		} );
+		// The virtual "window" field maps to window_value / window_unit (already covered by their names).
+	}
+
+	if ( resetTabButton ) {
+		resetTabButton.addEventListener( 'click', function () {
+			var panel = document.querySelector( '[data-hprnb-panel="' + currentTab + '"]' );
+			if ( ! panel || ! window.confirm( i18n.resetTab || '?' ) ) {
+				return;
+			}
+			resetPanel( panel );
+		} );
+	}
+
+	Array.prototype.forEach.call( document.querySelectorAll( '.hprnb-preset[data-hprnb-preset]' ), function ( button ) {
+		button.addEventListener( 'click', function () {
+			var preset = ( cfg.presets || {} )[ button.getAttribute( 'data-hprnb-preset' ) ];
+			if ( ! preset ) {
+				return;
+			}
+			Object.keys( preset ).forEach( function ( key ) {
+				var el = form.querySelector( '[name="hprnb_settings[' + key + ']"]' );
+				if ( el ) {
+					setFieldValue( el, preset[ key ] );
+				}
+			} );
 		} );
 	} );
 

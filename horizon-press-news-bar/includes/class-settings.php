@@ -66,13 +66,13 @@ final class Settings {
 			),
 			'label_text'               => array(
 				'type'        => 'text',
-				'default'     => 'TOUTE L’ACTUALITÉ',
+				'default'     => 'EN CONTINU',
 				'max_length'  => 120,
 				'allow_empty' => true,
 			),
 			'label_position'           => array(
 				'type'    => 'enum',
-				'default' => 'end',
+				'default' => 'start',
 				'options' => array( 'start', 'end' ),
 			),
 			'window_value'             => array(
@@ -106,7 +106,7 @@ final class Settings {
 				'type'    => 'int',
 				'default' => 10,
 				'min'     => 1,
-				'max'     => 50,
+				'max'     => 30,
 			),
 			'orderby'                  => array(
 				'type'    => 'enum',
@@ -115,15 +115,15 @@ final class Settings {
 			),
 			'bg_color'                 => array(
 				'type'    => 'color',
-				'default' => '#B00000',
+				'default' => '#1B1C20',
 			),
 			'text_color'               => array(
 				'type'    => 'color',
-				'default' => '#FFFFFF',
+				'default' => '#F5F5F5',
 			),
 			'label_bg_color'           => array(
 				'type'    => 'color',
-				'default' => '#8F0000',
+				'default' => '#CE3029',
 			),
 			'label_text_color'         => array(
 				'type'    => 'color',
@@ -133,17 +133,37 @@ final class Settings {
 				'type'    => 'color',
 				'default' => '#FFFFFF',
 			),
+			'accent_color'             => array(
+				'type'    => 'color',
+				'default' => '#CE3029',
+			),
 			'font_size'                => array(
 				'type'    => 'int',
-				'default' => 14,
+				'default' => 15,
 				'min'     => 10,
 				'max'     => 24,
 			),
 			'bar_height'               => array(
 				'type'    => 'int',
-				'default' => 44,
-				'min'     => 28,
-				'max'     => 120,
+				'default' => 40,
+				'min'     => 32,
+				'max'     => 56,
+			),
+			'align_container'          => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
+			'max_width'                => array(
+				'type'    => 'int',
+				'default' => 1230,
+				'min'     => 960,
+				'max'     => 1920,
+			),
+			'gutter'                   => array(
+				'type'    => 'int',
+				'default' => 15,
+				'min'     => 0,
+				'max'     => 40,
 			),
 			'z_index'                  => array(
 				'type'    => 'int',
@@ -176,7 +196,7 @@ final class Settings {
 			),
 			'show_separator'           => array(
 				'type'    => 'bool',
-				'default' => false,
+				'default' => true,
 			),
 			'separator_char'           => array(
 				'type'        => 'text',
@@ -190,7 +210,7 @@ final class Settings {
 			),
 			'ticker_enabled'           => array(
 				'type'    => 'bool',
-				'default' => false,
+				'default' => true,
 			),
 			'ticker_mode'              => array(
 				'type'    => 'enum',
@@ -199,33 +219,37 @@ final class Settings {
 			),
 			'ticker_speed'             => array(
 				'type'    => 'int',
-				'default' => 60,
+				'default' => 30,
 				'min'     => 10,
-				'max'     => 300,
+				'max'     => 80,
 			),
 			'rotate_interval'          => array(
 				'type'    => 'int',
 				'default' => 5000,
-				'min'     => 1000,
-				'max'     => 60000,
+				'min'     => 3000,
+				'max'     => 12000,
 			),
 			'pause_on_hover'           => array(
 				'type'    => 'bool',
-				'default' => false,
+				'default' => true,
 			),
 			'close_button'             => array(
 				'type'    => 'bool',
-				'default' => false,
+				'default' => true,
 			),
 			'remember_dismiss'         => array(
 				'type'    => 'bool',
-				'default' => false,
+				'default' => true,
 			),
 			'dismiss_duration_hours'   => array(
 				'type'    => 'int',
 				'default' => 24,
 				'min'     => 1,
 				'max'     => 720,
+			),
+			'theme_offset'             => array(
+				'type'    => 'bool',
+				'default' => true,
 			),
 			'show_on_desktop'          => array(
 				'type'    => 'bool',
@@ -242,12 +266,12 @@ final class Settings {
 			),
 			'desktop_label_style'      => array(
 				'type'    => 'enum',
-				'default' => 'strip',
+				'default' => 'pill',
 				'options' => array( 'strip', 'pill', 'hidden' ),
 			),
 			'desktop_label_dot'        => array(
 				'type'    => 'bool',
-				'default' => false,
+				'default' => true,
 			),
 			'desktop_show_counter'     => array(
 				'type'    => 'bool',
@@ -265,8 +289,8 @@ final class Settings {
 			),
 			'mobile_layout'            => array(
 				'type'    => 'enum',
-				'default' => 'stacked',
-				'options' => array( 'stacked', 'inline' ),
+				'default' => 'flow',
+				'options' => array( 'flow', 'stacked', 'inline' ),
 			),
 			'mobile_label_style'       => array(
 				'type'    => 'enum',
@@ -275,17 +299,23 @@ final class Settings {
 			),
 			'mobile_label_dot'         => array(
 				'type'    => 'bool',
-				'default' => false,
+				'default' => true,
 			),
 			'mobile_show_counter'      => array(
 				'type'    => 'bool',
-				'default' => true,
+				'default' => false,
 			),
 			'mobile_lines'             => array(
 				'type'    => 'int',
 				'default' => 2,
 				'min'     => 1,
 				'max'     => 4,
+			),
+			'mobile_bar_height'        => array(
+				'type'    => 'int',
+				'default' => 76,
+				'min'     => 64,
+				'max'     => 96,
 			),
 			'mobile_font_size'         => array(
 				'type'    => 'int',
@@ -310,17 +340,30 @@ final class Settings {
 				'type'    => 'bool',
 				'default' => true,
 			),
+			'mobile_peek'              => array(
+				'type'    => 'enum',
+				'default' => 'headline',
+				'options' => array( 'headline', 'label' ),
+			),
+			'mobile_deep_collapse'     => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
+			'mobile_kbd_hide'          => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
 			'mobile_show_separator'    => array(
 				'type'    => 'bool',
 				'default' => false,
 			),
 			'mobile_custom_colors'     => array(
 				'type'    => 'bool',
-				'default' => true,
+				'default' => false,
 			),
 			'mobile_bg_color'          => array(
 				'type'    => 'color',
-				'default' => '#141414',
+				'default' => '#1B1C20',
 			),
 			'mobile_text_color'        => array(
 				'type'    => 'color',
@@ -328,7 +371,7 @@ final class Settings {
 			),
 			'mobile_accent_color'      => array(
 				'type'    => 'color',
-				'default' => '#E11D2A',
+				'default' => '#CE3029',
 			),
 			'mobile_label_text_color'  => array(
 				'type'    => 'color',
@@ -393,6 +436,108 @@ final class Settings {
 			$defaults[ $key ] = $descriptor['default'];
 		}
 		return $defaults;
+	}
+
+	/**
+	 * Presentation values of the v2 design (« Sombre + pastille rouge »): applied once when a 1.x
+	 * install is upgraded (schema 1 → 2) and offered as a preset in the Colours tab.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function v2_preset(): array {
+		return array(
+			'bg_color'                => '#1B1C20',
+			'text_color'              => '#F5F5F5',
+			'label_bg_color'          => '#CE3029',
+			'label_text_color'        => '#FFFFFF',
+			'link_hover_color'        => '#FFFFFF',
+			'accent_color'            => '#CE3029',
+			'font_size'               => 15,
+			'bar_height'              => 40,
+			'align_container'         => true,
+			'max_width'               => 1230,
+			'gutter'                  => 15,
+			'ticker_enabled'          => true,
+			'ticker_mode'             => 'marquee',
+			'ticker_speed'            => 30,
+			'rotate_interval'         => 5000,
+			'pause_on_hover'          => true,
+			'show_separator'          => true,
+			'separator_after_last'    => true,
+			'close_button'            => true,
+			'remember_dismiss'        => true,
+			'dismiss_duration_hours'  => 24,
+			'theme_offset'            => true,
+			'label_position'          => 'start',
+			'desktop_layout'          => 'inline',
+			'desktop_label_style'     => 'pill',
+			'desktop_label_dot'       => true,
+			'mobile_layout'           => 'flow',
+			'mobile_label_style'      => 'pill',
+			'mobile_label_dot'        => true,
+			'mobile_show_counter'     => false,
+			'mobile_lines'            => 2,
+			'mobile_bar_height'       => 76,
+			'mobile_font_size'        => 16,
+			'mobile_ticker_mode'      => 'rotate',
+			'mobile_show_progress'    => true,
+			'mobile_swipe'            => true,
+			'mobile_hide_on_scroll'   => true,
+			'mobile_peek'             => 'headline',
+			'mobile_deep_collapse'    => true,
+			'mobile_kbd_hide'         => true,
+			'mobile_custom_colors'    => false,
+			'mobile_bg_color'         => '#1B1C20',
+			'mobile_text_color'       => '#F5F5F5',
+			'mobile_accent_color'     => '#CE3029',
+			'mobile_label_text_color' => '#FFFFFF',
+		);
+	}
+
+	/**
+	 * Colour presets of the Colours tab (the keys they fill).
+	 *
+	 * @return array<string, array<string, string>>
+	 */
+	public static function color_presets(): array {
+		return array(
+			'dark' => array(
+				'bg_color'         => '#1B1C20',
+				'text_color'       => '#F5F5F5',
+				'label_bg_color'   => '#CE3029',
+				'label_text_color' => '#FFFFFF',
+				'link_hover_color' => '#FFFFFF',
+				'accent_color'     => '#CE3029',
+			),
+			'red'  => array(
+				'bg_color'         => '#CE3029',
+				'text_color'       => '#FFFFFF',
+				'label_bg_color'   => '#FFFFFF',
+				'label_text_color' => '#1B1C20',
+				'link_hover_color' => '#FFFFFF',
+				'accent_color'     => '#FFFFFF',
+			),
+		);
+	}
+
+	/**
+	 * Brings stored settings to the current schema. Runs on `init`; a no-op once up to date.
+	 * Schema 2 (plugin 2.0) applies the v2 presentation preset to an existing 1.x install.
+	 *
+	 * @return void
+	 */
+	public static function maybe_upgrade(): void {
+		$stored = (int) get_option( self::SCHEMA_OPTION, 0 );
+		if ( $stored >= HPRNB_SCHEMA_VERSION ) {
+			return;
+		}
+		$raw = get_option( self::OPTION, array() );
+		if ( $stored < 2 && is_array( $raw ) && ! empty( $raw ) ) {
+			update_option( self::OPTION, self::sanitize( array_merge( $raw, self::v2_preset() ) ), true );
+			Invalidation::invalidate();
+			self::$memo = null;
+		}
+		update_option( self::SCHEMA_OPTION, (string) HPRNB_SCHEMA_VERSION, true );
 	}
 
 	/**

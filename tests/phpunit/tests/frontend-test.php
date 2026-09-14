@@ -57,7 +57,7 @@ class Frontend_Test extends HPRNB_Test_Case {
 		$this->assertTrue( wp_script_is( 'hprnb-bootstrap', 'enqueued' ) );
 		$this->assertTrue( wp_style_is( 'hprnb-bar', 'enqueued' ) );
 		$this->assertTrue( wp_script_is( 'hprnb-bar', 'enqueued' ), 'The default mobile presentation needs the interactive script.' );
-		$this->assertContains( 'body.hprnb-reserve{--hprnb-height:44px;--hprnb-m-height:80px}', wp_styles()->get_data( 'hprnb-bar', 'after' ) );
+		$this->assertContains( 'body.hprnb-reserve{--hprnb-height:40px;--hprnb-m-height:76px;--hprnb-peek:40px}', wp_styles()->get_data( 'hprnb-bar', 'after' ) );
 		$this->assertSame( 'replace', wp_styles()->get_data( 'hprnb-bar', 'rtl' ) );
 		$this->assertSame( 'defer', wp_scripts()->get_data( 'hprnb-bootstrap', 'strategy' ) );
 
@@ -71,20 +71,20 @@ class Frontend_Test extends HPRNB_Test_Case {
 
 	public function test_php_mode_with_items() {
 		$this->create_post_ago( 60 );
-		$this->with_settings( array( 'render_mode' => 'php', 'ticker_enabled' => true, 'bar_height' => 60, 'mobile_layout' => 'inline' ) );
+		$this->with_settings( array( 'render_mode' => 'php', 'ticker_enabled' => true, 'bar_height' => 56, 'mobile_layout' => 'inline' ) );
 		$this->go_to_front( home_url( '/' ) );
 		$this->enqueue();
 
 		$this->assertFalse( wp_script_is( 'hprnb-bootstrap', 'enqueued' ) );
 		$this->assertTrue( wp_style_is( 'hprnb-bar', 'enqueued' ) );
 		$this->assertTrue( wp_script_is( 'hprnb-bar', 'enqueued' ) );
-		$this->assertContains( 'body.hprnb-reserve{--hprnb-height:60px;--hprnb-m-height:60px}', wp_styles()->get_data( 'hprnb-bar', 'after' ) );
+		$this->assertContains( 'body.hprnb-reserve{--hprnb-height:56px;--hprnb-m-height:56px;--hprnb-peek:56px}', wp_styles()->get_data( 'hprnb-bar', 'after' ) );
 
 
 		$footer = $this->render_footer();
 		$this->assertStringContainsString( '<aside', $footer );
 		$this->assertStringNotContainsString( 'data-hprnb-endpoint', $footer );
-		$this->with_settings( array( 'mobile_layout' => 'inline', 'mobile_ticker_mode' => 'static' ) );
+		$this->with_settings( array( 'mobile_layout' => 'inline', 'mobile_ticker_mode' => 'static', 'ticker_enabled' => false, 'close_button' => false, 'mobile_kbd_hide' => false ) );
 		$GLOBALS['wp_scripts'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$GLOBALS['wp_styles']  = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$this->go_to_front( home_url( '/' ) );
@@ -125,10 +125,11 @@ class Frontend_Test extends HPRNB_Test_Case {
 
 	public function test_dismiss_script_only_when_remembered() {
 		$this->create_post_ago( 60 );
+		$this->with_settings( array( 'close_button' => false ) );
 		$this->go_to_front( home_url( '/' ) );
 		$this->assertSame( '', $this->head() );
 
-		$this->with_settings( array( 'close_button' => true ) );
+		$this->with_settings( array( 'close_button' => true, 'remember_dismiss' => false ) );
 		$this->go_to_front( home_url( '/' ) );
 		$this->assertSame( '', $this->head() );
 

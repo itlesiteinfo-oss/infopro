@@ -137,7 +137,7 @@ final class Frontend {
 	 */
 	public static function enqueue_bar_assets( array $settings ): void {
 		Assets::enqueue_style();
-		wp_add_inline_style( 'hprnb-bar', sprintf( 'body.hprnb-reserve{--hprnb-height:%1$dpx;--hprnb-m-height:%2$dpx}', Renderer::profile_height( $settings, 'd' ), Renderer::profile_height( $settings, 'm' ) ) );
+		wp_add_inline_style( 'hprnb-bar', sprintf( 'body.hprnb-reserve{--hprnb-height:%1$dpx;--hprnb-m-height:%2$dpx;--hprnb-peek:%3$dpx}', Renderer::profile_height( $settings, 'd' ), Renderer::profile_height( $settings, 'm' ), Renderer::peek_height( $settings ) ) );
 		if ( Renderer::needs_interactive_js( $settings ) ) {
 			Assets::enqueue_bar_script();
 		}
@@ -188,6 +188,9 @@ final class Frontend {
 		$payload = Payload::get( $settings );
 		if ( (int) $payload['count'] > 0 && ! in_array( 'hprnb-reserve', $classes, true ) ) {
 			$classes[] = 'hprnb-reserve';
+			if ( ! empty( self::$settings['theme_offset'] ) ) {
+				$classes[] = 'hprnb-theme-offset';
+			}
 		}
 		return $classes;
 	}

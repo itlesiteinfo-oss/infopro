@@ -125,7 +125,7 @@ class Rest_Test extends HPRNB_Test_Case {
 		$this->assertStringContainsString( '--hprnb-bg:', $data['style'] );
 		$this->assertStringContainsString( 'no-store', $response->get_headers()['Cache-Control'] );
 
-		$this->assertSame( 'TOUTE L’ACTUALITÉ', Settings::raw()['label_text'], 'Preview never writes settings.' );
+		$this->assertSame( 'EN CONTINU', Settings::raw()['label_text'], 'Preview never writes settings.' );
 		$previewed = Settings::sanitize_form( array( 'label_text' => 'PREVIEW LABEL', 'enabled' => '1', 'window_value' => '24', 'window_unit' => 'hours', 'max_items' => '10' ) );
 		$this->assertFalse( get_transient( Cache::key( $previewed ) ), 'Preview never writes the public cache.' );
 

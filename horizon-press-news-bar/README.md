@@ -141,7 +141,7 @@ Il n’existe pas de mode « REST seul ».
 
 - **Cache hit** : 0 `WP_Query` de contenu, aucun parcours d’articles, aucun N+1. Avec un object cache persistant, aucun accès SQL propre à l’extension ; **sans** object cache persistant, WordPress lit le transient dans `wp_options` (un accès technique). Cette extension ne promet donc jamais « 0 SQL absolu ».
 - **Cache miss** : une requête principale `WP_Query` ; avec les miniatures, deux à trois requêtes supplémentaires bornées (métadonnées, fichiers joints) via `update_post_thumbnail_cache()`, jamais une requête par article.
-- Budgets front (minifiés) : CSS ≈ 13,5 Ko (deux profils de présentation compris), bootstrap ≈ 2,3 Ko, JS interactif ≈ 9,3 Ko. Le JS interactif n’est chargé que si le ticker, le bouton fermer, l’heure relative, le mode de défilement mobile ou le repli au défilement en a besoin.
+- Budgets front (minifiés) : CSS ≈ 19,3 Ko (profils, carte mobile v2, scénarios et compatibilité Jannah compris), bootstrap ≈ 2,4 Ko, JS interactif ≈ 12 Ko. Le JS interactif n’est chargé que si le ticker, le bouton fermer, l’heure relative, le mode de défilement mobile ou le repli au défilement en a besoin.
 
 ## 6. Endpoint REST public
 
@@ -202,6 +202,10 @@ Par défaut, l’ordinateur garde la barre classique (label bandeau devant le ti
 | `mobile_bg_color` / `mobile_text_color` / `mobile_accent_color` / `mobile_label_text_color` | couleurs | `#141414` / `#F5F5F5` / `#E11D2A` / `#FFFFFF` | |
 
 Seul `mobile_ticker_mode` entre dans la clé de cache (il détermine les boutons présents dans le markup) ; tout le reste est porté par `#hprnb-root` (classes `hprnb-root--{d|m}-*`, variables `--hprnb-height`, `--hprnb-d-lines`, `--hprnb-m-*`, JSON `data-hprnb-desktop` / `data-hprnb-mobile`). La feuille de style consomme des jetons effectifs `--hprnb-e-*` fixés par le profil ordinateur sur le root et, sous 768 px, par le profil mobile sur `.hprnb-bar`. Le script interactif choisit le profil effectif selon la largeur du root et se réinitialise au franchissement du seuil (rotation d’écran). L’aperçu d’administration propose deux onglets, Ordinateur et Mobile (cadre de 375 px), animés par le même script que le site, et affiche la hauteur calculée en regard des sélecteurs « Lignes de titre ».
+
+## 9 quater. En continu v2 (2.0)
+
+La 2.0 applique le cahier des charges client v1.1 : fond sombre `#1B1C20` sur les deux appareils, pastille rouge du thème `#CE3029` de 24 px alignée sur le conteneur du site (1230 px, gouttière 15 px), barre ordinateur de 40 px à 30 px/s avec fondu aux bords et boutons de 40 px, bouton fermer actif (24 h). Sur mobile, la disposition `flow` (défaut) fait flotter la pastille en tête du titre qui coule sur deux lignes (16 px / 26 px, carte de 76 px) ; en défilant, la première ligne devient le **bandeau replié de 40 px** avec un chevron ; arrivée en milieu de page repliée ; barre effacée quand un champ de formulaire est actif ; 44 px sur une ligne en paysage. La barre expose `--hprnb-offset` sur `body`, `body.hprnb-is-collapsed`, `body.hprnb-kbd`, l’évènement `hprnb:state` et `window.hprnbBar.state()` ; avec `theme_offset`, les éléments fixes de Jannah (`#go-to-top`, `#check-also-box`, `#reading-position-indicator`) se placent au-dessus de la barre. Nouveaux réglages : `accent_color`, `align_container`, `max_width`, `gutter`, `mobile_bar_height`, `mobile_peek`, `mobile_deep_collapse`, `mobile_kbd_hide`, `theme_offset`. La page de réglages est organisée en onglets (Contenu, Affichage, Couleurs, Fermeture, Thème, Avancé) avec des cartes par module, des préréglages de couleurs et un bouton « Réinitialiser l’onglet ». Une installation 1.x reçoit une fois le préréglage v2 à la mise à niveau.
 
 ## 10. Ticker (optionnel)
 

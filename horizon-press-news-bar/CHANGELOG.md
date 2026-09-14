@@ -2,6 +2,23 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.0.0] — 2026-09-14
+
+### Ajouté
+
+- **En continu v2** (cahier des charges client v1.1, §3, §4, §6, §7, §8) : fond sombre `#1b1c20` sur les deux appareils, pastille rouge du thème `#ce3029` (24 px, capitales 11,5 px, point pulsé) alignée sur le conteneur du site (1230 px, gouttière 15 px), barre ordinateur de 40 px à 30 px/s avec fondu de 28 px aux bords, séparateurs à 45 %, boutons de 40 px, bouton fermer actif par défaut (mémoire 24 h).
+- **Carte mobile « flow »** (76 px) : la pastille flotte en tête du titre qui coule sur deux lignes (16 px / 26 px) et repasse dessous ; la première ligne est le bandeau replié de 40 px avec un chevron « déployer » ; option « pastille seule » ; arrivée en milieu de page repliée d'emblée ; effacement quand un champ de formulaire est actif ; paysage (hauteur < 480 px) : une ligne de 44 px sans repli.
+- **Contrat avec le thème et les autres plugins** : `--hprnb-offset` sur `body` (hauteur visible, 0 si effacée), `body.hprnb-is-collapsed`, `body.hprnb-kbd`, évènement `hprnb:state` (`{ mobile, collapsed, height, offset }`), `window.hprnbBar.state()` ; compatibilité Jannah (`#go-to-top`, `#check-also-box`, `#reading-position-indicator` décalés, option `theme_offset`).
+- Nouveaux réglages : `accent_color`, `align_container`, `max_width`, `gutter`, `mobile_bar_height` (64–96), `mobile_peek`, `mobile_deep_collapse`, `mobile_kbd_hide`, `theme_offset`, disposition mobile `flow`.
+- **Page de réglages par onglets** (Contenu, Affichage, Couleurs, Fermeture, Thème, Avancé) : cartes par module avec interrupteur « Activer » (options grisées, jamais masquées), préréglages de couleurs « Sombre + pastille rouge » / « Rouge plein » avec contraste calculé, bouton « Réinitialiser l'onglet », en-tête avec version et bouton Enregistrer, aperçu en direct ; entièrement utilisable sans JavaScript.
+
+### Modifié
+
+- Nouveaux défauts : label « EN CONTINU » au début, ticker marquee actif à 30 px/s, pause au survol, séparateurs actifs, 15 px ordinateur, hauteur 40 px (32–56), `max_items` 30 au plus, intervalle 3–12 s, palette mobile dédiée désactivée (une seule palette), point « en direct » actif, compteur mobile masqué.
+- Schéma des réglages 2 : une installation 1.x reçoit une fois le préréglage de présentation v2 (`Settings::maybe_upgrade()`), le reste est conservé.
+- Bandeau replié : un tap n'ouvre jamais de lien ; le chevron et le tap déploient et maintiennent 4 s.
+- Budgets : CSS 20 Ko, JS interactif 13 Ko.
+
 ## [1.3.0] — 2026-09-14
 
 ### Ajouté

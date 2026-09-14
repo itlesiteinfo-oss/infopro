@@ -1,6 +1,6 @@
 # Cahier des charges FINAL AUDITÉ — Plugin WordPress « Horizon Press News Bar »
 
-> **Version 2.3 — 14 septembre 2026** (2.0 du 11 septembre ; 2.1 du 12 septembre : `separator_after_last` ; 2.2 : présentation mobile empilée paramétrable, §15.5, §22.4 bis, §23)  
+> **Version 3.0 — 14 septembre 2026** (2.0 du 11 septembre ; 2.1 du 12 septembre : `separator_after_last` ; 2.2 : présentation mobile empilée paramétrable, §15.5, §22.4 bis, §23 ; 2.3 : profils de présentation ; 3.0 : « En continu » v2, §15.8)  
 > **Statut : FINAL / prêt à remettre à Claude Code**  
 > **Objectif : obtenir en une seule exécution un plugin WordPress installable, testé, documenté et prêt pour la production.**
 
@@ -254,94 +254,79 @@ Après activation :
 ```json
 {
   "enabled": true,
-  "label_text": "TOUTE L’ACTUALITÉ",
-  "label_position": "end",
-
+  "label_text": "EN CONTINU",
+  "label_position": "start",
   "window_value": 24,
   "window_unit": "hours",
-
   "categories_include": [],
   "categories_exclude": [],
   "tags_include": [],
   "content_exclude_post_ids": [],
-
   "max_items": 10,
   "orderby": "date_desc",
-
-  "bg_color": "#B00000",
-  "text_color": "#FFFFFF",
-  "label_bg_color": "#8F0000",
+  "bg_color": "#1B1C20",
+  "text_color": "#F5F5F5",
+  "label_bg_color": "#CE3029",
   "label_text_color": "#FFFFFF",
   "link_hover_color": "#FFFFFF",
-  "font_size": 14,
-  "bar_height": 44,
+  "accent_color": "#CE3029",
+  "font_size": 15,
+  "bar_height": 40,
+  "align_container": true,
+  "max_width": 1230,
+  "gutter": 15,
   "z_index": 99990,
   "layout_mode": "reserve",
-
   "show_relative_time": false,
   "relative_time_max_hours": 48,
-
   "show_thumbnail": false,
   "thumbnail_size": "thumbnail",
-
-  "show_separator": false,
+  "show_separator": true,
   "separator_char": "•",
   "separator_after_last": true,
-
-  "ticker_enabled": false,
+  "ticker_enabled": true,
   "ticker_mode": "marquee",
-  "ticker_speed": 60,
+  "ticker_speed": 30,
   "rotate_interval": 5000,
-  "pause_on_hover": false,
-
-  "close_button": false,
-  "remember_dismiss": false,
+  "pause_on_hover": true,
+  "close_button": true,
+  "remember_dismiss": true,
   "dismiss_duration_hours": 24,
-
+  "theme_offset": true,
   "show_on_desktop": true,
   "show_on_mobile": true,
-
   "desktop_layout": "inline",
-  "desktop_label_style": "strip",
-  "desktop_label_dot": false,
+  "desktop_label_style": "pill",
+  "desktop_label_dot": true,
   "desktop_show_counter": false,
   "desktop_lines": 1,
   "desktop_show_progress": true,
-  "mobile_layout": "stacked",
+  "mobile_layout": "flow",
   "mobile_label_style": "pill",
-  "mobile_label_dot": false,
-  "mobile_show_counter": true,
+  "mobile_label_dot": true,
+  "mobile_show_counter": false,
   "mobile_lines": 2,
+  "mobile_bar_height": 76,
   "mobile_font_size": 16,
   "mobile_ticker_mode": "rotate",
   "mobile_show_progress": true,
   "mobile_swipe": true,
   "mobile_hide_on_scroll": true,
+  "mobile_peek": "headline",
+  "mobile_deep_collapse": true,
+  "mobile_kbd_hide": true,
   "mobile_show_separator": false,
-  "mobile_custom_colors": true,
-  "mobile_bg_color": "#141414",
+  "mobile_custom_colors": false,
+  "mobile_bg_color": "#1B1C20",
   "mobile_text_color": "#F5F5F5",
-  "mobile_accent_color": "#E11D2A",
+  "mobile_accent_color": "#CE3029",
   "mobile_label_text_color": "#FFFFFF",
-
   "display_scope": "everywhere",
-  "contexts": {
-    "front_page": true,
-    "blog_home": true,
-    "single_post": true,
-    "page": true,
-    "category": true,
-    "tag": true,
-    "archive": true,
-    "search": true,
-    "not_found": true
-  },
+  "contexts": {"front_page": true, "blog_home": true, "single_post": true, "page": true, "category": true, "tag": true, "archive": true, "search": true, "not_found": true},
   "display_exclude_ids": [],
-
   "render_mode": "hybrid",
   "cache_ttl": 120,
   "stale_threshold": 180,
-
   "auto_display": true,
   "shortcode_enabled": true,
   "uninstall_delete_data": false
@@ -681,7 +666,7 @@ Sur cache miss :
 
 Budgets front :
 
-- CSS principal minifié : objectif ≤ 14 Ko (10 Ko en V1.2, 8 Ko avant la présentation mobile : les deux profils de présentation de la V1.3 pèsent ≈ 4 Ko minifiés)
+- CSS principal minifié : objectif ≤ 20 Ko (14 Ko en V1.3 : la v2 ajoute la carte mobile, les scénarios clavier / paysage, le contrat d’offset et la compatibilité Jannah)
 - bootstrap hybride minifié : objectif ≤ 3 Ko ;
 - JS interactif minifié : objectif ≤ 10 Ko ;
 - 0 dépendance tierce ;
@@ -1128,6 +1113,35 @@ Le séparateur entre articles est un **pseudo-élément CSS** `::after` sur `.hp
 - mode `manual` et liste statique : le séparateur final s’affiche si l’option est active, sans défilement horizontal parasite de la page.
 
 ---
+
+## 15.8 En continu v2 (2.0) — cahier des charges client v1.1
+
+La version 2.0 applique le cahier des charges client « barre En continu v2 » (§3, §4, §6, §7, §8, §9) en fusionnant les prototypes `hprnb-bar-v2.css` / `.js` dans le cœur du plugin.
+
+### 15.8.1 Défauts v2
+
+Fond `#1B1C20` (texte `#F5F5F5`, contraste 16:1) sur les deux appareils ; pastille `#CE3029` / `#FFFFFF` (24 px, rayon 999 px, capitales 11,5 px, espacement .08em, point de 6 px à halo pulsé 1,8 s, ombre `0 1px 0 rgba(0,0,0,.25)`) ; accent `#CE3029` (progression, soulignement au survol) ; label « EN CONTINU » au début ; ordinateur 40 px (32–56) à 15 px, marquee actif à 30 px/s (10–80), pause au survol, séparateurs « • » à 45 % ; mobile 16 px / 26 px, carte 76 px (64–96), rotation 5 s (3–12) ; bouton fermer actif, mémoire 24 h ; contenu aligné sur le conteneur du site (`align_container`, `max_width` 1230, `gutter` 15) ; `theme_offset` actif. Préréglages de couleurs « Sombre + pastille rouge » (défaut) et « Rouge plein ». Une installation 1.x reçoit une fois ce préréglage à la mise à niveau (schéma 2, `Settings::maybe_upgrade()`).
+
+### 15.8.2 Ordinateur
+
+Barre de 40 px (+ zone sûre), grille `label | compteur | titre | contrôles` dans un conteneur de `max_width` px avec une gouttière de `gutter` px ; fondu de 28 px aux bords du marquee (`mask-image`) ; boutons de 40 px, rayon 8 px, fond au survol ; focus 2 px dans la couleur du texte ; aucun bouton de partage ni emplacement étranger.
+
+### 15.8.3 Mobile : carte « flow », bandeau replié, effacement
+
+- `mobile_layout = flow` (défaut, rotation uniquement ; les autres modes retombent sur `stacked`) : `.hprnb-bar__inner` en `display: block`, pastille en `float: inline-start` centrée sur la ligne 1, viewport / liste / article / lien / titre en blocs à `white-space: normal` ; le titre coule sur `mobile_lines` lignes de `round(police × 1,625)` px (26 px pour 16 px) et repasse sous la pastille ; le viewport est rogné à N lignes (`overflow: clip`, qui conserve l’habillage du flottant) ; contrôles en `position: absolute` en haut à droite ; la carte réserve `--hprnb-m-ctrls × 40 px` à droite ; progression de 3 px sur le bord supérieur.
+- Métriques (`Renderer::flow_metrics()`) : hauteur = `max(mobile_bar_height, lignes × ligne + 12)`, padding = `(hauteur − lignes × ligne) / 2`, bandeau replié `--hprnb-peek` = padding + ligne + 2 (40 px par défaut).
+- Repli (`mobile_hide_on_scroll`) : `translateY(100% − peek)`, `cursor: pointer`, liens à `pointer-events: none` (un tap n’ouvre jamais de lien), boutons masqués sauf le chevron `.hprnb-bar__btn--expand` (créé par le script, `aria-label` traduit) ; `mobile_peek = label` efface le titre du bandeau (`hprnb-root--peek-label`) ; `mobile_deep_collapse` : replié d’emblée sans transition si `scrollY > 120` à l’initialisation.
+- `mobile_kbd_hide` : un focus dans un champ de formulaire hors de la barre (sous 768 px) ajoute `body.hprnb-kbd` (barre translatée à 110 %, `--hprnb-offset: 0`) ; retour au blur.
+- Paysage (`max-height: 480px` et `max-width: 1023.98px`) : 44 px, une ligne, jamais de repli (`!important` sur les variables de la racine et du body), chevron masqué.
+- Motion réduite : aucune translation ni pulsation.
+
+### 15.8.4 Contrat avec le thème et les autres plugins
+
+`body.hprnb-reserve` porte `--hprnb-offset` (hauteur visible : `--hprnb-height` sur ordinateur, `--hprnb-m-height` ou `--hprnb-peek` sur mobile, 0 avec `hprnb-kbd`), les classes `hprnb-is-collapsed`, `hprnb-kbd`, `hprnb-theme-offset` ; le script émet `hprnb:state` sur `document` (`{ mobile, collapsed, height, offset }`) à chaque changement (repli, déploiement, clavier, fermeture, redimensionnement) et expose `window.hprnbBar.state()`. Compatibilité Jannah (option `theme_offset`) : `#go-to-top` à `offset + safe-area + 12 px`, `#check-also-box` à `offset + 15 px`, `#reading-position-indicator` à `offset + safe-area` en `z-index` 99991, avec transition. Rien n’est modifié dans le thème ; rien n’est inséré dans la barre.
+
+### 15.8.5 Administration
+
+Page par onglets (Contenu, Affichage, Couleurs, Fermeture, Thème, Avancé), en-tête collant (nom, version, « Réinitialiser l’onglet », « Enregistrer »), cartes par module avec interrupteur « Activer » dans l’en-tête (`show_on_desktop`, `show_on_mobile`, `mobile_custom_colors`, `close_button`, `theme_offset`, `enabled`) qui grise les lignes sans les masquer ; préréglages de couleurs ; contraste calculé ; hauteur calculée affichée en regard des lignes de titre ; aperçu en direct ; onglet mémorisé (ancre + `localStorage`) ; sans JavaScript, tous les panneaux sont visibles et le formulaire reste entièrement utilisable.
 
 # 16. TICKER OPTIONNEL
 
@@ -1950,6 +1964,7 @@ Scénarios :
 - injection hybride ;
 - séparateur de boucle : 4 modes (statique, marquee, rotate, manual) × LTR/RTL × option activée/désactivée ; jonction clone → original du marquee avec exactement un séparateur ; aucun séparateur en mode rotate ; aucun débordement horizontal ;
 - mobile empilé : pastille, compteur, progression, rotation automatique, balayage, repli au défilement et redéploiement, palette mobile, disposition en ligne (label devant le titre, 54 px puis 44 px sur une ligne), label masqué, mouvement réduit, franchissement du seuil 375 ↔ 1366 px, aperçu admin Mobile/Ordinateur, audit axe-core ;
+- v2 : carte mobile 76 px (pastille 24 px à 15 px, titre 16/26 px sur deux lignes rognées à 52 px), bandeau 40 px avec chevron, liens inactifs repliés, `--hprnb-offset` 76 → 40 → 76, `body.hprnb-is-collapsed`, évènement `hprnb:state`, option « pastille seule », clavier (`body.hprnb-kbd`, offset 0, retour au blur), arrivée en milieu de page repliée (et non repliée si désactivé), paysage 44 px sans repli, ordinateur 40 px dans 1230 px avec pastille à 15 px, vitesse 30, fondu, boutons 40 px, `#go-to-top` à 52 px et indicateur de lecture à 40 px / z 99991, option `theme_offset` et `align_container` désactivées ; page admin par onglets (préréglages, hauteur calculée, réinitialisation de l’onglet) ;
 - profils de présentation : design empilé sur ordinateur (pastille, point pulsant, compteur, 2 lignes = 76 px, progression sur le bord supérieur, contenu centré ≤ 1 200 px), cartes sur 3 lignes en statique (69 px, label bandeau pleine hauteur, label au début), marquee toujours sur une ligne (44 px), label bandeau et point sur mobile, séparateur mobile désactivé puis activé ; miroir des sections CSS ordinateur/mobile (test statique).
 
 Les tests de développement peuvent vivre hors du dossier inclus dans le ZIP final.

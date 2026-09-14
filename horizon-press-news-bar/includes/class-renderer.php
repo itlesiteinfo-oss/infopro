@@ -132,6 +132,14 @@ final class Renderer {
 	const LINE_HEIGHT  = 1.3;
 
 	/**
+	 * Mobile "flow" layout (v2 card): title line-height ratio (16px → 26px), minimum block padding
+	 * and the extra pixels of the collapsed strip below the first line (12 + 26 + 2 = 40px by default).
+	 */
+	const FLOW_LINE  = 1.625;
+	const FLOW_PAD   = 6;
+	const PEEK_EXTRA = 2;
+
+	/**
 	 * Inline CSS variables carried by the root (and by the admin preview root).
 	 *
 	 * @param array $settings Settings.
@@ -139,24 +147,31 @@ final class Renderer {
 	 */
 	public static function root_style( array $settings ): string {
 		return sprintf(
-			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-font-size:%6$dpx;--hprnb-height:%7$dpx;--hprnb-d-lines:%8$d;--hprnb-z:%9$d;--hprnb-sep:%10$s;--hprnb-m-bg:%11$s;--hprnb-m-fg:%12$s;--hprnb-m-accent:%13$s;--hprnb-m-label-fg:%14$s;--hprnb-m-font-size:%15$dpx;--hprnb-m-height:%16$dpx;--hprnb-m-lines:%17$d',
-			self::color( $settings['bg_color'], '#B00000' ),
-			self::color( $settings['text_color'], '#FFFFFF' ),
-			self::color( $settings['label_bg_color'], '#8F0000' ),
+			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-accent:%6$s;--hprnb-font-size:%7$dpx;--hprnb-height:%8$dpx;--hprnb-d-lines:%9$d;--hprnb-max:%10$dpx;--hprnb-gutter:%11$dpx;--hprnb-z:%12$d;--hprnb-sep:%13$s;--hprnb-m-bg:%14$s;--hprnb-m-fg:%15$s;--hprnb-m-accent:%16$s;--hprnb-m-label-fg:%17$s;--hprnb-m-font-size:%18$dpx;--hprnb-m-height:%19$dpx;--hprnb-m-lines:%20$d;--hprnb-m-line:%21$dpx;--hprnb-m-pad:%22$dpx;--hprnb-peek:%23$dpx;--hprnb-m-ctrls:%24$d',
+			self::color( $settings['bg_color'], '#1B1C20' ),
+			self::color( $settings['text_color'], '#F5F5F5' ),
+			self::color( $settings['label_bg_color'], '#CE3029' ),
 			self::color( $settings['label_text_color'], '#FFFFFF' ),
 			self::color( $settings['link_hover_color'], '#FFFFFF' ),
+			self::color( $settings['accent_color'] ?? '', '#CE3029' ),
 			(int) $settings['font_size'],
 			self::profile_height( $settings, 'd' ),
 			self::profile_lines( $settings, 'd' ),
+			(int) ( $settings['max_width'] ?? 1230 ),
+			(int) ( $settings['gutter'] ?? 15 ),
 			(int) $settings['z_index'],
 			self::css_string( isset( $settings['separator_char'] ) ? (string) $settings['separator_char'] : '•' ),
-			self::color( $settings['mobile_bg_color'] ?? '', '#141414' ),
+			self::color( $settings['mobile_bg_color'] ?? '', '#1B1C20' ),
 			self::color( $settings['mobile_text_color'] ?? '', '#F5F5F5' ),
-			self::color( $settings['mobile_accent_color'] ?? '', '#E11D2A' ),
+			self::color( $settings['mobile_accent_color'] ?? '', '#CE3029' ),
 			self::color( $settings['mobile_label_text_color'] ?? '', '#FFFFFF' ),
 			(int) ( $settings['mobile_font_size'] ?? 16 ),
 			self::profile_height( $settings, 'm' ),
-			self::profile_lines( $settings, 'm' )
+			self::profile_lines( $settings, 'm' ),
+			self::flow_metrics( $settings )['line'],
+			self::flow_metrics( $settings )['pad'],
+			self::peek_height( $settings ),
+			self::mobile_controls( $settings )
 		);
 	}
 
@@ -174,6 +189,9 @@ final class Renderer {
 			self::device_class( $settings ),
 			'hprnb-root--' . ( 'overlay' === $settings['layout_mode'] ? 'overlay' : 'reserve' ),
 		);
+		if ( ! empty( $settings['align_container'] ) ) {
+			$classes[] = 'hprnb-root--align';
+		}
 		foreach ( self::separator_classes( $settings ) as $class ) {
 			$classes[] = $class;
 		}
@@ -189,7 +207,7 @@ final class Renderer {
 			if ( $profile['dot'] ) {
 				$classes[] = 'hprnb-root--' . $p . '-dot';
 			}
-			if ( $profile['lines'] > 1 ) {
+			if ( $profile['lines'] > 1 && 'flow' !== $profile['layout'] ) {
 				$classes[] = 'hprnb-root--' . $p . '-wrap';
 			}
 		}
@@ -205,6 +223,9 @@ final class Renderer {
 		if ( self::profile( $settings, 'm' )['collapse'] ) {
 			$classes[] = 'hprnb-root--m-collapse';
 		}
+		if ( 'label' === ( $settings['mobile_peek'] ?? 'headline' ) ) {
+			$classes[] = 'hprnb-root--peek-label';
+		}
 
 		return $classes;
 	}
@@ -217,14 +238,18 @@ final class Renderer {
 	 * @return array{layout:string,label:string,dot:bool,counter:bool,lines:int,progress:bool,mode:string,font_size:int,collapse:bool,swipe:bool}
 	 */
 	public static function profile( array $settings, string $p ): array {
-		$mobile  = ( 'm' === $p );
-		$prefix  = $mobile ? 'mobile_' : 'desktop_';
-		$mode    = $mobile ? self::mobile_ticker( $settings ) : self::desktop_ticker( $settings );
-		$layout  = 'stacked' === ( $settings[ $prefix . 'layout' ] ?? ( $mobile ? 'stacked' : 'inline' ) ) ? 'stacked' : 'inline';
+		$mobile = ( 'm' === $p );
+		$prefix = $mobile ? 'mobile_' : 'desktop_';
+		$mode   = $mobile ? self::mobile_ticker( $settings ) : self::desktop_ticker( $settings );
+		$layout = (string) ( $settings[ $prefix . 'layout' ] ?? ( $mobile ? 'flow' : 'inline' ) );
+		$layout = in_array( $layout, $mobile ? array( 'flow', 'stacked', 'inline' ) : array( 'inline', 'stacked' ), true ) ? $layout : ( $mobile ? 'flow' : 'inline' );
+		if ( 'flow' === $layout && 'rotate' !== $mode ) {
+			$layout = 'stacked'; // The flowing card shows one headline at a time: any other mode uses the label row.
+		}
 		$label   = (string) ( $settings[ $prefix . 'label_style' ] ?? ( $mobile ? 'pill' : 'strip' ) );
 		$label   = in_array( $label, array( 'pill', 'strip', 'hidden' ), true ) ? $label : ( $mobile ? 'pill' : 'strip' );
 		$lines   = max( 1, min( 4, (int) ( $settings[ $prefix . 'lines' ] ?? ( $mobile ? 2 : 1 ) ) ) );
-		$stacked = ( 'stacked' === $layout );
+		$stacked = ( 'inline' !== $layout );
 
 		return array(
 			'layout'    => $layout,
@@ -235,8 +260,12 @@ final class Renderer {
 			'progress'  => 'rotate' === $mode && ! empty( $settings[ $prefix . 'show_progress' ] ),
 			'mode'      => $mode,
 			'font_size' => (int) ( $mobile ? ( $settings['mobile_font_size'] ?? 16 ) : $settings['font_size'] ),
+			// The label row (stacked) or the first line (flow) is what stays visible when collapsed.
 			'collapse'  => $mobile && $stacked && ! empty( $settings['mobile_hide_on_scroll'] ),
 			'swipe'     => $mobile && 'rotate' === $mode && ! empty( $settings['mobile_swipe'] ),
+			'peek'      => 'label' === ( $settings['mobile_peek'] ?? 'headline' ) ? 'label' : 'headline',
+			'deep'      => $mobile && $stacked && ! empty( $settings['mobile_deep_collapse'] ),
+			'kbd'       => $mobile && ! empty( $settings['mobile_kbd_hide'] ),
 		);
 	}
 
@@ -258,6 +287,9 @@ final class Renderer {
 		if ( 'm' === $p ) {
 			$data['swipe']    = $profile['swipe'];
 			$data['collapse'] = $profile['collapse'];
+			$data['peek']     = $profile['peek'];
+			$data['deep']     = $profile['deep'];
+			$data['kbd']      = $profile['kbd'];
 		}
 		return $data;
 	}
@@ -283,11 +315,67 @@ final class Renderer {
 	 */
 	public static function profile_height( array $settings, string $p ): int {
 		$profile = self::profile( $settings, $p );
-		$needed  = $profile['lines'] * (int) ceil( $profile['font_size'] * self::LINE_HEIGHT ) + self::BLOCK_PAD;
+		if ( 'flow' === $profile['layout'] ) {
+			return self::flow_metrics( $settings )['height'];
+		}
+		$needed = $profile['lines'] * (int) ceil( $profile['font_size'] * self::LINE_HEIGHT ) + self::BLOCK_PAD;
 		if ( 'stacked' === $profile['layout'] ) {
 			$needed += self::STRIP_HEIGHT + self::ROW_GAP;
 		}
 		return max( (int) $settings['bar_height'], $needed );
+	}
+
+	/**
+	 * Metrics of the mobile "flow" card: title line-height (px), card height (never below
+	 * `mobile_bar_height`, never clipping the configured lines), block padding, and the height
+	 * of the collapsed strip (first line + padding). 16px / 2 lines / 76px → line 26, pad 12, peek 40.
+	 *
+	 * @param array $settings Settings.
+	 * @return array{line:int,height:int,pad:int,peek:int}
+	 */
+	public static function flow_metrics( array $settings ): array {
+		$profile = self::profile( $settings, 'm' );
+		$line    = (int) round( $profile['font_size'] * self::FLOW_LINE );
+		$height  = max( (int) ( $settings['mobile_bar_height'] ?? 76 ), $profile['lines'] * $line + 2 * self::FLOW_PAD );
+		$pad     = (int) floor( ( $height - $profile['lines'] * $line ) / 2 );
+		return array(
+			'line'   => $line,
+			'height' => $height,
+			'pad'    => $pad,
+			'peek'   => $pad + $line + self::PEEK_EXTRA,
+		);
+	}
+
+	/**
+	 * Height of the collapsed strip under 768px: the first line of the flow card, or the label row
+	 * of the stacked layout (6 + 22 + 8). Also the mobile `--hprnb-offset` while collapsed.
+	 *
+	 * @param array $settings Settings.
+	 * @return int
+	 */
+	public static function peek_height( array $settings ): int {
+		$layout = self::profile( $settings, 'm' )['layout'];
+		if ( 'flow' === $layout ) {
+			return self::flow_metrics( $settings )['peek'];
+		}
+		return 'stacked' === $layout ? 36 : self::profile_height( $settings, 'm' );
+	}
+
+	/**
+	 * Number of control buttons shown under 768px (the flow card reserves their width).
+	 *
+	 * @param array $settings Settings.
+	 * @return int
+	 */
+	public static function mobile_controls( array $settings ): int {
+		$mode  = self::mobile_ticker( $settings );
+		$count = ! empty( $settings['close_button'] ) ? 1 : 0;
+		if ( in_array( $mode, array( 'marquee', 'rotate' ), true ) ) {
+			++$count;
+		} elseif ( 'manual' === $mode ) {
+			$count += 2;
+		}
+		return max( 1, $count );
 	}
 
 	/**
@@ -397,7 +485,8 @@ final class Renderer {
 			|| ! empty( $settings['close_button'] )
 			|| ! empty( $settings['show_relative_time'] )
 			|| 'none' !== self::mobile_ticker( $settings )
-			|| self::profile( $settings, 'm' )['collapse'];
+			|| self::profile( $settings, 'm' )['collapse']
+			|| self::profile( $settings, 'm' )['kbd'];
 	}
 
 	/**

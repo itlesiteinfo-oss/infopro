@@ -47,7 +47,7 @@ class Settings_Test extends HPRNB_Test_Case {
 
 	public function test_integer_bounds_and_fallbacks() {
 		$this->assertSame( 1, Settings::sanitize( array( 'max_items' => 0 ) )['max_items'] );
-		$this->assertSame( 50, Settings::sanitize( array( 'max_items' => 999 ) )['max_items'] );
+		$this->assertSame( 30, Settings::sanitize( array( 'max_items' => 999 ) )['max_items'] );
 		$this->assertSame( 10, Settings::sanitize( array( 'max_items' => 'abc' ) )['max_items'] );
 		$this->assertSame( 10, Settings::sanitize( array( 'font_size' => 5 ) )['font_size'] );
 		$this->assertSame( 24, Settings::sanitize( array( 'font_size' => '99' ) )['font_size'] );
@@ -84,10 +84,10 @@ class Settings_Test extends HPRNB_Test_Case {
 	public function test_color_sanitization() {
 		$this->assertSame( '#abc', Settings::sanitize( array( 'bg_color' => '#abc' ) )['bg_color'] );
 		$this->assertSame( '#123456', Settings::sanitize( array( 'bg_color' => ' #123456 ' ) )['bg_color'] );
-		$this->assertSame( '#B00000', Settings::sanitize( array( 'bg_color' => 'red' ) )['bg_color'] );
-		$this->assertSame( '#B00000', Settings::sanitize( array( 'bg_color' => '#GGGGGG' ) )['bg_color'] );
-		$this->assertSame( '#B00000', Settings::sanitize( array( 'bg_color' => 'expression(alert(1))' ) )['bg_color'] );
-		$this->assertSame( '#FFFFFF', Settings::sanitize( array( 'text_color' => array( '#000' ) ) )['text_color'] );
+		$this->assertSame( '#1B1C20', Settings::sanitize( array( 'bg_color' => 'red' ) )['bg_color'] );
+		$this->assertSame( '#1B1C20', Settings::sanitize( array( 'bg_color' => '#GGGGGG' ) )['bg_color'] );
+		$this->assertSame( '#1B1C20', Settings::sanitize( array( 'bg_color' => 'expression(alert(1))' ) )['bg_color'] );
+		$this->assertSame( '#F5F5F5', Settings::sanitize( array( 'text_color' => array( '#000' ) ) )['text_color'] );
 	}
 
 	public function test_label_text_is_stripped_and_bounded() {
@@ -160,7 +160,7 @@ class Settings_Test extends HPRNB_Test_Case {
 			}
 		);
 		$settings = Settings::get();
-		$this->assertSame( 50, $settings['max_items'] );
+		$this->assertSame( 30, $settings['max_items'] );
 		$this->assertSame( 'Filtered', $settings['label_text'] );
 		$this->assertSame( 10, Settings::raw()['max_items'] );
 	}

@@ -17,7 +17,7 @@ class Import_Export_Test extends HPRNB_Test_Case {
 				'_meta'    => array_merge(
 					array(
 						'plugin'         => 'horizon-press-news-bar',
-						'schema_version' => 1,
+						'schema_version' => 2,
 						'plugin_version' => '1.0.0',
 						'exported_at'    => '2026-09-11T10:00:00+00:00',
 					),
@@ -31,7 +31,7 @@ class Import_Export_Test extends HPRNB_Test_Case {
 	public function test_export_structure() {
 		$data = Import_Export::export_data();
 		$this->assertSame( 'horizon-press-news-bar', $data['_meta']['plugin'] );
-		$this->assertSame( 1, $data['_meta']['schema_version'] );
+		$this->assertSame( 2, $data['_meta']['schema_version'] );
 		$this->assertSame( HPRNB_VERSION, $data['_meta']['plugin_version'] );
 		$this->assertNotFalse( strtotime( $data['_meta']['exported_at'] ) );
 		$this->assertSame( Settings::raw(), $data['settings'] );
@@ -56,8 +56,8 @@ class Import_Export_Test extends HPRNB_Test_Case {
 		$settings = Settings::raw();
 		$this->assertStringNotContainsString( '<', $settings['label_text'] );
 		$this->assertStringContainsString( 'Imported', $settings['label_text'] );
-		$this->assertSame( 50, $settings['max_items'] );
-		$this->assertSame( '#B00000', $settings['bg_color'] );
+		$this->assertSame( 30, $settings['max_items'] );
+		$this->assertSame( '#1B1C20', $settings['bg_color'] );
 		$this->assertSame( 'php', $settings['render_mode'] );
 		$this->assertSame( 'date_desc', $settings['orderby'] );
 		$this->assertArrayNotHasKey( 'unknown_key', $settings );

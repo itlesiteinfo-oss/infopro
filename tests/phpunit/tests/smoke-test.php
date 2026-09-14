@@ -16,7 +16,7 @@ use HorizonPress\NewsBar\Settings;
 class Smoke_Test extends HPRNB_Test_Case {
 
 	public function test_plugin_constants_and_classes() {
-		$this->assertSame( '1.3.0', HPRNB_VERSION );
+		$this->assertSame( '2.0.0', HPRNB_VERSION );
 		$this->assertTrue( class_exists( Settings::class ) );
 		$this->assertTrue( class_exists( \HorizonPress\NewsBar\Admin\Settings_Page::class ) );
 		$this->assertTrue( has_action( 'wp_footer', array( \HorizonPress\NewsBar\Frontend::class, 'footer' ) ) !== false );
@@ -31,7 +31,7 @@ class Smoke_Test extends HPRNB_Test_Case {
 
 		$this->assertSame( Settings::defaults(), get_option( Settings::OPTION ) );
 		$this->assertMatchesRegularExpression( '/^[0-9a-f-]{36}$/', get_option( Settings::EPOCH_OPTION ) );
-		$this->assertSame( '1', get_option( Settings::SCHEMA_OPTION ) );
+		$this->assertSame( '2', get_option( Settings::SCHEMA_OPTION ) );
 
 		$autoloaded = wp_load_alloptions();
 		$this->assertArrayHasKey( Settings::OPTION, $autoloaded );
@@ -50,7 +50,7 @@ class Smoke_Test extends HPRNB_Test_Case {
 		$this->assertStringNotContainsString( 'Old headline', $payload['html'] );
 		$this->assertStringStartsWith( '<aside class="hprnb-bar', $payload['html'] );
 		$this->assertStringContainsString( 'aria-live="off"', $payload['html'] );
-		$this->assertStringContainsString( 'TOUTE L’ACTUALITÉ', $payload['html'] );
+		$this->assertStringContainsString( 'EN CONTINU', $payload['html'] );
 		$this->assertNotSame( $old, $payload['items'][0]['id'] );
 	}
 

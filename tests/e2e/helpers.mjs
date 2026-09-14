@@ -18,7 +18,7 @@ export function setSettings( overrides = {} ) {
 
 export function collectErrors( page ) {
 	const errors = [];
-	page.on( 'pageerror', ( e ) => errors.push( 'pageerror: ' + e.message ) );
+	page.on( 'pageerror', ( e ) => errors.push( 'pageerror: ' + e.message + ' @ ' + String( e.stack || '' ).split( '\n' ).slice( 1, 3 ).join( ' ' ).trim() ) );
 	page.on( 'console', ( m ) => {
 		// Resource failures caused by the sandbox network (no internet) are not plugin errors.
 		const where = ( m.location() && m.location().url ) || '';

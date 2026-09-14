@@ -4,9 +4,9 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
-"POT-Creation-Date: 2026-09-14 10:05+0000\n"
+"POT-Creation-Date: 2026-09-14 15:27+0000\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
-"Project-Id-Version: Horizon Press News Bar 1.3.0\n"
+"Project-Id-Version: Horizon Press News Bar 2.0.0\n"
 "Report-Msgid-Bugs-To: https://horizonpress.example/news-bar\n"
 "X-Domain: horizon-press-news-bar\n"
 "X-Generator: bin/build-i18n.php\n"
@@ -21,75 +21,79 @@ msgstr ""
 msgid "Plugin activation error"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:54
 #: horizon-press-news-bar/includes/admin/class-admin.php:55
+#: horizon-press-news-bar/includes/admin/class-admin.php:56
 msgid "News Bar"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:124
+#: horizon-press-news-bar/includes/admin/class-admin.php:127
+msgid "Reset every setting of this tab to its default value? Nothing is saved until you click Save."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-admin.php:128
 msgid "Restore every setting to its default value? This cannot be undone."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:125
+#: horizon-press-news-bar/includes/admin/class-admin.php:129
 msgid "Refreshing the preview…"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:126
+#: horizon-press-news-bar/includes/admin/class-admin.php:130
 msgid "The preview could not be refreshed."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:127
+#: horizon-press-news-bar/includes/admin/class-admin.php:131
 msgid "Preview updated."
 msgstr ""
 
 #. translators: %s: contrast ratio, e.g. "3.1:1".
-#: horizon-press-news-bar/includes/admin/class-admin.php:129
+#: horizon-press-news-bar/includes/admin/class-admin.php:133
 msgid "Low contrast (%s). WCAG AA recommends at least 4.5:1 for text."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:173
+#: horizon-press-news-bar/includes/admin/class-admin.php:177
 msgid "Settings imported."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:177
+#: horizon-press-news-bar/includes/admin/class-admin.php:181
 msgid "Settings imported. The file contains category, tag or post IDs: check that they exist on this site, IDs differ between sites."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:181
+#: horizon-press-news-bar/includes/admin/class-admin.php:185
 msgid "Import failed: no file was received or the upload failed."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:185
+#: horizon-press-news-bar/includes/admin/class-admin.php:189
 msgid "Import failed: the file exceeds 256 KB."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:189
+#: horizon-press-news-bar/includes/admin/class-admin.php:193
 msgid "Import failed: only .json files are accepted."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:193
+#: horizon-press-news-bar/includes/admin/class-admin.php:197
 msgid "Import failed: the file is not valid JSON."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:197
+#: horizon-press-news-bar/includes/admin/class-admin.php:201
 msgid "Import failed: the file is not a Horizon Press News Bar export or its schema version is not supported."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:201
+#: horizon-press-news-bar/includes/admin/class-admin.php:205
 msgid "Settings restored to their defaults."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:205
+#: horizon-press-news-bar/includes/admin/class-admin.php:209
 msgid "Reset cancelled: tick the confirmation box first."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:209
+#: horizon-press-news-bar/includes/admin/class-admin.php:213
 #: horizon-press-news-bar/includes/admin/class-import-export.php:185
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:161
 msgid "You are not allowed to do this."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-admin.php:224
+#: horizon-press-news-bar/includes/admin/class-admin.php:228
 msgid "Settings"
 msgstr ""
 
@@ -116,727 +120,924 @@ msgstr ""
 msgid "No post matches these criteria. The bar will not be displayed on the site."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:167
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:170
 msgid "Horizon Press News Bar"
 msgstr ""
 
+#. translators: %s: plugin version.
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:171
+msgid "version %s"
+msgstr ""
+
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:174
+msgid "Reset this tab"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:175
+msgid "Save"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:181
+msgid "Settings sections"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:189
 msgid "Save settings"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:192
-msgid "General"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:195
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:208
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:313
 msgid "Content"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:196
-msgid "Posts are selected when they are published, inside the sliding time window (never \"since midnight\") and match the filters below. Only the publication date counts, never the modification date."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:199
-msgid "Appearance"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:202
-msgid "Desktop presentation"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:203
-msgid "From 768 px. The label can sit on its own row above the headline or in front of it on the same line; the bar height follows the number of headline lines (label row + lines, never below the minimum height)."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:206
-msgid "Mobile presentation"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:207
-msgid "Under 768 px. Same choices as on desktop, plus a dedicated font size, swipe gestures, collapse on scroll and an optional mobile palette. Everything below is optional."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:210
-msgid "Behavior"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:213
-msgid "Visibility"
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:211
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:310
+msgid "General"
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:216
-msgid "Advanced"
+msgid "Selection"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:238
-msgid "Enable the news bar"
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:217
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:314
+msgid "Posts are selected when they are published, inside the sliding time window (never \"since midnight\") and match the filters below. Only the publication date counts, never the modification date."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:239
-msgid "Display the bar on the public site."
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:221
+msgid "Headline extras"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:244
-msgid "Label"
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:227
+msgid "Display"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:245
-msgid "Short text shown next to the headlines. Leave empty to hide the label."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:251
-msgid "Label position"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:253
-msgid "Start of the line"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:254
-msgid "End of the line"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:256
-msgid "\"End\" is the right side in left-to-right languages and the left side in right-to-left languages."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:261
-msgid "Time window"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:262
-msgid "Sliding window ending now: at 16:20 with 24 hours, posts published since yesterday 16:20 are eligible. Minutes: 1–1440, hours: 1–720, days: 1–30."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:268
-msgid "Categories"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:269
-msgid "No selection means every category."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:274
-msgid "Maximum number of posts"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:279
-msgid "Order"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:281
-msgid "Newest first"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:282
-msgid "Oldest first"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:289
-msgid "Excluded categories"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:295
-msgid "Tags"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:296
-msgid "When at least one tag is selected, only posts having one of these tags are eligible."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:301
-msgid "Excluded post IDs"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:302
-msgid "Comma-separated post IDs that must never appear in the bar."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:307
-msgid "Background colour"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:312
-msgid "Text colour"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:318
-msgid "Label background colour"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:323
-msgid "Label text colour"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:329
-msgid "Link hover colour"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:334
-msgid "Font size (px)"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:339
-msgid "Minimum bar height (px)"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:340
-msgid "The actual height follows the presentation (label row, number of headline lines) and never goes below this value."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:345
-msgid "z-index"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:350
-msgid "Layout"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:352
-msgid "Reserve — pushes the page content up so the bar never covers it (default)"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:353
-msgid "Overlay — floats over the page; may cover a fixed element of the theme or of another plugin"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:359
-msgid "Thumbnails"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:360
-msgid "Show the featured image next to each headline."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:365
-msgid "Thumbnail size"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:367
-msgid "An existing WordPress image size; no new size is generated."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:372
-msgid "Separator"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:373
-msgid "Show a separator between headlines."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:378
-msgid "Separator character"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:387
-msgid "Separator after the last post"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:388
-msgid "Show the separator after the last post (continuous loop)."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:389
-msgid "Makes the last → first junction identical to every other junction, for example when the marquee wraps. Only applies when the separator is enabled."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:395
-msgid "Relative time"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:396
-msgid "Show \"2 hours ago\" after each headline (refreshed every minute in the browser)."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:401
-msgid "Relative time limit (hours)"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:402
-msgid "Beyond this age the absolute date is shown instead."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:407
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:452
-msgid "Label placement"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:409
-msgid "In front of the headline, on the same line (default on desktop)"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:410
-msgid "On its own row above the headline"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:416
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:461
-msgid "Label style"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:418
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:464
-msgid "Block — full-height label in the label colours"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:419
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:463
-msgid "Pill — small rounded uppercase badge"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:420
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:465
-msgid "Hidden"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:426
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:471
-msgid "Live dot"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:427
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:472
-msgid "Show a small pulsing dot in front of the label text."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:432
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:477
-msgid "Counter"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:433
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:478
-msgid "Show \"2/8\" next to the label (rotate mode)."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:438
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:483
-msgid "Headline lines"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:440
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:485
-msgid "Number of lines a headline may take; the bar height follows (marquee always uses one line)."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:446
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:509
-msgid "Progress line"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:447
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:510
-msgid "Show a thin progress line along the top edge until the next headline (rotate mode)."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:454
-msgid "On its own row above the headline (default on mobile)"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:455
-msgid "In front of the headline, on the same line"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:491
-msgid "Mobile font size (px)"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:496
-msgid "Mobile ticker mode"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:498
-msgid "Rotate — one headline at a time (recommended)"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:499
-msgid "Same as desktop"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:500
-msgid "Static list"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:501
-msgid "Marquee"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:502
-msgid "Manual — previous / next buttons"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:504
-msgid "Rotate and marquee always come with the Pause / Play button and respect reduced-motion preferences."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:515
-msgid "Swipe"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:516
-msgid "Swipe left or right to move between headlines (rotate mode)."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:521
-msgid "Collapse on scroll"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:522
-msgid "Collapse the bar to its label row while scrolling down; expand when scrolling up or tapping the label (label on its own row)."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:527
-msgid "Mobile separator"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:528
-msgid "Show the separator between headlines on mobile too (static, marquee and manual modes)."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:533
-msgid "Mobile colours"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:534
-msgid "Use a dedicated mobile palette (below) instead of the desktop colours."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:539
-msgid "Mobile background colour"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:545
-msgid "Mobile text colour"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:552
-msgid "Mobile accent colour"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:553
-msgid "Label pill, live dot and progress line."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:559
-msgid "Mobile label text colour"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:565
-msgid "Ticker"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:566
-msgid "Animate the headlines. Marquee and rotate always come with a keyboard-accessible Pause / Play button and stop when the visitor prefers reduced motion."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:571
-msgid "Ticker mode"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:573
-msgid "Marquee — continuous scrolling"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:574
-msgid "Rotate — one headline at a time"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:575
-msgid "Manual — previous / next buttons, no automatic motion"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:581
-msgid "Marquee speed (px/s)"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:586
-msgid "Rotate interval (ms)"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:591
-msgid "Pause on hover"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:592
-msgid "Extra comfort option; the Pause / Play button remains the accessible control."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:597
-msgid "Close button"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:598
-msgid "Let visitors close the bar."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:603
-msgid "Remember closing"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:604
-msgid "Keep the bar closed for the duration below (stored in the browser localStorage, no cookie)."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:609
-msgid "Closing duration (hours)"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:614
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1073
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:230
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:794
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1304
 msgid "Desktop"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:615
-msgid "Show the bar on screens of 768 px and wider."
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:231
+msgid "From 768 px: a fixed bar with a continuous scroll, aligned on the site container."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:620
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1074
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:236
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:800
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1305
 msgid "Mobile"
 msgstr ""
 
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:237
+msgid "Under 768 px: the label opens the headline, which runs on two lines; the first line becomes the collapsed strip while scrolling down."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:244
+msgid "Colours"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:247
+msgid "Palette"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:248
+msgid "One palette for desktop and mobile. The theme red is only used for the label pill: that is what catches the eye."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:253
+msgid "Dedicated mobile palette"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:254
+msgid "Optional: other colours under 768 px."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:261
+msgid "Closing"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:264
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:771
+msgid "Close button"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:265
+msgid "A cross in the bar hides it; with the memory option the visitor does not see it again for the chosen duration (anti-flash head script)."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:272
+msgid "Theme"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:275
+msgid "Jannah fixed elements"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:276
+msgid "The bar exposes its visible height as --hprnb-offset on <body> (with body.hprnb-is-collapsed, body.hprnb-kbd and the hprnb:state event). With this option the theme's \"go to top\" button, \"Check also\" box and reading position indicator sit above the bar and follow its collapse. Nothing in the theme is modified."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:281
+msgid "Placement"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:287
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:334
+msgid "Advanced"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:290
+msgid "Pages"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:294
+msgid "Technical"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:317
+msgid "Appearance"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:320
+msgid "Desktop presentation"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:321
+msgid "From 768 px. The label can sit on its own row above the headline or in front of it on the same line; the bar height follows the number of headline lines (label row + lines, never below the minimum height)."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:324
+msgid "Mobile presentation"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:325
+msgid "Under 768 px. Same choices as on desktop, plus a dedicated font size, swipe gestures, collapse on scroll and an optional mobile palette. Everything below is optional."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:328
+msgid "Behavior"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:331
+msgid "Visibility"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:356
+msgid "Enable the news bar"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:357
+msgid "Display the bar on the public site."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:362
+msgid "Label"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:363
+msgid "Short text shown next to the headlines. Leave empty to hide the label."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:369
+msgid "Label position"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:371
+msgid "Start of the line"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:372
+msgid "End of the line"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:374
+msgid "\"End\" is the right side in left-to-right languages and the left side in right-to-left languages."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:379
+msgid "Time window"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:380
+msgid "Sliding window ending now: at 16:20 with 24 hours, posts published since yesterday 16:20 are eligible. Minutes: 1–1440, hours: 1–720, days: 1–30."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:386
+msgid "Categories"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:387
+msgid "No selection means every category."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:392
+msgid "Maximum number of posts"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:397
+msgid "Order"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:399
+msgid "Newest first"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:400
+msgid "Oldest first"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:407
+msgid "Excluded categories"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:413
+msgid "Tags"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:414
+msgid "When at least one tag is selected, only posts having one of these tags are eligible."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:419
+msgid "Excluded post IDs"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:420
+msgid "Comma-separated post IDs that must never appear in the bar."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:425
+msgid "Background colour"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:430
+msgid "Text colour"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:436
+msgid "Label background colour"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:441
+msgid "Label text colour"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:447
+msgid "Link hover colour"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:452
+msgid "Accent colour"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:453
+msgid "Progress line and link hover underline (the theme red by default)."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:458
+msgid "Font size (px)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:463
+msgid "Height (px)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:464
+msgid "32 to 56 px; 40 px recommended. With the label on its own row or several headline lines the bar grows as needed."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:469
+msgid "Align on the site container"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:470
+msgid "Same maximum width and gutter as the article (Jannah container: 1230 px, 15 px)."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:475
+msgid "Container width (px)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:481
+msgid "Gutter (px)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:487
+msgid "z-index"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:492
+msgid "Layout"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:494
+msgid "Reserve — pushes the page content up so the bar never covers it (default)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:495
+msgid "Overlay — floats over the page; may cover a fixed element of the theme or of another plugin"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:501
+msgid "Thumbnails"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:502
+msgid "Show the featured image next to each headline."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:507
+msgid "Thumbnail size"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:509
+msgid "An existing WordPress image size; no new size is generated."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:514
+msgid "Separator"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:515
+msgid "Show a separator between headlines."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:520
+msgid "Separator character"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:529
+msgid "Separator after the last post"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:530
+msgid "Show the separator after the last post (continuous loop)."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:531
+msgid "Makes the last → first junction identical to every other junction, for example when the marquee wraps. Only applies when the separator is enabled."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:537
+msgid "Relative time"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:538
+msgid "Show \"2 hours ago\" after each headline (refreshed every minute in the browser)."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:543
+msgid "Relative time limit (hours)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:544
+msgid "Beyond this age the absolute date is shown instead."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:549
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:594
+msgid "Label placement"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:551
+msgid "In front of the headline, on the same line (default on desktop)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:552
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:597
+msgid "On its own row above the headline"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:558
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:604
+msgid "Label style"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:560
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:607
+msgid "Block — full-height label in the label colours"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:561
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:606
+msgid "Pill — small rounded uppercase badge"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:562
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:608
+msgid "Hidden"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:568
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:614
+msgid "Live dot"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:569
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:615
+msgid "Show a small pulsing dot in front of the label text."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:574
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:620
+msgid "Counter"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:575
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:621
-msgid "Show the bar on screens narrower than 768 px (CSS only, no device detection)."
+msgid "Show \"2/8\" next to the label (rotate mode)."
 msgstr ""
 
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:580
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:626
-msgid "Scope"
+msgid "Headline lines"
 msgstr ""
 
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:582
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:628
-msgid "Everywhere"
+msgid "Number of lines a headline may take; the bar height follows (marquee always uses one line)."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:629
-msgid "Only the contexts ticked below"
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:588
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:658
+msgid "Progress line"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:589
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:659
+msgid "Show a thin progress line along the top edge until the next headline (rotate mode)."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:596
+msgid "Floating at the head of the headline, which runs on two lines under it (default on mobile; rotation only)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:598
+msgid "In front of the headline, on the same line"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:634
+msgid "Card height (px)"
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:635
-msgid "Contexts"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:637
-msgid "Front page"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:638
-msgid "Blog home"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:639
-msgid "Single post"
+msgid "64 to 96 px; 76 px = 12 + two lines of 26 + 12. Floating label only; grows with the number of lines."
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:640
-msgid "Page"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:641
-msgid "Category archive"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:642
-msgid "Tag archive"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:643
-msgid "Other archives"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:644
-msgid "Search results"
+msgid "Mobile font size (px)"
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:645
-msgid "404 page"
+msgid "Mobile ticker mode"
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:647
-msgid "The bar is never shown in wp-admin, feeds, embeds, previews, the login page, sitemaps, AMP pages, REST, AJAX or cron requests."
+msgid "Rotate — one headline at a time (recommended)"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:652
-msgid "Excluded page / post IDs"
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:648
+msgid "Same as desktop"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:649
+msgid "Static list"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:650
+msgid "Marquee"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:651
+msgid "Manual — previous / next buttons"
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:653
-msgid "Comma-separated IDs of pages or posts on which the bar must not appear."
+msgid "Rotate and marquee always come with the Pause / Play button and respect reduced-motion preferences."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:658
-msgid "Render mode"
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:664
+msgid "Swipe"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:660
-msgid "Hybrid (recommended) — server rendering plus a conditional REST refresh when a page cache served a stale bar"
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:665
+msgid "Swipe left or right to move between headlines (rotate mode)."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:661
-msgid "PHP — server rendering only, no freshness check (diagnostics or sites without a long page cache)"
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:670
+msgid "Collapse on scroll"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:667
-msgid "Server cache TTL (seconds)"
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:671
+msgid "Collapse the bar to its label row while scrolling down; expand when scrolling up or tapping the label (label on its own row)."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:668
-msgid "30 to 600 seconds. Kept short because a post can leave the window without any WordPress event."
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:676
+msgid "Collapsed strip"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:673
-msgid "Stale threshold (seconds)"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:674
-msgid "Hybrid mode: a server-rendered bar older than this triggers at most one REST request per page load."
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:678
+msgid "Label and the first line of the headline"
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:679
-msgid "Automatic display"
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:680
-msgid "Insert the bar automatically in the footer of eligible pages."
-msgstr ""
-
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:685
-msgid "Shortcode"
+msgid "Label only"
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:686
+msgid "Landing mid-page"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:687
+msgid "Start collapsed when the page opens further than 120 px down (anchor, back navigation)."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:693
+msgid "Keyboard open"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:694
+msgid "Slide the bar away while a form field is active; bring it back on blur."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:699
+msgid "Mobile separator"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:700
+msgid "Show the separator between headlines on mobile too (static, marquee and manual modes)."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:705
+msgid "Mobile colours"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:706
+msgid "Use a dedicated mobile palette (below) instead of the desktop colours."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:711
+msgid "Mobile background colour"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:717
+msgid "Mobile text colour"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:724
+msgid "Mobile accent colour"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:725
+msgid "Label pill, live dot and progress line."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:731
+msgid "Mobile label text colour"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:737
+msgid "Ticker"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:738
+msgid "Animate the headlines. Marquee and rotate always come with a keyboard-accessible Pause / Play button and stop when the visitor prefers reduced motion."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:743
+msgid "Ticker mode"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:745
+msgid "Marquee — continuous scrolling"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:746
+msgid "Rotate — one headline at a time"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:747
+msgid "Manual — previous / next buttons, no automatic motion"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:753
+msgid "Marquee speed (px/s)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:754
+msgid "10 to 80 px per second; 30 recommended (20 px/s made a 20-headline loop last four minutes)."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:759
+msgid "Rotate interval (ms)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:760
+msgid "3000 to 12000 ms (3 to 12 seconds) between two headlines."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:765
+msgid "Pause on hover"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:766
+msgid "Extra comfort option; the Pause / Play button remains the accessible control."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:772
+msgid "Let visitors close the bar."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:777
+msgid "Remember closing"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:778
+msgid "Keep the bar closed for the duration below (stored in the browser localStorage, no cookie)."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:783
+msgid "Closing duration (hours)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:788
+msgid "Theme fixed elements"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:789
+msgid "Move the Jannah \"go to top\" button, the \"Check also\" box and the reading position indicator above the bar (they follow the collapse)."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:795
+msgid "Show the bar on screens of 768 px and wider."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:801
+msgid "Show the bar on screens narrower than 768 px (CSS only, no device detection)."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:806
+msgid "Scope"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:808
+msgid "Everywhere"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:809
+msgid "Only the contexts ticked below"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:815
+msgid "Contexts"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:817
+msgid "Front page"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:818
+msgid "Blog home"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:819
+msgid "Single post"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:820
+msgid "Page"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:821
+msgid "Category archive"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:822
+msgid "Tag archive"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:823
+msgid "Other archives"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:824
+msgid "Search results"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:825
+msgid "404 page"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:827
+msgid "The bar is never shown in wp-admin, feeds, embeds, previews, the login page, sitemaps, AMP pages, REST, AJAX or cron requests."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:832
+msgid "Excluded page / post IDs"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:833
+msgid "Comma-separated IDs of pages or posts on which the bar must not appear."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:838
+msgid "Render mode"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:840
+msgid "Hybrid (recommended) — server rendering plus a conditional REST refresh when a page cache served a stale bar"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:841
+msgid "PHP — server rendering only, no freshness check (diagnostics or sites without a long page cache)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:847
+msgid "Server cache TTL (seconds)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:848
+msgid "30 to 600 seconds. Kept short because a post can leave the window without any WordPress event."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:853
+msgid "Stale threshold (seconds)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:854
+msgid "Hybrid mode: a server-rendered bar older than this triggers at most one REST request per page load."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:859
+msgid "Automatic display"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:860
+msgid "Insert the bar automatically in the footer of eligible pages."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:865
+msgid "Shortcode"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:866
 msgid "Allow [hprnb_news_bar]. Only one bar is ever rendered per page."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:691
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:871
 msgid "Uninstall"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:692
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:872
 msgid "Delete the plugin settings when the plugin is uninstalled. Posts, media and terms are never touched."
 msgstr ""
 
 #. translators: %d: number of lines.
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:706
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:886
 msgid "%d line"
 msgid_plural "%d lines"
 msgstr[0] ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:754
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:930
+msgid "Other"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:954
+msgid "Enable"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:961
+msgid "Presets:"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:962
+msgid "Dark + red pill (recommended)"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:963
+msgid "Solid red"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:986
 msgid "Advanced filters"
 msgstr ""
 
 #. translators: %d: bar height in pixels.
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:784
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1015
 msgid "Bar height: %d px"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:910
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1141
 msgid "Window value"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:914
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1145
 msgid "Window unit"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:916
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1147
 msgid "minutes"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:917
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1148
 msgid "hours"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:918
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1149
 msgid "days"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:975
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1206
 msgid "No term available."
 msgstr ""
 
 #. translators: %s: field label.
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:986
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1217
 msgid "Filter: %s"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:987
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1218
 msgid "Filter…"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:989
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1220
 msgid "Select all"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:990
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1221
 msgid "Deselect all"
 msgstr ""
 
 #. translators: %d: maximum number of terms listed.
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1007
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1238
 msgid "Only the first %d terms are listed."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1023
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1254
 msgid "Tools"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1026
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1257
 msgid "Export"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1028
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1259
 msgid "Download settings (JSON)"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1029
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1260
 msgid "The file contains the settings only, never posts or personal data."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1033
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1039
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1264
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1270
 msgid "Import"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1040
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1271
 msgid "JSON file exported by this plugin, 256 KB maximum. Unknown keys are ignored; category, tag and post IDs may differ between sites."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1045
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1276
 msgid "Reset"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1050
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1281
 msgid "I understand that every setting will be restored to its default value."
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1051
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1282
 msgid "Restore defaults"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1070
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1071
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1301
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1302
 msgid "Preview"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1072
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1303
 msgid "Preview device"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1088
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1319
 msgid "Refresh preview posts"
 msgstr ""
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:1091
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:1322
 msgid "Colours, sizes and label update instantly. Content criteria are applied by \"Refresh preview posts\" (also triggered automatically shortly after a change). Nothing is saved until you click \"Save settings\"."
 msgstr ""
 
 #. translators: %s: human-readable time difference, e.g. "2 hours".
-#: horizon-press-news-bar/includes/class-renderer.php:457
+#: horizon-press-news-bar/includes/class-renderer.php:547
 msgid "%s ago"
 msgstr ""
 
 #: horizon-press-news-bar/templates/bar.php:39
 msgid "Latest news"
+msgstr ""
+
+#: horizon-press-news-bar/templates/bar.php:39
+msgid "Show the latest news"
 msgstr ""
 
 #: horizon-press-news-bar/templates/bar.php:59

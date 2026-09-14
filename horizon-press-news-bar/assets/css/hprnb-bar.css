@@ -22,34 +22,45 @@
  *    (the inline style attribute written by Renderer::root_style() overrides them).
  * ------------------------------------------------------------------------- */
 .hprnb-root {
-	--hprnb-bg: #B00000;
-	--hprnb-fg: #FFFFFF;
-	--hprnb-label-bg: #8F0000;
+	/* v2 palette: dark bar, the theme red (#ce3029) reserved for the pill, the progress line and hovers. */
+	--hprnb-bg: #1B1C20;
+	--hprnb-fg: #F5F5F5;
+	--hprnb-label-bg: #CE3029;
 	--hprnb-label-fg: #FFFFFF;
 	--hprnb-hover: #FFFFFF;
-	--hprnb-font-size: 14px;
-	--hprnb-height: 44px;
+	--hprnb-accent: #CE3029;
+	--hprnb-muted: color-mix(in srgb, currentColor 55%, transparent);
+	--hprnb-font-size: 15px;
+	--hprnb-height: 40px;
 	--hprnb-d-lines: 1;
+	--hprnb-max: 1230px;
+	--hprnb-gutter: 15px;
+	--hprnb-pill: 24px;
+	--hprnb-btn: 40px;
 	--hprnb-z: 99990;
 	--hprnb-sep: '•';
 	--hprnb-track: 0px;
 	--hprnb-duration: 30s;
-	--hprnb-m-bg: #141414;
+	--hprnb-m-bg: #1B1C20;
 	--hprnb-m-fg: #F5F5F5;
-	--hprnb-m-accent: #E11D2A;
+	--hprnb-m-accent: #CE3029;
 	--hprnb-m-label-fg: #FFFFFF;
 	--hprnb-m-font-size: 16px;
-	--hprnb-m-height: 80px;
+	--hprnb-m-height: 76px;
 	--hprnb-m-lines: 2;
-	/* Label row of the stacked layout and the part of a collapsed bar that stays visible
-	   (Renderer::STRIP_HEIGHT / ROW_GAP / BLOCK_PAD use the same numbers). */
+	--hprnb-m-line: 26px;
+	--hprnb-m-pad: 12px;
+	--hprnb-m-ctrls: 1;
+	/* Label row of the stacked layout (Renderer::STRIP_HEIGHT / ROW_GAP / BLOCK_PAD) and the part
+	   of a collapsed bar that stays visible (first line of the flow card: 12 + 26 + 2). */
 	--hprnb-strip: 22px;
-	--hprnb-peek: 36px;
+	--hprnb-peek: 40px;
 	/* Effective tokens: desktop defaults = classic single line, block label. */
+	--hprnb-e-display: grid;
 	--hprnb-e-bg: var(--hprnb-bg);
 	--hprnb-e-fg: var(--hprnb-fg);
 	--hprnb-e-hover: var(--hprnb-hover);
-	--hprnb-e-accent: var(--hprnb-fg);
+	--hprnb-e-accent: var(--hprnb-accent);
 	--hprnb-e-label-bg: var(--hprnb-label-bg);
 	--hprnb-e-label-fg: var(--hprnb-label-fg);
 	--hprnb-e-font-size: var(--hprnb-font-size);
@@ -71,6 +82,7 @@
 	--hprnb-e-label-tracking: normal;
 	--hprnb-e-label-transform: none;
 	--hprnb-e-label-lh: inherit;
+	--hprnb-e-label-shadow: none;
 	--hprnb-e-dot: none;
 	--hprnb-e-title-display: block;
 	--hprnb-e-title-ws: nowrap;
@@ -118,10 +130,9 @@
 	--hprnb-e-thumb-min: 0px;
 }
 
-/* Compact label typography: every stacked label, and the pill in the inline layout.
+/* Compact label typography: the stacked label row (22px) and the v2 pill (24px badge, 11.5px caps).
    :where() keeps every mapping at the same specificity, so the mobile reset (section 14) wins. */
-.hprnb-root--d-stacked,
-.hprnb-root--d-label-pill {
+.hprnb-root--d-stacked {
 	--hprnb-e-label-align: center;
 	--hprnb-e-label-bs: var(--hprnb-strip);
 	--hprnb-e-label-pad: 8px 10px;
@@ -132,12 +143,34 @@
 }
 
 .hprnb-root--d-label-pill {
+	--hprnb-e-label-align: center;
+	--hprnb-e-label-bs: var(--hprnb-pill);
+	--hprnb-e-label-pad: 0 11px 0 9px;
+	--hprnb-e-label-size: 11.5px;
+	--hprnb-e-label-tracking: .08em;
+	--hprnb-e-label-transform: uppercase;
+	--hprnb-e-label-lh: var(--hprnb-pill);
 	--hprnb-e-label-radius: 999px;
+	--hprnb-e-label-shadow: 0 1px 0 rgba(0, 0, 0, .25);
 }
 
 .hprnb-root--d-inline:where(.hprnb-root--d-label-pill) {
 	--hprnb-e-label-margin: 0 12px;
 	--hprnb-e-list-pad: .25em;
+}
+
+/* Content aligned on the site container (same max width and gutter as the article). */
+.hprnb-root--align {
+	--hprnb-e-max: var(--hprnb-max);
+	--hprnb-e-pad: 0 var(--hprnb-gutter);
+}
+
+.hprnb-root--align:where(.hprnb-root--d-stacked) {
+	--hprnb-e-pad: 6px var(--hprnb-gutter);
+}
+
+.hprnb-root--align:where(.hprnb-root--d-label-pill) {
+	--hprnb-e-label-margin: 0 12px 0 0;
 }
 
 .hprnb-root--d-label-hidden {
@@ -181,6 +214,8 @@
 	font-size: var(--hprnb-e-font-size);
 	line-height: 1.3;
 	text-align: start;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10), 0 -6px 24px rgba(0, 0, 0, .18);
+	-webkit-font-smoothing: antialiased;
 }
 
 .hprnb-bar *,
@@ -191,7 +226,7 @@
 
 /* Grid areas: label / meta (counter) / title (viewport) / ctrl (buttons). */
 .hprnb-bar__inner {
-	display: grid;
+	display: var(--hprnb-e-display);
 	grid-template-columns: var(--hprnb-e-cols);
 	grid-template-rows: var(--hprnb-e-rows);
 	grid-template-areas: var(--hprnb-e-areas);
@@ -225,12 +260,13 @@
 	letter-spacing: var(--hprnb-e-label-tracking);
 	text-transform: var(--hprnb-e-label-transform);
 	line-height: var(--hprnb-e-label-lh);
+	box-shadow: var(--hprnb-e-label-shadow);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
-/* Optional live dot. */
+/* Optional live dot: 6px in the label colour with a pulsed halo (none with reduced motion). */
 .hprnb-bar__label::before {
 	content: "";
 	display: var(--hprnb-e-dot);
@@ -239,7 +275,7 @@
 	block-size: 6px;
 	border-radius: 50%;
 	background: currentColor;
-	animation: hprnb-pulse 2s ease-in-out infinite;
+	animation: hprnb-pulse 1.8s ease-out infinite;
 }
 
 .hprnb-bar__label-text {
@@ -254,11 +290,11 @@
 	grid-area: meta;
 	justify-self: start;
 	margin-inline: 8px 4px;
-	font-size: max(11px, .8em);
+	color: var(--hprnb-muted);
+	font-size: 12px;
 	font-variant-numeric: tabular-nums;
 	letter-spacing: .04em;
 	white-space: nowrap;
-	opacity: .75;
 }
 
 /* ---------------------------------------------------------------------------
@@ -331,8 +367,14 @@
 	color: var(--hprnb-e-hover);
 }
 
+.hprnb-bar__link {
+	transition: color .15s;
+}
+
 .hprnb-bar__link:hover .hprnb-bar__title {
 	text-decoration: underline;
+	text-decoration-color: var(--hprnb-e-accent);
+	text-decoration-thickness: 2px;
 	text-underline-offset: .15em;
 }
 
@@ -345,14 +387,14 @@
 	content: var(--hprnb-e-sep);
 	flex: none;
 	margin-inline-start: 1.25em;
-	opacity: .7;
+	opacity: .45;
 }
 
 .hprnb-bar__item:last-child::after {
 	content: var(--hprnb-e-sep-last);
 	flex: none;
 	margin-inline-start: 1.25em;
-	opacity: .7;
+	opacity: .45;
 }
 
 /* Hidden from assistive technology where the alt-text syntax is supported. */
@@ -406,6 +448,7 @@
 	align-items: center;
 	align-self: center;
 	justify-self: end;
+	gap: 2px;
 }
 
 /* Every control needs the script: without it (or before it runs) none is shown. */
@@ -417,26 +460,36 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	min-inline-size: 44px;
-	min-block-size: 44px;
+	min-inline-size: var(--hprnb-btn);
+	min-block-size: var(--hprnb-btn);
 	margin: 0;
 	padding: 0;
 	border: 0;
-	border-radius: 0;
+	border-radius: 8px;
 	background: transparent;
 	box-shadow: none;
 	color: inherit;
 	font: inherit;
 	line-height: 1;
 	text-transform: none;
+	opacity: .85;
 	cursor: pointer;
 	touch-action: manipulation;
+	transition: opacity .15s, background-color .15s;
 	-webkit-appearance: none;
 	appearance: none;
 }
 
-.hprnb-bar__btn:not([disabled]):hover {
+.hprnb-bar__btn:not([disabled]):hover,
+.hprnb-bar__btn:focus-visible {
 	color: var(--hprnb-e-hover);
+	opacity: 1;
+	background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+/* The "expand" chevron only exists in the collapsed mobile strip. */
+.hprnb-bar__btn--expand {
+	display: none;
 }
 
 .hprnb-bar__btn[disabled] {
@@ -444,11 +497,11 @@
 	cursor: default;
 }
 
-/* Inline 24×24 SVGs (stroke: currentColor, no fill). */
+/* Inline SVGs (stroke: currentColor, no fill), 20px in a 40px button. */
 .hprnb-bar__btn svg {
 	display: block;
-	inline-size: 24px;
-	block-size: 24px;
+	inline-size: 20px;
+	block-size: 20px;
 	fill: none;
 	pointer-events: none;
 }
@@ -478,12 +531,12 @@
 
 .hprnb-bar__link:focus-visible,
 .hprnb-bar__btn:focus-visible {
-	outline: 2px solid currentColor;
+	outline: 2px solid var(--hprnb-e-fg);
 	outline-offset: 2px;
 }
 
 .hprnb-bar__btn:focus-visible {
-	outline-offset: -3px;
+	outline-offset: -2px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -510,6 +563,8 @@
 
 .hprnb-bar--marquee-on .hprnb-bar__viewport {
 	overflow: hidden;
+	-webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent);
+	mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent);
 }
 
 /* While scrolling, the list edges carry no padding so the wrap junction (track gap) equals the item gap. */
@@ -622,8 +677,13 @@
 		scroll-behavior: auto;
 	}
 
+	.hprnb-bar,
 	.hprnb-root--m-collapse .hprnb-bar {
 		transition: none;
+	}
+
+	.hprnb-bar__label::before {
+		box-shadow: none;
 	}
 }
 
@@ -633,7 +693,19 @@
  *     and the JS (ensureLayout) copy them onto the body, hence the fallbacks.
  * ------------------------------------------------------------------------- */
 body.hprnb-reserve {
-	padding-block-end: calc(var(--hprnb-height, 44px) + env(safe-area-inset-bottom, 0px));
+	/* Visible height of the bar, exposed to the theme and to other plugins (0 while the keyboard is open). */
+	--hprnb-offset: var(--hprnb-height, 40px);
+	padding-block-end: calc(var(--hprnb-height, 40px) + env(safe-area-inset-bottom, 0px));
+}
+
+body.hprnb-reserve.hprnb-kbd {
+	--hprnb-offset: 0px;
+}
+
+/* Keyboard open (a form field is active on a phone): the bar slides out of view. */
+body.hprnb-kbd .hprnb-bar,
+body.hprnb-kbd .hprnb-bar--collapsed {
+	transform: translateY(110%) !important;
 }
 
 /* Remembered dismissal (html.hprnb-dismissed is set by the head micro-script). */
@@ -663,10 +735,40 @@ html.hprnb-dismissed body.hprnb-reserve {
 		overflow: hidden;
 	}
 
-	/* The reserved space follows the mobile height (set on the body by PHP and the JS). */
+	/* The reserved space follows the mobile height (set on the body by PHP and the JS); the offset
+	   follows the collapsed strip. */
 	body.hprnb-reserve {
-		padding-block-end: calc(var(--hprnb-m-height, var(--hprnb-height, 44px)) + env(safe-area-inset-bottom, 0px));
+		--hprnb-offset: var(--hprnb-m-height, var(--hprnb-height, 40px));
+		padding-block-end: calc(var(--hprnb-m-height, var(--hprnb-height, 40px)) + env(safe-area-inset-bottom, 0px));
 	}
+
+	body.hprnb-reserve.hprnb-is-collapsed {
+		--hprnb-offset: var(--hprnb-peek, 40px);
+	}
+
+	body.hprnb-reserve.hprnb-kbd {
+		--hprnb-offset: 0px;
+	}
+}
+
+/* Jannah: the theme's fixed elements follow the bar and its collapse (setting theme_offset). */
+body.hprnb-reserve.hprnb-theme-offset #go-to-top,
+body.hprnb-reserve.hprnb-theme-offset #check-also-box,
+body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
+	transition: bottom .28s cubic-bezier(.2, .7, .2, 1), transform .3s, opacity .3s;
+}
+
+body.hprnb-reserve.hprnb-theme-offset #go-to-top {
+	bottom: calc(var(--hprnb-offset, 40px) + env(safe-area-inset-bottom, 0px) + 12px) !important;
+}
+
+body.hprnb-reserve.hprnb-theme-offset #check-also-box {
+	bottom: calc(var(--hprnb-offset, 40px) + 15px) !important;
+}
+
+body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
+	bottom: calc(var(--hprnb-offset, 40px) + env(safe-area-inset-bottom, 0px)) !important;
+	z-index: 99991 !important;
 }
 
 @media (min-width: 768px) {
@@ -687,6 +789,7 @@ html.hprnb-dismissed body.hprnb-reserve {
  * ------------------------------------------------------------------------- */
 @container hprnb (max-width: 767.98px) {
 	.hprnb-root .hprnb-bar {
+		--hprnb-e-display: grid;
 		--hprnb-e-font-size: var(--hprnb-m-font-size);
 		--hprnb-e-lines: var(--hprnb-m-lines);
 		--hprnb-e-height: var(--hprnb-m-height);
@@ -706,6 +809,7 @@ html.hprnb-dismissed body.hprnb-reserve {
 		--hprnb-e-label-tracking: normal;
 		--hprnb-e-label-transform: none;
 		--hprnb-e-label-lh: inherit;
+		--hprnb-e-label-shadow: none;
 		--hprnb-e-dot: none;
 		--hprnb-e-title-display: block;
 		--hprnb-e-title-ws: nowrap;
@@ -733,8 +837,7 @@ html.hprnb-dismissed body.hprnb-reserve {
 		--hprnb-e-thumb-min: 0px;
 	}
 
-	.hprnb-root--m-stacked .hprnb-bar,
-	.hprnb-root--m-label-pill .hprnb-bar {
+	.hprnb-root--m-stacked .hprnb-bar {
 		--hprnb-e-label-align: center;
 		--hprnb-e-label-bs: var(--hprnb-strip);
 		--hprnb-e-label-pad: 8px 10px;
@@ -745,12 +848,104 @@ html.hprnb-dismissed body.hprnb-reserve {
 	}
 
 	.hprnb-root--m-label-pill .hprnb-bar {
+		--hprnb-e-label-align: center;
+		--hprnb-e-label-bs: var(--hprnb-pill);
+		--hprnb-e-label-pad: 0 11px 0 9px;
+		--hprnb-e-label-size: 11.5px;
+		--hprnb-e-label-tracking: .08em;
+		--hprnb-e-label-transform: uppercase;
+		--hprnb-e-label-lh: var(--hprnb-pill);
 		--hprnb-e-label-radius: 999px;
+		--hprnb-e-label-shadow: 0 1px 0 rgba(0, 0, 0, .25);
 	}
 
 	.hprnb-root--m-inline:where(.hprnb-root--m-label-pill) .hprnb-bar {
 		--hprnb-e-label-margin: 0 12px;
 		--hprnb-e-list-pad: .25em;
+	}
+
+	.hprnb-root--align .hprnb-bar {
+		--hprnb-e-max: var(--hprnb-max);
+		--hprnb-e-pad: 0 var(--hprnb-gutter);
+	}
+
+	.hprnb-root--align:where(.hprnb-root--m-stacked) .hprnb-bar {
+		--hprnb-e-pad: 6px var(--hprnb-gutter);
+	}
+
+	.hprnb-root--align:where(.hprnb-root--m-label-pill) .hprnb-bar {
+		--hprnb-e-label-margin: 0 12px 0 0;
+	}
+
+	/* Flow card (v2, rotation only): the pill floats at the head of the headline, which runs on two
+	   lines and passes back under the pill; the first line alone is the 40px collapsed strip. */
+	.hprnb-root--m-flow .hprnb-bar {
+		--hprnb-e-display: block;
+		--hprnb-e-max: none;
+		--hprnb-e-label-margin: 0;
+	}
+
+	.hprnb-root--m-flow .hprnb-bar__inner {
+		position: relative;
+		padding: var(--hprnb-m-pad) calc(var(--hprnb-gutter) + var(--hprnb-btn) * var(--hprnb-m-ctrls)) var(--hprnb-m-pad) var(--hprnb-gutter);
+		overflow: hidden; /* clips a third line */
+		line-height: var(--hprnb-m-line);
+	}
+
+	.hprnb-root--m-flow .hprnb-bar__label {
+		float: inline-start;
+		margin: calc((var(--hprnb-m-line) - var(--hprnb-e-label-bs)) / 2) 0 0;
+		margin-inline-end: 10px;
+	}
+
+	.hprnb-root--m-flow .hprnb-bar__counter {
+		display: none;
+	}
+
+	.hprnb-root--m-flow .hprnb-bar__viewport,
+	.hprnb-root--m-flow .hprnb-bar__list,
+	.hprnb-root--m-flow .hprnb-bar__item,
+	.hprnb-root--m-flow .hprnb-bar__link,
+	.hprnb-root--m-flow .hprnb-bar__title {
+		display: block;
+		overflow: visible;
+		inline-size: auto;
+		max-inline-size: none;
+		margin: 0;
+		padding: 0;
+		white-space: normal;
+		animation: none;
+	}
+
+	.hprnb-root--m-flow .hprnb-bar__item[hidden] {
+		display: none;
+	}
+
+	.hprnb-root--m-flow .hprnb-bar__viewport {
+		max-block-size: calc(var(--hprnb-m-lines) * var(--hprnb-m-line));
+		overflow: clip; /* unlike hidden, clip keeps the text flowing around the floating pill */
+		transition: opacity .18s;
+		touch-action: pan-y;
+	}
+
+	.hprnb-root--m-flow .hprnb-bar__title {
+		font-weight: 600;
+		letter-spacing: -.005em;
+	}
+
+	.hprnb-root--m-flow .hprnb-bar__link:hover .hprnb-bar__title {
+		text-decoration: none;
+	}
+
+	.hprnb-root--m-flow .hprnb-bar__controls {
+		position: absolute;
+		inset-inline-end: calc(var(--hprnb-gutter) - 8px);
+		inset-block-start: calc(var(--hprnb-m-pad) + (var(--hprnb-m-line) - var(--hprnb-btn)) / 2);
+		block-size: var(--hprnb-btn);
+	}
+
+	.hprnb-root--m-flow .hprnb-bar__progress {
+		block-size: 3px;
 	}
 
 	.hprnb-root--m-label-hidden .hprnb-bar {
@@ -789,19 +984,86 @@ html.hprnb-dismissed body.hprnb-reserve {
 		box-shadow: inset 0 1px 0 color-mix(in srgb, var(--hprnb-m-fg) 14%, transparent), 0 -8px 28px rgba(0, 0, 0, .3);
 	}
 
-	/* Collapse on scroll: only the label row peeks above the bottom edge. */
+	/* Collapse on scroll: only the first line (flow) or the label row (stacked) peeks above the edge;
+	   a tap anywhere on the strip (links disabled) or on the chevron expands the bar again. */
 	.hprnb-root--m-collapse .hprnb-bar {
-		transition: transform .28s ease;
+		transition: transform .28s cubic-bezier(.2, .7, .2, 1);
+		will-change: transform;
 	}
 
 	.hprnb-bar--collapsed {
 		transform: translateY(calc(100% - var(--hprnb-peek) - env(safe-area-inset-bottom, 0px)));
+		cursor: pointer;
+	}
+
+	.hprnb-bar--collapsed .hprnb-bar__link {
+		pointer-events: none;
+	}
+
+	.hprnb-bar--collapsed .hprnb-bar__btn {
+		display: none;
+	}
+
+	.hprnb-bar--collapsed .hprnb-bar__controls {
+		align-items: flex-start;
+		align-self: start;
+	}
+
+	.hprnb-bar--collapsed .hprnb-bar__btn--expand {
+		display: inline-flex;
+		min-inline-size: 36px;
+		min-block-size: 30px;
+	}
+
+	/* Option "pill only" in the strip: the headline fades out while collapsed. */
+	.hprnb-root--peek-label .hprnb-bar--collapsed .hprnb-bar__viewport {
+		opacity: 0;
+	}
+}
+
+/* Short screen (phone in landscape): one line of 44px, never collapsed. The !important beats the
+   inline custom properties of the root and of the body. */
+@media (max-height: 480px) and (max-width: 1023.98px) {
+	.hprnb-root,
+	body.hprnb-reserve {
+		--hprnb-m-height: 44px !important;
+		--hprnb-m-pad: 9px !important;
+		--hprnb-m-lines: 1 !important;
+		--hprnb-peek: 44px !important;
+	}
+
+	.hprnb-root--m-flow .hprnb-bar .hprnb-bar__title {
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.hprnb-root--m-flow .hprnb-bar .hprnb-bar__viewport {
+		max-block-size: var(--hprnb-m-line);
+	}
+
+	.hprnb-bar__btn--expand {
+		display: none !important;
+	}
+
+	.hprnb-root .hprnb-bar--collapsed {
+		transform: none;
+		cursor: default;
+	}
+
+	.hprnb-root .hprnb-bar--collapsed .hprnb-bar__link {
+		pointer-events: auto;
+	}
+
+	.hprnb-root .hprnb-bar--collapsed .hprnb-bar__btn {
+		display: inline-flex;
 	}
 }
 
 @keyframes hprnb-pulse {
-	0%, 100% { opacity: 1; transform: scale(1); }
-	50% { opacity: .45; transform: scale(.7); }
+	0% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 55%, transparent); }
+	70% { box-shadow: 0 0 0 6px color-mix(in srgb, currentColor 0%, transparent); }
+	100% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 0%, transparent); }
 }
 
 @keyframes hprnb-rise {

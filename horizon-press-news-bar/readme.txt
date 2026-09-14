@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.3.0
+Stable tag: 2.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,13 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.0.0 =
+* "En continu" v2: dark bar (#1b1c20) on both devices, theme-red pill (#ce3029) aligned on the site container (1230 px, 15 px gutter), 40 px desktop bar at 30 px/s with edge fade and 40 px buttons, close button (24 h memory) on by default.
+* New mobile card (76 px): the pill floats at the head of the headline, which runs on two lines under it; the first line is the 40 px collapsed strip with a chevron; landing mid-page starts collapsed; the bar slides away while a form field is active; 44 px single line in landscape.
+* Contract with the theme and other plugins: --hprnb-offset on body, body.hprnb-is-collapsed / body.hprnb-kbd, the hprnb:state event and window.hprnbBar.state(); Jannah go-to-top, "Check also" and reading indicator moved above the bar (option).
+* Tabbed settings page (Content, Display, Colours, Closing, Theme, Advanced) with module cards and Enable switches, colour presets with computed contrast, "Reset this tab", live preview.
+* Existing 1.x installs receive the v2 presentation preset once (schema 2); every value stays editable.
 
 = 1.3.0 =
 * Two presentation profiles with the same options, Desktop and Mobile: label in front of the headline or on its own row, block / pill / hidden label with an optional live dot, counter, 1 to 4 headline lines (the bar height follows), progress line along the top edge. The stacked mobile design is now available on desktop.

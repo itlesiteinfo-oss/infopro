@@ -51,6 +51,15 @@
 		}
 	}
 
+	var TOP_ZONE = 120; // px: "top of the page" zone (never collapsed there).
+	var CHEVRON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 15 6-6 6 6"/></svg>';
+	var FIELD = 'input:not([type=button]):not([type=submit]):not([type=checkbox]):not([type=radio]):not([type=range]), textarea, select, [contenteditable="true"]';
+
+	/** A phone in landscape (short screen): one line, never collapsed. Same media query as the stylesheet. */
+	function isShortScreen() {
+		return !! ( window.matchMedia && window.matchMedia( '(max-height: 480px) and (max-width: 1023.98px)' ).matches );
+	}
+
 	function isKeyboardFocus( el ) {
 		try {
 			return el.matches( ':focus-visible' );
@@ -235,15 +244,21 @@
 		state.add( function () {
 			if ( clone ) {
 				track.removeChild( clone );
+				clone = null;
 			}
-			track.parentNode.insertBefore( list, track );
-			track.parentNode.removeChild( track );
+			if ( track.parentNode ) {
+				track.parentNode.insertBefore( list, track );
+				track.parentNode.removeChild( track );
+			}
 			aside.classList.remove( 'hprnb-bar--marquee-on' );
 		} );
 
 		createPauseController( state, aside, cfg, toggle, viewport, null );
 
 		function measure() {
+			if ( aside.hprnbState !== state ) {
+				return; // A debounced measurement arriving after destroy().
+			}
 			var listWidth = list.getBoundingClientRect().width;
 			if ( listWidth <= viewport.clientWidth ) {
 				aside.classList.remove( 'hprnb-bar--marquee-on' );
@@ -602,7 +617,81 @@
 		}
 	}
 
-	function setupClose( state, root, aside, cfg ) {
+	/* ------------------------------------------------------------------ */
+	/* Contract with the theme and other plugins (v2)                      */
+	/*   --hprnb-offset on <body>: visible height of the bar (0 when hidden)*/
+	/*   body.hprnb-is-collapsed / body.hprnb-kbd, document "hprnb:state"  */
+	/*   { mobile, collapsed, height, offset }, window.hprnbBar.state().   */
+	/* ------------------------------------------------------------------ */
+
+	function setupContract( state, root, aside, profile, mobile ) {
+		if ( root.classList.contains( 'hprnb-root--preview' ) ) {
+			return null;
+		}
+		var body = document.body;
+
+		function current() {
+			var collapsed = aside.classList.contains( 'hprnb-bar--collapsed' );
+			var cs = getComputedStyle( body );
+			var full = parseFloat( cs.getPropertyValue( mobile ? '--hprnb-m-height' : '--hprnb-height' ) ) || aside.offsetHeight;
+			var peek = parseFloat( cs.getPropertyValue( '--hprnb-peek' ) ) || 40;
+			var hidden = aside.hidden || root.hidden || body.classList.contains( 'hprnb-kbd' );
+			return { mobile: mobile, collapsed: collapsed, height: full, offset: hidden ? 0 : ( mobile && collapsed ? peek : full ) };
+		}
+
+		function emit() {
+			var detail = current();
+			body.classList.toggle( 'hprnb-is-collapsed', detail.collapsed );
+			body.style.setProperty( '--hprnb-offset', detail.offset + 'px' );
+			try {
+				document.dispatchEvent( new CustomEvent( 'hprnb:state', { detail: detail } ) );
+			} catch ( e ) {
+				// Very old engines without CustomEvent: the body classes and the variable still apply.
+			}
+		}
+
+		api.state = current;
+		state.add( function () {
+			body.classList.remove( 'hprnb-is-collapsed' );
+			body.classList.remove( 'hprnb-kbd' );
+			body.style.removeProperty( '--hprnb-offset' );
+			if ( api.state === current ) {
+				api.state = null;
+			}
+		} );
+
+		// Keyboard open (a field outside the bar has the focus on a phone): the bar slides away.
+		if ( profile.kbd ) {
+			state.on( document, 'focusin', function ( event ) {
+				var target = event.target;
+				if ( ! isNarrow( root ) || ! target || ! target.matches || aside.contains( target ) ) {
+					return;
+				}
+				if ( target.matches( FIELD ) ) {
+					body.classList.add( 'hprnb-kbd' );
+					emit();
+				}
+			} );
+			state.on( document, 'focusout', function () {
+				setTimeout( function () {
+					if ( aside.hprnbState !== state ) {
+						return;
+					}
+					var active = document.activeElement;
+					if ( ! active || ! active.matches || ! active.matches( FIELD ) || aside.contains( active ) ) {
+						if ( body.classList.contains( 'hprnb-kbd' ) ) {
+							body.classList.remove( 'hprnb-kbd' );
+							emit();
+						}
+					}
+				}, 60 );
+			} );
+		}
+
+		return { emit: emit, current: current };
+	}
+
+	function setupClose( state, root, aside, cfg, contract ) {
 		var button = aside.querySelector( '.hprnb-bar__btn--close' );
 		if ( ! button ) {
 			return;
@@ -612,6 +701,9 @@
 			aside.hidden = true;
 			root.hidden = true;
 			document.body.classList.remove( 'hprnb-reserve' );
+			if ( contract ) {
+				contract.emit();
+			}
 			if ( cfg.remember ) {
 				try {
 					localStorage.setItem( DISMISS_KEY, String( Date.now() + cfg.dismissHours * 3600000 ) );
@@ -626,13 +718,47 @@
 	/* Collapse on scroll (mobile, stacked)                                */
 	/* ------------------------------------------------------------------ */
 
-	function setupCollapse( state, aside ) {
+	function setupCollapse( state, aside, profile, contract ) {
 		var lastY = window.scrollY;
 		var ticking = false;
 		var holdUntil = 0;
 
 		function set( collapsed ) {
+			if ( aside.classList.contains( 'hprnb-bar--collapsed' ) === collapsed ) {
+				return;
+			}
 			aside.classList.toggle( 'hprnb-bar--collapsed', collapsed );
+			if ( contract ) {
+				contract.emit();
+			}
+		}
+
+		// Chevron "expand" in the collapsed strip (its click bubbles to the strip handler below).
+		var controls = aside.querySelector( '.hprnb-bar__controls' );
+		if ( ! controls ) {
+			controls = document.createElement( 'div' );
+			controls.className = 'hprnb-bar__controls';
+			( aside.querySelector( '.hprnb-bar__inner' ) || aside ).appendChild( controls );
+			state.add( function () {
+				controls.parentNode.removeChild( controls );
+			} );
+		}
+		var chevron = document.createElement( 'button' );
+		chevron.type = 'button';
+		chevron.className = 'hprnb-bar__btn hprnb-bar__btn--expand';
+		chevron.setAttribute( 'aria-label', aside.getAttribute( 'data-hprnb-label-expand' ) || 'Expand' );
+		chevron.innerHTML = CHEVRON;
+		controls.insertBefore( chevron, controls.firstChild );
+		state.add( function () {
+			chevron.parentNode.removeChild( chevron );
+		} );
+
+		// Landing in the middle of the page (anchor, back navigation): start collapsed, without a slide.
+		if ( profile.deep && window.scrollY > TOP_ZONE && ! isShortScreen() ) {
+			aside.style.transition = 'none';
+			set( true );
+			void aside.offsetHeight;
+			aside.style.removeProperty( 'transition' );
 		}
 
 		state.on( window, 'scroll', function () {
@@ -647,9 +773,11 @@
 					lastY = y;
 					return;
 				}
-				if ( y > lastY + 8 && y > 120 ) {
+				if ( isShortScreen() ) {
+					set( false );
+				} else if ( y > lastY + 8 && y > TOP_ZONE ) {
 					set( true );
-				} else if ( y < lastY - 8 || y <= 120 ) {
+				} else if ( y < lastY - 8 || y <= TOP_ZONE ) {
 					set( false );
 				}
 				lastY = y;
@@ -736,7 +864,8 @@
 		state.hide( prev, mode !== 'manual' );
 		state.hide( next, mode !== 'manual' );
 
-		setupClose( state, root, aside, cfg );
+		var contract = setupContract( state, root, aside, profile, mobile );
+		setupClose( state, root, aside, cfg, contract );
 		if ( cfg.reltime ) {
 			setupRelativeTime( state, aside, cfg );
 		}
@@ -758,7 +887,26 @@
 		}
 
 		if ( profile.collapse && ! root.classList.contains( 'hprnb-root--preview' ) ) {
-			setupCollapse( state, aside );
+			setupCollapse( state, aside, profile, contract );
+		}
+		if ( contract ) {
+			contract.emit();
+			var resizeTimer = null;
+			state.on( window, 'resize', function () {
+				clearTimeout( resizeTimer );
+				resizeTimer = setTimeout( function () {
+					if ( aside.hprnbState !== state ) {
+						return;
+					}
+					if ( isShortScreen() && aside.classList.contains( 'hprnb-bar--collapsed' ) ) {
+						aside.classList.remove( 'hprnb-bar--collapsed' );
+					}
+					contract.emit();
+				}, 150 );
+			} );
+			state.add( function () {
+				clearTimeout( resizeTimer );
+			} );
 		}
 
 		// Crossing the 768px threshold re-initialises the bar for the other presentation.
@@ -791,7 +939,8 @@
 		}
 	}
 
-	window.hprnbBar = { init: init, destroy: destroy };
+	var api = { init: init, destroy: destroy, state: null };
+	window.hprnbBar = api;
 
 	function boot() {
 		init( document.getElementById( 'hprnb-root' ) );

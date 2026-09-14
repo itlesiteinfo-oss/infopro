@@ -162,15 +162,30 @@ final class Settings_Page {
 		}
 
 		$settings = Settings::raw();
+		$layout   = self::layout();
 		?>
 		<div class="wrap hprnb-wrap">
-			<h1><?php esc_html_e( 'Horizon Press News Bar', 'horizon-press-news-bar' ); ?></h1>
+			<header class="hprnb-header">
+				<div class="hprnb-header__title">
+					<h1><?php esc_html_e( 'Horizon Press News Bar', 'horizon-press-news-bar' ); ?></h1>
+					<span class="hprnb-header__version"><?php echo esc_html( sprintf( /* translators: %s: plugin version. */ __( 'version %s', 'horizon-press-news-bar' ), HPRNB_VERSION ) ); ?></span>
+				</div>
+				<div class="hprnb-header__actions">
+					<button type="button" class="button" id="hprnb-reset-tab" hidden><?php esc_html_e( 'Reset this tab', 'horizon-press-news-bar' ); ?></button>
+					<button type="submit" form="hprnb-form" class="button button-primary" id="hprnb-save"><?php esc_html_e( 'Save', 'horizon-press-news-bar' ); ?></button>
+				</div>
+			</header>
 			<?php settings_errors( Settings::OPTION ); ?>
 			<div class="hprnb-layout">
 				<div class="hprnb-main">
+					<nav class="hprnb-tabs" role="tablist" aria-label="<?php esc_attr_e( 'Settings sections', 'horizon-press-news-bar' ); ?>" hidden>
+						<?php foreach ( $layout as $tab_key => $tab ) : ?>
+						<button type="button" role="tab" class="hprnb-tabs__tab" id="hprnb-tab-btn-<?php echo esc_attr( $tab_key ); ?>" aria-controls="hprnb-tab-<?php echo esc_attr( $tab_key ); ?>" aria-selected="false" data-hprnb-tab="<?php echo esc_attr( $tab_key ); ?>"><?php echo esc_html( $tab['title'] ); ?></button>
+						<?php endforeach; ?>
+					</nav>
 					<form method="post" action="options.php" id="hprnb-form" class="hprnb-form">
 						<?php settings_fields( self::GROUP ); ?>
-						<?php self::render_sections( $settings ); ?>
+						<?php self::render_tabs( $settings, $layout ); ?>
 						<?php submit_button( __( 'Save settings', 'horizon-press-news-bar' ) ); ?>
 					</form>
 					<?php self::render_tools( $settings ); ?>
@@ -182,7 +197,110 @@ final class Settings_Page {
 	}
 
 	/**
-	 * Section definitions in display order.
+	 * Tabs and cards of the settings page. Each card lists its field keys; an optional `switch` key
+	 * (a boolean setting) is rendered as the "Enable" toggle of the card header and greys the rows out.
+	 *
+	 * @return array<string, array{title: string, cards: array<int, array<string, mixed>>}>
+	 */
+	private static function layout(): array {
+		return array(
+			'content'  => array(
+				'title' => __( 'Content', 'horizon-press-news-bar' ),
+				'cards' => array(
+					array(
+						'title'  => __( 'General', 'horizon-press-news-bar' ),
+						'switch' => 'enabled',
+						'keys'   => array( 'label_text', 'label_position' ),
+					),
+					array(
+						'title'       => __( 'Selection', 'horizon-press-news-bar' ),
+						'description' => __( 'Posts are selected when they are published, inside the sliding time window (never "since midnight") and match the filters below. Only the publication date counts, never the modification date.', 'horizon-press-news-bar' ),
+						'keys'        => array( 'window', 'categories_include', 'orderby', 'categories_exclude', 'tags_include', 'content_exclude_post_ids' ),
+					),
+					array(
+						'title' => __( 'Headline extras', 'horizon-press-news-bar' ),
+						'keys'  => array( 'show_thumbnail', 'thumbnail_size', 'show_separator', 'separator_char', 'separator_after_last', 'show_relative_time', 'relative_time_max_hours' ),
+					),
+				),
+			),
+			'display'  => array(
+				'title' => __( 'Display', 'horizon-press-news-bar' ),
+				'cards' => array(
+					array(
+						'title'       => __( 'Desktop', 'horizon-press-news-bar' ),
+						'description' => __( 'From 768 px: a fixed bar with a continuous scroll, aligned on the site container.', 'horizon-press-news-bar' ),
+						'switch'      => 'show_on_desktop',
+						'keys'        => array( 'bar_height', 'max_items', 'ticker_enabled', 'ticker_mode', 'ticker_speed', 'pause_on_hover', 'align_container', 'max_width', 'gutter', 'desktop_layout', 'desktop_label_style', 'desktop_label_dot', 'desktop_show_counter', 'desktop_lines', 'desktop_show_progress' ),
+					),
+					array(
+						'title'       => __( 'Mobile', 'horizon-press-news-bar' ),
+						'description' => __( 'Under 768 px: the label opens the headline, which runs on two lines; the first line becomes the collapsed strip while scrolling down.', 'horizon-press-news-bar' ),
+						'switch'      => 'show_on_mobile',
+						'keys'        => array( 'mobile_layout', 'mobile_bar_height', 'mobile_lines', 'mobile_font_size', 'mobile_ticker_mode', 'rotate_interval', 'mobile_hide_on_scroll', 'mobile_peek', 'mobile_deep_collapse', 'mobile_kbd_hide', 'mobile_show_progress', 'mobile_swipe', 'mobile_label_style', 'mobile_label_dot', 'mobile_show_counter', 'mobile_show_separator' ),
+					),
+				),
+			),
+			'colors'   => array(
+				'title' => __( 'Colours', 'horizon-press-news-bar' ),
+				'cards' => array(
+					array(
+						'title'       => __( 'Palette', 'horizon-press-news-bar' ),
+						'description' => __( 'One palette for desktop and mobile. The theme red is only used for the label pill: that is what catches the eye.', 'horizon-press-news-bar' ),
+						'presets'     => true,
+						'keys'        => array( 'bg_color', 'text_color', 'label_bg_color', 'label_text_color', 'accent_color', 'link_hover_color' ),
+					),
+					array(
+						'title'       => __( 'Dedicated mobile palette', 'horizon-press-news-bar' ),
+						'description' => __( 'Optional: other colours under 768 px.', 'horizon-press-news-bar' ),
+						'switch'      => 'mobile_custom_colors',
+						'keys'        => array( 'mobile_bg_color', 'mobile_text_color', 'mobile_accent_color', 'mobile_label_text_color' ),
+					),
+				),
+			),
+			'close'    => array(
+				'title' => __( 'Closing', 'horizon-press-news-bar' ),
+				'cards' => array(
+					array(
+						'title'       => __( 'Close button', 'horizon-press-news-bar' ),
+						'description' => __( 'A cross in the bar hides it; with the memory option the visitor does not see it again for the chosen duration (anti-flash head script).', 'horizon-press-news-bar' ),
+						'switch'      => 'close_button',
+						'keys'        => array( 'remember_dismiss', 'dismiss_duration_hours' ),
+					),
+				),
+			),
+			'theme'    => array(
+				'title' => __( 'Theme', 'horizon-press-news-bar' ),
+				'cards' => array(
+					array(
+						'title'       => __( 'Jannah fixed elements', 'horizon-press-news-bar' ),
+						'description' => __( 'The bar exposes its visible height as --hprnb-offset on <body> (with body.hprnb-is-collapsed, body.hprnb-kbd and the hprnb:state event). With this option the theme\'s "go to top" button, "Check also" box and reading position indicator sit above the bar and follow its collapse. Nothing in the theme is modified.', 'horizon-press-news-bar' ),
+						'switch'      => 'theme_offset',
+						'keys'        => array(),
+					),
+					array(
+						'title' => __( 'Placement', 'horizon-press-news-bar' ),
+						'keys'  => array( 'layout_mode', 'z_index' ),
+					),
+				),
+			),
+			'advanced' => array(
+				'title' => __( 'Advanced', 'horizon-press-news-bar' ),
+				'cards' => array(
+					array(
+						'title' => __( 'Pages', 'horizon-press-news-bar' ),
+						'keys'  => array( 'display_scope', 'contexts', 'display_exclude_ids' ),
+					),
+					array(
+						'title' => __( 'Technical', 'horizon-press-news-bar' ),
+						'keys'  => array( 'render_mode', 'cache_ttl', 'stale_threshold', 'auto_display', 'shortcode_enabled', 'uninstall_delete_data' ),
+					),
+				),
+			),
+		);
+	}
+
+	/**
+	 * Section definitions (kept for the field definitions; the page itself is laid out by layout()).
 	 *
 	 * @return array<string, array{title: string, description?: string}>
 	 */
@@ -328,6 +446,12 @@ final class Settings_Page {
 				'type'    => 'color',
 				'label'   => __( 'Link hover colour', 'horizon-press-news-bar' ),
 			),
+			'accent_color'             => array(
+				'section' => 'appearance',
+				'type'    => 'color',
+				'label'   => __( 'Accent colour', 'horizon-press-news-bar' ),
+				'desc'    => __( 'Progress line and link hover underline (the theme red by default).', 'horizon-press-news-bar' ),
+			),
 			'font_size'                => array(
 				'section' => 'appearance',
 				'type'    => 'number',
@@ -336,8 +460,26 @@ final class Settings_Page {
 			'bar_height'               => array(
 				'section' => 'appearance',
 				'type'    => 'number',
-				'label'   => __( 'Minimum bar height (px)', 'horizon-press-news-bar' ),
-				'desc'    => __( 'The actual height follows the presentation (label row, number of headline lines) and never goes below this value.', 'horizon-press-news-bar' ),
+				'label'   => __( 'Height (px)', 'horizon-press-news-bar' ),
+				'desc'    => __( '32 to 56 px; 40 px recommended. With the label on its own row or several headline lines the bar grows as needed.', 'horizon-press-news-bar' ),
+			),
+			'align_container'          => array(
+				'section' => 'appearance',
+				'type'    => 'checkbox',
+				'label'   => __( 'Align on the site container', 'horizon-press-news-bar' ),
+				'text'    => __( 'Same maximum width and gutter as the article (Jannah container: 1230 px, 15 px).', 'horizon-press-news-bar' ),
+			),
+			'max_width'                => array(
+				'section' => 'appearance',
+				'type'    => 'number',
+				'label'   => __( 'Container width (px)', 'horizon-press-news-bar' ),
+				'depends' => 'align_container',
+			),
+			'gutter'                   => array(
+				'section' => 'appearance',
+				'type'    => 'number',
+				'label'   => __( 'Gutter (px)', 'horizon-press-news-bar' ),
+				'depends' => 'align_container',
 			),
 			'z_index'                  => array(
 				'section' => 'appearance',
@@ -451,7 +593,8 @@ final class Settings_Page {
 				'type'    => 'radio',
 				'label'   => __( 'Label placement', 'horizon-press-news-bar' ),
 				'options' => array(
-					'stacked' => __( 'On its own row above the headline (default on mobile)', 'horizon-press-news-bar' ),
+					'flow'    => __( 'Floating at the head of the headline, which runs on two lines under it (default on mobile; rotation only)', 'horizon-press-news-bar' ),
+					'stacked' => __( 'On its own row above the headline', 'horizon-press-news-bar' ),
 					'inline'  => __( 'In front of the headline, on the same line', 'horizon-press-news-bar' ),
 				),
 			),
@@ -484,6 +627,12 @@ final class Settings_Page {
 				'options' => self::line_options(),
 				'desc'    => __( 'Number of lines a headline may take; the bar height follows (marquee always uses one line).', 'horizon-press-news-bar' ),
 				'hint'    => 'm',
+			),
+			'mobile_bar_height'        => array(
+				'section' => 'mobile',
+				'type'    => 'number',
+				'label'   => __( 'Card height (px)', 'horizon-press-news-bar' ),
+				'desc'    => __( '64 to 96 px; 76 px = 12 + two lines of 26 + 12. Floating label only; grows with the number of lines.', 'horizon-press-news-bar' ),
 			),
 			'mobile_font_size'         => array(
 				'section' => 'mobile',
@@ -520,6 +669,29 @@ final class Settings_Page {
 				'type'    => 'checkbox',
 				'label'   => __( 'Collapse on scroll', 'horizon-press-news-bar' ),
 				'text'    => __( 'Collapse the bar to its label row while scrolling down; expand when scrolling up or tapping the label (label on its own row).', 'horizon-press-news-bar' ),
+			),
+			'mobile_peek'              => array(
+				'section' => 'mobile',
+				'type'    => 'radio',
+				'label'   => __( 'Collapsed strip', 'horizon-press-news-bar' ),
+				'options' => array(
+					'headline' => __( 'Label and the first line of the headline', 'horizon-press-news-bar' ),
+					'label'    => __( 'Label only', 'horizon-press-news-bar' ),
+				),
+				'depends' => 'mobile_hide_on_scroll',
+			),
+			'mobile_deep_collapse'     => array(
+				'section' => 'mobile',
+				'type'    => 'checkbox',
+				'label'   => __( 'Landing mid-page', 'horizon-press-news-bar' ),
+				'text'    => __( 'Start collapsed when the page opens further than 120 px down (anchor, back navigation).', 'horizon-press-news-bar' ),
+				'depends' => 'mobile_hide_on_scroll',
+			),
+			'mobile_kbd_hide'          => array(
+				'section' => 'mobile',
+				'type'    => 'checkbox',
+				'label'   => __( 'Keyboard open', 'horizon-press-news-bar' ),
+				'text'    => __( 'Slide the bar away while a form field is active; bring it back on blur.', 'horizon-press-news-bar' ),
 			),
 			'mobile_show_separator'    => array(
 				'section' => 'mobile',
@@ -579,11 +751,13 @@ final class Settings_Page {
 				'section' => 'behavior',
 				'type'    => 'number',
 				'label'   => __( 'Marquee speed (px/s)', 'horizon-press-news-bar' ),
+				'desc'    => __( '10 to 80 px per second; 30 recommended (20 px/s made a 20-headline loop last four minutes).', 'horizon-press-news-bar' ),
 			),
 			'rotate_interval'          => array(
 				'section' => 'behavior',
 				'type'    => 'number',
 				'label'   => __( 'Rotate interval (ms)', 'horizon-press-news-bar' ),
+				'desc'    => __( '3000 to 12000 ms (3 to 12 seconds) between two headlines.', 'horizon-press-news-bar' ),
 			),
 			'pause_on_hover'           => array(
 				'section' => 'behavior',
@@ -607,6 +781,12 @@ final class Settings_Page {
 				'section' => 'behavior',
 				'type'    => 'number',
 				'label'   => __( 'Closing duration (hours)', 'horizon-press-news-bar' ),
+			),
+			'theme_offset'             => array(
+				'section' => 'behavior',
+				'type'    => 'checkbox',
+				'label'   => __( 'Theme fixed elements', 'horizon-press-news-bar' ),
+				'text'    => __( 'Move the Jannah "go to top" button, the "Check also" box and the reading position indicator above the bar (they follow the collapse).', 'horizon-press-news-bar' ),
 			),
 			'show_on_desktop'          => array(
 				'section' => 'behavior',
@@ -718,45 +898,96 @@ final class Settings_Page {
 	}
 
 	/**
-	 * Renders every section.
+	 * Renders the tab panels and their cards. Without JavaScript every panel is visible.
 	 *
 	 * @param array $settings Current settings.
+	 * @param array $layout   Tabs / cards from layout().
 	 * @return void
 	 */
-	private static function render_sections( array $settings ): void {
+	private static function render_tabs( array $settings, array $layout ): void {
 		$fields   = self::fields();
 		$advanced = self::advanced_content_keys();
+		$placed   = array();
 
-		foreach ( self::sections() as $section_key => $section ) {
-			echo '<section class="hprnb-section" id="hprnb-section-' . esc_attr( $section_key ) . '">';
-			echo '<h2>' . esc_html( $section['title'] ) . '</h2>';
-			if ( ! empty( $section['description'] ) ) {
-				echo '<p class="description">' . esc_html( $section['description'] ) . '</p>';
-			}
-
-			$regular = array();
-			$folded  = array();
-			foreach ( $fields as $key => $field ) {
-				if ( $field['section'] !== $section_key ) {
-					continue;
+		foreach ( $layout as $tab_key => $tab ) {
+			echo '<div class="hprnb-panel" id="hprnb-tab-' . esc_attr( $tab_key ) . '" role="tabpanel" aria-labelledby="hprnb-tab-btn-' . esc_attr( $tab_key ) . '" data-hprnb-panel="' . esc_attr( $tab_key ) . '">';
+			echo '<h2 class="hprnb-panel__title">' . esc_html( $tab['title'] ) . '</h2>';
+			foreach ( $tab['cards'] as $index => $card ) {
+				self::render_card( $card, $fields, $settings, $advanced, $tab_key . '-' . $index );
+				foreach ( $card['keys'] as $key ) {
+					$placed[ $key ] = true;
 				}
-				if ( in_array( $key, $advanced, true ) ) {
-					$folded[ $key ] = $field;
-				} else {
-					$regular[ $key ] = $field;
+				if ( ! empty( $card['switch'] ) ) {
+					$placed[ $card['switch'] ] = true;
 				}
 			}
-
-			if ( ! empty( $regular ) ) {
-				self::render_table( $regular, $settings );
-			}
-			if ( ! empty( $folded ) ) {
-				echo '<details class="hprnb-details"><summary>' . esc_html__( 'Advanced filters', 'horizon-press-news-bar' ) . '</summary>';
-				self::render_table( $folded, $settings );
-				echo '</details>';
-			}
-			echo '</section>';
+			echo '</div>';
 		}
+
+		// Safety net: a field that no card lists is still editable.
+		$rest = array_diff_key( $fields, $placed );
+		if ( ! empty( $rest ) ) {
+			echo '<div class="hprnb-panel" data-hprnb-panel="other"><h2 class="hprnb-panel__title">' . esc_html__( 'Other', 'horizon-press-news-bar' ) . '</h2>';
+			self::render_table( $rest, $settings );
+			echo '</div>';
+		}
+	}
+
+	/**
+	 * Renders one card: header (title, optional "Enable" switch), description, presets, rows.
+	 *
+	 * @param array  $card     Card definition.
+	 * @param array  $fields   Every field definition.
+	 * @param array  $settings Current settings.
+	 * @param array  $advanced Keys folded under "Advanced filters".
+	 * @param string $id       Card id suffix.
+	 * @return void
+	 */
+	private static function render_card( array $card, array $fields, array $settings, array $advanced, string $id ): void {
+		$switch = ! empty( $card['switch'] ) && isset( $fields[ $card['switch'] ] ) ? $card['switch'] : '';
+		echo '<section class="hprnb-card" id="hprnb-card-' . esc_attr( $id ) . '"' . ( $switch ? ' data-hprnb-switch="' . esc_attr( $switch ) . '"' : '' ) . '>';
+		echo '<header class="hprnb-card__header"><h3 class="hprnb-card__title">' . esc_html( $card['title'] ) . '</h3>';
+		if ( $switch ) {
+			$switch_id = 'hprnb-field-' . str_replace( '_', '-', $switch );
+			echo '<label class="hprnb-switch" for="' . esc_attr( $switch_id ) . '">';
+			echo '<input type="checkbox" id="' . esc_attr( $switch_id ) . '" name="' . esc_attr( Settings::OPTION . '[' . $switch . ']' ) . '" value="1"' . checked( ! empty( $settings[ $switch ] ), true, false ) . ' />';
+			echo '<span class="hprnb-switch__track" aria-hidden="true"></span><span class="hprnb-switch__text">' . esc_html__( 'Enable', 'horizon-press-news-bar' ) . '</span></label>';
+		}
+		echo '</header>';
+		if ( ! empty( $card['description'] ) ) {
+			echo '<p class="description hprnb-card__description">' . esc_html( $card['description'] ) . '</p>';
+		}
+		if ( ! empty( $card['presets'] ) ) {
+			echo '<p class="hprnb-presets"><span class="hprnb-presets__label">' . esc_html__( 'Presets:', 'horizon-press-news-bar' ) . '</span> ';
+			echo '<button type="button" class="button hprnb-preset" data-hprnb-preset="dark">' . esc_html__( 'Dark + red pill (recommended)', 'horizon-press-news-bar' ) . '</button> ';
+			echo '<button type="button" class="button hprnb-preset" data-hprnb-preset="red">' . esc_html__( 'Solid red', 'horizon-press-news-bar' ) . '</button></p>';
+		}
+
+		$regular = array();
+		$folded  = array();
+		foreach ( $card['keys'] as $key ) {
+			if ( ! isset( $fields[ $key ] ) || $key === $switch ) {
+				continue;
+			}
+			$field = $fields[ $key ];
+			if ( $switch && empty( $field['depends'] ) ) {
+				$field['depends'] = $switch;
+			}
+			if ( in_array( $key, $advanced, true ) ) {
+				$folded[ $key ] = $field;
+			} else {
+				$regular[ $key ] = $field;
+			}
+		}
+		if ( ! empty( $regular ) ) {
+			self::render_table( $regular, $settings );
+		}
+		if ( ! empty( $folded ) ) {
+			echo '<details class="hprnb-details"><summary>' . esc_html__( 'Advanced filters', 'horizon-press-news-bar' ) . '</summary>';
+			self::render_table( $folded, $settings );
+			echo '</details>';
+		}
+		echo '</section>';
 	}
 
 	/**

@@ -70,7 +70,7 @@ class Cache_Test extends HPRNB_Test_Case {
 		$window = Settings::sanitize( array_merge( $settings, array( 'window_value' => 12 ) ) );
 		$this->assertNotSame( $key, Cache::key( $window ) );
 
-		$ticker = Settings::sanitize( array_merge( $settings, array( 'ticker_enabled' => true ) ) );
+		$ticker = Settings::sanitize( array_merge( $settings, array( 'ticker_enabled' => false ) ) );
 		$this->assertNotSame( $key, Cache::key( $ticker ) );
 
 		// Mobile: only the ticker mode (it changes the markup) is part of the key.

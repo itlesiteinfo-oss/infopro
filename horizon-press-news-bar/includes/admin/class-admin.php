@@ -8,6 +8,7 @@
 namespace HorizonPress\NewsBar\Admin;
 
 use HorizonPress\NewsBar\Rest_Controller;
+use HorizonPress\NewsBar\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -119,8 +120,11 @@ final class Admin {
 			array(
 				'restUrl'      => rest_url( Rest_Controller::NAMESPACE . '/preview' ),
 				'nonce'        => wp_create_nonce( 'wp_rest' ),
+				'defaults'     => Settings::defaults(),
+				'presets'      => Settings::color_presets(),
 				'emptyMessage' => Settings_Page::empty_message(),
 				'i18n'         => array(
+					'resetTab'       => __( 'Reset every setting of this tab to its default value? Nothing is saved until you click Save.', 'horizon-press-news-bar' ),
 					'confirmReset'   => __( 'Restore every setting to its default value? This cannot be undone.', 'horizon-press-news-bar' ),
 					'previewLoading' => __( 'Refreshing the preview…', 'horizon-press-news-bar' ),
 					'previewError'   => __( 'The preview could not be refreshed.', 'horizon-press-news-bar' ),

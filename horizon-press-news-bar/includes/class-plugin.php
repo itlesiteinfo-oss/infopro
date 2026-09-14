@@ -60,6 +60,7 @@ final class Plugin {
 		}
 		$this->registered = true;
 
+		add_action( 'init', array( Settings::class, 'maybe_upgrade' ), 5 );
 		add_action( 'init', array( $this, 'load_textdomain' ) );
 
 		Invalidation::register();

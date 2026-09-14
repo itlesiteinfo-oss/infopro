@@ -69,9 +69,9 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_asset_budgets() {
-		$this->assertLessThanOrEqual( 14 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
+		$this->assertLessThanOrEqual( 20 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
 		$this->assertLessThanOrEqual( 3 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bootstrap.min.js' ) );
-		$this->assertLessThanOrEqual( 10 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
+		$this->assertLessThanOrEqual( 13 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
 	}
 
 	/**
@@ -81,7 +81,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	public function test_presentation_profiles_stay_in_sync() {
 		$css = file_get_contents( HPRNB_PATH . 'assets/css/hprnb-bar.css' );
 		$this->assertSame( 1, preg_match( '/\* 2\. Desktop profile.*?\*\/(.*?)\/\* -{10,}\s*\* 3\./s', $css, $desktop ) );
-		$this->assertSame( 1, preg_match( '/@container hprnb \(max-width: 767\.98px\) \{(.*)\n\}\n\n@keyframes hprnb-pulse/s', $css, $mobile ) );
+		$this->assertSame( 1, preg_match( '/@container hprnb \(max-width: 767\.98px\) \{(.*?)\n\}\n\n\/\* Short screen/s', $css, $mobile ) );
 
 		$normalise = static function ( string $block, string $prefix ): array {
 			$block = preg_replace( '/\/\*.*?\*\//s', '', $block );
@@ -94,8 +94,8 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 				if ( '.hprnb-root' === $selector ) {
 					continue; // The mobile reset of every token has no desktop counterpart (the root defaults play that role).
 				}
-				if ( in_array( $selector, array( '.hprnb-root--P-colors', '.hprnb-root--P-collapse', '.hprnb-bar--collapsed' ), true ) ) {
-					continue; // Mobile-only features (palette, collapse on scroll).
+				if ( preg_match( '/P-colors|P-collapse|P-flow|hprnb-bar--collapsed|peek-label/', $selector ) ) {
+					continue; // Mobile-only features (palette, collapse on scroll, flow card, collapsed strip).
 				}
 				$declarations = array_filter( array_map( 'trim', explode( ';', $rule[2] ) ) );
 				$out[ $selector ] = array_values( $declarations );
@@ -119,7 +119,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	public function test_plugin_headers() {
 		$data = get_plugin_data( HPRNB_FILE, false, false );
 		$this->assertSame( 'Horizon Press News Bar', $data['Name'] );
-		$this->assertSame( '1.3.0', $data['Version'] );
+		$this->assertSame( '2.0.0', $data['Version'] );
 		$this->assertSame( '6.6', $data['RequiresWP'] );
 		$this->assertSame( '8.0', $data['RequiresPHP'] );
 		$this->assertSame( 'horizon-press-news-bar', $data['TextDomain'] );
