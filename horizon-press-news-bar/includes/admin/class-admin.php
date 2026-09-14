@@ -92,10 +92,21 @@ final class Admin {
 		// The admin stylesheet only uses logical properties: the same file serves LTR and RTL.
 		wp_enqueue_style( 'hprnb-admin', HPRNB_URL . 'assets/css/hprnb-admin' . $suffix . '.css', array( 'hprnb-bar' ), HPRNB_VERSION );
 
+		// The front interactive script animates the preview (rotation, progress, marquee, buttons).
+		wp_enqueue_script(
+			'hprnb-bar',
+			HPRNB_URL . 'assets/js/hprnb-bar' . $suffix . '.js',
+			array(),
+			HPRNB_VERSION,
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
+		);
 		wp_enqueue_script(
 			'hprnb-admin',
 			HPRNB_URL . 'assets/js/hprnb-admin' . $suffix . '.js',
-			array(),
+			array( 'hprnb-bar' ),
 			HPRNB_VERSION,
 			array(
 				'in_footer' => true,

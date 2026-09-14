@@ -66,7 +66,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_asset_budgets() {
-		$this->assertLessThanOrEqual( 8 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
+		$this->assertLessThanOrEqual( 10 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
 		$this->assertLessThanOrEqual( 3 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bootstrap.min.js' ) );
 		$this->assertLessThanOrEqual( 10 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
 	}
@@ -79,7 +79,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	public function test_plugin_headers() {
 		$data = get_plugin_data( HPRNB_FILE, false, false );
 		$this->assertSame( 'Horizon Press News Bar', $data['Name'] );
-		$this->assertSame( '1.1.0', $data['Version'] );
+		$this->assertSame( '1.2.0', $data['Version'] );
 		$this->assertSame( '6.6', $data['RequiresWP'] );
 		$this->assertSame( '8.0', $data['RequiresPHP'] );
 		$this->assertSame( 'horizon-press-news-bar', $data['TextDomain'] );

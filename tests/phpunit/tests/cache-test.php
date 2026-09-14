@@ -73,6 +73,12 @@ class Cache_Test extends HPRNB_Test_Case {
 		$ticker = Settings::sanitize( array_merge( $settings, array( 'ticker_enabled' => true ) ) );
 		$this->assertNotSame( $key, Cache::key( $ticker ) );
 
+		// Mobile: only the ticker mode (it changes the markup) is part of the key.
+		$mobile_mode = Settings::sanitize( array_merge( $settings, array( 'mobile_ticker_mode' => 'manual' ) ) );
+		$this->assertNotSame( $key, Cache::key( $mobile_mode ) );
+		$mobile_rest = Settings::sanitize( array_merge( $settings, array( 'mobile_layout' => 'inline', 'mobile_font_size' => 20, 'mobile_bar_height' => 90, 'mobile_label_style' => 'hidden', 'mobile_show_counter' => false, 'mobile_show_progress' => false, 'mobile_swipe' => false, 'mobile_hide_on_scroll' => false, 'mobile_custom_colors' => false, 'mobile_bg_color' => '#000000' ) ) );
+		$this->assertSame( $key, Cache::key( $mobile_rest ), 'Every other mobile setting lives on the root, outside the cache.' );
+
 		// The separator is a CSS concern on the root: none of its settings may fragment the cache.
 		$separator = Settings::sanitize( array_merge( $settings, array( 'show_separator' => true, 'separator_char' => '|', 'separator_after_last' => false ) ) );
 		$this->assertSame( $key, Cache::key( $separator ), 'show_separator / separator_char / separator_after_last never enter the cache key.' );

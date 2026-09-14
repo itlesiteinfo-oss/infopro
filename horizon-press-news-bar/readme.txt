@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,9 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 1.2.0 =
+* Dedicated mobile presentation under 768 px: label pill with a live dot, counter, full-width two-line headline, rotate by default with a progress line and swipe gestures, collapse on scroll, dedicated mobile palette and font size. Fifteen new `mobile_*` settings in a new "Mobile" section; two-tab (desktop / mobile) animated preview in the admin.
 
 = 1.1.0 =
 * New setting "Separator after the last post" (`separator_after_last`, on by default): the separator is now a CSS pseudo-element driven by classes on the root container, so the last → first junction (marquee wrap) matches every other junction. Separator settings no longer fragment the server cache. No separator is shown in rotate mode.

@@ -27,11 +27,22 @@
 	--hprnb-sep: '•';
 	--hprnb-track: 0px;
 	--hprnb-duration: 30s;
+	--hprnb-m-bg: #141414;
+	--hprnb-m-fg: #F5F5F5;
+	--hprnb-m-accent: #E11D2A;
+	--hprnb-m-label-fg: #FFFFFF;
+	--hprnb-m-font-size: 16px;
+	--hprnb-m-height: 76px;
+	--hprnb-m-strip: 22px;
+	--hprnb-m-peek: 36px;
 	display: block;
+	inline-size: 100%;
 	margin: 0;
 	padding: 0;
 	border: 0;
 	background: transparent;
+	/* Query container for the mobile presentation (same 768px threshold as the media queries). */
+	container: hprnb / inline-size;
 }
 
 /* `hidden` must win over the explicit display values set below. */
@@ -240,6 +251,11 @@
 	align-items: center;
 }
 
+/* Every control needs the script: without it (or before it runs) none is shown. */
+.hprnb-bar:not([data-hprnb-init]) .hprnb-bar__controls {
+	display: none;
+}
+
 .hprnb-bar__btn {
 	display: inline-flex;
 	align-items: center;
@@ -330,6 +346,10 @@
 	overflow: hidden;
 }
 
+.hprnb-bar--marquee-on .hprnb-bar__title {
+	max-inline-size: none;
+}
+
 /* While scrolling, the list edges carry no padding so the wrap junction (track gap) equals the item gap. */
 .hprnb-bar--marquee-on .hprnb-bar__list {
 	padding-inline: 0;
@@ -375,13 +395,19 @@
  * 10. Reduced motion — no automatic animation, no decorative smoothing.
  * ------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
-	.hprnb-bar__track {
+	.hprnb-bar__track,
+	.hprnb-bar__item,
+	.hprnb-bar__label::before {
 		animation: none !important;
 	}
 
 	.hprnb-bar__viewport,
 	.hprnb-bar--ticker-manual .hprnb-bar__viewport {
 		scroll-behavior: auto;
+	}
+
+	.hprnb-root--m-collapse .hprnb-bar {
+		transition: none;
 	}
 }
 
@@ -423,13 +449,194 @@ html.hprnb-dismissed body.hprnb-reserve {
 		overflow: hidden;
 	}
 
-	.hprnb-bar__label {
+	/* Inline layout only: the stacked layout gives the headline the whole row. */
+	.hprnb-root--m-inline .hprnb-bar__label {
 		max-inline-size: min(38vw, 220px);
 	}
 
-	.hprnb-bar__title {
+	.hprnb-root--m-inline .hprnb-bar:not(.hprnb-bar--marquee-on) .hprnb-bar__title {
 		max-inline-size: 60vw;
 	}
+
+	/* The reserved space follows the mobile height (set on the body by PHP and the JS). */
+	body.hprnb-reserve {
+		padding-block-end: calc(var(--hprnb-m-height, var(--hprnb-height, 44px)) + env(safe-area-inset-bottom, 0px));
+	}
+}
+
+/* ---------------------------------------------------------------------------
+ * 13. Mobile presentation — container query on #hprnb-root (< 768px).
+ *     Stacked: row 1 = label pill + counter (+ controls spanning both rows),
+ *     row 2 = full-width headline. Everything is driven by root classes,
+ *     custom properties and data-hprnb-mobile (assembled outside the cache).
+ * ------------------------------------------------------------------------- */
+@container hprnb (max-width: 767.98px) {
+	.hprnb-bar {
+		font-size: var(--hprnb-m-font-size);
+	}
+
+	.hprnb-root--m-colors .hprnb-bar {
+		background: color-mix(in srgb, var(--hprnb-m-bg) 94%, transparent);
+		color: var(--hprnb-m-fg);
+		-webkit-backdrop-filter: blur(14px);
+		backdrop-filter: blur(14px);
+		/* Hairline drawn as an inset shadow so the configured height is exact. */
+		box-shadow: inset 0 1px 0 color-mix(in srgb, var(--hprnb-m-fg) 14%, transparent), 0 -8px 28px rgba(0, 0, 0, .3);
+	}
+
+	.hprnb-root--m-colors .hprnb-bar__label {
+		background: var(--hprnb-m-accent);
+		color: var(--hprnb-m-label-fg);
+	}
+
+	.hprnb-root--m-stacked .hprnb-bar__inner {
+		display: grid;
+		/* The label column never takes more than 60% of the bar; the pill text is ellipsised beyond. */
+		grid-template-columns: fit-content(60%) minmax(0, 1fr) auto;
+		grid-template-rows: var(--hprnb-m-strip) minmax(0, 1fr);
+		align-items: center;
+		column-gap: 8px;
+		row-gap: 4px;
+		block-size: var(--hprnb-m-height);
+		padding: 6px 12px 8px;
+	}
+
+	.hprnb-root--m-stacked .hprnb-bar__label {
+		grid-area: 1 / 1 / 2 / 2;
+		order: 0;
+		align-self: center;
+		gap: 6px;
+		max-inline-size: none;
+		block-size: var(--hprnb-m-strip);
+		padding-inline: 8px 10px;
+		font-size: 11px;
+		font-weight: 700;
+		letter-spacing: .08em;
+		text-transform: uppercase;
+		line-height: var(--hprnb-m-strip);
+		border-radius: 999px;
+	}
+
+	.hprnb-root--m-label-pill .hprnb-bar__label::before {
+		content: "";
+		flex: none;
+		inline-size: 6px;
+		block-size: 6px;
+		border-radius: 50%;
+		background: currentColor;
+		animation: hprnb-pulse 2s ease-in-out infinite;
+	}
+
+	.hprnb-root--m-label-strip .hprnb-bar__label {
+		background: transparent;
+		color: var(--hprnb-m-accent);
+		padding-inline: 0;
+	}
+
+	.hprnb-root--m-label-hidden .hprnb-bar__label {
+		display: none;
+	}
+
+	.hprnb-bar__counter {
+		grid-area: 1 / 2 / 2 / 3;
+		justify-self: start;
+		font-size: 11px;
+		font-variant-numeric: tabular-nums;
+		letter-spacing: .04em;
+		opacity: .7;
+	}
+
+	.hprnb-root--m-stacked .hprnb-bar__viewport {
+		grid-area: 2 / 1 / 3 / 3;
+		order: 0;
+		align-self: stretch;
+	}
+
+	.hprnb-root--m-stacked .hprnb-bar__controls {
+		grid-area: 1 / 3 / 3 / 4;
+		order: 0;
+		align-self: center;
+	}
+
+	.hprnb-root--m-stacked .hprnb-bar__list {
+		padding-inline: 0;
+	}
+
+	.hprnb-root--m-stacked .hprnb-bar__title {
+		max-inline-size: none;
+	}
+
+	/* Rotate: one full-width headline, up to two lines, swipeable. */
+	.hprnb-root--m-stacked .hprnb-bar--mode-rotate .hprnb-bar__list,
+	.hprnb-root--m-stacked .hprnb-bar--mode-rotate .hprnb-bar__item,
+	.hprnb-root--m-stacked .hprnb-bar--mode-rotate .hprnb-bar__link {
+		inline-size: 100%;
+	}
+
+	.hprnb-root--m-stacked .hprnb-bar--mode-rotate .hprnb-bar__viewport {
+		overflow: hidden;
+		touch-action: pan-y;
+	}
+
+	.hprnb-root--m-stacked .hprnb-bar--mode-rotate .hprnb-bar__title {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		overflow: hidden;
+		white-space: normal;
+		line-height: 1.25;
+		font-weight: 600;
+	}
+
+	.hprnb-bar--mode-rotate .hprnb-bar__item:not([hidden]) {
+		animation: hprnb-rise .32s ease-out;
+	}
+
+	.hprnb-bar__progress {
+		position: absolute;
+		inset-inline: 0;
+		inset-block-end: env(safe-area-inset-bottom, 0px);
+		block-size: 3px;
+		background: var(--hprnb-m-accent);
+		transform: scaleX(0);
+		transform-origin: 0 50%;
+	}
+
+	.hprnb-bar--rtl .hprnb-bar__progress {
+		transform-origin: 100% 50%;
+	}
+
+	.hprnb-bar__progress.is-run {
+		animation: hprnb-progress var(--hprnb-progress, 5s) linear forwards;
+	}
+
+	.hprnb-bar--paused .hprnb-bar__progress {
+		animation-play-state: paused;
+	}
+
+	/* Collapse on scroll: only the label row peeks above the bottom edge. */
+	.hprnb-root--m-collapse .hprnb-bar {
+		transition: transform .28s ease;
+	}
+
+	.hprnb-bar--collapsed {
+		transform: translateY(calc(100% - var(--hprnb-m-peek) - env(safe-area-inset-bottom, 0px)));
+	}
+}
+
+@keyframes hprnb-pulse {
+	0%, 100% { opacity: 1; transform: scale(1); }
+	50% { opacity: .45; transform: scale(.7); }
+}
+
+@keyframes hprnb-rise {
+	from { opacity: 0; transform: translateY(6px); }
+	to { opacity: 1; transform: none; }
+}
+
+@keyframes hprnb-progress {
+	from { transform: scaleX(0); }
+	to { transform: scaleX(1); }
 }
 
 @media (min-width: 768px) {

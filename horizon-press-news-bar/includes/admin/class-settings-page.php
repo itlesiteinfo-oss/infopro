@@ -75,6 +75,13 @@ final class Settings_Page {
 				/* translators: %s: contrast ratio, e.g. "3.1:1". */
 				$warnings[] = sprintf( __( 'Label text / label background contrast is %s, below the 4.5:1 recommended by WCAG AA.', 'horizon-press-news-bar' ), self::format_ratio( $ratio ) );
 			}
+			if ( ! empty( $clean['mobile_custom_colors'] ) ) {
+				$ratio = self::contrast_ratio( $clean['mobile_text_color'], $clean['mobile_bg_color'] );
+				if ( $ratio < 4.5 ) {
+					/* translators: %s: contrast ratio, e.g. "3.1:1". */
+					$warnings[] = sprintf( __( 'Mobile text / mobile background contrast is %s, below the 4.5:1 recommended by WCAG AA.', 'horizon-press-news-bar' ), self::format_ratio( $ratio ) );
+				}
+			}
 
 			if ( ! empty( $warnings ) ) {
 				add_settings_error( Settings::OPTION, 'hprnb_settings_saved', __( 'Settings saved.', 'horizon-press-news-bar' ), 'success' );
@@ -190,6 +197,10 @@ final class Settings_Page {
 			),
 			'appearance' => array(
 				'title' => __( 'Appearance', 'horizon-press-news-bar' ),
+			),
+			'mobile'     => array(
+				'title'       => __( 'Mobile', 'horizon-press-news-bar' ),
+				'description' => __( 'Under 768 px the bar switches to a dedicated presentation: a label pill and a counter on a first row, the headline on its own full-width row, one headline at a time with a progress line, swipe gestures and a collapse-on-scroll behaviour. Everything below is optional.', 'horizon-press-news-bar' ),
 			),
 			'behavior'   => array(
 				'title' => __( 'Behavior', 'horizon-press-news-bar' ),
@@ -384,6 +395,105 @@ final class Settings_Page {
 				'type'    => 'number',
 				'label'   => __( 'Relative time limit (hours)', 'horizon-press-news-bar' ),
 				'desc'    => __( 'Beyond this age the absolute date is shown instead.', 'horizon-press-news-bar' ),
+			),
+			'mobile_layout'            => array(
+				'section' => 'mobile',
+				'type'    => 'radio',
+				'label'   => __( 'Mobile layout', 'horizon-press-news-bar' ),
+				'options' => array(
+					'stacked' => __( 'Stacked (recommended) — label pill and counter above a full-width headline', 'horizon-press-news-bar' ),
+					'inline'  => __( 'Inline — same single line as on desktop', 'horizon-press-news-bar' ),
+				),
+			),
+			'mobile_font_size'         => array(
+				'section' => 'mobile',
+				'type'    => 'number',
+				'label'   => __( 'Mobile font size (px)', 'horizon-press-news-bar' ),
+			),
+			'mobile_bar_height'        => array(
+				'section' => 'mobile',
+				'type'    => 'number',
+				'label'   => __( 'Mobile bar height (px)', 'horizon-press-news-bar' ),
+				'desc'    => __( 'Stacked layout only; the inline layout keeps the desktop height.', 'horizon-press-news-bar' ),
+			),
+			'mobile_label_style'       => array(
+				'section' => 'mobile',
+				'type'    => 'select',
+				'label'   => __( 'Mobile label style', 'horizon-press-news-bar' ),
+				'options' => array(
+					'pill'   => __( 'Pill with a live dot', 'horizon-press-news-bar' ),
+					'strip'  => __( 'Plain uppercase text', 'horizon-press-news-bar' ),
+					'hidden' => __( 'Hidden', 'horizon-press-news-bar' ),
+				),
+			),
+			'mobile_ticker_mode'       => array(
+				'section' => 'mobile',
+				'type'    => 'select',
+				'label'   => __( 'Mobile ticker mode', 'horizon-press-news-bar' ),
+				'options' => array(
+					'rotate'  => __( 'Rotate — one headline at a time (recommended)', 'horizon-press-news-bar' ),
+					'inherit' => __( 'Same as desktop', 'horizon-press-news-bar' ),
+					'static'  => __( 'Static list', 'horizon-press-news-bar' ),
+					'marquee' => __( 'Marquee', 'horizon-press-news-bar' ),
+					'manual'  => __( 'Manual — previous / next buttons', 'horizon-press-news-bar' ),
+				),
+				'desc'    => __( 'Rotate and marquee always come with the Pause / Play button and respect reduced-motion preferences.', 'horizon-press-news-bar' ),
+			),
+			'mobile_show_counter'      => array(
+				'section' => 'mobile',
+				'type'    => 'checkbox',
+				'label'   => __( 'Counter', 'horizon-press-news-bar' ),
+				'text'    => __( 'Show "2/8" next to the label (rotate mode, stacked layout).', 'horizon-press-news-bar' ),
+			),
+			'mobile_show_progress'     => array(
+				'section' => 'mobile',
+				'type'    => 'checkbox',
+				'label'   => __( 'Progress line', 'horizon-press-news-bar' ),
+				'text'    => __( 'Show a thin progress line until the next headline (rotate mode, stacked layout).', 'horizon-press-news-bar' ),
+			),
+			'mobile_swipe'             => array(
+				'section' => 'mobile',
+				'type'    => 'checkbox',
+				'label'   => __( 'Swipe', 'horizon-press-news-bar' ),
+				'text'    => __( 'Swipe left or right to move between headlines (rotate mode).', 'horizon-press-news-bar' ),
+			),
+			'mobile_hide_on_scroll'    => array(
+				'section' => 'mobile',
+				'type'    => 'checkbox',
+				'label'   => __( 'Collapse on scroll', 'horizon-press-news-bar' ),
+				'text'    => __( 'Collapse the bar to its label row while scrolling down; expand when scrolling up or tapping the label (stacked layout).', 'horizon-press-news-bar' ),
+			),
+			'mobile_custom_colors'     => array(
+				'section' => 'mobile',
+				'type'    => 'checkbox',
+				'label'   => __( 'Mobile colours', 'horizon-press-news-bar' ),
+				'text'    => __( 'Use a dedicated mobile palette (below) instead of the desktop colours.', 'horizon-press-news-bar' ),
+			),
+			'mobile_bg_color'          => array(
+				'section' => 'mobile',
+				'type'    => 'color',
+				'label'   => __( 'Mobile background colour', 'horizon-press-news-bar' ),
+				'depends' => 'mobile_custom_colors',
+			),
+			'mobile_text_color'        => array(
+				'section'  => 'mobile',
+				'type'     => 'color',
+				'label'    => __( 'Mobile text colour', 'horizon-press-news-bar' ),
+				'contrast' => 'mobile',
+				'depends'  => 'mobile_custom_colors',
+			),
+			'mobile_accent_color'      => array(
+				'section' => 'mobile',
+				'type'    => 'color',
+				'label'   => __( 'Mobile accent colour', 'horizon-press-news-bar' ),
+				'desc'    => __( 'Label pill, live dot and progress line.', 'horizon-press-news-bar' ),
+				'depends' => 'mobile_custom_colors',
+			),
+			'mobile_label_text_color'  => array(
+				'section' => 'mobile',
+				'type'    => 'color',
+				'label'   => __( 'Mobile label text colour', 'horizon-press-news-bar' ),
+				'depends' => 'mobile_custom_colors',
 			),
 			'ticker_enabled'           => array(
 				'section' => 'behavior',
@@ -877,13 +987,19 @@ final class Settings_Page {
 		?>
 		<aside class="hprnb-preview" id="hprnb-preview" aria-label="<?php esc_attr_e( 'Preview', 'horizon-press-news-bar' ); ?>">
 			<h2><?php esc_html_e( 'Preview', 'horizon-press-news-bar' ); ?></h2>
-			<div class="hprnb-preview__stage" id="hprnb-preview-stage">
-				<div id="hprnb-preview-root" class="hprnb-root" style="<?php echo esc_attr( Renderer::root_style( $settings ) ); ?>">
+			<div class="hprnb-preview__tabs" role="tablist" aria-label="<?php esc_attr_e( 'Preview device', 'horizon-press-news-bar' ); ?>">
+				<button type="button" role="tab" id="hprnb-preview-tab-desktop" class="hprnb-preview__tab is-active" aria-selected="true" aria-controls="hprnb-preview-stage" data-hprnb-device="desktop"><?php esc_html_e( 'Desktop', 'horizon-press-news-bar' ); ?></button>
+				<button type="button" role="tab" id="hprnb-preview-tab-mobile" class="hprnb-preview__tab" aria-selected="false" aria-controls="hprnb-preview-stage" data-hprnb-device="mobile"><?php esc_html_e( 'Mobile', 'horizon-press-news-bar' ); ?></button>
+			</div>
+			<div class="hprnb-preview__stage" id="hprnb-preview-stage" data-hprnb-device="desktop">
+				<div class="hprnb-preview__frame">
+				<div id="hprnb-preview-root" class="<?php echo esc_attr( implode( ' ', Renderer::root_classes( $settings ) ) ); ?> hprnb-root--preview hprnb-root--flat" style="<?php echo esc_attr( Renderer::root_style( $settings ) ); ?>" data-hprnb-mobile="<?php echo esc_attr( (string) wp_json_encode( Renderer::mobile_data( $settings ) ) ); ?>">
 					<?php if ( '' === $html ) : ?>
 					<p class="hprnb-preview__empty" id="hprnb-preview-empty"><?php echo esc_html( self::empty_message() ); ?></p>
 					<?php else : ?>
 						<?php echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup built and escaped by the Renderer. ?>
 					<?php endif; ?>
+				</div>
 				</div>
 			</div>
 			<p class="hprnb-preview__actions">

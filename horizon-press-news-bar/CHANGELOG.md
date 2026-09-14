@@ -2,6 +2,19 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [1.2.0] — 2026-09-14
+
+### Ajouté
+
+- Présentation mobile empilée (sous 768 px) : pastille de label avec point « en direct », compteur, titre pleine largeur sur deux lignes, rotation par défaut avec ligne de progression et balayage tactile, repli au défilement, palette mobile dédiée, police 16 px — quinze réglages `mobile_*` dans une nouvelle section « Mobile ».
+- Aperçu d’administration à deux onglets (Ordinateur / Mobile) animé par le script interactif de la barre.
+
+### Modifié
+
+- Le seuil mobile de la présentation est mesuré par une container query sur `#hprnb-root` (même 768 px) ; les classes d’affichage par appareil restent des media queries.
+- Le script interactif se détruit et se réinitialise proprement au franchissement du seuil.
+- Plus aucune troncature « … » des titres en marquee sur mobile.
+
 ## [1.1.0] — 2026-09-12
 
 ### Ajouté

@@ -235,6 +235,69 @@ final class Settings {
 				'type'    => 'bool',
 				'default' => true,
 			),
+			'mobile_layout'            => array(
+				'type'    => 'enum',
+				'default' => 'stacked',
+				'options' => array( 'stacked', 'inline' ),
+			),
+			'mobile_font_size'         => array(
+				'type'    => 'int',
+				'default' => 16,
+				'min'     => 12,
+				'max'     => 24,
+			),
+			'mobile_bar_height'        => array(
+				'type'    => 'int',
+				'default' => 76,
+				'min'     => 44,
+				'max'     => 140,
+			),
+			'mobile_label_style'       => array(
+				'type'    => 'enum',
+				'default' => 'pill',
+				'options' => array( 'pill', 'strip', 'hidden' ),
+			),
+			'mobile_ticker_mode'       => array(
+				'type'    => 'enum',
+				'default' => 'rotate',
+				'options' => array( 'inherit', 'static', 'marquee', 'rotate', 'manual' ),
+			),
+			'mobile_show_counter'      => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
+			'mobile_show_progress'     => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
+			'mobile_swipe'             => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
+			'mobile_hide_on_scroll'    => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
+			'mobile_custom_colors'     => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
+			'mobile_bg_color'          => array(
+				'type'    => 'color',
+				'default' => '#141414',
+			),
+			'mobile_text_color'        => array(
+				'type'    => 'color',
+				'default' => '#F5F5F5',
+			),
+			'mobile_accent_color'      => array(
+				'type'    => 'color',
+				'default' => '#E11D2A',
+			),
+			'mobile_label_text_color'  => array(
+				'type'    => 'color',
+				'default' => '#FFFFFF',
+			),
 			'display_scope'            => array(
 				'type'    => 'enum',
 				'default' => 'everywhere',

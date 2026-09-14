@@ -87,6 +87,10 @@
 			if (height) {
 				document.body.style.setProperty('--hprnb-height', height);
 			}
+			var mobileHeight = root.style.getPropertyValue('--hprnb-m-height');
+			if (mobileHeight) {
+				document.body.style.setProperty('--hprnb-m-height', mobileHeight);
+			}
 			document.body.classList.add('hprnb-reserve');
 		}
 

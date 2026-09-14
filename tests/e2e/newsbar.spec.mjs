@@ -39,8 +39,9 @@ test( 'desktop: bar is fixed at the bottom, reserves space, no overflow, no cons
 	expect( await page.locator( '.hprnb-bar__item' ).count() ).toBeLessThanOrEqual( 10 );
 	await expect( page.locator( '.hprnb-bar__label-text' ) ).toHaveText( 'TOUTE L’ACTUALITÉ' );
 	expect( await page.locator( 'script#hprnb-bootstrap-js' ).count() ).toBe( 1 );
-	expect( await page.locator( 'script#hprnb-bar-js' ).count() ).toBe( 0 );
-	expect( await page.locator( '.hprnb-bar button' ).count() ).toBe( 0 );
+	expect( await page.locator( 'script#hprnb-bar-js' ).count() ).toBe( 1 ); // mobile rotate needs it; harmless on desktop
+	await expect( page.locator( '.hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+	expect( await page.locator( '.hprnb-bar button:not([hidden])' ).count() ).toBe( 0 );
 	expect( await noHorizontalOverflow( page ) ).toBe( true );
 	expect( errors ).toEqual( [] );
 } );
@@ -137,8 +138,8 @@ test( 'hybrid: stale SSR and empty REST result removes the bar', async ( { page 
 	await expect( page.locator( 'body' ) ).not.toHaveClass( /hprnb-reserve/ );
 } );
 
-test( 'mobile: single line, label capped, one-line bar, no overflow; hide on mobile', async ( { page } ) => {
-	setSettings();
+test( 'mobile inline layout: single line, label capped, one-line bar, no overflow; hide on mobile', async ( { page } ) => {
+	setSettings( { mobile_layout: 'inline', mobile_ticker_mode: 'inherit' } );
 	await page.setViewportSize( { width: 375, height: 667 } );
 	await page.goto( '/' );
 	const bar = page.locator( '#hprnb-root .hprnb-bar' );
@@ -172,13 +173,13 @@ test( 'responsive widths never overflow horizontally', async ( { page } ) => {
 		await page.goto( '/' );
 		await expect( page.locator( '#hprnb-root .hprnb-bar' ) ).toBeVisible();
 		expect( await noHorizontalOverflow( page ), `width ${ width }` ).toBe( true );
-		expect( Math.round( ( await page.locator( '.hprnb-bar' ).boundingBox() ).height ), `width ${ width }` ).toBe( 44 );
+		expect( Math.round( ( await page.locator( '.hprnb-bar' ).boundingBox() ).height ), `width ${ width }` ).toBe( width < 768 ? 76 : 44 );
 	}
 } );
 
 test( 'RTL: label "end" sits on the left, marquee direction flips, RTL stylesheet used', async ( { page } ) => {
 	// dir="auto" resolves the direction from the first strong character of the bar (the label).
-	setSettings( { ticker_enabled: true, ticker_mode: 'marquee', label_text: 'آخر الأخبار' } );
+	setSettings( { ticker_enabled: true, ticker_mode: 'marquee', label_text: 'آخر الأخبار', mobile_layout: 'inline', mobile_ticker_mode: 'inherit' } );
 	const arabic = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=عنوان تجريبي طويل لاختبار الشريط الإخباري في اتجاه من اليمين إلى اليسار', '--porcelain' ] );
 	try {
 		await page.setViewportSize( { width: 375, height: 667 } );
@@ -207,7 +208,7 @@ test( 'RTL: label "end" sits on the left, marquee direction flips, RTL styleshee
 	}
 
 	// Latin content on an LTR site: label "end" on the right, LTR keyframe.
-	setSettings( { ticker_enabled: true, ticker_mode: 'marquee' } );
+	setSettings( { ticker_enabled: true, ticker_mode: 'marquee', mobile_layout: 'inline', mobile_ticker_mode: 'inherit' } );
 	await page.goto( '/' );
 	const aside = page.locator( '.hprnb-bar' );
 	await expect( aside ).toHaveClass( /hprnb-bar--marquee-on/ );
@@ -219,7 +220,7 @@ test( 'RTL: label "end" sits on the left, marquee direction flips, RTL styleshee
 } );
 
 test( 'marquee: clone, pause/play button, hover, focus, hidden tab, fits → no animation', async ( { page } ) => {
-	setSettings( { ticker_enabled: true, ticker_mode: 'marquee', pause_on_hover: true } );
+	setSettings( { ticker_enabled: true, ticker_mode: 'marquee', pause_on_hover: true, mobile_ticker_mode: 'inherit' } );
 	const errors = collectErrors( page );
 	await page.setViewportSize( { width: 375, height: 667 } );
 	await page.goto( '/' );
@@ -279,7 +280,7 @@ test( 'marquee: clone, pause/play button, hover, focus, hidden tab, fits → no 
 
 	// Content that fits: no animation, no clone, toggle hidden.
 	await page.setViewportSize( { width: 1920, height: 800 } );
-	setSettings( { ticker_enabled: true, ticker_mode: 'marquee', max_items: 1 } );
+	setSettings( { ticker_enabled: true, ticker_mode: 'marquee', max_items: 1, mobile_ticker_mode: 'inherit' } );
 	await page.goto( '/' );
 	await expect( page.locator( '.hprnb-bar__item' ) ).toHaveCount( 1 );
 	await expect( aside ).not.toHaveClass( /hprnb-bar--marquee-on/ );
@@ -289,7 +290,7 @@ test( 'marquee: clone, pause/play button, hover, focus, hidden tab, fits → no 
 } );
 
 test( 'reduced motion disables marquee and rotate', async ( { page } ) => {
-	setSettings( { ticker_enabled: true, ticker_mode: 'marquee' } );
+	setSettings( { ticker_enabled: true, ticker_mode: 'marquee', mobile_ticker_mode: 'inherit' } );
 	await page.emulateMedia( { reducedMotion: 'reduce' } );
 	await page.setViewportSize( { width: 375, height: 667 } );
 	await page.goto( '/' );
@@ -300,7 +301,7 @@ test( 'reduced motion disables marquee and rotate', async ( { page } ) => {
 	await expect( page.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden();
 	expect( await page.locator( '.hprnb-bar__list' ).evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'none' );
 
-	setSettings( { ticker_enabled: true, ticker_mode: 'rotate' } );
+	setSettings( { ticker_enabled: true, ticker_mode: 'rotate', mobile_ticker_mode: 'inherit' } );
 	await page.goto( '/' );
 	await expect( page.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden();
 	expect( await page.locator( '.hprnb-bar__item[hidden]' ).count() ).toBe( 0 );
@@ -333,7 +334,7 @@ test( 'rotate: one item at a time, advances, pauses on focus and via button', as
 } );
 
 test( 'manual: prev/next buttons and end states', async ( { page } ) => {
-	setSettings( { ticker_enabled: true, ticker_mode: 'manual' } );
+	setSettings( { ticker_enabled: true, ticker_mode: 'manual', mobile_ticker_mode: 'inherit' } );
 	await page.setViewportSize( { width: 375, height: 667 } );
 	await page.goto( '/' );
 	const prev = page.locator( '.hprnb-bar__btn--prev' );
@@ -353,7 +354,7 @@ test( 'manual: prev/next buttons and end states', async ( { page } ) => {
 	await expect( next ).toBeDisabled();
 
 	await page.setViewportSize( { width: 1920, height: 800 } );
-	setSettings( { ticker_enabled: true, ticker_mode: 'manual', max_items: 1 } );
+	setSettings( { ticker_enabled: true, ticker_mode: 'manual', max_items: 1, mobile_ticker_mode: 'inherit' } );
 	await page.goto( '/' );
 	await expect( prev ).toBeDisabled();
 	await expect( next ).toBeDisabled();
@@ -431,6 +432,7 @@ test( 'separator after the last post: 4 modes × LTR/RTL × on/off', async ( { p
 					separator_after_last: loop,
 					ticker_enabled: mode !== 'static',
 					ticker_mode: mode === 'static' ? 'marquee' : mode,
+					mobile_ticker_mode: 'inherit',
 					label_text: rtl ? 'آخر الأخبار' : 'TOUTE L’ACTUALITÉ',
 				} );
 				await page.goto( rtl ? '/?hprnb_rtl=1' : '/' );
@@ -536,7 +538,7 @@ test( 'admin: settings page, live preview, contrast warning, save, export, impor
 	await expect( page.locator( 'h1' ) ).toHaveText( 'Horizon Press News Bar' );
 	expect( await page.locator( 'link#hprnb-admin-css' ).count() ).toBe( 1 );
 	await expect( page.locator( '#hprnb-preview-root .hprnb-bar' ) ).toBeVisible();
-	expect( await page.locator( '#hprnb-preview-root .hprnb-bar' ).evaluate( ( el ) => getComputedStyle( el ).position ) ).toBe( 'static' );
+	expect( await page.locator( '#hprnb-preview-root .hprnb-bar' ).evaluate( ( el ) => getComputedStyle( el ).position ) ).toBe( 'relative' );
 
 	// Live visual updates without network.
 	const previews = countRequests( page, /hprnb\/v1\/preview/ );
@@ -566,6 +568,24 @@ test( 'admin: settings page, live preview, contrast warning, save, export, impor
 	await page.uncheck( '#hprnb-field-show-separator' );
 	await expect( previewRoot ).not.toHaveClass( /hprnb-bar--sep/ );
 	await expect( dependentRow ).toHaveClass( /hprnb-row--inactive/ );
+
+	// Preview tabs: the mobile frame renders the stacked presentation, animated by the front script.
+	await page.click( '#hprnb-preview-tab-mobile' );
+	await expect( page.locator( '#hprnb-preview-stage' ) ).toHaveAttribute( 'data-hprnb-device', 'mobile' );
+	await expect( previewRoot ).not.toHaveClass( /hprnb-root--flat/ );
+	await expect( page.locator( '#hprnb-preview-root .hprnb-bar' ) ).toHaveClass( /hprnb-bar--mode-rotate/ );
+	await expect( page.locator( '#hprnb-preview-root .hprnb-bar__counter' ) ).toHaveCount( 1 );
+	expect( Math.round( ( await previewRoot.boundingBox() ).width ) ).toBeLessThanOrEqual( 375 );
+	await page.uncheck( '#hprnb-field-mobile-custom-colors' );
+	await expect( previewRoot ).not.toHaveClass( /hprnb-root--m-colors/ );
+	await expect( page.locator( 'tr[data-hprnb-depends="mobile_custom_colors"]' ).first() ).toHaveClass( /hprnb-row--inactive/ );
+	await page.check( '#hprnb-field-mobile-custom-colors' );
+	await page.check( '#hprnb-field-mobile-layout-inline' );
+	await expect( previewRoot ).toHaveClass( /hprnb-root--m-inline/ );
+	await page.check( '#hprnb-field-mobile-layout-stacked' );
+	await page.click( '#hprnb-preview-tab-desktop' );
+	await expect( previewRoot ).toHaveClass( /hprnb-root--flat/ );
+	await expect( page.locator( '#hprnb-preview-root .hprnb-bar' ) ).toHaveClass( /hprnb-bar--mode-none/ );
 	expect( previews ).toHaveLength( 0 );
 
 	// Contrast warning (never blocks saving).
@@ -678,6 +698,8 @@ test( 'accessibility: axe-core audit of the bar and visible keyboard focus', asy
 		await page.setViewportSize( { width: 375, height: 667 } );
 		await page.goto( '/' );
 		await expect( page.locator( '#hprnb-root .hprnb-bar' ) ).toBeVisible();
+		await expect( page.locator( '#hprnb-root .hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await page.waitForTimeout( 500 ); // let the headline entrance animation (opacity) finish before sampling contrast
 		await page.addScriptTag( { path: axePath } );
 		const results = await page.evaluate( async () => {
 			const r = await window.axe.run( document.getElementById( 'hprnb-root' ), { runOnly: { type: 'tag', values: [ 'wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice' ] } } );
@@ -711,4 +733,114 @@ test( 'accessibility: axe-core audit of the bar and visible keyboard focus', asy
 		const inClone = await page.evaluate( () => !! ( document.activeElement && document.activeElement.closest( '.hprnb-bar__list--clone' ) ) );
 		expect( inClone ).toBe( false );
 	}
+} );
+
+test( 'mobile stacked presentation: pill, counter, progress, rotation, swipe, collapse, colours, options, breakpoint', async ( { page } ) => {
+	setSettings( { rotate_interval: 1500 } );
+	const errors = collectErrors( page );
+	await page.setViewportSize( { width: 375, height: 667 } );
+	await page.goto( '/' );
+	const root = page.locator( '#hprnb-root' );
+	const aside = page.locator( '#hprnb-root .hprnb-bar' );
+	await expect( aside ).toBeVisible();
+	await expect( root ).toHaveClass( /hprnb-root--m-stacked/ );
+	await expect( aside ).toHaveClass( /hprnb-bar--mode-rotate/ );
+	await expect( aside ).toHaveClass( /hprnb-bar--mobile/ );
+	expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 76 );
+	expect( await page.evaluate( () => parseFloat( getComputedStyle( document.body ).paddingBottom ) ) ).toBeGreaterThanOrEqual( 76 );
+
+	// Row 1: pill label with a live dot and the counter; row 2: full-width 16px headline, two lines max.
+	const label = page.locator( '.hprnb-bar__label' );
+	await expect( label ).toBeVisible();
+	expect( await label.evaluate( ( el ) => getComputedStyle( el ).borderTopLeftRadius ) ).toBe( '999px' );
+	// The default label ("TOUTE L’ACTUALITÉ") fits in the pill without an ellipsis, and the pill stays under 60% of the bar.
+	expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => el.scrollWidth <= el.clientWidth + 1 ) ).toBe( true );
+	expect( ( await label.boundingBox() ).width ).toBeLessThanOrEqual( 375 * 0.6 );
+	expect( await label.evaluate( ( el ) => getComputedStyle( el, '::before' ).content ) ).toBe( '""' );
+	const counter = page.locator( '.hprnb-bar__counter' );
+	await expect( counter ).toHaveText( /^1\/\d+$/ );
+	const title = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' );
+	expect( await title.evaluate( ( el ) => getComputedStyle( el ).fontSize ) ).toBe( '16px' );
+	expect( await title.evaluate( ( el ) => getComputedStyle( el ).webkitLineClamp ) ).toBe( '2' );
+	expect( ( await page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__link' ).boundingBox() ).width ).toBeGreaterThan( 250 );
+	const labelBox = await label.boundingBox();
+	const titleBox = await title.boundingBox();
+	expect( titleBox.y ).toBeGreaterThan( labelBox.y + labelBox.height - 1 );
+
+	// Dedicated mobile palette.
+	expect( await aside.evaluate( ( el ) => getComputedStyle( el ).color ) ).toBe( 'rgb(245, 245, 245)' );
+	// color-mix() resolves to rgb(20 20 20 / .94) or color(srgb 0.078 …), depending on the engine.
+	expect( await aside.evaluate( ( el ) => getComputedStyle( el ).backgroundColor ) ).toMatch( /20, 20, 20|0\.078/ );
+	expect( await label.evaluate( ( el ) => getComputedStyle( el ).backgroundColor ) ).toBe( 'rgb(225, 29, 42)' );
+
+	// Progress line runs and the rotation advances.
+	const progress = page.locator( '.hprnb-bar__progress' );
+	await expect( progress ).toHaveClass( /is-run/ );
+	expect( await progress.evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'hprnb-progress' );
+	await expect( counter ).toHaveText( /^2\/\d+$/, { timeout: 4000 } );
+
+	// Swipe left → next headline.
+	const before = await counter.textContent();
+	const box = await page.locator( '.hprnb-bar__viewport' ).boundingBox();
+	await page.mouse.move( box.x + box.width - 20, box.y + box.height / 2 );
+	await page.mouse.down();
+	await page.mouse.move( box.x + 40, box.y + box.height / 2, { steps: 8 } );
+	await page.mouse.up();
+	await expect( counter ).not.toHaveText( before );
+
+	// Collapse while scrolling down, expand when scrolling up or tapping the label row.
+	// (Before the buttons get focus: an interaction inside the bar holds it open for 4 s.)
+	await page.evaluate( () => window.scrollTo( 0, 0 ) );
+	await page.evaluate( () => window.scrollTo( 0, 600 ) );
+	await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
+	await page.evaluate( () => window.scrollTo( 0, 300 ) );
+	await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
+	await page.evaluate( () => window.scrollTo( 0, 900 ) );
+	await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
+	await label.click( { force: true } );
+	await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
+
+	// Pause / Play pauses the rotation and the progress line; no prev/next buttons in rotate mode.
+	const toggle = page.locator( '.hprnb-bar__btn--toggle' );
+	await expect( toggle ).toBeVisible();
+	await toggle.click();
+	await expect( aside ).toHaveClass( /hprnb-bar--paused/ );
+	expect( await progress.evaluate( ( el ) => getComputedStyle( el ).animationPlayState ) ).toBe( 'paused' );
+	await toggle.click();
+	await expect( page.locator( '.hprnb-bar__btn--prev' ) ).toBeHidden();
+	expect( await noHorizontalOverflow( page ) ).toBe( true );
+
+	expect( errors ).toEqual( [] );
+
+	// Crossing the threshold re-initialises the bar for the desktop presentation, and back.
+	await page.setViewportSize( { width: 1366, height: 800 } );
+	await expect( aside ).toHaveClass( /hprnb-bar--mode-none/ );
+	await expect( page.locator( '.hprnb-bar__counter' ) ).toHaveCount( 0 );
+	await expect( page.locator( '.hprnb-bar__progress' ) ).toHaveCount( 0 );
+	await expect( toggle ).toBeHidden();
+	expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 44 );
+	await page.setViewportSize( { width: 375, height: 667 } );
+	await expect( aside ).toHaveClass( /hprnb-bar--mode-rotate/ );
+	await expect( page.locator( '.hprnb-bar__counter' ) ).toHaveCount( 1 );
+
+	// Options: hidden label, desktop colours, no counter/progress/collapse.
+	setSettings( { mobile_label_style: 'hidden', mobile_custom_colors: false, mobile_show_counter: false, mobile_show_progress: false, mobile_hide_on_scroll: false } );
+	await page.goto( '/' );
+	await expect( label ).toBeHidden();
+	expect( await aside.evaluate( ( el ) => getComputedStyle( el ).backgroundColor ) ).toBe( 'rgb(176, 0, 0)' );
+	await expect( page.locator( '.hprnb-bar__counter' ) ).toHaveCount( 0 );
+	await expect( page.locator( '.hprnb-bar__progress' ) ).toHaveCount( 0 );
+	await expect( root ).not.toHaveClass( /hprnb-root--m-collapse/ );
+	await page.evaluate( () => window.scrollTo( 0, 900 ) );
+	await page.waitForTimeout( 300 );
+	await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
+
+	// Reduced motion: no automatic rotation, no progress line, toggle hidden.
+	setSettings();
+	await page.emulateMedia( { reducedMotion: 'reduce' } );
+	await page.goto( '/' );
+	await expect( aside ).toHaveClass( /hprnb-bar--reduced/ );
+	await expect( page.locator( '.hprnb-bar__progress' ) ).toHaveCount( 0 );
+	await expect( toggle ).toBeHidden();
+	expect( await noHorizontalOverflow( page ) ).toBe( true );
 } );

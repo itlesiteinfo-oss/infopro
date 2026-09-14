@@ -86,22 +86,14 @@ final class Renderer {
 		$count = isset( $payload['count'] ) ? (int) $payload['count'] : 0;
 		$empty = ( $count < 1 || '' === $html );
 
-		$classes = array(
-			'hprnb-root',
-			self::device_class( $settings ),
-			'hprnb-root--' . ( 'overlay' === $settings['layout_mode'] ? 'overlay' : 'reserve' ),
-		);
-		foreach ( self::separator_classes( $settings ) as $class ) {
-			$classes[] = $class;
-		}
-
 		$attributes = array(
 			'id'                   => 'hprnb-root',
-			'class'                => implode( ' ', $classes ),
+			'class'                => implode( ' ', self::root_classes( $settings ) ),
 			'data-hprnb-generated' => (string) (int) ( $payload['generated_at'] ?? 0 ),
 			'data-hprnb-stale'     => (string) self::stale_threshold( $settings ),
 			'data-hprnb-layout'    => 'overlay' === $settings['layout_mode'] ? 'overlay' : 'reserve',
 			'data-hprnb-empty'     => $empty ? '1' : '0',
+			'data-hprnb-mobile'    => (string) wp_json_encode( self::mobile_data( $settings ) ),
 		);
 
 		$urls = array();
@@ -137,7 +129,7 @@ final class Renderer {
 	 */
 	public static function root_style( array $settings ): string {
 		return sprintf(
-			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-font-size:%6$dpx;--hprnb-height:%7$dpx;--hprnb-z:%8$d;--hprnb-sep:%9$s',
+			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-font-size:%6$dpx;--hprnb-height:%7$dpx;--hprnb-z:%8$d;--hprnb-sep:%9$s;--hprnb-m-bg:%10$s;--hprnb-m-fg:%11$s;--hprnb-m-accent:%12$s;--hprnb-m-label-fg:%13$s;--hprnb-m-font-size:%14$dpx;--hprnb-m-height:%15$dpx',
 			self::color( $settings['bg_color'], '#B00000' ),
 			self::color( $settings['text_color'], '#FFFFFF' ),
 			self::color( $settings['label_bg_color'], '#8F0000' ),
@@ -146,8 +138,92 @@ final class Renderer {
 			(int) $settings['font_size'],
 			(int) $settings['bar_height'],
 			(int) $settings['z_index'],
-			self::css_string( isset( $settings['separator_char'] ) ? (string) $settings['separator_char'] : '•' )
+			self::css_string( isset( $settings['separator_char'] ) ? (string) $settings['separator_char'] : '•' ),
+			self::color( $settings['mobile_bg_color'] ?? '', '#141414' ),
+			self::color( $settings['mobile_text_color'] ?? '', '#F5F5F5' ),
+			self::color( $settings['mobile_accent_color'] ?? '', '#E11D2A' ),
+			self::color( $settings['mobile_label_text_color'] ?? '', '#FFFFFF' ),
+			(int) ( $settings['mobile_font_size'] ?? 16 ),
+			self::mobile_height( $settings )
 		);
+	}
+
+	/**
+	 * Every class of the root element: base, device, layout, separator and mobile presentation.
+	 *
+	 * @param array $settings Settings.
+	 * @return string[]
+	 */
+	public static function root_classes( array $settings ): array {
+		$classes = array(
+			'hprnb-root',
+			self::device_class( $settings ),
+			'hprnb-root--' . ( 'overlay' === $settings['layout_mode'] ? 'overlay' : 'reserve' ),
+		);
+		foreach ( self::separator_classes( $settings ) as $class ) {
+			$classes[] = $class;
+		}
+
+		$stacked   = 'inline' !== ( $settings['mobile_layout'] ?? 'stacked' );
+		$classes[] = $stacked ? 'hprnb-root--m-stacked' : 'hprnb-root--m-inline';
+		$label     = (string) ( $settings['mobile_label_style'] ?? 'pill' );
+		$classes[] = 'hprnb-root--m-label-' . ( in_array( $label, array( 'pill', 'strip', 'hidden' ), true ) ? $label : 'pill' );
+		if ( ! empty( $settings['mobile_custom_colors'] ) ) {
+			$classes[] = 'hprnb-root--m-colors';
+		}
+		if ( $stacked && ! empty( $settings['mobile_hide_on_scroll'] ) ) {
+			$classes[] = 'hprnb-root--m-collapse';
+		}
+
+		return $classes;
+	}
+
+	/**
+	 * Mobile behaviour flags read by the interactive script (data-hprnb-mobile).
+	 *
+	 * @param array $settings Settings.
+	 * @return array<string, mixed>
+	 */
+	public static function mobile_data( array $settings ): array {
+		$stacked = 'inline' !== ( $settings['mobile_layout'] ?? 'stacked' );
+		return array(
+			'layout'   => $stacked ? 'stacked' : 'inline',
+			'counter'  => $stacked && ! empty( $settings['mobile_show_counter'] ),
+			'progress' => $stacked && ! empty( $settings['mobile_show_progress'] ),
+			'swipe'    => ! empty( $settings['mobile_swipe'] ),
+			'collapse' => $stacked && ! empty( $settings['mobile_hide_on_scroll'] ),
+		);
+	}
+
+	/**
+	 * Height of the bar under 768px (stacked height, or the desktop height for the inline layout).
+	 *
+	 * @param array $settings Settings.
+	 * @return int
+	 */
+	public static function mobile_height( array $settings ): int {
+		if ( 'inline' === ( $settings['mobile_layout'] ?? 'stacked' ) ) {
+			return (int) $settings['bar_height'];
+		}
+		return (int) ( $settings['mobile_bar_height'] ?? 76 );
+	}
+
+	/**
+	 * Effective ticker mode under 768px: none|marquee|rotate|manual.
+	 *
+	 * @param array $settings Settings.
+	 * @return string
+	 */
+	public static function mobile_ticker( array $settings ): string {
+		$desktop = ! empty( $settings['ticker_enabled'] ) ? (string) $settings['ticker_mode'] : 'none';
+		$mobile  = (string) ( $settings['mobile_ticker_mode'] ?? 'rotate' );
+		if ( 'inherit' === $mobile ) {
+			return $desktop;
+		}
+		if ( 'static' === $mobile ) {
+			return 'none';
+		}
+		return in_array( $mobile, array( 'marquee', 'rotate', 'manual' ), true ) ? $mobile : $desktop;
 	}
 
 	/**
@@ -221,7 +297,11 @@ final class Renderer {
 	 * @return bool
 	 */
 	public static function needs_interactive_js( array $settings ): bool {
-		return ! empty( $settings['ticker_enabled'] ) || ! empty( $settings['close_button'] ) || ! empty( $settings['show_relative_time'] );
+		return ! empty( $settings['ticker_enabled'] )
+			|| ! empty( $settings['close_button'] )
+			|| ! empty( $settings['show_relative_time'] )
+			|| 'none' !== self::mobile_ticker( $settings )
+			|| 'inline' !== ( $settings['mobile_layout'] ?? 'stacked' );
 	}
 
 	/**

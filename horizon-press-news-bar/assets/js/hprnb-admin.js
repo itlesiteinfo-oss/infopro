@@ -34,7 +34,23 @@
 		z_index: '--hprnb-z'
 	};
 	var PX_KEYS = { font_size: true, bar_height: true };
-	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, show_separator: true, separator_char: true, separator_after_last: true };
+	var MOBILE_VARS = { mobile_bg_color: '--hprnb-m-bg', mobile_text_color: '--hprnb-m-fg', mobile_accent_color: '--hprnb-m-accent', mobile_label_text_color: '--hprnb-m-label-fg', mobile_font_size: '--hprnb-m-font-size' };
+	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_layout: true, mobile_bar_height: true, mobile_label_style: true, mobile_show_counter: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true, mobile_font_size: true };
+	var reinitTimer = null;
+
+	/** Restarts the interactive script on the preview root (rotation, progress, marquee…). */
+	function reinitPreview() {
+		if ( reinitTimer !== null ) {
+			clearTimeout( reinitTimer );
+		}
+		reinitTimer = setTimeout( function () {
+			reinitTimer = null;
+			if ( previewRoot && window.hprnbBar && typeof window.hprnbBar.destroy === 'function' ) {
+				window.hprnbBar.destroy( previewRoot );
+				window.hprnbBar.init( previewRoot );
+			}
+		}, 120 );
+	}
 
 	/** Single-quoted CSS string literal, mirroring Renderer::css_string(). */
 	function cssString( value ) {
@@ -145,6 +161,33 @@
 		previewRoot.classList.toggle( 'hprnb-bar--sep-loop', showSep && valueOf( 'separator_after_last' ) === '1' );
 		previewRoot.style.setProperty( '--hprnb-sep', cssString( valueOf( 'separator_char' ) || '•' ) );
 
+		// Mobile presentation: root classes, custom properties and the data-hprnb-mobile flags.
+		Object.keys( MOBILE_VARS ).forEach( function ( key ) {
+			var value = valueOf( key );
+			if ( value !== '' ) {
+				previewRoot.style.setProperty( MOBILE_VARS[ key ], key === 'mobile_font_size' ? parseInt( value, 10 ) + 'px' : value );
+			}
+		} );
+		var stacked = valueOf( 'mobile_layout' ) !== 'inline';
+		var labelStyle = valueOf( 'mobile_label_style' ) || 'pill';
+		var collapse = stacked && valueOf( 'mobile_hide_on_scroll' ) === '1';
+		previewRoot.style.setProperty( '--hprnb-m-height', ( stacked ? parseInt( valueOf( 'mobile_bar_height' ), 10 ) || 76 : parseInt( valueOf( 'bar_height' ), 10 ) || 44 ) + 'px' );
+		previewRoot.classList.toggle( 'hprnb-root--m-stacked', stacked );
+		previewRoot.classList.toggle( 'hprnb-root--m-inline', ! stacked );
+		[ 'pill', 'strip', 'hidden' ].forEach( function ( style ) {
+			previewRoot.classList.toggle( 'hprnb-root--m-label-' + style, labelStyle === style );
+		} );
+		previewRoot.classList.toggle( 'hprnb-root--m-colors', valueOf( 'mobile_custom_colors' ) === '1' );
+		previewRoot.classList.toggle( 'hprnb-root--m-collapse', collapse );
+		previewRoot.setAttribute( 'data-hprnb-mobile', JSON.stringify( {
+			layout: stacked ? 'stacked' : 'inline',
+			counter: stacked && valueOf( 'mobile_show_counter' ) === '1',
+			progress: stacked && valueOf( 'mobile_show_progress' ) === '1',
+			swipe: valueOf( 'mobile_swipe' ) === '1',
+			collapse: collapse
+		} ) );
+		reinitPreview();
+
 		var aside = previewRoot.querySelector( '.hprnb-bar' );
 		if ( ! aside ) {
 			return;
@@ -195,6 +238,9 @@
 	function renderPreview( data ) {
 		if ( ! previewRoot ) {
 			return;
+		}
+		if ( window.hprnbBar && typeof window.hprnbBar.destroy === 'function' ) {
+			window.hprnbBar.destroy( previewRoot );
 		}
 		if ( ! data || typeof data.html !== 'string' || data.count === 0 || data.html === '' ) {
 			var empty = document.createElement( 'p' );
@@ -349,7 +395,7 @@
 	}
 
 	function updateContrast() {
-		var pairs = { text: [ 'text_color', 'bg_color' ], label: [ 'label_text_color', 'label_bg_color' ] };
+		var pairs = { text: [ 'text_color', 'bg_color' ], label: [ 'label_text_color', 'label_bg_color' ], mobile: [ 'mobile_text_color', 'mobile_bg_color' ] };
 		Object.keys( pairs ).forEach( function ( id ) {
 			var warning = document.getElementById( 'hprnb-contrast-' + id );
 			if ( ! warning ) {
@@ -412,6 +458,33 @@
 				setAll( false );
 			} );
 		}
+	} );
+
+	/* ------------------------------------------------------------------ */
+	/* Preview device tabs (desktop = flat root, mobile = 375px frame)     */
+	/* ------------------------------------------------------------------ */
+
+	var stage = document.getElementById( 'hprnb-preview-stage' );
+	var tabs = Array.prototype.slice.call( document.querySelectorAll( '.hprnb-preview__tab[data-hprnb-device]' ) );
+
+	function selectDevice( device ) {
+		if ( ! stage || ! previewRoot ) {
+			return;
+		}
+		stage.setAttribute( 'data-hprnb-device', device );
+		previewRoot.classList.toggle( 'hprnb-root--flat', device !== 'mobile' );
+		tabs.forEach( function ( tab ) {
+			var active = tab.getAttribute( 'data-hprnb-device' ) === device;
+			tab.classList.toggle( 'is-active', active );
+			tab.setAttribute( 'aria-selected', active ? 'true' : 'false' );
+		} );
+		reinitPreview();
+	}
+
+	tabs.forEach( function ( tab ) {
+		tab.addEventListener( 'click', function () {
+			selectDevice( tab.getAttribute( 'data-hprnb-device' ) );
+		} );
 	} );
 
 	/* ------------------------------------------------------------------ */

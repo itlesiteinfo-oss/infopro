@@ -149,6 +149,20 @@ remember_dismiss: bool false
 dismiss_duration_hours: int 24 [1,720]
 show_on_desktop: bool true
 show_on_mobile: bool true
+mobile_layout: enum stacked [stacked,inline]
+mobile_font_size: int 16 [12,24]
+mobile_bar_height: int 76 [44,140]
+mobile_label_style: enum pill [pill,strip,hidden]
+mobile_ticker_mode: enum rotate [inherit,static,marquee,rotate,manual]   (only mobile key in the cache hash: it drives the buttons in the markup)
+mobile_show_counter: bool true
+mobile_show_progress: bool true
+mobile_swipe: bool true
+mobile_hide_on_scroll: bool true
+mobile_custom_colors: bool true
+mobile_bg_color: color #141414
+mobile_text_color: color #F5F5F5
+mobile_accent_color: color #E11D2A
+mobile_label_text_color: color #FFFFFF
 display_scope: enum everywhere [everywhere,custom]
 contexts: bool_map (keys front_page, blog_home, single_post, page, category, tag, archive, search, not_found; all default true)
 display_exclude_ids: id_list []
@@ -298,7 +312,10 @@ public static function root_style( array $settings ): string;           // "--hp
 public static function device_class( array $settings ): string;         // hprnb-device-all | hprnb-hide-mobile | hprnb-hide-desktop  (both false never reaches the renderer)
 public static function locate_template( string $name ): string;         // theme override: {stylesheet}/horizon-press-news-bar/{name}.php, {template}/..., else plugin templates/{name}.php
 public static function render_template( string $name, array $context ): string; // ob_start(); include; the template reads $context['items'], $context['settings'], $context['item'] — NO extract()
-public static function needs_interactive_js( array $settings ): bool;   // ticker_enabled || close_button || show_relative_time
+public static function needs_interactive_js( array $settings ): bool;   // ticker_enabled || close_button || show_relative_time || mobile_ticker( $settings ) !== 'none'
+public static function mobile_ticker( array $settings ): string;        // effective mobile mode: inherit → desktop mode (none|marquee|rotate|manual), static → none
+public static function root_classes( array $settings ): array;           // hprnb-root, device, layout, separator and mobile classes (hprnb-root--m-stacked|m-inline, hprnb-root--m-label-*, hprnb-root--m-colors, hprnb-root--m-collapse)
+public static function mobile_data( array $settings ): array;            // {layout, counter, progress, swipe, collapse} serialised in data-hprnb-mobile
 public static function relative_time_label( int $timestamp, array $settings, ?int $now = null ): string; // within relative_time_max_hours: sprintf( __( '%s ago' ), human_time_diff( $ts, $now ) ), else wp_date( date_format . ' ' . time_format, $ts )
 ```
 
