@@ -198,9 +198,13 @@ final class Settings_Page {
 			'appearance' => array(
 				'title' => __( 'Appearance', 'horizon-press-news-bar' ),
 			),
+			'desktop'    => array(
+				'title'       => __( 'Desktop presentation', 'horizon-press-news-bar' ),
+				'description' => __( 'From 768 px. The label can sit on its own row above the headline or in front of it on the same line; the bar height follows the number of headline lines (label row + lines, never below the minimum height).', 'horizon-press-news-bar' ),
+			),
 			'mobile'     => array(
-				'title'       => __( 'Mobile', 'horizon-press-news-bar' ),
-				'description' => __( 'Under 768 px the bar switches to a dedicated presentation: a label pill and a counter on a first row, the headline on its own full-width row, one headline at a time with a progress line, swipe gestures and a collapse-on-scroll behaviour. Everything below is optional.', 'horizon-press-news-bar' ),
+				'title'       => __( 'Mobile presentation', 'horizon-press-news-bar' ),
+				'description' => __( 'Under 768 px. Same choices as on desktop, plus a dedicated font size, swipe gestures, collapse on scroll and an optional mobile palette. Everything below is optional.', 'horizon-press-news-bar' ),
 			),
 			'behavior'   => array(
 				'title' => __( 'Behavior', 'horizon-press-news-bar' ),
@@ -332,7 +336,8 @@ final class Settings_Page {
 			'bar_height'               => array(
 				'section' => 'appearance',
 				'type'    => 'number',
-				'label'   => __( 'Bar height (px)', 'horizon-press-news-bar' ),
+				'label'   => __( 'Minimum bar height (px)', 'horizon-press-news-bar' ),
+				'desc'    => __( 'The actual height follows the presentation (label row, number of headline lines) and never goes below this value.', 'horizon-press-news-bar' ),
 			),
 			'z_index'                  => array(
 				'section' => 'appearance',
@@ -396,35 +401,94 @@ final class Settings_Page {
 				'label'   => __( 'Relative time limit (hours)', 'horizon-press-news-bar' ),
 				'desc'    => __( 'Beyond this age the absolute date is shown instead.', 'horizon-press-news-bar' ),
 			),
+			'desktop_layout'           => array(
+				'section' => 'desktop',
+				'type'    => 'radio',
+				'label'   => __( 'Label placement', 'horizon-press-news-bar' ),
+				'options' => array(
+					'inline'  => __( 'In front of the headline, on the same line (default on desktop)', 'horizon-press-news-bar' ),
+					'stacked' => __( 'On its own row above the headline', 'horizon-press-news-bar' ),
+				),
+			),
+			'desktop_label_style'      => array(
+				'section' => 'desktop',
+				'type'    => 'select',
+				'label'   => __( 'Label style', 'horizon-press-news-bar' ),
+				'options' => array(
+					'strip'  => __( 'Block — full-height label in the label colours', 'horizon-press-news-bar' ),
+					'pill'   => __( 'Pill — small rounded uppercase badge', 'horizon-press-news-bar' ),
+					'hidden' => __( 'Hidden', 'horizon-press-news-bar' ),
+				),
+			),
+			'desktop_label_dot'        => array(
+				'section' => 'desktop',
+				'type'    => 'checkbox',
+				'label'   => __( 'Live dot', 'horizon-press-news-bar' ),
+				'text'    => __( 'Show a small pulsing dot in front of the label text.', 'horizon-press-news-bar' ),
+			),
+			'desktop_show_counter'     => array(
+				'section' => 'desktop',
+				'type'    => 'checkbox',
+				'label'   => __( 'Counter', 'horizon-press-news-bar' ),
+				'text'    => __( 'Show "2/8" next to the label (rotate mode).', 'horizon-press-news-bar' ),
+			),
+			'desktop_lines'            => array(
+				'section' => 'desktop',
+				'type'    => 'select',
+				'label'   => __( 'Headline lines', 'horizon-press-news-bar' ),
+				'options' => self::line_options(),
+				'desc'    => __( 'Number of lines a headline may take; the bar height follows (marquee always uses one line).', 'horizon-press-news-bar' ),
+				'hint'    => 'd',
+			),
+			'desktop_show_progress'    => array(
+				'section' => 'desktop',
+				'type'    => 'checkbox',
+				'label'   => __( 'Progress line', 'horizon-press-news-bar' ),
+				'text'    => __( 'Show a thin progress line along the top edge until the next headline (rotate mode).', 'horizon-press-news-bar' ),
+			),
 			'mobile_layout'            => array(
 				'section' => 'mobile',
 				'type'    => 'radio',
-				'label'   => __( 'Mobile layout', 'horizon-press-news-bar' ),
+				'label'   => __( 'Label placement', 'horizon-press-news-bar' ),
 				'options' => array(
-					'stacked' => __( 'Stacked (recommended) — label pill and counter above a full-width headline', 'horizon-press-news-bar' ),
-					'inline'  => __( 'Inline — same single line as on desktop', 'horizon-press-news-bar' ),
+					'stacked' => __( 'On its own row above the headline (default on mobile)', 'horizon-press-news-bar' ),
+					'inline'  => __( 'In front of the headline, on the same line', 'horizon-press-news-bar' ),
 				),
+			),
+			'mobile_label_style'       => array(
+				'section' => 'mobile',
+				'type'    => 'select',
+				'label'   => __( 'Label style', 'horizon-press-news-bar' ),
+				'options' => array(
+					'pill'   => __( 'Pill — small rounded uppercase badge', 'horizon-press-news-bar' ),
+					'strip'  => __( 'Block — full-height label in the label colours', 'horizon-press-news-bar' ),
+					'hidden' => __( 'Hidden', 'horizon-press-news-bar' ),
+				),
+			),
+			'mobile_label_dot'         => array(
+				'section' => 'mobile',
+				'type'    => 'checkbox',
+				'label'   => __( 'Live dot', 'horizon-press-news-bar' ),
+				'text'    => __( 'Show a small pulsing dot in front of the label text.', 'horizon-press-news-bar' ),
+			),
+			'mobile_show_counter'      => array(
+				'section' => 'mobile',
+				'type'    => 'checkbox',
+				'label'   => __( 'Counter', 'horizon-press-news-bar' ),
+				'text'    => __( 'Show "2/8" next to the label (rotate mode).', 'horizon-press-news-bar' ),
+			),
+			'mobile_lines'             => array(
+				'section' => 'mobile',
+				'type'    => 'select',
+				'label'   => __( 'Headline lines', 'horizon-press-news-bar' ),
+				'options' => self::line_options(),
+				'desc'    => __( 'Number of lines a headline may take; the bar height follows (marquee always uses one line).', 'horizon-press-news-bar' ),
+				'hint'    => 'm',
 			),
 			'mobile_font_size'         => array(
 				'section' => 'mobile',
 				'type'    => 'number',
 				'label'   => __( 'Mobile font size (px)', 'horizon-press-news-bar' ),
-			),
-			'mobile_bar_height'        => array(
-				'section' => 'mobile',
-				'type'    => 'number',
-				'label'   => __( 'Mobile bar height (px)', 'horizon-press-news-bar' ),
-				'desc'    => __( 'Stacked layout only; the inline layout keeps the desktop height.', 'horizon-press-news-bar' ),
-			),
-			'mobile_label_style'       => array(
-				'section' => 'mobile',
-				'type'    => 'select',
-				'label'   => __( 'Mobile label style', 'horizon-press-news-bar' ),
-				'options' => array(
-					'pill'   => __( 'Pill with a live dot', 'horizon-press-news-bar' ),
-					'strip'  => __( 'Plain uppercase text', 'horizon-press-news-bar' ),
-					'hidden' => __( 'Hidden', 'horizon-press-news-bar' ),
-				),
 			),
 			'mobile_ticker_mode'       => array(
 				'section' => 'mobile',
@@ -439,17 +503,11 @@ final class Settings_Page {
 				),
 				'desc'    => __( 'Rotate and marquee always come with the Pause / Play button and respect reduced-motion preferences.', 'horizon-press-news-bar' ),
 			),
-			'mobile_show_counter'      => array(
-				'section' => 'mobile',
-				'type'    => 'checkbox',
-				'label'   => __( 'Counter', 'horizon-press-news-bar' ),
-				'text'    => __( 'Show "2/8" next to the label (rotate mode, stacked layout).', 'horizon-press-news-bar' ),
-			),
 			'mobile_show_progress'     => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Progress line', 'horizon-press-news-bar' ),
-				'text'    => __( 'Show a thin progress line until the next headline (rotate mode, stacked layout).', 'horizon-press-news-bar' ),
+				'text'    => __( 'Show a thin progress line along the top edge until the next headline (rotate mode).', 'horizon-press-news-bar' ),
 			),
 			'mobile_swipe'             => array(
 				'section' => 'mobile',
@@ -461,7 +519,13 @@ final class Settings_Page {
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Collapse on scroll', 'horizon-press-news-bar' ),
-				'text'    => __( 'Collapse the bar to its label row while scrolling down; expand when scrolling up or tapping the label (stacked layout).', 'horizon-press-news-bar' ),
+				'text'    => __( 'Collapse the bar to its label row while scrolling down; expand when scrolling up or tapping the label (label on its own row).', 'horizon-press-news-bar' ),
+			),
+			'mobile_show_separator'    => array(
+				'section' => 'mobile',
+				'type'    => 'checkbox',
+				'label'   => __( 'Mobile separator', 'horizon-press-news-bar' ),
+				'text'    => __( 'Show the separator between headlines on mobile too (static, marquee and manual modes).', 'horizon-press-news-bar' ),
 			),
 			'mobile_custom_colors'     => array(
 				'section' => 'mobile',
@@ -631,6 +695,20 @@ final class Settings_Page {
 	}
 
 	/**
+	 * Options of the "Headline lines" selects.
+	 *
+	 * @return array<int, string>
+	 */
+	private static function line_options(): array {
+		$options = array();
+		for ( $n = 1; $n <= 4; $n++ ) {
+			/* translators: %d: number of lines. */
+			$options[ $n ] = sprintf( _n( '%d line', '%d lines', $n, 'horizon-press-news-bar' ), $n );
+		}
+		return $options;
+	}
+
+	/**
 	 * Keys shown inside the collapsed "advanced filters" block of the Content section.
 	 *
 	 * @return string[]
@@ -701,6 +779,10 @@ final class Settings_Page {
 			}
 			echo '</th><td>';
 			self::render_field( $key, $field, $settings, $id );
+			if ( ! empty( $field['hint'] ) ) {
+				/* translators: %d: bar height in pixels. */
+				echo ' <span class="description hprnb-height-hint" data-hprnb-height="' . esc_attr( $field['hint'] ) . '" data-hprnb-height-format="' . esc_attr( __( 'Bar height: %d px', 'horizon-press-news-bar' ) ) . '">' . esc_html( sprintf( __( 'Bar height: %d px', 'horizon-press-news-bar' ), Renderer::profile_height( $settings, $field['hint'] ) ) ) . '</span>';
+			}
 			if ( ! empty( $field['desc'] ) ) {
 				echo '<p class="description">' . esc_html( $field['desc'] ) . '</p>';
 			}
@@ -993,7 +1075,7 @@ final class Settings_Page {
 			</div>
 			<div class="hprnb-preview__stage" id="hprnb-preview-stage" data-hprnb-device="desktop">
 				<div class="hprnb-preview__frame">
-				<div id="hprnb-preview-root" class="<?php echo esc_attr( implode( ' ', Renderer::root_classes( $settings ) ) ); ?> hprnb-root--preview hprnb-root--flat" style="<?php echo esc_attr( Renderer::root_style( $settings ) ); ?>" data-hprnb-mobile="<?php echo esc_attr( (string) wp_json_encode( Renderer::mobile_data( $settings ) ) ); ?>">
+				<div id="hprnb-preview-root" class="<?php echo esc_attr( implode( ' ', Renderer::root_classes( $settings ) ) ); ?> hprnb-root--preview hprnb-root--flat" style="<?php echo esc_attr( Renderer::root_style( $settings ) ); ?>" data-hprnb-desktop="<?php echo esc_attr( (string) wp_json_encode( Renderer::profile_data( $settings, 'd' ) ) ); ?>" data-hprnb-mobile="<?php echo esc_attr( (string) wp_json_encode( Renderer::profile_data( $settings, 'm' ) ) ); ?>">
 					<?php if ( '' === $html ) : ?>
 					<p class="hprnb-preview__empty" id="hprnb-preview-empty"><?php echo esc_html( self::empty_message() ); ?></p>
 					<?php else : ?>

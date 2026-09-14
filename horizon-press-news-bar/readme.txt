@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,12 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 1.3.0 =
+* Two presentation profiles with the same options, Desktop and Mobile: label in front of the headline or on its own row, block / pill / hidden label with an optional live dot, counter, 1 to 4 headline lines (the bar height follows), progress line along the top edge. The stacked mobile design is now available on desktop.
+* Multi-line headlines outside the rotation become horizontally scrolling cards.
+* Mobile separator is opt-in; the inline mobile label always precedes the headline.
+* `bar_height` is now a minimum; `mobile_bar_height` replaced by `mobile_lines`.
 
 = 1.2.0 =
 * Dedicated mobile presentation under 768 px: label pill with a live dot, counter, full-width two-line headline, rotate by default with a progress line and swipe gestures, collapse on scroll, dedicated mobile palette and font size. Fifteen new `mobile_*` settings in a new "Mobile" section; two-tab (desktop / mobile) animated preview in the admin.

@@ -141,7 +141,7 @@ Il n’existe pas de mode « REST seul ».
 
 - **Cache hit** : 0 `WP_Query` de contenu, aucun parcours d’articles, aucun N+1. Avec un object cache persistant, aucun accès SQL propre à l’extension ; **sans** object cache persistant, WordPress lit le transient dans `wp_options` (un accès technique). Cette extension ne promet donc jamais « 0 SQL absolu ».
 - **Cache miss** : une requête principale `WP_Query` ; avec les miniatures, deux à trois requêtes supplémentaires bornées (métadonnées, fichiers joints) via `update_post_thumbnail_cache()`, jamais une requête par article.
-- Budgets front (minifiés) : CSS ≈ 9,5 Ko (présentation mobile comprise), bootstrap ≈ 2,3 Ko, JS interactif ≈ 9,2 Ko. Le JS interactif n’est chargé que si le ticker, le bouton fermer, l’heure relative ou la présentation mobile (disposition empilée ou mode de défilement mobile) en a besoin.
+- Budgets front (minifiés) : CSS ≈ 13,5 Ko (deux profils de présentation compris), bootstrap ≈ 2,3 Ko, JS interactif ≈ 9,3 Ko. Le JS interactif n’est chargé que si le ticker, le bouton fermer, l’heure relative, le mode de défilement mobile ou le repli au défilement en a besoin.
 
 ## 6. Endpoint REST public
 
@@ -180,22 +180,28 @@ Appareils : si `show_on_desktop` et `show_on_mobile` sont tous deux faux, aucun 
 
 Le séparateur entre articles est un **pseudo-élément CSS** (`.hprnb-bar__item::after`), jamais un élément du DOM : le caractère vient de la variable `--hprnb-sep` et l’activation des classes `hprnb-bar--sep` / `hprnb-bar--sep-loop` portées par `#hprnb-root`, assemblé hors cache. `separator_after_last` (actif par défaut, sans effet si `show_separator` est faux) répète le même séparateur après le dernier article, de sorte que la jonction dernier → premier (boucle du marquee) soit identique aux autres ; en mode `rotate` aucun séparateur n’est affiché. Ces trois réglages n’entrent pas dans la clé de cache.
 
-## 9 ter. Présentation mobile (paramétrable)
+## 9 ter. Profils de présentation (ordinateur / mobile, paramétrables)
 
-Sous 768 px (container query sur `#hprnb-root`, même seuil que les media queries), la barre adopte par défaut une **disposition empilée** : une première rangée avec le label en pastille (point « en direct » pulsant) et un compteur « 2/8 », une seconde rangée où le titre occupe toute la largeur (16 px, graisse 600, deux lignes maximum en rotation, jamais tronqué en marquee), les contrôles à droite. Le mode de défilement mobile par défaut est la **rotation** (un titre à la fois) avec ligne de progression, balayage tactile et transition d’apparition ; en défilant vers le bas la barre se **replie** sur sa rangée de label et se redéploie en remontant ou d’une touche. Palette mobile dédiée par défaut : fond `#141414` légèrement translucide (flou d’arrière-plan), texte `#F5F5F5`, accent `#E11D2A`, label `#FFFFFF`.
+Deux profils aux réglages identiques : **ordinateur** (à partir de 768 px, clés `desktop_*`) et **mobile** (sous 768 px via une container query sur `#hprnb-root`, clés `mobile_*`). Chaque profil choisit la **position du label** (devant le titre sur la même ligne, ou sur sa propre ligne au-dessus), le **style du label** (bandeau aux couleurs du label, pastille arrondie en capitales, masqué) et son **point « en direct »** pulsant, le **compteur** « 2/8 » (rotation), le **nombre de lignes de titre** (1 à 4, dont découle la hauteur de la barre : `max(bar_height, lignes × ⌈police × 1,3⌉ + 12 [+ 26 avec le label sur sa ligne])`) et la **ligne de progression** (rotation, piste de 2 px sur le bord supérieur). En rotation le titre unique est tronqué à N lignes ; en statique/manuel chaque article devient une carte multi-lignes à défilement horizontal ; le marquee reste sur une ligne. Le design empilé « mobile » est donc disponible tel quel sur ordinateur.
+
+Par défaut, l’ordinateur garde la barre classique (label bandeau devant le titre, une ligne, 44 px) et le mobile adopte la disposition empilée : pastille, compteur, titre 16 px sur deux lignes (80 px), **rotation** avec progression, balayage tactile, **repli au défilement**, palette dédiée (`#141414` translucide flouté, texte `#F5F5F5`, accent `#E11D2A`, label `#FFFFFF`). Sur mobile, le label en ligne précède toujours le titre et le séparateur n’est affiché que sur demande.
 
 | Clé | Type | Défaut | Valeurs |
 |---|---|---|---|
-| `mobile_layout` | énumération | `stacked` | `stacked`, `inline` |
+| `desktop_layout` / `mobile_layout` | énumération | `inline` / `stacked` | `inline`, `stacked` |
+| `desktop_label_style` / `mobile_label_style` | énumération | `strip` / `pill` | `strip`, `pill`, `hidden` |
+| `desktop_label_dot` / `mobile_label_dot` | booléens | `false` | |
+| `desktop_show_counter` / `mobile_show_counter` | booléens | `false` / `true` | rotation |
+| `desktop_lines` / `mobile_lines` | entiers | `1` / `2` | 1–4 |
+| `desktop_show_progress` / `mobile_show_progress` | booléens | `true` | rotation |
 | `mobile_font_size` | entier (px) | `16` | 12–24 |
-| `mobile_bar_height` | entier (px) | `76` | 44–140 (disposition empilée) |
-| `mobile_label_style` | énumération | `pill` | `pill`, `strip`, `hidden` |
 | `mobile_ticker_mode` | énumération | `rotate` | `rotate`, `inherit`, `static`, `marquee`, `manual` |
-| `mobile_show_counter` / `mobile_show_progress` / `mobile_swipe` / `mobile_hide_on_scroll` | booléens | `true` | |
+| `mobile_swipe` / `mobile_hide_on_scroll` | booléens | `true` | |
+| `mobile_show_separator` | booléen | `false` | |
 | `mobile_custom_colors` | booléen | `true` | |
 | `mobile_bg_color` / `mobile_text_color` / `mobile_accent_color` / `mobile_label_text_color` | couleurs | `#141414` / `#F5F5F5` / `#E11D2A` / `#FFFFFF` | |
 
-Seul `mobile_ticker_mode` entre dans la clé de cache (il détermine les boutons présents dans le markup) ; tout le reste est porté par `#hprnb-root`. Le script interactif choisit le mode effectif selon la largeur du root et se réinitialise au franchissement du seuil (rotation d’écran). L’aperçu d’administration propose deux onglets, Ordinateur et Mobile (cadre de 375 px), animés par le même script que le site.
+Seul `mobile_ticker_mode` entre dans la clé de cache (il détermine les boutons présents dans le markup) ; tout le reste est porté par `#hprnb-root` (classes `hprnb-root--{d|m}-*`, variables `--hprnb-height`, `--hprnb-d-lines`, `--hprnb-m-*`, JSON `data-hprnb-desktop` / `data-hprnb-mobile`). La feuille de style consomme des jetons effectifs `--hprnb-e-*` fixés par le profil ordinateur sur le root et, sous 768 px, par le profil mobile sur `.hprnb-bar`. Le script interactif choisit le profil effectif selon la largeur du root et se réinitialise au franchissement du seuil (rotation d’écran). L’aperçu d’administration propose deux onglets, Ordinateur et Mobile (cadre de 375 px), animés par le même script que le site, et affiche la hauteur calculée en regard des sélecteurs « Lignes de titre ».
 
 ## 10. Ticker (optionnel)
 

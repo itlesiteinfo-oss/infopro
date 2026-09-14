@@ -149,15 +149,23 @@ remember_dismiss: bool false
 dismiss_duration_hours: int 24 [1,720]
 show_on_desktop: bool true
 show_on_mobile: bool true
-mobile_layout: enum stacked [stacked,inline]
-mobile_font_size: int 16 [12,24]
-mobile_bar_height: int 76 [44,140]
+desktop_layout: enum inline [inline,stacked]              (label in front of the headline / on its own row)
+desktop_label_style: enum strip [strip,pill,hidden]
+desktop_label_dot: bool false
+desktop_show_counter: bool false                            (rotate mode)
+desktop_lines: int 1 [1,4]                                  (headline lines; the bar height follows)
+desktop_show_progress: bool true                            (rotate mode)
+mobile_layout: enum stacked [stacked,inline]                (inline = label in front of the headline, always first on a phone)
 mobile_label_style: enum pill [pill,strip,hidden]
-mobile_ticker_mode: enum rotate [inherit,static,marquee,rotate,manual]   (only mobile key in the cache hash: it drives the buttons in the markup)
+mobile_label_dot: bool false
 mobile_show_counter: bool true
+mobile_lines: int 2 [1,4]
+mobile_font_size: int 16 [12,24]
+mobile_ticker_mode: enum rotate [inherit,static,marquee,rotate,manual]   (only presentation key in the cache hash: it drives the buttons in the markup)
 mobile_show_progress: bool true
 mobile_swipe: bool true
 mobile_hide_on_scroll: bool true
+mobile_show_separator: bool false
 mobile_custom_colors: bool true
 mobile_bg_color: color #141414
 mobile_text_color: color #F5F5F5
@@ -312,10 +320,14 @@ public static function root_style( array $settings ): string;           // "--hp
 public static function device_class( array $settings ): string;         // hprnb-device-all | hprnb-hide-mobile | hprnb-hide-desktop  (both false never reaches the renderer)
 public static function locate_template( string $name ): string;         // theme override: {stylesheet}/horizon-press-news-bar/{name}.php, {template}/..., else plugin templates/{name}.php
 public static function render_template( string $name, array $context ): string; // ob_start(); include; the template reads $context['items'], $context['settings'], $context['item'] — NO extract()
-public static function needs_interactive_js( array $settings ): bool;   // ticker_enabled || close_button || show_relative_time || mobile_ticker( $settings ) !== 'none'
-public static function mobile_ticker( array $settings ): string;        // effective mobile mode: inherit → desktop mode (none|marquee|rotate|manual), static → none
-public static function root_classes( array $settings ): array;           // hprnb-root, device, layout, separator and mobile classes (hprnb-root--m-stacked|m-inline, hprnb-root--m-label-*, hprnb-root--m-colors, hprnb-root--m-collapse)
-public static function mobile_data( array $settings ): array;            // {layout, counter, progress, swipe, collapse} serialised in data-hprnb-mobile
+public static function needs_interactive_js( array $settings ): bool;   // ticker_enabled || close_button || show_relative_time || mobile_ticker() !== 'none' || mobile collapse on scroll
+public static function desktop_ticker( array $settings ): string;       // effective mode from 768px: none|marquee|rotate|manual
+public static function mobile_ticker( array $settings ): string;        // effective mobile mode: inherit → desktop mode, static → none
+public static function profile( array $settings, string $p ): array;    // 'd'|'m' → {layout, label, dot, counter, lines (1 in marquee), progress, mode, font_size, collapse, swipe}
+public static function profile_data( array $settings, string $p ): array;   // {layout, lines, counter, progress [, swipe, collapse]} serialised in data-hprnb-desktop / data-hprnb-mobile
+public static function profile_lines( array $settings, string $p ): int;
+public static function profile_height( array $settings, string $p ): int;   // max( bar_height, lines × ceil( font × 1.3 ) + 12 [+ 22 + 4 when stacked] ) — STRIP_HEIGHT / ROW_GAP / BLOCK_PAD / LINE_HEIGHT
+public static function root_classes( array $settings ): array;           // hprnb-root, device, layout, separator (hprnb-bar--sep[-loop]), per profile hprnb-root--{d|m}-{inline|stacked}, hprnb-root--d-end, -label-{pill|strip|hidden}, -dot, -wrap; hprnb-root--m-sep[-loop], -m-colors, -m-collapse
 public static function relative_time_label( int $timestamp, array $settings, ?int $now = null ): string; // within relative_time_max_hours: sprintf( __( '%s ago' ), human_time_diff( $ts, $now ) ), else wp_date( date_format . ' ' . time_format, $ts )
 ```
 
@@ -569,12 +581,12 @@ Data passed from PHP via `wp_localize_script( 'hprnb-admin', 'hprnbAdmin', { res
   padding-block-end: env(safe-area-inset-bottom, 0px); background: var(--hprnb-bg); color: var(--hprnb-fg); font-size: var(--hprnb-font-size); }`
 - `.hprnb-bar__inner { display:flex; align-items:center; height: var(--hprnb-height); min-width:0 }`
 - Label: `.hprnb-bar__label` flex none, background label-bg, colour label-fg, uppercase not
-  forced, `max-inline-size: min(38vw, 220px)` on mobile, single line, `text-overflow: ellipsis`,
+  forced except by the compact pill / stacked typography; label column capped at 50% (inline) / 60% (stacked) of the bar, single line, `text-overflow: ellipsis`,
   `order: 0`; `.hprnb-bar--label-end .hprnb-bar__label { order: 2 }`; viewport `order: 1`;
   controls `order: 3` (label-start: controls order 3 too; i.e. controls always at the end).
 - Viewport: `flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin;` (and `::-webkit-scrollbar { height: 0 }` for a discreet bar).
 - List: `display:flex; gap: 1.25em; margin:0; padding:0 1em; list-style:none; white-space:nowrap; align-items:center`.
-- Item/link: single line, `text-overflow: ellipsis` with `max-width: 60vw` per title on mobile; link colour inherits; `:hover` colour `var(--hprnb-hover)` with underline; `:focus-visible { outline: 2px solid currentColor; outline-offset: 2px }`.
+- Item/link: one line with `text-overflow: ellipsis` by default (title capped at 60cqi on mobile outside marquee/rotate); `-webkit-line-clamp: var(--hprnb-e-lines)` when wrapping (rotate, or lines > 1 as `min(80cqi, 30em)` cards); link colour inherits; `:hover` colour `var(--hprnb-hover)` with underline; `:focus-visible { outline: 2px solid currentColor; outline-offset: 2px }`.
 - Separator (pseudo-element, no DOM): `.hprnb-bar--sep .hprnb-bar__item:not(:last-child)::after, .hprnb-bar--sep-loop .hprnb-bar__item:last-child::after { content: var(--hprnb-sep, '•'); margin-inline-start: 1.25em; opacity: .7 }` (+ `content: … / ""` under `@supports`); `.hprnb-bar--ticker-rotate .hprnb-bar__item::after { content: none }`; no margin-inline-end.
 - Thumb: `.hprnb-bar__thumb { block-size: calc(var(--hprnb-height) - 12px); inline-size: auto; aspect-ratio: 1; object-fit: cover; border-radius: 2px; margin-inline-end: .5em; vertical-align: middle }`.
 - Time: `.hprnb-bar__time { opacity:.8; margin-inline-start:.5em; font-size:.85em }`.
@@ -591,7 +603,7 @@ Data passed from PHP via `wp_localize_script( 'hprnb-admin', 'hprnbAdmin', { res
   root's inline `--hprnb-height` value onto `document.body.style` (`ensureLayout()`), which covers late REST injection.
 - Dismissed: `html.hprnb-dismissed #hprnb-root { display:none } html.hprnb-dismissed body.hprnb-reserve { padding-block-end: 0 }`.
 - Device: `@media (max-width: 767.98px) { .hprnb-hide-mobile { display:none !important } } @media (min-width: 768px) { .hprnb-hide-desktop { display:none !important } }`.
-- Mobile (`max-width: 767.98px`): label max width `min(38vw, 220px)`, everything one line, no page horizontal scrollbar (`.hprnb-bar { max-inline-size: 100vw; overflow: hidden }`).
+- Mobile (`max-width: 767.98px`): no page horizontal scrollbar (`.hprnb-bar { max-inline-size: 100vw; overflow: hidden }`); the mobile profile itself is a container query on `#hprnb-root` setting the `--hprnb-e-*` tokens on `.hprnb-bar` (see the stylesheet, sections 2 and 14).
 - `hprnb-bar-rtl.css` = the same rules (WordPress replaces the file when `is_rtl()`); logical properties make it identical except the marquee default keyframe (`hprnb-marquee-rtl` as default). Generate it from the LTR file with that single change.
 
 ## 16. Admin (`includes/admin/*`)

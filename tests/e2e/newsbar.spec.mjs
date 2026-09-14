@@ -147,9 +147,15 @@ test( 'mobile inline layout: single line, label capped, one-line bar, no overflo
 	const label = page.locator( '.hprnb-bar__label' );
 	await expect( label ).toBeVisible();
 	const labelBox = await label.boundingBox();
-	expect( labelBox.width ).toBeLessThanOrEqual( Math.min( 0.38 * 375, 220 ) + 1 );
-	expect( Math.round( ( await bar.boundingBox() ).height ) ).toBe( 44 );
+	expect( labelBox.width ).toBeLessThanOrEqual( 0.5 * 375 + 1 );
+	// On a phone the inline label always precedes the headline, whatever label_position says (default "end").
+	expect( labelBox.x ).toBeLessThan( ( await page.locator( '.hprnb-bar__viewport' ).boundingBox() ).x );
+	expect( Math.round( ( await bar.boundingBox() ).height ) ).toBe( 54, 'Inline, two 16px lines: 2 × 21 + 12' );
 	expect( await noHorizontalOverflow( page ) ).toBe( true );
+
+	setSettings( { mobile_layout: 'inline', mobile_ticker_mode: 'inherit', mobile_lines: 1 } );
+	await page.goto( '/' );
+	expect( Math.round( ( await bar.boundingBox() ).height ) ).toBe( 44 );
 
 	setSettings( { show_on_mobile: false } );
 	await page.goto( '/' );
@@ -173,7 +179,7 @@ test( 'responsive widths never overflow horizontally', async ( { page } ) => {
 		await page.goto( '/' );
 		await expect( page.locator( '#hprnb-root .hprnb-bar' ) ).toBeVisible();
 		expect( await noHorizontalOverflow( page ), `width ${ width }` ).toBe( true );
-		expect( Math.round( ( await page.locator( '.hprnb-bar' ).boundingBox() ).height ), `width ${ width }` ).toBe( width < 768 ? 76 : 44 );
+		expect( Math.round( ( await page.locator( '.hprnb-bar' ).boundingBox() ).height ), `width ${ width }` ).toBe( width < 768 ? 80 : 44 );
 	}
 } );
 
@@ -182,7 +188,7 @@ test( 'RTL: label "end" sits on the left, marquee direction flips, RTL styleshee
 	setSettings( { ticker_enabled: true, ticker_mode: 'marquee', label_text: 'آخر الأخبار', mobile_layout: 'inline', mobile_ticker_mode: 'inherit' } );
 	const arabic = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=عنوان تجريبي طويل لاختبار الشريط الإخباري في اتجاه من اليمين إلى اليسار', '--porcelain' ] );
 	try {
-		await page.setViewportSize( { width: 375, height: 667 } );
+		await page.setViewportSize( { width: 1024, height: 700 } );
 		await page.goto( '/?hprnb_rtl=1' );
 		expect( await page.evaluate( () => document.documentElement.dir ) ).toBe( 'rtl' );
 		expect( await page.locator( 'link#hprnb-bar-css' ).count() ).toBe( 0 );
@@ -347,7 +353,7 @@ test( 'manual: prev/next buttons and end states', async ( { page } ) => {
 	await next.click();
 	await expect.poll( () => page.locator( '.hprnb-bar__viewport' ).evaluate( ( el ) => el.scrollLeft ) ).toBeGreaterThan( 0 );
 	await expect( prev ).toBeEnabled();
-	for ( let i = 0; i < 12; i++ ) {
+	for ( let i = 0; i < 12 && ! ( await next.isDisabled() ); i++ ) {
 		await next.click();
 		await page.waitForTimeout( 150 );
 	}
@@ -430,6 +436,7 @@ test( 'separator after the last post: 4 modes × LTR/RTL × on/off', async ( { p
 					show_separator: true,
 					separator_char: '|',
 					separator_after_last: loop,
+					mobile_show_separator: true,
 					ticker_enabled: mode !== 'static',
 					ticker_mode: mode === 'static' ? 'marquee' : mode,
 					mobile_ticker_mode: 'inherit',
@@ -482,6 +489,70 @@ test( 'separator after the last post: 4 modes × LTR/RTL × on/off', async ( { p
 	await page.goto( '/' );
 	await expect( page.locator( '#hprnb-root' ) ).not.toHaveClass( /hprnb-bar--sep/ );
 	expect( ( await separators( page, ORIGINAL ) ).every( ( s ) => s === null ) ).toBe( true );
+} );
+
+test( 'presentation profiles: the stacked design on desktop, headline lines, live dot, block label, mobile inline label first', async ( { page } ) => {
+	setSettings( { desktop_layout: 'stacked', desktop_label_style: 'pill', desktop_label_dot: true, desktop_show_counter: true, desktop_lines: 2, desktop_show_progress: true, ticker_enabled: true, ticker_mode: 'rotate', rotate_interval: 1500 } );
+	const errors = collectErrors( page );
+	await page.setViewportSize( { width: 1366, height: 800 } );
+	await page.goto( '/' );
+	const root = page.locator( '#hprnb-root' );
+	const aside = page.locator( '#hprnb-root .hprnb-bar' );
+	const label = page.locator( '.hprnb-bar__label' );
+	await expect( root ).toHaveClass( /hprnb-root--d-stacked/ );
+	await expect( root ).toHaveClass( /hprnb-root--d-label-pill/ );
+	await expect( root ).toHaveClass( /hprnb-root--d-dot/ );
+	await expect( aside ).toHaveClass( /hprnb-bar--mode-rotate/ );
+	expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 76, '22 + 4 + 2 × 19 + 12' );
+	expect( await label.evaluate( ( el ) => getComputedStyle( el ).borderTopLeftRadius ) ).toBe( '999px' );
+	expect( await label.evaluate( ( el ) => getComputedStyle( el, '::before' ).display ) ).toBe( 'block' );
+	expect( await label.evaluate( ( el ) => getComputedStyle( el, '::before' ).animationName ) ).toBe( 'hprnb-pulse' );
+	await expect( page.locator( '.hprnb-bar__counter' ) ).toHaveText( /^1\/\d+$/ );
+	const title = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' );
+	expect( await title.evaluate( ( el ) => getComputedStyle( el ).webkitLineClamp ) ).toBe( '2' );
+	expect( ( await title.boundingBox() ).y ).toBeGreaterThan( ( await label.boundingBox() ).y + 20 );
+	const progress = page.locator( '.hprnb-bar__progress' );
+	await expect( progress ).toHaveClass( /is-run/ );
+	expect( await progress.evaluate( ( el ) => getComputedStyle( el, '::after' ).animationName ) ).toBe( 'hprnb-progress' );
+	expect( ( await page.locator( '.hprnb-bar__inner' ).boundingBox() ).width ).toBeLessThanOrEqual( 1200 );
+	await expect( page.locator( '.hprnb-bar__counter' ) ).toHaveText( /^2\/\d+$/, { timeout: 4000 } );
+	expect( await noHorizontalOverflow( page ) ).toBe( true );
+
+	// Three headline lines without rotation: wrapped cards in the scrolling list, 69px bar (3 × 19 + 12).
+	setSettings( { desktop_lines: 3, label_position: 'start' } );
+	await page.goto( '/' );
+	await expect( root ).toHaveClass( /hprnb-root--d-wrap/ );
+	await expect( root ).not.toHaveClass( /hprnb-root--d-end/ );
+	expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 69 );
+	expect( await title.first().evaluate( ( el ) => getComputedStyle( el ).whiteSpace ) ).toBe( 'normal' );
+	expect( await title.first().evaluate( ( el ) => getComputedStyle( el ).webkitLineClamp ) ).toBe( '3' );
+	expect( ( await page.locator( '.hprnb-bar__item' ).first().boundingBox() ).width ).toBeLessThanOrEqual( 30 * 14 + 1 );
+	expect( ( await label.boundingBox() ).x ).toBeLessThan( ( await page.locator( '.hprnb-bar__viewport' ).boundingBox() ).x );
+	expect( Math.round( ( await label.boundingBox() ).height ) ).toBe( 69, 'Block label spans the full height.' );
+	await expect( page.locator( '.hprnb-bar__counter' ) ).toHaveCount( 0 );
+
+	// Marquee ignores the lines setting: one line, 44px.
+	setSettings( { desktop_lines: 3, ticker_enabled: true, ticker_mode: 'marquee' } );
+	await page.goto( '/' );
+	await expect( aside ).toHaveClass( /hprnb-bar--marquee-on/ );
+	expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 44 );
+	expect( await title.first().evaluate( ( el ) => getComputedStyle( el ).whiteSpace ) ).toBe( 'nowrap' );
+
+	// Mobile: block label on its own row, separator shown in the static list only when asked.
+	setSettings( { mobile_label_style: 'strip', mobile_label_dot: true, mobile_ticker_mode: 'static', mobile_lines: 2, show_separator: true, mobile_show_separator: false } );
+	await page.setViewportSize( { width: 375, height: 667 } );
+	await page.goto( '/' );
+	await expect( root ).toHaveClass( /hprnb-root--m-label-strip/ );
+	await expect( root ).toHaveClass( /hprnb-root--m-dot/ );
+	await expect( root ).not.toHaveClass( /hprnb-root--m-sep/ );
+	expect( await label.evaluate( ( el ) => getComputedStyle( el ).borderTopLeftRadius ) ).toBe( '0px' );
+	expect( await page.locator( '.hprnb-bar__item' ).first().evaluate( ( el ) => getComputedStyle( el, '::after' ).content ) ).toBe( 'none' );
+	setSettings( { mobile_ticker_mode: 'static', mobile_lines: 2, show_separator: true, mobile_show_separator: true } );
+	await page.goto( '/' );
+	await expect( root ).toHaveClass( /hprnb-root--m-sep-loop/ );
+	expect( await page.locator( '.hprnb-bar__item' ).first().evaluate( ( el ) => getComputedStyle( el, '::after' ).content ) ).toContain( '•' );
+	expect( await noHorizontalOverflow( page ) ).toBe( true );
+	expect( errors ).toEqual( [] );
 } );
 
 test( 'php mode and empty states', async ( { page } ) => {
@@ -746,17 +817,17 @@ test( 'mobile stacked presentation: pill, counter, progress, rotation, swipe, co
 	await expect( root ).toHaveClass( /hprnb-root--m-stacked/ );
 	await expect( aside ).toHaveClass( /hprnb-bar--mode-rotate/ );
 	await expect( aside ).toHaveClass( /hprnb-bar--mobile/ );
-	expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 76 );
-	expect( await page.evaluate( () => parseFloat( getComputedStyle( document.body ).paddingBottom ) ) ).toBeGreaterThanOrEqual( 76 );
+	expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 80, 'Label row 22 + gap 4 + two 16px lines (2 × 21) + padding 12' );
+	expect( await page.evaluate( () => parseFloat( getComputedStyle( document.body ).paddingBottom ) ) ).toBeGreaterThanOrEqual( 80 );
 
-	// Row 1: pill label with a live dot and the counter; row 2: full-width 16px headline, two lines max.
+	// Row 1: pill label (live dot off by default) and the counter; row 2: full-width 16px headline, two lines max.
 	const label = page.locator( '.hprnb-bar__label' );
 	await expect( label ).toBeVisible();
+	expect( await label.evaluate( ( el ) => getComputedStyle( el, '::before' ).display ) ).toBe( 'none', 'The live dot is off by default.' );
 	expect( await label.evaluate( ( el ) => getComputedStyle( el ).borderTopLeftRadius ) ).toBe( '999px' );
 	// The default label ("TOUTE L’ACTUALITÉ") fits in the pill without an ellipsis, and the pill stays under 60% of the bar.
 	expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => el.scrollWidth <= el.clientWidth + 1 ) ).toBe( true );
 	expect( ( await label.boundingBox() ).width ).toBeLessThanOrEqual( 375 * 0.6 );
-	expect( await label.evaluate( ( el ) => getComputedStyle( el, '::before' ).content ) ).toBe( '""' );
 	const counter = page.locator( '.hprnb-bar__counter' );
 	await expect( counter ).toHaveText( /^1\/\d+$/ );
 	const title = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' );
@@ -776,7 +847,8 @@ test( 'mobile stacked presentation: pill, counter, progress, rotation, swipe, co
 	// Progress line runs and the rotation advances.
 	const progress = page.locator( '.hprnb-bar__progress' );
 	await expect( progress ).toHaveClass( /is-run/ );
-	expect( await progress.evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'hprnb-progress' );
+	expect( await progress.evaluate( ( el ) => getComputedStyle( el, '::after' ).animationName ) ).toBe( 'hprnb-progress' );
+	expect( ( await progress.boundingBox() ).y ).toBeLessThan( ( await aside.boundingBox() ).y + 1, 'The progress track runs along the top edge of the bar.' );
 	await expect( counter ).toHaveText( /^2\/\d+$/, { timeout: 4000 } );
 
 	// Swipe left → next headline.
@@ -805,7 +877,7 @@ test( 'mobile stacked presentation: pill, counter, progress, rotation, swipe, co
 	await expect( toggle ).toBeVisible();
 	await toggle.click();
 	await expect( aside ).toHaveClass( /hprnb-bar--paused/ );
-	expect( await progress.evaluate( ( el ) => getComputedStyle( el ).animationPlayState ) ).toBe( 'paused' );
+	expect( await progress.evaluate( ( el ) => getComputedStyle( el, '::after' ).animationPlayState ) ).toBe( 'paused' );
 	await toggle.click();
 	await expect( page.locator( '.hprnb-bar__btn--prev' ) ).toBeHidden();
 	expect( await noHorizontalOverflow( page ) ).toBe( true );

@@ -280,10 +280,10 @@
 	}
 
 	/* ------------------------------------------------------------------ */
-	/* Rotate (+ mobile counter, progress line and swipe)                  */
+	/* Rotate (+ counter, progress line and swipe, per profile)           */
 	/* ------------------------------------------------------------------ */
 
-	function setupRotate( state, aside, cfg, toggle, mobile ) {
+	function setupRotate( state, aside, cfg, toggle, profile ) {
 		var viewport = aside.querySelector( '.hprnb-bar__viewport' );
 		var items = aside.querySelectorAll( '.hprnb-bar__item' );
 		if ( ! viewport || items.length < 2 ) {
@@ -297,7 +297,7 @@
 		var counter = null;
 		var progress = null;
 
-		if ( mobile && cfg.m.counter ) {
+		if ( profile.counter ) {
 			counter = document.createElement( 'span' );
 			counter.className = 'hprnb-bar__counter';
 			counter.setAttribute( 'aria-hidden', 'true' );
@@ -309,7 +309,7 @@
 				inner.insertBefore( counter, inner.firstChild );
 			}
 		}
-		if ( mobile && cfg.m.progress ) {
+		if ( profile.progress ) {
 			progress = document.createElement( 'div' );
 			progress.className = 'hprnb-bar__progress';
 			progress.setAttribute( 'aria-hidden', 'true' );
@@ -386,7 +386,7 @@
 			}
 		} );
 
-		if ( mobile && cfg.m.swipe ) {
+		if ( profile.swipe ) {
 			var startX = 0;
 			var startY = 0;
 			var tracking = false;
@@ -692,6 +692,7 @@
 			dismissHours: parseInt( d.hprnbDismissHours, 10 ) || 24,
 			reltime: d.hprnbReltime === '1',
 			reltimeMax: parseInt( d.hprnbReltimeMax, 10 ) || 48,
+			d: parseJson( root.getAttribute( 'data-hprnb-desktop' ) ),
 			m: parseJson( root.getAttribute( 'data-hprnb-mobile' ) )
 		};
 	}
@@ -718,6 +719,7 @@
 
 		var cfg = readConfig( aside, root );
 		var mobile = isNarrow( root );
+		var profile = mobile ? cfg.m : cfg.d;
 		var mode = mobile ? cfg.tickerMobile : cfg.ticker;
 		var reduced = prefersReducedMotion();
 		var toggle = aside.querySelector( '.hprnb-bar__btn--toggle' );
@@ -749,13 +751,13 @@
 			if ( reduced ) {
 				state.hide( toggle, true );
 			} else {
-				setupRotate( state, aside, cfg, toggle, mobile );
+				setupRotate( state, aside, cfg, toggle, profile );
 			}
 		} else if ( mode === 'manual' ) {
 			setupManual( state, aside, reduced );
 		}
 
-		if ( mobile && cfg.m.collapse && ! root.classList.contains( 'hprnb-root--preview' ) ) {
+		if ( profile.collapse && ! root.classList.contains( 'hprnb-root--preview' ) ) {
 			setupCollapse( state, aside );
 		}
 

@@ -1,6 +1,6 @@
 # Cahier des charges FINAL AUDITÉ — Plugin WordPress « Horizon Press News Bar »
 
-> **Version 2.2 — 14 septembre 2026** (2.0 du 11 septembre ; 2.1 du 12 septembre : `separator_after_last` ; 2.2 : présentation mobile empilée paramétrable, §15.5, §22.4 bis, §23)  
+> **Version 2.3 — 14 septembre 2026** (2.0 du 11 septembre ; 2.1 du 12 septembre : `separator_after_last` ; 2.2 : présentation mobile empilée paramétrable, §15.5, §22.4 bis, §23)  
 > **Statut : FINAL / prêt à remettre à Claude Code**  
 > **Objectif : obtenir en une seule exécution un plugin WordPress installable, testé, documenté et prêt pour la production.**
 
@@ -301,15 +301,23 @@ Après activation :
   "show_on_desktop": true,
   "show_on_mobile": true,
 
+  "desktop_layout": "inline",
+  "desktop_label_style": "strip",
+  "desktop_label_dot": false,
+  "desktop_show_counter": false,
+  "desktop_lines": 1,
+  "desktop_show_progress": true,
   "mobile_layout": "stacked",
-  "mobile_font_size": 16,
-  "mobile_bar_height": 76,
   "mobile_label_style": "pill",
-  "mobile_ticker_mode": "rotate",
+  "mobile_label_dot": false,
   "mobile_show_counter": true,
+  "mobile_lines": 2,
+  "mobile_font_size": 16,
+  "mobile_ticker_mode": "rotate",
   "mobile_show_progress": true,
   "mobile_swipe": true,
   "mobile_hide_on_scroll": true,
+  "mobile_show_separator": false,
   "mobile_custom_colors": true,
   "mobile_bg_color": "#141414",
   "mobile_text_color": "#F5F5F5",
@@ -584,7 +592,7 @@ Les couleurs, tailles et z-index ne doivent pas forcer un nouveau payload : elle
 
 Le séparateur est également un pur sujet CSS : `show_separator`, `separator_char` et `separator_after_last` se traduisent par des classes (`hprnb-bar--sep`, `hprnb-bar--sep-loop`) et une variable (`--hprnb-sep`) portées par `#hprnb-root`, assemblé hors cache. Ces trois clés **n’entrent pas** dans le hash ; les y ajouter fragmenterait le cache sans raison.
 
-Réglages mobiles : seul `mobile_ticker_mode` entre dans le hash (il détermine la présence des boutons Pause/Lecture et Précédent/Suivant dans le markup et l’attribut `data-hprnb-ticker-mobile`). Tous les autres réglages `mobile_*` sont des classes, variables CSS ou données JSON portées par `#hprnb-root`, assemblé hors cache.
+Profils de présentation (`desktop_*`, `mobile_*`) : seul `mobile_ticker_mode` entre dans le hash (il détermine la présence des boutons Pause/Lecture et Précédent/Suivant dans le markup et l’attribut `data-hprnb-ticker-mobile`). Tous les autres réglages des deux profils (disposition, style du label, point, compteur, lignes, progression, séparateur mobile, palette) sont des classes, variables CSS ou données JSON portées par `#hprnb-root`, assemblé hors cache.
 
 ## 9.3 Payload
 
@@ -673,7 +681,7 @@ Sur cache miss :
 
 Budgets front :
 
-- CSS principal minifié : objectif ≤ 10 Ko (8 Ko avant la présentation mobile de la V1.2, qui ajoute ≈ 1,7 Ko : disposition empilée, pastille, compteur, progression, repli) ;
+- CSS principal minifié : objectif ≤ 14 Ko (10 Ko en V1.2, 8 Ko avant la présentation mobile : les deux profils de présentation de la V1.3 pèsent ≈ 4 Ko minifiés)
 - bootstrap hybride minifié : objectif ≤ 3 Ko ;
 - JS interactif minifié : objectif ≤ 10 Ko ;
 - 0 dépendance tierce ;
@@ -737,7 +745,7 @@ Le root porte :
 - classes d’affichage desktop/mobile ;
 - variables CSS visuelles dans son attribut `style` (dont `--hprnb-sep`) ;
 - classes de séparateur `hprnb-bar--sep` et `hprnb-bar--sep-loop` ;
-- classes et variables de la présentation mobile (`hprnb-root--m-*`, `--hprnb-m-*`) et l’attribut `data-hprnb-mobile` (JSON : compteur, progression, balayage, repli).
+- classes et variables des deux profils de présentation (`hprnb-root--d-*`, `hprnb-root--m-*`, `--hprnb-height`, `--hprnb-d-lines`, `--hprnb-m-*`) et les attributs `data-hprnb-desktop` / `data-hprnb-mobile` (JSON : disposition, lignes, compteur, progression ; balayage et repli sur mobile).
 
 Les variables CSS présentes sur le root doivent permettre à une barre injectée plus tard d’hériter immédiatement :
 
@@ -1033,46 +1041,57 @@ Classes root :
 
 Masquage **uniquement CSS**, jamais `wp_is_mobile()`.
 
-## 15.5 Mobile — présentation empilée paramétrable
+## 15.5 Profils de présentation (ordinateur / mobile)
 
-Sous 768 px, la présentation en ligne (label + titres sur une seule ligne de 44 px) laisse trop peu de place aux titres. La V1.2 introduit une **présentation mobile dédiée**, activée par défaut, entièrement paramétrable dans l’administration (§22.4 bis) et sans JavaScript supplémentaire côté serveur.
+La V1.3 généralise la présentation mobile de la V1.2 en **deux profils** aux réglages identiques : **ordinateur** (à partir de 768 px, clés `desktop_*`) et **mobile** (sous 768 px, clés `mobile_*`). Chaque profil choisit :
+
+- la **position du label** (`*_layout` : `inline` = devant le titre, sur la même ligne ; `stacked` = sur sa propre ligne, au-dessus du titre) ;
+- le **style du label** (`*_label_style` : `strip` = bandeau aux couleurs du label, `pill` = pastille arrondie en capitales, `hidden`) et le **point « en direct »** pulsant devant le texte (`*_label_dot`, désactivé par défaut) ;
+- le **compteur** « 2/8 » (`*_show_counter`, mode rotation) ;
+- le **nombre de lignes de titre** (`*_lines`, 1 à 4), dont découle la **hauteur de la barre** ;
+- la **ligne de progression** (`*_show_progress`, mode rotation).
+
+Défauts — ordinateur : `inline`, `strip`, sans point, sans compteur, 1 ligne, progression ; mobile : `stacked`, `pill`, sans point, compteur, 2 lignes, progression, police 16 px. Le design empilé « mobile » est donc disponible tel quel sur ordinateur (`desktop_layout = stacked`, `desktop_label_style = pill`, `desktop_show_counter`, `desktop_lines = 2`, ticker en rotation).
 
 ### 15.5.1 Mesure du contexte
 
-- La présentation mobile est pilotée par une **container query** sur `#hprnb-root` (`container: hprnb / inline-size`, `inline-size: 100%`) : `@container hprnb (max-width: 767.98px)`. Le même seuil de 768 px est conservé ; il reste fixe et vit dans la feuille CSS statique.
-- Le JavaScript interactif utilise la même mesure (largeur du root < 768 px, `ResizeObserver`) pour choisir le mode effectif et se réinitialise proprement au franchissement du seuil (rotation d’écran, redimensionnement).
+- Le profil mobile est piloté par une **container query** sur `#hprnb-root` (`container: hprnb / inline-size`, `inline-size: 100%`) : `@container hprnb (max-width: 767.98px)`. Le même seuil de 768 px est conservé ; il reste fixe et vit dans la feuille CSS statique.
+- Toutes les règles de la feuille consomment des **jetons effectifs** `--hprnb-e-*` (couleurs, police, lignes, hauteur, colonnes et zones de grille, style du label, point, retour à la ligne, séparateur). Le profil ordinateur les fixe sur le root (classes `hprnb-root--d-*`) ; sous 768 px le profil mobile les remet à zéro puis les fixe sur `.hprnb-bar` (une container query ne peut pas styler son propre conteneur) via les classes `hprnb-root--m-*` ; le mode de défilement (marquee, rotation) en surcharge quelques-uns sur `.hprnb-bar__inner`. La section mobile de la feuille est le miroir exact de la section ordinateur (test statique dédié).
+- Le JavaScript interactif utilise la même mesure (largeur du root < 768 px, `ResizeObserver`) pour choisir le profil et le mode effectifs (`data-hprnb-desktop` / `data-hprnb-mobile`) et se réinitialise proprement au franchissement du seuil (rotation d’écran, redimensionnement).
 - Les classes d’affichage par appareil (`hprnb-hide-mobile` / `hprnb-hide-desktop`, §15.4) restent des media queries : le masquage par appareil ne dépend pas de la largeur du conteneur.
-- Dans l’aperçu d’administration, la même feuille rend fidèlement la présentation mobile dans un cadre de 375 px (§23).
+- Dans l’aperçu d’administration, la même feuille rend fidèlement les deux profils (§23).
 
-### 15.5.2 Disposition `stacked` (défaut) et `inline`
+### 15.5.2 Disposition, label et hauteur
 
-`mobile_layout = stacked` :
+- `inline` : grille `label | compteur | titre | contrôles` ; sur ordinateur, `label_position = end` donne `titre | label | compteur | contrôles` ; **sur mobile le label en ligne précède toujours le titre**. La colonne du label est plafonnée à 50 % de la barre (ellipse au-delà).
+- `stacked` : deux rangées — un **bandeau** de 22 px (`label | compteur | contrôles`, les contrôles occupant les deux rangées) puis la rangée de titre sur toute la largeur (graisse 600) ; la colonne du label est plafonnée à 60 %. Sur ordinateur le contenu est centré dans 1 200 px au maximum, le fond restant pleine largeur.
+- **Hauteur** calculée côté PHP (`Renderer::profile_height()`) et reproduite par l’aperçu : `max(bar_height, lignes × ⌈police × 1,3⌉ + 12 [+ 22 + 4 en stacked])`. Exemples : ordinateur par défaut 44 px ; mobile par défaut 80 px ; ordinateur stacked 2 lignes 76 px ; mobile inline 1 ligne 44 px. `bar_height` devient une **hauteur minimale**. Le marquee reste toujours sur une ligne (`lines` effectif = 1).
+- **Lignes multiples** : en rotation, le titre unique occupe toute la largeur et est tronqué à N lignes (`-webkit-line-clamp`) ; en statique et en manuel, chaque article devient une carte de `min(80cqi, 30em)` de large, tronquée à N lignes, dans la liste à défilement horizontal natif (snap en manuel).
+- **Style du label** : `strip` = bloc pleine hauteur (police héritée) en `inline`, bloc de 22 px en capitales en `stacked` ; `pill` = pastille de 22 px, rayon 999 px, capitales, `max(11px, .8em)`, espacement .06em, marge de 12 px en `inline` ; `hidden`. Point « en direct » : pseudo-élément `::before` de 6 px en `currentColor`, pulsation 2 s (supprimée avec `prefers-reduced-motion`), jamais sur un label masqué.
+- Miniature (`show_thumbnail`) : hauteur `max(lignes × 1,3em, 32px)` (0 px de minimum en `stacked`).
 
-- grille de deux rangées : **bandeau** (label sous forme de pastille + compteur « 2/8 ») et **rangée de titre** sur toute la largeur ; les contrôles (Pause/Lecture, Précédent/Suivant, Fermer) occupent la colonne de droite sur les deux rangées ;
-- hauteur `mobile_bar_height` (défaut 76 px, 44–140), police `mobile_font_size` (défaut 16 px, 12–24), titres en graisse 600, jusqu’à **deux lignes** (`line-clamp`) en mode rotation, une ligne sans troncature en marquee ;
-- label : `mobile_label_style` = `pill` (pastille arrondie avec point « live » pulsant), `strip` (texte capitales sans fond) ou `hidden` ;
-- aucune limite `38vw` ni `60vw` : la rangée de titre a toute la largeur ;
-- zone de sécurité iOS et absence de débordement horizontal conservés.
+### 15.5.3 Mode de défilement, compteur, progression, balayage
 
-`mobile_layout = inline` : présentation identique à l’ordinateur (une ligne), avec `mobile_font_size` appliquée ; aucune des options empilées ci-dessous.
+`mobile_ticker_mode` : `rotate` (défaut, recommandé : un titre à la fois, lisible en entier), `inherit` (mode de l’ordinateur), `static`, `marquee`, `manual`. Sur ordinateur, le mode reste `ticker_enabled` + `ticker_mode`.
 
-### 15.5.3 Mode de défilement mobile
-
-`mobile_ticker_mode` : `rotate` (défaut, recommandé : un titre à la fois, lisible en entier), `inherit` (mode de l’ordinateur), `static`, `marquee`, `manual`.
-
-- Le mode effectif mobile détermine, avec le mode ordinateur, les boutons présents dans le markup (Pause/Lecture pour `marquee`/`rotate`, Précédent/Suivant pour `manual`) ; le JavaScript masque (`hidden`) les boutons sans objet pour le mode effectif courant.
-- Rotation mobile : intervalle `rotate_interval`, **barre de progression** (`mobile_show_progress`, 3 px, couleur d’accent, `transform` animé, en pause avec la barre), **compteur** (`mobile_show_counter`, « 2/8 », `aria-hidden`), **balayage tactile** gauche/droite (`mobile_swipe`, seuil 40 px, sens inversé en RTL ; le glissement du pointeur sur le lien ne déclenche ni glisser-déposer natif ni clic, et libère le focus donné au lien par le pointeur), transition d’apparition du titre (désactivée avec `prefers-reduced-motion`).
+- Le mode effectif mobile détermine, avec le mode ordinateur, les boutons présents dans le markup (Pause/Lecture pour `marquee`/`rotate`, Précédent/Suivant pour `manual`) ; le JavaScript masque (`hidden`) les boutons sans objet pour le profil effectif.
+- Rotation (les deux profils) : intervalle `rotate_interval`, **compteur** (`*_show_counter`, « 2/8 », `aria-hidden`, zone `meta` de la grille, créé par le script), **ligne de progression** (`*_show_progress`) : piste de 2 px sur le **bord supérieur** de la barre (fond `currentColor` à 18 %, remplissage couleur d’accent — couleur du texte sur ordinateur, `mobile_accent_color` sur mobile — animé par `transform` sur son `::after`, en pause avec la barre), transition d’apparition du titre (désactivée avec `prefers-reduced-motion`).
+- **Balayage tactile** (mobile uniquement) gauche/droite (`mobile_swipe`, seuil 40 px, sens inversé en RTL ; le glissement du pointeur sur le lien ne déclenche ni glisser-déposer natif ni clic, et libère le focus donné au lien par le pointeur).
 - Les règles d’accessibilité du §16.4 s’appliquent inchangées (Pause/Lecture obligatoire, `prefers-reduced-motion` = aucune animation automatique).
 
-### 15.5.4 Repli au défilement
+### 15.5.4 Repli au défilement (mobile, label sur sa ligne)
 
-`mobile_hide_on_scroll` (défaut `true`) : en défilant vers le bas au-delà de 120 px, la barre se replie (`hprnb-bar--collapsed`, `transform: translateY(...)`) en laissant visible le bandeau (pastille + compteur) ; elle se redéploie au défilement vers le haut ou à l’appui sur le bandeau ; un focus clavier (`:focus-visible`) dans la barre la redéploie et la maintient ouverte 4 s. La transition est supprimée avec `prefers-reduced-motion`. Le padding de réservation du `<body>` ne change pas (`--hprnb-m-height` sous 768 px).
+`mobile_hide_on_scroll` (défaut `true`, sans effet en `inline`) : en défilant vers le bas au-delà de 120 px, la barre se replie (`hprnb-bar--collapsed`, `transform: translateY(...)`) en laissant visible le bandeau de 36 px (`--hprnb-peek` : pastille + compteur) ; elle se redéploie au défilement vers le haut ou à l’appui sur le bandeau ; un focus clavier (`:focus-visible`) dans la barre la redéploie et la maintient ouverte 4 s. La transition est supprimée avec `prefers-reduced-motion`. Le padding de réservation du `<body>` ne change pas (`--hprnb-m-height` sous 768 px).
 
 ### 15.5.5 Palette mobile
 
-`mobile_custom_colors` (défaut `true`) : la barre mobile utilise `mobile_bg_color` (défaut `#141414`, fond quasi opaque avec léger flou d’arrière-plan), `mobile_text_color` (`#F5F5F5`), `mobile_accent_color` (`#E11D2A` : pastille, point live, progression) et `mobile_label_text_color` (`#FFFFFF`). Désactivé : la barre mobile reprend les couleurs de l’ordinateur. L’administration calcule le contraste texte/fond mobile (avertissement sous 4,5:1, non bloquant).
+`mobile_custom_colors` (défaut `true`) : la barre mobile utilise `mobile_bg_color` (défaut `#141414`, fond quasi opaque avec léger flou d’arrière-plan), `mobile_text_color` (`#F5F5F5`), `mobile_accent_color` (`#E11D2A` : pastille ou bandeau, point live, progression) et `mobile_label_text_color` (`#FFFFFF`). Désactivé : la barre mobile reprend les couleurs de l’ordinateur. L’administration calcule le contraste texte/fond mobile (avertissement sous 4,5:1, non bloquant).
 
-Toutes ces valeurs passent par des classes (`hprnb-root--m-stacked|m-inline`, `hprnb-root--m-label-{pill|strip|hidden}`, `hprnb-root--m-colors`, `hprnb-root--m-collapse`) et des variables CSS (`--hprnb-m-bg`, `--hprnb-m-fg`, `--hprnb-m-accent`, `--hprnb-m-label-fg`, `--hprnb-m-font-size`, `--hprnb-m-height`) portées par `#hprnb-root`, hors cache (§9.2).
+### 15.5.6 Séparateur mobile
+
+`mobile_show_separator` (défaut `false`) : sous 768 px, le séparateur du §15.7 n’est affiché qu’à la demande (classes `hprnb-root--m-sep` / `hprnb-root--m-sep-loop`), avec le même caractère et la même règle « après le dernier » ; sur ordinateur `show_separator` reste seul maître. En rotation, jamais de séparateur.
+
+Toutes ces valeurs passent par des classes (`hprnb-root--{d|m}-{inline|stacked}`, `hprnb-root--d-end`, `hprnb-root--{d|m}-label-{pill|strip|hidden}`, `hprnb-root--{d|m}-dot`, `hprnb-root--{d|m}-wrap`, `hprnb-root--m-sep[-loop]`, `hprnb-root--m-colors`, `hprnb-root--m-collapse`), des variables (`--hprnb-height`, `--hprnb-d-lines`, `--hprnb-m-bg`, `--hprnb-m-fg`, `--hprnb-m-accent`, `--hprnb-m-label-fg`, `--hprnb-m-font-size`, `--hprnb-m-height`, `--hprnb-m-lines`) et les JSON `data-hprnb-desktop` / `data-hprnb-mobile` portés par `#hprnb-root`, hors cache (§9.2).
 
 ## 15.6 Mode statique
 
@@ -1086,7 +1105,7 @@ Ticker désactivé :
 
 ## 15.7 Séparateur
 
-Le séparateur entre articles est un **pseudo-élément CSS** `::after` sur `.hprnb-bar__item` ; aucun élément DOM, aucune modification du HTML des `<li>`.
+Le séparateur entre articles est un **pseudo-élément CSS** `::after` sur `.hprnb-bar__item` ; aucun élément DOM, aucune modification du HTML des `<li>`. Le contenu vient du jeton effectif `--hprnb-e-sep` (entre les articles) / `--hprnb-e-sep-last` (après le dernier), alimenté par `--hprnb-sep` sur ordinateur via `hprnb-bar--sep` / `hprnb-bar--sep-loop` et sur mobile uniquement si `mobile_show_separator` (§15.5.6).
 
 - caractère : variable `--hprnb-sep` (chaîne CSS) portée par `#hprnb-root`, valeur par défaut `'•'` ;
 - activation : classe `hprnb-bar--sep` sur `#hprnb-root` (`show_separator = true`) ;
@@ -1422,16 +1441,27 @@ Pas d’endpoint async supplémentaire en V1.
 
 Aucun champ CSS libre.
 
-## 22.4 bis Mobile
+## 22.4 bis Présentation ordinateur
 
-Section dédiée, entre Apparence et Comportement :
+Section dédiée, entre Apparence et Présentation mobile :
 
-- disposition (`mobile_layout` : empilée recommandée / en ligne) ;
-- taille de police mobile, hauteur mobile ;
-- style du label (pastille, bandeau, masqué) ;
+- position du label (`desktop_layout` : devant le titre, sur la même ligne / sur sa propre ligne au-dessus du titre) ;
+- style du label (bandeau, pastille, masqué) et point « en direct » ;
+- compteur ;
+- lignes de titre (1 à 4), avec la hauteur calculée affichée en regard et recalculée en direct ;
+- ligne de progression.
+
+Dans Apparence, « Hauteur de la barre » devient « Hauteur minimale de la barre ».
+
+## 22.4 ter Présentation mobile
+
+Mêmes réglages que 22.4 bis (préfixe `mobile_`), plus :
+
+- taille de police mobile ;
 - mode de défilement mobile (rotation recommandée, hérité, statique, marquee, manuel) ;
-- compteur, barre de progression, balayage tactile, repli au défilement ;
-- palette mobile dédiée (case « Couleurs mobiles dédiées » ; les quatre couleurs sont grisées quand elle est décochée) avec avertissement de contraste.
+- balayage tactile, repli au défilement ;
+- séparateur mobile (désactivé par défaut) ;
+- palette mobile dédiée (case « Couleurs mobiles » ; les quatre couleurs sont grisées quand elle est décochée) avec avertissement de contraste.
 
 Sans JavaScript, le formulaire reste entièrement utilisable.
 
@@ -1461,7 +1491,7 @@ Sans JavaScript, le formulaire reste entièrement utilisable.
 
 Aperçu visuel sticky sur desktop, sous le formulaire sur petit écran.
 
-Deux onglets : **Ordinateur** (présentation en ligne) et **Mobile** (cadre de 375 px rendant la présentation empilée avec la même feuille de style). L’aperçu charge le script interactif de la barre : rotation, progression, compteur, marquee et boutons se comportent comme sur le site ; le repli au défilement est désactivé dans l’aperçu.
+Deux onglets : **Ordinateur** (profil ordinateur ; `hprnb-root--flat` neutralise la container query) et **Mobile** (cadre de 375 px rendant le profil mobile avec la même feuille de style). L’aperçu charge le script interactif de la barre : rotation, progression, compteur, marquee et boutons se comportent comme sur le site ; le repli au défilement est désactivé dans l’aperçu. Les hauteurs affichées en regard des sélecteurs « Lignes de titre » sont recalculées en direct par le script d’administration (même formule que le PHP).
 
 Mises à jour purement visuelles :
 
@@ -1919,7 +1949,8 @@ Scénarios :
 - reduced motion ;
 - injection hybride ;
 - séparateur de boucle : 4 modes (statique, marquee, rotate, manual) × LTR/RTL × option activée/désactivée ; jonction clone → original du marquee avec exactement un séparateur ; aucun séparateur en mode rotate ; aucun débordement horizontal ;
-- mobile empilé : pastille, compteur, progression, rotation automatique, balayage, repli au défilement et redéploiement, palette mobile, disposition en ligne, label masqué, mouvement réduit, franchissement du seuil 375 ↔ 1366 px, aperçu admin Mobile/Ordinateur, audit axe-core.
+- mobile empilé : pastille, compteur, progression, rotation automatique, balayage, repli au défilement et redéploiement, palette mobile, disposition en ligne (label devant le titre, 54 px puis 44 px sur une ligne), label masqué, mouvement réduit, franchissement du seuil 375 ↔ 1366 px, aperçu admin Mobile/Ordinateur, audit axe-core ;
+- profils de présentation : design empilé sur ordinateur (pastille, point pulsant, compteur, 2 lignes = 76 px, progression sur le bord supérieur, contenu centré ≤ 1 200 px), cartes sur 3 lignes en statique (69 px, label bandeau pleine hauteur, label au début), marquee toujours sur une ligne (44 px), label bandeau et point sur mobile, séparateur mobile désactivé puis activé ; miroir des sections CSS ordinateur/mobile (test statique).
 
 Les tests de développement peuvent vivre hors du dossier inclus dans le ZIP final.
 
@@ -1992,11 +2023,12 @@ Avant ZIP final, vérifier au minimum :
 - reduced motion ;
 - séparateur après le dernier article : jonction marquee identique aux autres jonctions.
 
-### Mobile empilé
+### Profils de présentation
 
 - 320/375/390/430 px : pastille + titre sur toute la largeur, deux lignes max, aucune troncature « … » en marquee ;
-- rotation avec progression et compteur ; balayage ; repli/redéploiement au défilement ;
-- palette mobile et police 16 px ; disposition en ligne en repli ;
+- rotation avec progression (bord supérieur) et compteur ; balayage ; repli/redéploiement au défilement ;
+- palette mobile et police 16 px ; label devant le titre (`mobile_layout = inline`) sur 1 puis 2 lignes ;
+- ordinateur : design empilé (pastille, point, compteur, 2 lignes), cartes multi-lignes en statique/manuel, label bandeau ou masqué, hauteur affichée dans l’administration conforme à la barre ;
 - rotation d’écran : réinitialisation propre.
 
 ### Responsive

@@ -93,7 +93,8 @@ final class Renderer {
 			'data-hprnb-stale'     => (string) self::stale_threshold( $settings ),
 			'data-hprnb-layout'    => 'overlay' === $settings['layout_mode'] ? 'overlay' : 'reserve',
 			'data-hprnb-empty'     => $empty ? '1' : '0',
-			'data-hprnb-mobile'    => (string) wp_json_encode( self::mobile_data( $settings ) ),
+			'data-hprnb-desktop'   => (string) wp_json_encode( self::profile_data( $settings, 'd' ) ),
+			'data-hprnb-mobile'    => (string) wp_json_encode( self::profile_data( $settings, 'm' ) ),
 		);
 
 		$urls = array();
@@ -122,6 +123,15 @@ final class Renderer {
 	}
 
 	/**
+	 * Row height of the label strip in the stacked layout, row gap and block padding (px), and the
+	 * title line-height factor. Mirrored by the stylesheet (--hprnb-strip, padding) and the admin script.
+	 */
+	const STRIP_HEIGHT = 22;
+	const ROW_GAP      = 4;
+	const BLOCK_PAD    = 12;
+	const LINE_HEIGHT  = 1.3;
+
+	/**
 	 * Inline CSS variables carried by the root (and by the admin preview root).
 	 *
 	 * @param array $settings Settings.
@@ -129,14 +139,15 @@ final class Renderer {
 	 */
 	public static function root_style( array $settings ): string {
 		return sprintf(
-			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-font-size:%6$dpx;--hprnb-height:%7$dpx;--hprnb-z:%8$d;--hprnb-sep:%9$s;--hprnb-m-bg:%10$s;--hprnb-m-fg:%11$s;--hprnb-m-accent:%12$s;--hprnb-m-label-fg:%13$s;--hprnb-m-font-size:%14$dpx;--hprnb-m-height:%15$dpx',
+			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-font-size:%6$dpx;--hprnb-height:%7$dpx;--hprnb-d-lines:%8$d;--hprnb-z:%9$d;--hprnb-sep:%10$s;--hprnb-m-bg:%11$s;--hprnb-m-fg:%12$s;--hprnb-m-accent:%13$s;--hprnb-m-label-fg:%14$s;--hprnb-m-font-size:%15$dpx;--hprnb-m-height:%16$dpx;--hprnb-m-lines:%17$d',
 			self::color( $settings['bg_color'], '#B00000' ),
 			self::color( $settings['text_color'], '#FFFFFF' ),
 			self::color( $settings['label_bg_color'], '#8F0000' ),
 			self::color( $settings['label_text_color'], '#FFFFFF' ),
 			self::color( $settings['link_hover_color'], '#FFFFFF' ),
 			(int) $settings['font_size'],
-			(int) $settings['bar_height'],
+			self::profile_height( $settings, 'd' ),
+			self::profile_lines( $settings, 'd' ),
 			(int) $settings['z_index'],
 			self::css_string( isset( $settings['separator_char'] ) ? (string) $settings['separator_char'] : '•' ),
 			self::color( $settings['mobile_bg_color'] ?? '', '#141414' ),
@@ -144,12 +155,15 @@ final class Renderer {
 			self::color( $settings['mobile_accent_color'] ?? '', '#E11D2A' ),
 			self::color( $settings['mobile_label_text_color'] ?? '', '#FFFFFF' ),
 			(int) ( $settings['mobile_font_size'] ?? 16 ),
-			self::mobile_height( $settings )
+			self::profile_height( $settings, 'm' ),
+			self::profile_lines( $settings, 'm' )
 		);
 	}
 
 	/**
-	 * Every class of the root element: base, device, layout, separator and mobile presentation.
+	 * Every class of the root element: base, device, layout, separator and the two presentation
+	 * profiles (d = desktop, from 768px; m = mobile, under 768px): layout (inline|stacked, plus
+	 * `-end` when the inline label follows the headline), label style, live dot, multi-line wrap.
 	 *
 	 * @param array $settings Settings.
 	 * @return string[]
@@ -164,14 +178,31 @@ final class Renderer {
 			$classes[] = $class;
 		}
 
-		$stacked   = 'inline' !== ( $settings['mobile_layout'] ?? 'stacked' );
-		$classes[] = $stacked ? 'hprnb-root--m-stacked' : 'hprnb-root--m-inline';
-		$label     = (string) ( $settings['mobile_label_style'] ?? 'pill' );
-		$classes[] = 'hprnb-root--m-label-' . ( in_array( $label, array( 'pill', 'strip', 'hidden' ), true ) ? $label : 'pill' );
+		foreach ( array( 'd', 'm' ) as $p ) {
+			$profile   = self::profile( $settings, $p );
+			$classes[] = 'hprnb-root--' . $p . '-' . $profile['layout'];
+			// label_position only applies from 768px: on a phone the inline label always precedes the headline.
+			if ( 'd' === $p && 'inline' === $profile['layout'] && 'start' !== ( $settings['label_position'] ?? 'end' ) ) {
+				$classes[] = 'hprnb-root--' . $p . '-end';
+			}
+			$classes[] = 'hprnb-root--' . $p . '-label-' . $profile['label'];
+			if ( $profile['dot'] ) {
+				$classes[] = 'hprnb-root--' . $p . '-dot';
+			}
+			if ( $profile['lines'] > 1 ) {
+				$classes[] = 'hprnb-root--' . $p . '-wrap';
+			}
+		}
+		if ( ! empty( $settings['mobile_show_separator'] ) ) {
+			$classes[] = 'hprnb-root--m-sep';
+			if ( ! empty( $settings['separator_after_last'] ) ) {
+				$classes[] = 'hprnb-root--m-sep-loop';
+			}
+		}
 		if ( ! empty( $settings['mobile_custom_colors'] ) ) {
 			$classes[] = 'hprnb-root--m-colors';
 		}
-		if ( $stacked && ! empty( $settings['mobile_hide_on_scroll'] ) ) {
+		if ( self::profile( $settings, 'm' )['collapse'] ) {
 			$classes[] = 'hprnb-root--m-collapse';
 		}
 
@@ -179,33 +210,98 @@ final class Renderer {
 	}
 
 	/**
-	 * Mobile behaviour flags read by the interactive script (data-hprnb-mobile).
+	 * Normalised presentation profile.
 	 *
-	 * @param array $settings Settings.
-	 * @return array<string, mixed>
+	 * @param array  $settings Settings.
+	 * @param string $p        'd' (desktop, from 768px) or 'm' (mobile, under 768px).
+	 * @return array{layout:string,label:string,dot:bool,counter:bool,lines:int,progress:bool,mode:string,font_size:int,collapse:bool,swipe:bool}
 	 */
-	public static function mobile_data( array $settings ): array {
-		$stacked = 'inline' !== ( $settings['mobile_layout'] ?? 'stacked' );
+	public static function profile( array $settings, string $p ): array {
+		$mobile  = ( 'm' === $p );
+		$prefix  = $mobile ? 'mobile_' : 'desktop_';
+		$mode    = $mobile ? self::mobile_ticker( $settings ) : self::desktop_ticker( $settings );
+		$layout  = 'stacked' === ( $settings[ $prefix . 'layout' ] ?? ( $mobile ? 'stacked' : 'inline' ) ) ? 'stacked' : 'inline';
+		$label   = (string) ( $settings[ $prefix . 'label_style' ] ?? ( $mobile ? 'pill' : 'strip' ) );
+		$label   = in_array( $label, array( 'pill', 'strip', 'hidden' ), true ) ? $label : ( $mobile ? 'pill' : 'strip' );
+		$lines   = max( 1, min( 4, (int) ( $settings[ $prefix . 'lines' ] ?? ( $mobile ? 2 : 1 ) ) ) );
+		$stacked = ( 'stacked' === $layout );
+
 		return array(
-			'layout'   => $stacked ? 'stacked' : 'inline',
-			'counter'  => $stacked && ! empty( $settings['mobile_show_counter'] ),
-			'progress' => $stacked && ! empty( $settings['mobile_show_progress'] ),
-			'swipe'    => ! empty( $settings['mobile_swipe'] ),
-			'collapse' => $stacked && ! empty( $settings['mobile_hide_on_scroll'] ),
+			'layout'    => $layout,
+			'label'     => $label,
+			'dot'       => 'hidden' !== $label && ! empty( $settings[ $prefix . 'label_dot' ] ),
+			'counter'   => 'rotate' === $mode && ! empty( $settings[ $prefix . 'show_counter' ] ),
+			'lines'     => 'marquee' === $mode ? 1 : $lines,
+			'progress'  => 'rotate' === $mode && ! empty( $settings[ $prefix . 'show_progress' ] ),
+			'mode'      => $mode,
+			'font_size' => (int) ( $mobile ? ( $settings['mobile_font_size'] ?? 16 ) : $settings['font_size'] ),
+			'collapse'  => $mobile && $stacked && ! empty( $settings['mobile_hide_on_scroll'] ),
+			'swipe'     => $mobile && 'rotate' === $mode && ! empty( $settings['mobile_swipe'] ),
 		);
 	}
 
 	/**
-	 * Height of the bar under 768px (stacked height, or the desktop height for the inline layout).
+	 * Behaviour flags of a profile read by the interactive script (data-hprnb-desktop / data-hprnb-mobile).
 	 *
-	 * @param array $settings Settings.
+	 * @param array  $settings Settings.
+	 * @param string $p        'd' or 'm'.
+	 * @return array<string, mixed>
+	 */
+	public static function profile_data( array $settings, string $p ): array {
+		$profile = self::profile( $settings, $p );
+		$data    = array(
+			'layout'   => $profile['layout'],
+			'lines'    => $profile['lines'],
+			'counter'  => $profile['counter'],
+			'progress' => $profile['progress'],
+		);
+		if ( 'm' === $p ) {
+			$data['swipe']    = $profile['swipe'];
+			$data['collapse'] = $profile['collapse'];
+		}
+		return $data;
+	}
+
+	/**
+	 * Effective number of title lines of a profile (1 in marquee mode).
+	 *
+	 * @param array  $settings Settings.
+	 * @param string $p        'd' or 'm'.
 	 * @return int
 	 */
-	public static function mobile_height( array $settings ): int {
-		if ( 'inline' === ( $settings['mobile_layout'] ?? 'stacked' ) ) {
-			return (int) $settings['bar_height'];
+	public static function profile_lines( array $settings, string $p ): int {
+		return self::profile( $settings, $p )['lines'];
+	}
+
+	/**
+	 * Bar height of a profile in px: the label strip (stacked layout) plus the title lines plus the
+	 * block padding, never below `bar_height`. The stylesheet lays the rows out with the same numbers.
+	 *
+	 * @param array  $settings Settings.
+	 * @param string $p        'd' or 'm'.
+	 * @return int
+	 */
+	public static function profile_height( array $settings, string $p ): int {
+		$profile = self::profile( $settings, $p );
+		$needed  = $profile['lines'] * (int) ceil( $profile['font_size'] * self::LINE_HEIGHT ) + self::BLOCK_PAD;
+		if ( 'stacked' === $profile['layout'] ) {
+			$needed += self::STRIP_HEIGHT + self::ROW_GAP;
 		}
-		return (int) ( $settings['mobile_bar_height'] ?? 76 );
+		return max( (int) $settings['bar_height'], $needed );
+	}
+
+	/**
+	 * Effective ticker mode from 768px: none|marquee|rotate|manual.
+	 *
+	 * @param array $settings Settings.
+	 * @return string
+	 */
+	public static function desktop_ticker( array $settings ): string {
+		$mode = (string) ( $settings['ticker_mode'] ?? 'marquee' );
+		if ( empty( $settings['ticker_enabled'] ) || ! in_array( $mode, array( 'marquee', 'rotate', 'manual' ), true ) ) {
+			return 'none';
+		}
+		return $mode;
 	}
 
 	/**
@@ -215,7 +311,7 @@ final class Renderer {
 	 * @return string
 	 */
 	public static function mobile_ticker( array $settings ): string {
-		$desktop = ! empty( $settings['ticker_enabled'] ) ? (string) $settings['ticker_mode'] : 'none';
+		$desktop = self::desktop_ticker( $settings );
 		$mobile  = (string) ( $settings['mobile_ticker_mode'] ?? 'rotate' );
 		if ( 'inherit' === $mobile ) {
 			return $desktop;
@@ -301,7 +397,7 @@ final class Renderer {
 			|| ! empty( $settings['close_button'] )
 			|| ! empty( $settings['show_relative_time'] )
 			|| 'none' !== self::mobile_ticker( $settings )
-			|| 'inline' !== ( $settings['mobile_layout'] ?? 'stacked' );
+			|| self::profile( $settings, 'm' )['collapse'];
 	}
 
 	/**

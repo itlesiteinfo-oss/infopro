@@ -57,7 +57,7 @@ class Frontend_Test extends HPRNB_Test_Case {
 		$this->assertTrue( wp_script_is( 'hprnb-bootstrap', 'enqueued' ) );
 		$this->assertTrue( wp_style_is( 'hprnb-bar', 'enqueued' ) );
 		$this->assertTrue( wp_script_is( 'hprnb-bar', 'enqueued' ), 'The default mobile presentation needs the interactive script.' );
-		$this->assertContains( 'body.hprnb-reserve{--hprnb-height:44px;--hprnb-m-height:76px}', wp_styles()->get_data( 'hprnb-bar', 'after' ) );
+		$this->assertContains( 'body.hprnb-reserve{--hprnb-height:44px;--hprnb-m-height:80px}', wp_styles()->get_data( 'hprnb-bar', 'after' ) );
 		$this->assertSame( 'replace', wp_styles()->get_data( 'hprnb-bar', 'rtl' ) );
 		$this->assertSame( 'defer', wp_scripts()->get_data( 'hprnb-bootstrap', 'strategy' ) );
 

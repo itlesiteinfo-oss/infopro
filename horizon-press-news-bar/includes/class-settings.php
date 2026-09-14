@@ -235,10 +235,57 @@ final class Settings {
 				'type'    => 'bool',
 				'default' => true,
 			),
+			'desktop_layout'           => array(
+				'type'    => 'enum',
+				'default' => 'inline',
+				'options' => array( 'inline', 'stacked' ),
+			),
+			'desktop_label_style'      => array(
+				'type'    => 'enum',
+				'default' => 'strip',
+				'options' => array( 'strip', 'pill', 'hidden' ),
+			),
+			'desktop_label_dot'        => array(
+				'type'    => 'bool',
+				'default' => false,
+			),
+			'desktop_show_counter'     => array(
+				'type'    => 'bool',
+				'default' => false,
+			),
+			'desktop_lines'            => array(
+				'type'    => 'int',
+				'default' => 1,
+				'min'     => 1,
+				'max'     => 4,
+			),
+			'desktop_show_progress'    => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
 			'mobile_layout'            => array(
 				'type'    => 'enum',
 				'default' => 'stacked',
 				'options' => array( 'stacked', 'inline' ),
+			),
+			'mobile_label_style'       => array(
+				'type'    => 'enum',
+				'default' => 'pill',
+				'options' => array( 'pill', 'strip', 'hidden' ),
+			),
+			'mobile_label_dot'         => array(
+				'type'    => 'bool',
+				'default' => false,
+			),
+			'mobile_show_counter'      => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
+			'mobile_lines'             => array(
+				'type'    => 'int',
+				'default' => 2,
+				'min'     => 1,
+				'max'     => 4,
 			),
 			'mobile_font_size'         => array(
 				'type'    => 'int',
@@ -246,25 +293,10 @@ final class Settings {
 				'min'     => 12,
 				'max'     => 24,
 			),
-			'mobile_bar_height'        => array(
-				'type'    => 'int',
-				'default' => 76,
-				'min'     => 44,
-				'max'     => 140,
-			),
-			'mobile_label_style'       => array(
-				'type'    => 'enum',
-				'default' => 'pill',
-				'options' => array( 'pill', 'strip', 'hidden' ),
-			),
 			'mobile_ticker_mode'       => array(
 				'type'    => 'enum',
 				'default' => 'rotate',
 				'options' => array( 'inherit', 'static', 'marquee', 'rotate', 'manual' ),
-			),
-			'mobile_show_counter'      => array(
-				'type'    => 'bool',
-				'default' => true,
 			),
 			'mobile_show_progress'     => array(
 				'type'    => 'bool',
@@ -277,6 +309,10 @@ final class Settings {
 			'mobile_hide_on_scroll'    => array(
 				'type'    => 'bool',
 				'default' => true,
+			),
+			'mobile_show_separator'    => array(
+				'type'    => 'bool',
+				'default' => false,
 			),
 			'mobile_custom_colors'     => array(
 				'type'    => 'bool',

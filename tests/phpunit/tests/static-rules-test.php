@@ -55,7 +55,10 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 			$source = file_get_contents( $file );
 			$this->assertStringNotContainsString( 'console.log', $source, $file );
 			$this->assertStringNotContainsString( 'jQuery', $source, $file );
-			$this->assertDoesNotMatchRegularExpression( '/\$\(/', $source, $file );
+			// The minifier may name a local helper `$`; only the source can call jQuery.
+			if ( ! str_ends_with( $file, '.min.js' ) ) {
+				$this->assertDoesNotMatchRegularExpression( '/\$\(/', $source, $file );
+			}
 			$this->assertDoesNotMatchRegularExpression( '/\beval\s*\(/', $source, $file );
 			$this->assertDoesNotMatchRegularExpression( '#https?://(?!www\.w3\.org)#', $source, $file );
 		}
@@ -66,9 +69,46 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_asset_budgets() {
-		$this->assertLessThanOrEqual( 10 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
+		$this->assertLessThanOrEqual( 14 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
 		$this->assertLessThanOrEqual( 3 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bootstrap.min.js' ) );
 		$this->assertLessThanOrEqual( 10 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
+	}
+
+	/**
+	 * The desktop profile mapping (section 2, base rules) and the mobile one (section 14, container
+	 * query) must define the same tokens for the same classes, prefix aside.
+	 */
+	public function test_presentation_profiles_stay_in_sync() {
+		$css = file_get_contents( HPRNB_PATH . 'assets/css/hprnb-bar.css' );
+		$this->assertSame( 1, preg_match( '/\* 2\. Desktop profile.*?\*\/(.*?)\/\* -{10,}\s*\* 3\./s', $css, $desktop ) );
+		$this->assertSame( 1, preg_match( '/@container hprnb \(max-width: 767\.98px\) \{(.*)\n\}\n\n@keyframes hprnb-pulse/s', $css, $mobile ) );
+
+		$normalise = static function ( string $block, string $prefix ): array {
+			$block = preg_replace( '/\/\*.*?\*\//s', '', $block );
+			$block = str_replace( array( '.hprnb-bar--sep-loop', '.hprnb-bar--sep' ), array( '.hprnb-root--' . $prefix . '-sep-loop', '.hprnb-root--' . $prefix . '-sep' ), $block );
+			$block = str_replace( array( 'hprnb-root--' . $prefix . '-', ' .hprnb-bar {', ' .hprnb-bar,' ), array( 'hprnb-root--P-', ' {', ',' ), $block );
+			preg_match_all( '/([^{}]+)\{([^{}]*)\}/', $block, $rules, PREG_SET_ORDER );
+			$out = array();
+			foreach ( $rules as $rule ) {
+				$selector = preg_replace( '/\s+/', ' ', trim( $rule[1] ) );
+				if ( '.hprnb-root' === $selector ) {
+					continue; // The mobile reset of every token has no desktop counterpart (the root defaults play that role).
+				}
+				if ( in_array( $selector, array( '.hprnb-root--P-colors', '.hprnb-root--P-collapse', '.hprnb-bar--collapsed' ), true ) ) {
+					continue; // Mobile-only features (palette, collapse on scroll).
+				}
+				$declarations = array_filter( array_map( 'trim', explode( ';', $rule[2] ) ) );
+				$out[ $selector ] = array_values( $declarations );
+			}
+			return $out;
+		};
+
+		$d = $normalise( $desktop[1], 'd' );
+		$m = $normalise( $mobile[1], 'm' );
+		// Only these tokens legitimately differ between the two profiles.
+		$d['.hprnb-root--P-stacked'] = array_values( array_diff( $d['.hprnb-root--P-stacked'], array( '--hprnb-e-max: 1200px' ) ) );
+		$m['.hprnb-root--P-stacked'] = array_values( array_diff( $m['.hprnb-root--P-stacked'], array( '--hprnb-e-max: none' ) ) );
+		$this->assertSame( $d, $m );
 	}
 
 	public function test_no_translation_before_init() {
@@ -79,7 +119,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	public function test_plugin_headers() {
 		$data = get_plugin_data( HPRNB_FILE, false, false );
 		$this->assertSame( 'Horizon Press News Bar', $data['Name'] );
-		$this->assertSame( '1.2.0', $data['Version'] );
+		$this->assertSame( '1.3.0', $data['Version'] );
 		$this->assertSame( '6.6', $data['RequiresWP'] );
 		$this->assertSame( '8.0', $data['RequiresPHP'] );
 		$this->assertSame( 'horizon-press-news-bar', $data['TextDomain'] );

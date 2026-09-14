@@ -156,13 +156,14 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$payload  = Renderer::payload( array( $this->item() ), $settings, 1757600000 );
 		$root     = Renderer::root( $payload, $settings );
 
-		$this->assertStringStartsWith( '<div id="hprnb-root" class="hprnb-root hprnb-device-all hprnb-root--reserve hprnb-root--m-stacked hprnb-root--m-label-pill hprnb-root--m-colors hprnb-root--m-collapse" data-hprnb-generated="1757600000" data-hprnb-stale="180" data-hprnb-layout="reserve" data-hprnb-empty="0" data-hprnb-mobile="', $root );
-		$this->assertStringContainsString( esc_attr( '{"layout":"stacked","counter":true,"progress":true,"swipe":true,"collapse":true}' ), $root );
+		$this->assertStringStartsWith( '<div id="hprnb-root" class="hprnb-root hprnb-device-all hprnb-root--reserve hprnb-root--d-inline hprnb-root--d-end hprnb-root--d-label-strip hprnb-root--m-stacked hprnb-root--m-label-pill hprnb-root--m-wrap hprnb-root--m-colors hprnb-root--m-collapse" data-hprnb-generated="1757600000" data-hprnb-stale="180" data-hprnb-layout="reserve" data-hprnb-empty="0" data-hprnb-desktop="', $root );
+		$this->assertStringContainsString( esc_attr( '{"layout":"inline","lines":1,"counter":false,"progress":false}' ), $root );
+		$this->assertStringContainsString( esc_attr( '{"layout":"stacked","lines":2,"counter":true,"progress":true,"swipe":true,"collapse":true}' ), $root );
 		$this->assertStringContainsString( 'data-hprnb-endpoint="' . esc_url( rest_url( 'hprnb/v1/items' ) ) . '"', $root );
 		$this->assertStringContainsString( 'data-hprnb-css="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=1.2.0"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=1.3.0"', $root );
 		$this->assertStringContainsString( 'data-hprnb-js', $root, 'The default mobile presentation (rotate, stacked) needs the interactive script.' );
-		$this->assertStringContainsString( 'style="--hprnb-bg:#B00000;--hprnb-fg:#FFFFFF;--hprnb-label-bg:#8F0000;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-font-size:14px;--hprnb-height:44px;--hprnb-z:99990;--hprnb-sep:&#039;•&#039;;--hprnb-m-bg:#141414;--hprnb-m-fg:#F5F5F5;--hprnb-m-accent:#E11D2A;--hprnb-m-label-fg:#FFFFFF;--hprnb-m-font-size:16px;--hprnb-m-height:76px"', $root );
+		$this->assertStringContainsString( 'style="--hprnb-bg:#B00000;--hprnb-fg:#FFFFFF;--hprnb-label-bg:#8F0000;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-font-size:14px;--hprnb-height:44px;--hprnb-d-lines:1;--hprnb-z:99990;--hprnb-sep:&#039;•&#039;;--hprnb-m-bg:#141414;--hprnb-m-fg:#F5F5F5;--hprnb-m-accent:#E11D2A;--hprnb-m-label-fg:#FFFFFF;--hprnb-m-font-size:16px;--hprnb-m-height:80px;--hprnb-m-lines:2"', $root );
 		$this->assertStringNotContainsString( ' hidden', $root );
 		$this->assertStringContainsString( '<aside', $root );
 		$this->assertStringEndsWith( '</aside></div>', $root );
@@ -179,7 +180,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$hybrid_js = $this->with_settings( array( 'close_button' => true, 'show_on_desktop' => false ) );
 		$root = Renderer::root( Renderer::payload( array( $this->item() ), $hybrid_js ), $hybrid_js );
 		$this->assertStringContainsString( 'data-hprnb-js="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=1.2.0"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=1.3.0"', $root );
 		$this->assertStringContainsString( 'hprnb-hide-desktop', $root );
 
 		add_filter( 'hprnb_stale_threshold', static fn() => 900 );
@@ -202,25 +203,41 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$this->assertTrue( Renderer::needs_interactive_js( array_merge( $defaults, array( 'show_relative_time' => true ) ) ) );
 	}
 
-	public function test_mobile_presentation_on_the_root() {
-		$settings = Settings::get();
+	public function test_presentation_profiles_on_the_root() {
+		$settings = Settings::defaults();
 		$this->assertSame( 'rotate', Renderer::mobile_ticker( $settings ) );
+		$this->assertSame( 'none', Renderer::desktop_ticker( $settings ) );
 		$this->assertSame( 'none', Renderer::mobile_ticker( array_merge( $settings, array( 'mobile_ticker_mode' => 'inherit' ) ) ) );
 		$this->assertSame( 'marquee', Renderer::mobile_ticker( array_merge( $settings, array( 'mobile_ticker_mode' => 'inherit', 'ticker_enabled' => true ) ) ) );
 		$this->assertSame( 'none', Renderer::mobile_ticker( array_merge( $settings, array( 'mobile_ticker_mode' => 'static', 'ticker_enabled' => true ) ) ) );
 		$this->assertSame( 'manual', Renderer::mobile_ticker( array_merge( $settings, array( 'mobile_ticker_mode' => 'manual' ) ) ) );
-		$this->assertSame( 76, Renderer::mobile_height( $settings ) );
-		$this->assertSame( 44, Renderer::mobile_height( array_merge( $settings, array( 'mobile_layout' => 'inline' ) ) ) );
 
-		$this->assertSame( array( 'hprnb-root', 'hprnb-device-all', 'hprnb-root--reserve', 'hprnb-root--m-stacked', 'hprnb-root--m-label-pill', 'hprnb-root--m-colors', 'hprnb-root--m-collapse' ), Renderer::root_classes( $settings ) );
-		$inline = array_merge( $settings, array( 'mobile_layout' => 'inline', 'mobile_label_style' => 'hidden', 'mobile_custom_colors' => false, 'mobile_hide_on_scroll' => true ) );
-		$this->assertSame( array( 'hprnb-root', 'hprnb-device-all', 'hprnb-root--reserve', 'hprnb-root--m-inline', 'hprnb-root--m-label-hidden' ), Renderer::root_classes( $inline ), 'Inline layout never collapses.' );
-		$this->assertSame( array( 'layout' => 'inline', 'counter' => false, 'progress' => false, 'swipe' => true, 'collapse' => false ), Renderer::mobile_data( $inline ) );
-		$this->assertSame( array( 'layout' => 'stacked', 'counter' => true, 'progress' => true, 'swipe' => true, 'collapse' => true ), Renderer::mobile_data( $settings ) );
+		// Heights: label row (22 + 4) + lines × ceil(font × 1.3) + 12, never below bar_height.
+		$this->assertSame( 44, Renderer::profile_height( $settings, 'd' ), 'Inline, one 14px line: the 44px minimum wins.' );
+		$this->assertSame( 80, Renderer::profile_height( $settings, 'm' ), 'Stacked, two 16px lines.' );
+		$this->assertSame( 54, Renderer::profile_height( array_merge( $settings, array( 'mobile_layout' => 'inline' ) ), 'm' ), 'Inline, two 16px lines.' );
+		$this->assertSame( 44, Renderer::profile_height( array_merge( $settings, array( 'mobile_layout' => 'inline', 'mobile_lines' => 1 ) ), 'm' ) );
+		$this->assertSame( 76, Renderer::profile_height( array_merge( $settings, array( 'desktop_layout' => 'stacked', 'desktop_lines' => 2 ) ), 'd' ) );
+		$this->assertSame( 60, Renderer::profile_height( array_merge( $settings, array( 'bar_height' => 60, 'desktop_lines' => 2 ) ), 'd' ), 'Minimum height above the computed one.' );
+		$this->assertSame( 44, Renderer::profile_height( array_merge( $settings, array( 'mobile_ticker_mode' => 'marquee', 'mobile_layout' => 'inline', 'mobile_lines' => 4 ) ), 'm' ), 'Marquee is always one line.' );
+		$this->assertSame( 1, Renderer::profile_lines( array_merge( $settings, array( 'ticker_enabled' => true, 'ticker_mode' => 'marquee', 'desktop_lines' => 3 ) ), 'd' ) );
 
-		$custom = $this->with_settings( array( 'mobile_bg_color' => '#000000', 'mobile_font_size' => 20, 'mobile_bar_height' => 90, 'mobile_accent_color' => '#0000FF' ) );
+		$this->assertSame( array( 'hprnb-root', 'hprnb-device-all', 'hprnb-root--reserve', 'hprnb-root--d-inline', 'hprnb-root--d-end', 'hprnb-root--d-label-strip', 'hprnb-root--m-stacked', 'hprnb-root--m-label-pill', 'hprnb-root--m-wrap', 'hprnb-root--m-colors', 'hprnb-root--m-collapse' ), Renderer::root_classes( $settings ) );
+		$inline = array_merge( $settings, array( 'mobile_layout' => 'inline', 'mobile_label_style' => 'hidden', 'mobile_label_dot' => true, 'mobile_custom_colors' => false, 'mobile_hide_on_scroll' => true, 'label_position' => 'start' ) );
+		$this->assertSame( array( 'hprnb-root', 'hprnb-device-all', 'hprnb-root--reserve', 'hprnb-root--d-inline', 'hprnb-root--d-label-strip', 'hprnb-root--m-inline', 'hprnb-root--m-label-hidden', 'hprnb-root--m-wrap' ), Renderer::root_classes( $inline ), 'Inline layout never collapses; a hidden label has no dot; label at the start has no -end class.' );
+		$this->assertNotContains( 'hprnb-root--m-end', Renderer::root_classes( array_merge( $inline, array( 'label_position' => 'end' ) ) ), 'On a phone the inline label always precedes the headline.' );
+		$desktop = array_merge( $settings, array( 'desktop_layout' => 'stacked', 'desktop_label_style' => 'pill', 'desktop_label_dot' => true, 'desktop_lines' => 2, 'show_separator' => true, 'mobile_show_separator' => true, 'mobile_lines' => 1 ) );
+		$this->assertSame( array( 'hprnb-root', 'hprnb-device-all', 'hprnb-root--reserve', 'hprnb-bar--sep', 'hprnb-bar--sep-loop', 'hprnb-root--d-stacked', 'hprnb-root--d-label-pill', 'hprnb-root--d-dot', 'hprnb-root--d-wrap', 'hprnb-root--m-stacked', 'hprnb-root--m-label-pill', 'hprnb-root--m-sep', 'hprnb-root--m-sep-loop', 'hprnb-root--m-colors', 'hprnb-root--m-collapse' ), Renderer::root_classes( $desktop ) );
+
+		$this->assertSame( array( 'layout' => 'stacked', 'lines' => 2, 'counter' => true, 'progress' => true, 'swipe' => true, 'collapse' => true ), Renderer::profile_data( $settings, 'm' ) );
+		$this->assertSame( array( 'layout' => 'inline', 'lines' => 2, 'counter' => true, 'progress' => true, 'swipe' => true, 'collapse' => false ), Renderer::profile_data( $inline, 'm' ) );
+		$this->assertSame( array( 'layout' => 'inline', 'lines' => 1, 'counter' => false, 'progress' => false ), Renderer::profile_data( $settings, 'd' ), 'Static desktop: no counter, no progress.' );
+		$rotate = array_merge( $settings, array( 'ticker_enabled' => true, 'ticker_mode' => 'rotate', 'desktop_show_counter' => true ) );
+		$this->assertSame( array( 'layout' => 'inline', 'lines' => 1, 'counter' => true, 'progress' => true ), Renderer::profile_data( $rotate, 'd' ) );
+
+		$custom = $this->with_settings( array( 'mobile_bg_color' => '#000000', 'mobile_font_size' => 20, 'mobile_lines' => 3, 'mobile_accent_color' => '#0000FF' ) );
 		$style  = Renderer::root_style( $custom );
-		$this->assertStringContainsString( '--hprnb-m-bg:#000000;--hprnb-m-fg:#F5F5F5;--hprnb-m-accent:#0000FF;--hprnb-m-label-fg:#FFFFFF;--hprnb-m-font-size:20px;--hprnb-m-height:90px', $style );
+		$this->assertStringContainsString( '--hprnb-m-bg:#000000;--hprnb-m-fg:#F5F5F5;--hprnb-m-accent:#0000FF;--hprnb-m-label-fg:#FFFFFF;--hprnb-m-font-size:20px;--hprnb-m-height:116px;--hprnb-m-lines:3', $style );
 	}
 
 	public function test_relative_time_label() {

@@ -30,12 +30,16 @@
 		label_text_color: '--hprnb-label-fg',
 		link_hover_color: '--hprnb-hover',
 		font_size: '--hprnb-font-size',
-		bar_height: '--hprnb-height',
 		z_index: '--hprnb-z'
 	};
-	var PX_KEYS = { font_size: true, bar_height: true };
+	var PX_KEYS = { font_size: true };
 	var MOBILE_VARS = { mobile_bg_color: '--hprnb-m-bg', mobile_text_color: '--hprnb-m-fg', mobile_accent_color: '--hprnb-m-accent', mobile_label_text_color: '--hprnb-m-label-fg', mobile_font_size: '--hprnb-m-font-size' };
-	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_layout: true, mobile_bar_height: true, mobile_label_style: true, mobile_show_counter: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true, mobile_font_size: true };
+	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, bar_height: true, show_separator: true, separator_char: true, separator_after_last: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
+	/* Row height of the stacked label strip, row gap, block padding and title line-height: mirrors Renderer::profile_height(). */
+	var STRIP = 22;
+	var ROW_GAP = 4;
+	var BLOCK_PAD = 12;
+	var LINE_HEIGHT = 1.3;
 	var reinitTimer = null;
 
 	/** Restarts the interactive script on the preview root (rotation, progress, marquee…). */
@@ -143,6 +147,44 @@
 		return el.value;
 	}
 
+	/** Effective ticker mode of a profile: none|marquee|rotate|manual (mirrors Renderer::desktop_ticker / mobile_ticker). */
+	function effectiveMode( p ) {
+		var desktop = valueOf( 'ticker_enabled' ) === '1' ? ( valueOf( 'ticker_mode' ) || 'marquee' ) : 'none';
+		if ( p !== 'm' ) {
+			return desktop;
+		}
+		var mobile = valueOf( 'mobile_ticker_mode' ) || 'rotate';
+		if ( mobile === 'inherit' ) {
+			return desktop;
+		}
+		if ( mobile === 'static' ) {
+			return 'none';
+		}
+		return mobile;
+	}
+
+	/** Normalised presentation profile (mirrors Renderer::profile()). */
+	function computeProfile( p ) {
+		var mobile = ( p === 'm' );
+		var prefix = mobile ? 'mobile_' : 'desktop_';
+		var mode = effectiveMode( p );
+		var layout = valueOf( prefix + 'layout' ) === 'stacked' ? 'stacked' : 'inline';
+		var label = valueOf( prefix + 'label_style' ) || ( mobile ? 'pill' : 'strip' );
+		var lines = Math.max( 1, Math.min( 4, parseInt( valueOf( prefix + 'lines' ), 10 ) || ( mobile ? 2 : 1 ) ) );
+		return {
+			layout: layout,
+			label: label,
+			dot: label !== 'hidden' && valueOf( prefix + 'label_dot' ) === '1',
+			counter: mode === 'rotate' && valueOf( prefix + 'show_counter' ) === '1',
+			lines: mode === 'marquee' ? 1 : lines,
+			progress: mode === 'rotate' && valueOf( prefix + 'show_progress' ) === '1',
+			mode: mode,
+			fontSize: parseInt( valueOf( mobile ? 'mobile_font_size' : 'font_size' ), 10 ) || ( mobile ? 16 : 14 ),
+			collapse: mobile && layout === 'stacked' && valueOf( 'mobile_hide_on_scroll' ) === '1',
+			swipe: mobile && mode === 'rotate' && valueOf( 'mobile_swipe' ) === '1'
+		};
+	}
+
 	function applyVisual() {
 		if ( ! previewRoot ) {
 			return;
@@ -161,31 +203,46 @@
 		previewRoot.classList.toggle( 'hprnb-bar--sep-loop', showSep && valueOf( 'separator_after_last' ) === '1' );
 		previewRoot.style.setProperty( '--hprnb-sep', cssString( valueOf( 'separator_char' ) || '•' ) );
 
-		// Mobile presentation: root classes, custom properties and the data-hprnb-mobile flags.
+		// Presentation profiles (desktop / mobile): root classes, custom properties, JSON flags and heights,
+		// computed exactly like Renderer::profile() / profile_height().
 		Object.keys( MOBILE_VARS ).forEach( function ( key ) {
 			var value = valueOf( key );
 			if ( value !== '' ) {
 				previewRoot.style.setProperty( MOBILE_VARS[ key ], key === 'mobile_font_size' ? parseInt( value, 10 ) + 'px' : value );
 			}
 		} );
-		var stacked = valueOf( 'mobile_layout' ) !== 'inline';
-		var labelStyle = valueOf( 'mobile_label_style' ) || 'pill';
-		var collapse = stacked && valueOf( 'mobile_hide_on_scroll' ) === '1';
-		previewRoot.style.setProperty( '--hprnb-m-height', ( stacked ? parseInt( valueOf( 'mobile_bar_height' ), 10 ) || 76 : parseInt( valueOf( 'bar_height' ), 10 ) || 44 ) + 'px' );
-		previewRoot.classList.toggle( 'hprnb-root--m-stacked', stacked );
-		previewRoot.classList.toggle( 'hprnb-root--m-inline', ! stacked );
-		[ 'pill', 'strip', 'hidden' ].forEach( function ( style ) {
-			previewRoot.classList.toggle( 'hprnb-root--m-label-' + style, labelStyle === style );
+		var labelEnd = valueOf( 'label_position' ) !== 'start';
+		var minHeight = parseInt( valueOf( 'bar_height' ), 10 ) || 44;
+		[ 'd', 'm' ].forEach( function ( p ) {
+			var profile = computeProfile( p );
+			var cls = previewRoot.classList;
+			cls.toggle( 'hprnb-root--' + p + '-inline', profile.layout === 'inline' );
+			cls.toggle( 'hprnb-root--' + p + '-stacked', profile.layout === 'stacked' );
+			cls.toggle( 'hprnb-root--' + p + '-end', p === 'd' && profile.layout === 'inline' && labelEnd );
+			[ 'pill', 'strip', 'hidden' ].forEach( function ( style ) {
+				cls.toggle( 'hprnb-root--' + p + '-label-' + style, profile.label === style );
+			} );
+			cls.toggle( 'hprnb-root--' + p + '-dot', profile.dot );
+			cls.toggle( 'hprnb-root--' + p + '-wrap', profile.lines > 1 );
+			var height = profile.lines * Math.ceil( profile.fontSize * LINE_HEIGHT ) + BLOCK_PAD + ( profile.layout === 'stacked' ? STRIP + ROW_GAP : 0 );
+			height = Math.max( minHeight, height );
+			previewRoot.style.setProperty( p === 'm' ? '--hprnb-m-height' : '--hprnb-height', height + 'px' );
+			previewRoot.style.setProperty( p === 'm' ? '--hprnb-m-lines' : '--hprnb-d-lines', String( profile.lines ) );
+			var data = { layout: profile.layout, lines: profile.lines, counter: profile.counter, progress: profile.progress };
+			if ( p === 'm' ) {
+				data.swipe = profile.swipe;
+				data.collapse = profile.collapse;
+			}
+			previewRoot.setAttribute( p === 'm' ? 'data-hprnb-mobile' : 'data-hprnb-desktop', JSON.stringify( data ) );
+			Array.prototype.forEach.call( document.querySelectorAll( '.hprnb-height-hint[data-hprnb-height="' + p + '"]' ), function ( hint ) {
+				hint.textContent = ( hint.getAttribute( 'data-hprnb-height-format' ) || '%d' ).replace( '%d', String( height ) );
+			} );
 		} );
+		var mobileSep = valueOf( 'mobile_show_separator' ) === '1';
+		previewRoot.classList.toggle( 'hprnb-root--m-sep', mobileSep );
+		previewRoot.classList.toggle( 'hprnb-root--m-sep-loop', mobileSep && valueOf( 'separator_after_last' ) === '1' );
 		previewRoot.classList.toggle( 'hprnb-root--m-colors', valueOf( 'mobile_custom_colors' ) === '1' );
-		previewRoot.classList.toggle( 'hprnb-root--m-collapse', collapse );
-		previewRoot.setAttribute( 'data-hprnb-mobile', JSON.stringify( {
-			layout: stacked ? 'stacked' : 'inline',
-			counter: stacked && valueOf( 'mobile_show_counter' ) === '1',
-			progress: stacked && valueOf( 'mobile_show_progress' ) === '1',
-			swipe: valueOf( 'mobile_swipe' ) === '1',
-			collapse: collapse
-		} ) );
+		previewRoot.classList.toggle( 'hprnb-root--m-collapse', computeProfile( 'm' ).collapse );
 		reinitPreview();
 
 		var aside = previewRoot.querySelector( '.hprnb-bar' );
