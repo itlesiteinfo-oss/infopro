@@ -195,7 +195,7 @@ mobile_show_pause: bool true                                (2.3: Pause / Play b
 mobile_show_close: bool true                                (2.3: close button on mobile; close_button must be on too)
 mobile_layout += 'card'                                     (2.4: the "discover" design — heading row, headline beside a landscape image)
 mobile_card_thumb: int 140 [80,220]                         (2.4: width of the card image, in a 16:10 box)
-                                                            (2.4.1: image at the start under the pill, headline +2px on as many lines as the image holds, close alone in a tab above the end corner; controls_place / controls_layout do not apply)
+                                                            (2.4.2: the picture opens the line and sets the card height; the pill takes the first line beside it, the headline runs from the second at +2px on the lines the picture leaves; close alone in a tab above the end corner, hidden while collapsed; collapsed it is the flowing card's strip — pulsing dot plus one line; controls_place / controls_layout do not apply)
 mobile_contexts: bool_map (same keys as `contexts`; all true) (2.4: narrows the global scope for this profile)
 mobile_placement: enum fixed [fixed,inline]                 (2.4: pinned to the screen, or a block of the article)
 mobile_inline_anchor: enum after [before,after,before_end]   (2.4: where in the article)

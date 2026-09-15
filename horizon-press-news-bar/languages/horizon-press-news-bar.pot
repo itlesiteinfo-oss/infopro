@@ -4,7 +4,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
-"POT-Creation-Date: 2026-09-15 15:46+0000\n"
+"POT-Creation-Date: 2026-09-15 17:52+0000\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 "Project-Id-Version: Horizon Press News Bar 2.3.0\n"
 "Report-Msgid-Bugs-To: https://horizonpress.example/news-bar\n"
@@ -1310,7 +1310,7 @@ msgid "Colours, sizes and label update instantly. Content criteria are applied b
 msgstr ""
 
 #. translators: %s: human-readable time difference, e.g. "2 hours".
-#: horizon-press-news-bar/includes/class-renderer.php:718
+#: horizon-press-news-bar/includes/class-renderer.php:719
 msgid "%s ago"
 msgstr ""
 

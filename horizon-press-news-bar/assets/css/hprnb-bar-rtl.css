@@ -707,6 +707,7 @@ body.hprnb-reserve.hprnb-pending {
 @media (prefers-reduced-motion: reduce) {
 	.hprnb-bar__track,
 	.hprnb-bar__item,
+	.hprnb-bar__title,
 	.hprnb-bar__label::before {
 		animation: none !important;
 	}
@@ -1295,16 +1296,17 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		block-size: 3px;
 	}
 
-	/* P-card: the "discover" design — a heading row, then a large landscape image at the start of
-	   the line with the headline beside it. Built around its picture, which is always in the markup.
+	/* P-card: the "discover" design — a large landscape image opens the line, the label takes the
+	   first line of the text column beside it and the headline runs from the second. Collapsed it
+	   becomes the strip of the flowing card: the pulsing pill and the first line of the headline.
 	   The close button is a square tab above the top end corner, outside the card. */
 	.hprnb-root--m-card .hprnb-bar {
 		--hprnb-e-display: block;
 		--hprnb-e-max: none;
 		--hprnb-e-label-margin: 0;
-		--hprnb-e-card-head: 26px;
-		--hprnb-e-card-gap: 10px;
 		--hprnb-e-card-pad: 14px;
+		--hprnb-e-card-gap: 12px;
+		--hprnb-e-card-col: calc(var(--hprnb-m-card-thumb) + var(--hprnb-e-card-gap));
 		--hprnb-e-card-tab: 46px;
 	}
 
@@ -1319,28 +1321,53 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	.hprnb-root--m-card .hprnb-bar__inner {
 		position: relative;
 		padding: var(--hprnb-e-card-pad) var(--hprnb-gutter);
+		padding-inline-start: calc(var(--hprnb-gutter) + var(--hprnb-e-card-col));
 		block-size: var(--hprnb-m-height);
 		line-height: var(--hprnb-m-line);
 	}
 
-	/* Heading row: the pill keeps its badge and sits above the image; the strip style becomes a
-	   plain bold heading. */
-	.hprnb-root--m-card .hprnb-bar__label {
-		float: none;
-		align-self: center;
-		inline-size: fit-content;
-		block-size: var(--hprnb-e-card-head);
-		max-inline-size: calc(100% - var(--hprnb-btn));
-		margin: 0 0 var(--hprnb-e-card-gap);
-		line-height: var(--hprnb-e-card-head);
+	/* The image sits in its own column, out of the text flow, and spans the whole card. */
+	.hprnb-root--m-card .hprnb-bar__thumb {
+		position: absolute;
+		inset-block-start: var(--hprnb-e-card-pad);
+		inset-inline-start: var(--hprnb-gutter);
+		display: block;
+		flex: none;
+		order: 0;
+		inline-size: var(--hprnb-m-card-thumb);
+		block-size: var(--hprnb-m-card-thumb-h);
+		aspect-ratio: auto;
+		margin: 0;
+		border-radius: 6px;
+		box-shadow: 0 0 0 1px rgba(255, 255, 255, .14);
+		transform: none;
 	}
 
+	/* First line of the text column: the pill, centred on the line. */
+	.hprnb-root--m-card .hprnb-bar__label {
+		float: none;
+		inline-size: fit-content;
+		max-inline-size: 100%;
+		block-size: var(--hprnb-pill);
+		margin: calc((var(--hprnb-m-line) - var(--hprnb-pill)) / 2) 0;
+		line-height: var(--hprnb-pill);
+	}
+
+	/* Room for the pause button only when one shares that line. */
+	.hprnb-root--m-card .hprnb-bar__inner:has(.hprnb-bar__btn--toggle:not([hidden])) .hprnb-bar__label {
+		max-inline-size: calc(100% - var(--hprnb-btn));
+	}
+
+	/* The strip style becomes a plain bold heading filling that first line. */
 	.hprnb-root--m-card:where(.hprnb-root--m-label-strip) .hprnb-bar__label {
+		block-size: var(--hprnb-m-line);
 		padding-inline: 0;
+		margin-block: 0;
 		background: transparent;
 		color: var(--hprnb-e-fg);
 		font-size: 16px;
 		letter-spacing: normal;
+		line-height: var(--hprnb-m-line);
 		text-transform: none;
 		box-shadow: none;
 	}
@@ -1349,9 +1376,12 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		display: none;
 	}
 
+	/* Plain blocks from the viewport down, so the headline is text the pill can float against. */
 	.hprnb-root--m-card .hprnb-bar__viewport,
 	.hprnb-root--m-card .hprnb-bar__list,
-	.hprnb-root--m-card .hprnb-bar__item {
+	.hprnb-root--m-card .hprnb-bar__item,
+	.hprnb-root--m-card .hprnb-bar__link,
+	.hprnb-root--m-card .hprnb-bar__title {
 		display: block;
 		inline-size: auto;
 		max-inline-size: none;
@@ -1365,51 +1395,29 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		display: none;
 	}
 
+	/* Deliberately not positioned: the image hangs off .hprnb-bar__inner, so this clip never
+	   reaches it and the picture can be taller than the two lines of headline beside it. */
 	.hprnb-root--m-card .hprnb-bar__viewport {
-		overflow: clip;
+		max-block-size: calc(var(--hprnb-m-card-lines, 2) * var(--hprnb-m-line));
+		overflow: visible clip;
 		touch-action: pan-y;
 	}
 
-	/* Image first, headline beside it. Flex and not grid: an article without a picture keeps the
-	   whole width, gap included. */
-	.hprnb-root--m-card .hprnb-bar__link {
-		display: flex;
-		align-items: flex-start;
-		gap: 12px;
-		inline-size: 100%;
-		max-inline-size: none;
-		white-space: normal;
-	}
-
-	.hprnb-root--m-card .hprnb-bar__thumb {
-		order: 0;
-		flex: none;
-		position: static;
-		display: block;
-		inline-size: var(--hprnb-m-card-thumb);
-		block-size: var(--hprnb-m-card-thumb-h);
-		aspect-ratio: auto;
-		margin: 0;
-		border-radius: 6px;
-		box-shadow: 0 0 0 1px rgba(255, 255, 255, .14);
-		transform: none;
-	}
-
-	/* The headline is the point: two sizes up, bold, on as many lines as the image is tall. */
+	/* The headline is the point: two sizes up, bold, on as many lines as the image leaves. */
 	.hprnb-root--m-card .hprnb-bar__title {
-		order: 1;
-		flex: 1 1 auto;
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
-		-webkit-line-clamp: var(--hprnb-m-card-lines, var(--hprnb-m-lines));
+		-webkit-line-clamp: var(--hprnb-m-card-lines, 2);
 		min-inline-size: 0;
-		max-inline-size: none;
 		overflow: hidden;
 		font-size: calc(var(--hprnb-m-font-size) + 2px);
 		font-weight: 700;
 		letter-spacing: -.01em;
 		line-height: var(--hprnb-m-line);
-		white-space: normal;
+	}
+
+	.hprnb-root--m-card .hprnb-bar__link:hover .hprnb-bar__title {
+		text-decoration: none;
 	}
 
 	.hprnb-root--m-card .hprnb-bar__time {
@@ -1451,9 +1459,42 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		block-size: 22px;
 	}
 
-	/* Collapsed: only the heading row shows; the tab goes with the rest, the chevron takes its row. */
+	/* Collapsed: the image and its column step aside, the pill floats back into the line and the
+	   first line of the headline runs beside it — the strip of the flowing card. */
+	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__inner {
+		padding-inline-start: var(--hprnb-gutter);
+	}
+
+	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__thumb {
+		display: none;
+	}
+
+	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__label {
+		float: inline-start;
+		margin-block: calc((var(--hprnb-m-line) - var(--hprnb-pill)) / 2) 0;
+	}
+
 	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__viewport {
-		opacity: 0;
+		max-block-size: var(--hprnb-m-line);
+	}
+
+	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__title {
+		-webkit-line-clamp: 1;
+	}
+
+	/* An article without a featured picture gives that column back to its headline. */
+	.hprnb-root--m-card .hprnb-bar__inner:not(:has(.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb)) {
+		padding-inline-start: var(--hprnb-gutter);
+	}
+
+	/* The picture hangs off .hprnb-bar__inner, so the item must never carry a transform of its
+	   own: it would become the containing block and drag the picture along on every rotation. */
+	.hprnb-root--m-card .hprnb-bar__item:not([hidden]) {
+		animation-name: hprnb-appear;
+	}
+
+	.hprnb-root--m-card .hprnb-bar__title {
+		animation: hprnb-rise .32s ease-out;
 	}
 
 	.hprnb-root--m-card .hprnb-bar__progress {
@@ -1553,7 +1594,8 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	   The "label only" option keeps the full pill instead. The card does the same when an image
 	   takes its own column: the red dot carries the "live" signal, the headline keeps the width. */
 	.hprnb-root--m-flow:where(.hprnb-root--m-label-compact) .hprnb-bar__label,
-	.hprnb-root--m-flow:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label {
+	.hprnb-root--m-flow:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label,
+	.hprnb-root--m-card:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label {
 		inline-size: var(--hprnb-pill);
 		min-inline-size: var(--hprnb-pill);
 		padding-inline: 0;
@@ -1562,13 +1604,15 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	}
 
 	.hprnb-root--m-flow:where(.hprnb-root--m-label-compact) .hprnb-bar__label-text,
-	.hprnb-root--m-flow:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label-text {
+	.hprnb-root--m-flow:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label-text,
+	.hprnb-root--m-card:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label-text {
 		display: none;
 	}
 
 	/* The beacon always shows its dot, even when the live dot option is off. */
 	.hprnb-root--m-flow:where(.hprnb-root--m-label-compact) .hprnb-bar__label::before,
-	.hprnb-root--m-flow:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label::before {
+	.hprnb-root--m-flow:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label::before,
+	.hprnb-root--m-card:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label::before {
 		display: block;
 	}
 
@@ -1637,6 +1681,14 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 @keyframes hprnb-rise {
 	from { opacity: 0; transform: translateY(6px); }
 	to { opacity: 1; transform: none; }
+}
+
+/* Same entrance without a transform: an animated transform turns the item into the containing
+   block of its absolutely positioned descendants, which would shift the card's picture on every
+   rotation. */
+@keyframes hprnb-appear {
+	from { opacity: 0; }
+	to { opacity: 1; }
 }
 
 @keyframes hprnb-progress {

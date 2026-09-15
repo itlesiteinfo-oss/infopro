@@ -2,6 +2,25 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.4.2] — 2026-09-15
+
+### Modifié — design « Découvrir »
+
+- **Carte plus courte** : la pastille n'a plus de ligne à elle au-dessus de tout ; elle prend la **première ligne de la colonne de texte**, à côté de l'image, et **le titre commence à la deuxième ligne**. La hauteur suit la seule image : `2 × 14 + max(hauteur image, ligne + lignes × ligne)` — **116 px au lieu de 152** avec les réglages par défaut (82 px pour une image de 80, 166 px pour une de 220).
+- Le nombre de lignes du titre se déduit de l'image (`⌊(hauteur image − ligne) / ligne⌋`, au moins 1) pour que le texte finisse au niveau de la photo : c'est la largeur d'image qui règle la taille du bloc, plus `mobile_lines`.
+- **Bandeau replié identique à celui du premier bandeau** : l'image et sa colonne s'effacent, la pastille redevient le **point rouge clignotant** collé à la gouttière et la **première ligne du titre** s'affiche à côté. Le bouton Fermer ne s'affiche pas dans le bandeau replié. Hauteur du bandeau : 43 px.
+- Un article **sans image mise en avant** récupère la colonne pour son titre (`:has()`), au lieu de laisser un vide.
+- La largeur réservée au bouton Pause sur la première ligne n'est prise que lorsqu'un bouton Pause y figure réellement.
+
+### Corrigé
+
+- **L'image de la carte se décalait à chaque rotation** : l'animation d'entrée posait un `transform` sur l'article, qui devenait alors le bloc conteneur de l'image positionnée — celle-ci sautait dans la colonne de texte pendant l'animation. L'article apparaît désormais en fondu (`hprnb-appear`) et c'est le titre qui monte ; le mouvement réduit coupe aussi cette animation de titre.
+- L'image était rognée par la fenêtre de texte lorsque celle-ci était positionnée : la fenêtre ne l'est plus, l'image se raccroche à la carte.
+
+### Modifié
+
+- Budget CSS relevé à 36 Ko.
+
 ## [2.4.1] — 2026-09-15
 
 ### Corrigé

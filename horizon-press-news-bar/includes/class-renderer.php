@@ -144,9 +144,8 @@ final class Renderer {
 	 * Mobile "card" layout: heading row, gap under it, block padding and the aspect ratio of the
 	 * landscape image (16:10). Mirrored by the stylesheet and the admin script.
 	 */
-	const CARD_HEAD      = 26;
-	const CARD_GAP       = 10;
 	const CARD_PAD       = 14;
+	const CARD_GAP       = 12;
 	const CARD_RATIO     = 0.625;
 	const CARD_FONT_PLUS = 2;
 	const CARD_LINE      = 1.5;
@@ -459,10 +458,11 @@ final class Renderer {
 		$line    = (int) round( $font * self::CARD_LINE );
 		$thumb   = max( 80, min( 220, (int) ( $settings['mobile_card_thumb'] ?? 140 ) ) );
 		$thumb_h = (int) round( $thumb * self::CARD_RATIO );
-		// As many lines as the image is tall, never fewer than the profile asks for.
-		$lines  = max( $profile['lines'], (int) floor( $thumb_h / $line ) );
-		$body   = max( $lines * $line, $thumb_h );
-		$height = 2 * self::CARD_PAD + self::CARD_HEAD + self::CARD_GAP + $body;
+		// The label takes the first line beside the image and the headline fills what it leaves
+		// under it, so the text ends level with the picture and the card stays as short as it can.
+		$lines  = max( 1, (int) floor( ( $thumb_h - $line ) / $line ) );
+		$body   = max( $thumb_h, $line + $lines * $line );
+		$height = 2 * self::CARD_PAD + $body;
 
 		return array(
 			'font'         => $font,
@@ -472,7 +472,8 @@ final class Renderer {
 			'thumb_height' => $thumb_h,
 			'height'       => max( (int) ( $settings['mobile_bar_height'] ?? 76 ), $height ),
 			'pad'          => self::CARD_PAD,
-			'peek'         => self::CARD_PAD + self::CARD_HEAD + self::PEEK_EXTRA,
+			// Collapsed it is the same strip as the flowing card: the pulsing pill and one line.
+			'peek'         => self::CARD_PAD + $line + self::PEEK_EXTRA,
 		);
 	}
 

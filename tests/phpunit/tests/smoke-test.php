@@ -16,7 +16,7 @@ use HorizonPress\NewsBar\Settings;
 class Smoke_Test extends HPRNB_Test_Case {
 
 	public function test_plugin_constants_and_classes() {
-		$this->assertSame( '2.4.1', HPRNB_VERSION );
+		$this->assertSame( '2.4.2', HPRNB_VERSION );
 		$this->assertTrue( class_exists( Settings::class ) );
 		$this->assertTrue( class_exists( \HorizonPress\NewsBar\Admin\Settings_Page::class ) );
 		$this->assertTrue( has_action( 'wp_footer', array( \HorizonPress\NewsBar\Frontend::class, 'footer' ) ) !== false );

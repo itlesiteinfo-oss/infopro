@@ -47,8 +47,6 @@
 	var FLOW_LINE = 1.625;
 	var FLOW_PAD = 6;
 	var PEEK_EXTRA = 2;
-	var CARD_HEAD = 26;
-	var CARD_GAP = 10;
 	var CARD_PAD = 14;
 	var CARD_RATIO = 0.625;
 	var CARD_FONT_PLUS = 2;
@@ -228,10 +226,10 @@
 		var line = Math.round( ( profile.fontSize + CARD_FONT_PLUS ) * CARD_LINE );
 		var thumb = Math.max( 80, Math.min( 220, parseInt( valueOf( 'mobile_card_thumb' ), 10 ) || 140 ) );
 		var thumbH = Math.round( thumb * CARD_RATIO );
-		var lines = Math.max( profile.lines, Math.floor( thumbH / line ) );
-		var body = Math.max( lines * line, thumbH );
-		var height = Math.max( parseInt( valueOf( 'mobile_bar_height' ), 10 ) || 76, 2 * CARD_PAD + CARD_HEAD + CARD_GAP + body );
-		return { line: line, lines: lines, thumb: thumb, thumbH: thumbH, height: height, pad: CARD_PAD, peek: CARD_PAD + CARD_HEAD + PEEK_EXTRA };
+		var lines = Math.max( 1, Math.floor( ( thumbH - line ) / line ) );
+		var body = Math.max( thumbH, line + lines * line );
+		var height = Math.max( parseInt( valueOf( 'mobile_bar_height' ), 10 ) || 76, 2 * CARD_PAD + body );
+		return { line: line, lines: lines, thumb: thumb, thumbH: thumbH, height: height, pad: CARD_PAD, peek: CARD_PAD + line + PEEK_EXTRA };
 	}
 
 	function applyVisual() {

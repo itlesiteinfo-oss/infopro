@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.4.1
+Stable tag: 2.4.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,11 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.4.2 =
+* "Discover" design: shorter card — the pill takes the first line beside the picture and the headline starts on the second; the height follows the picture (116px instead of 152px by default).
+* Collapsed, it is the same strip as the flowing card: the pulsing red dot and the first line of the headline.
+* Fixed the card's picture jumping on every rotation (the entrance animation made the item a containing block).
 
 = 2.4.1 =
 * Fixed: saving the settings hid the bar on the whole site (the per-profile page types were posted under the wrong name). Existing installs are repaired at upgrade.

@@ -1102,15 +1102,17 @@ test( 'v2.4: page types per profile, the bar inside the article, desktop collaps
 		expect( Math.round( image.height ) ).toBe( 88, '16:10 box.' );
 		const label = await page.locator( '.hprnb-bar__label' ).boundingBox();
 		expect( label.width ).toBeLessThan( 200, 'The heading shrink-wraps, it is not a full-width band.' );
-		expect( label.y + label.height ).toBeLessThanOrEqual( image.y + 1, 'Heading row above the image.' );
-		expect( Math.round( image.x ) ).toBe( 15, 'The image starts the line, under the pill.' );
+		expect( Math.round( image.x ) ).toBe( 15, 'The image opens the line.' );
+		expect( label.x ).toBeGreaterThan( image.x + image.width, 'The pill takes the first line of the text column, beside the image.' );
+		expect( Math.abs( label.y - image.y ) ).toBeLessThanOrEqual( 2, 'Level with the top of the image, not on a row of its own.' );
 		const headline = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' );
 		const headlineBox = await headline.boundingBox();
 		expect( headlineBox.x ).toBeGreaterThan( image.x + image.width, 'The headline sits beside the image.' );
+		expect( headlineBox.y ).toBeGreaterThanOrEqual( label.y + label.height - 2, 'And starts on the second line, under the pill.' );
 		expect( await headline.evaluate( ( el ) => getComputedStyle( el ).fontSize ) ).toBe( '18px', 'Two sizes above the 16px profile.' );
-		expect( await headline.evaluate( ( el ) => getComputedStyle( el ).webkitLineClamp ) ).toBe( '3', 'As many 27px lines as the 88px image holds.' );
-		// 14 + 26 + 10 + max(3 x 27, 88) + 14 = 152 → the image drives it.
-		expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 152 );
+		expect( await headline.evaluate( ( el ) => getComputedStyle( el ).webkitLineClamp ) ).toBe( '2', 'The lines the 88px image leaves under the pill.' );
+		// 14 + max(88, 27 + 2 x 27) + 14 = 116: the picture drives the height, nothing above it.
+		expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 116 );
 		const barBox = await aside.boundingBox();
 		const tab = page.locator( '.hprnb-bar__btn--close' );
 		const tabBox = await tab.boundingBox();
@@ -1123,9 +1125,20 @@ test( 'v2.4: page types per profile, the bar inside the article, desktop collaps
 			const top = document.elementFromPoint( rect.x + rect.width / 2, rect.y + rect.height / 2 );
 			return el === top || el.contains( top );
 		} ) ).toBe( true, 'Painted, not merely positioned.' );
+		// Collapsed it is the strip of the flowing card: the pulsing dot and the first line.
 		await page.evaluate( () => window.scrollTo( 0, 900 ) );
 		await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
-		expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '42px', 'Only the heading row peeks.' );
+		expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '43px', 'One line and its padding.' );
+		const dot = await page.locator( '.hprnb-bar__label' ).boundingBox();
+		expect( Math.round( dot.width ) ).toBe( 24, 'The pill shrinks to its dot.' );
+		expect( Math.round( dot.x ) ).toBe( 15, 'Against the gutter, on the left.' );
+		expect( await page.locator( '.hprnb-bar__label' ).evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'hprnb-beacon' );
+		expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => getComputedStyle( el ).display ) ).toBe( 'none' );
+		const strip = await headline.boundingBox();
+		expect( strip.x ).toBeGreaterThan( dot.x + dot.width, 'The first line of the headline runs beside it.' );
+		expect( Math.round( strip.height ) ).toBe( 27, 'One line.' );
+		await expect( thumb ).toBeHidden( 'No picture in the strip.' );
+		expect( await tab.evaluate( ( el ) => getComputedStyle( el ).display ) ).toBe( 'none', 'And no close tab.' );
 		await page.evaluate( () => window.scrollTo( 0, 0 ) );
 		await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
 		await tab.click();
@@ -1151,7 +1164,8 @@ test( 'v2.4: page types per profile, the bar inside the article, desktop collaps
 		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
 		await expect( page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb' ) ).toHaveCount( 0 );
 		const wide = await page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' ).boundingBox();
-		expect( wide.width ).toBeGreaterThan( 330, 'No image, no reserved column and no gap.' );
+		expect( wide.width ).toBeGreaterThan( 330, 'No picture, so its column goes back to the headline.' );
+		expect( Math.round( wide.x ) ).toBe( 15 );
 		expect( await noHorizontalOverflow( page ) ).toBe( true );
 		expect( errors ).toEqual( [] );
 	} finally {
