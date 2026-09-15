@@ -225,6 +225,16 @@ Trois réglages supplémentaires dans la carte **Mobile** : **Boutons** (empilé
 
 **Liseré d'accent** (`accent_edge`, activé, onglet Couleurs) : un trait de 2 px de la couleur d'accent sur le bord supérieur de la barre, que la progression de la rotation vient remplir.
 
+## 9 octies. Types de pages, placement dans l'article et second design mobile (2.4)
+
+**Types de pages par profil** : chaque carte de profil (onglet Affichage) a sa liste **Types de pages**, qui restreint la portée globale définie dans l'onglet Avancé. Un profil refusé sur la page courante est simplement masqué en CSS et n'y réserve aucun espace ; les deux refusés, la barre n'est pas rendue.
+
+**Placement dans l'article** : `{desktop|mobile}_placement` choisit entre *fixée en bas de l'écran* (défaut) et *dans l'article*. Dans ce second mode, **Où dans l'article** (`before` / `after` / `before_end`) et **Numéro du paragraphe** (1 à 30) décident du point d'insertion — indépendamment pour l'ordinateur et pour le mobile. La barre devient alors un bloc du contenu : pleine largeur (elle sort du gabarit contraint via `alignfull` et un décalage mesuré par le script), en flux, sans espace réservé et sans repli. Quand les deux profils visent deux paragraphes différents, le serveur rend la barre à celui de l'ordinateur et laisse une ancre vide à celui du mobile ; le script déplace la racine au franchissement des 768 px. Un article sans paragraphe laisse la barre en bas de l'écran.
+
+**Repli sur ordinateur** : `desktop_hide_on_scroll`, `desktop_collapse_mode` et `desktop_collapse_after` reprennent les trois moments du mobile. La barre glisse entièrement hors de vue et laisse un onglet arrondi contre le bord inférieur, aligné sur la gouttière du conteneur.
+
+**Design « Découvrir » (mobile)** : `mobile_layout = card` affiche une ligne de titre, puis le titre sur `mobile_lines` lignes à côté d'une image paysage 16:10 dont la largeur se règle par `mobile_card_thumb` (80 à 220 px). Le style de label « bandeau » y devient un simple titre en gras, « pastille » conserve la pastille rouge. Replié, seule la ligne de titre reste visible. Un article sans image mise en avant rend toute la largeur au titre.
+
 ## 10. Ticker (optionnel)
 
 Désactivé par défaut. Trois modes :

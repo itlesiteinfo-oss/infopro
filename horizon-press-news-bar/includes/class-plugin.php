@@ -66,6 +66,7 @@ final class Plugin {
 		Invalidation::register();
 		Assets::register();
 		Frontend::register();
+		Placement::register();
 		Rest_Controller::register();
 		Shortcode::register();
 		Admin\Preview::register();

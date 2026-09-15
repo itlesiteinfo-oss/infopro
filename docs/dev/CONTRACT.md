@@ -19,7 +19,7 @@ through `languages/horizon-press-news-bar-fr_FR.po/.mo`.
 - No translation function may run before the `init` hook.
 - Every executable PHP file starts with an `ABSPATH` guard (`defined( 'ABSPATH' ) || exit;`).
 - `wp_is_mobile()` is never used. Device visibility is CSS only (768px fixed breakpoint).
-- Contract with the theme and other plugins (v2): `--hprnb-offset` on `<body>` (visible height: 40 desktop, 76 / 40 mobile, 0 while hidden), `body.hprnb-is-collapsed`, `body.hprnb-kbd`, `body.hprnb-theme-offset`, `document` event `hprnb:state` with `{ mobile, collapsed, height, offset }`, `window.hprnbBar.state()`, and `body.hprnb-pending` while the bar waits for its reveal threshold (2.3: `--hprnb-offset` is then 0 and no space is reserved). Nothing foreign is ever inserted in the bar.
+- Contract with the theme and other plugins (v2): `--hprnb-offset` on `<body>` (visible height: 40 desktop, 76 / 40 mobile, 0 while hidden), `body.hprnb-is-collapsed`, `body.hprnb-kbd`, `body.hprnb-theme-offset`, `document` event `hprnb:state` with `{ mobile, collapsed, height, offset }`, `window.hprnbBar.state()`, and `body.hprnb-pending` while the bar waits for its reveal threshold (2.3: `--hprnb-offset` is then 0 and no space is reserved). A profile placed inside the article, and a bar collapsed from 768px, also report an offset of 0 (2.4). Nothing foreign is ever inserted in the bar.
 - Escaping at output: `esc_html()`, `esc_attr()`, `esc_url()`; colours validated with
   `sanitize_hex_color()` at input; IDs with `absint()`.
 - No `console.log` in production JS. All `localStorage`/`sessionStorage` access in `try/catch`.
@@ -193,6 +193,19 @@ mobile_collapse_after: int 120 [0,800]                      (2.3: collapse thres
 mobile_controls_place: enum inside [inside,outside]         (2.3: outside = floating group above the bar, --hprnb-m-ctrls 0)
 mobile_show_pause: bool true                                (2.3: Pause / Play button on mobile)
 mobile_show_close: bool true                                (2.3: close button on mobile; close_button must be on too)
+mobile_layout += 'card'                                     (2.4: the "discover" design — heading row, headline beside a landscape image)
+mobile_card_thumb: int 140 [80,220]                         (2.4: width of the card image, in a 16:10 box)
+mobile_contexts: bool_map (same keys as `contexts`; all true) (2.4: narrows the global scope for this profile)
+mobile_placement: enum fixed [fixed,inline]                 (2.4: pinned to the screen, or a block of the article)
+mobile_inline_anchor: enum after [before,after,before_end]   (2.4: where in the article)
+mobile_inline_paragraph: int 3 [1,30]                       (2.4: paragraph number, clamped to the article)
+desktop_contexts: bool_map (same keys as `contexts`; all true) (2.4)
+desktop_placement: enum fixed [fixed,inline]                (2.4)
+desktop_inline_anchor: enum after [before,after,before_end]  (2.4)
+desktop_inline_paragraph: int 3 [1,30]                      (2.4)
+desktop_hide_on_scroll: bool false                          (2.4: collapse from 768px; the bar leaves a chevron tab)
+desktop_collapse_mode: enum scroll [scroll,threshold,immediate] (2.4)
+desktop_collapse_after: int 120 [0,800]                     (2.4)
 mobile_show_separator: bool false
 mobile_custom_colors: bool true
 mobile_bg_color: color #141414

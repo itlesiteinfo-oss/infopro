@@ -141,6 +141,15 @@ final class Renderer {
 	const PEEK_EXTRA = 2;
 
 	/**
+	 * Mobile "card" layout: heading row, gap under it, block padding and the aspect ratio of the
+	 * landscape image (16:10). Mirrored by the stylesheet and the admin script.
+	 */
+	const CARD_HEAD  = 26;
+	const CARD_GAP   = 10;
+	const CARD_PAD   = 14;
+	const CARD_RATIO = 0.625;
+
+	/**
 	 * Inline CSS variables carried by the root (and by the admin preview root).
 	 *
 	 * @param array $settings Settings.
@@ -148,7 +157,7 @@ final class Renderer {
 	 */
 	public static function root_style( array $settings ): string {
 		return sprintf(
-			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-accent:%6$s;--hprnb-font-size:%7$dpx;--hprnb-height:%8$dpx;--hprnb-d-lines:%9$d;--hprnb-max:%10$dpx;--hprnb-gutter:%11$dpx;--hprnb-z:%12$d;--hprnb-sep:%13$s;--hprnb-m-bg:%14$s;--hprnb-m-fg:%15$s;--hprnb-m-accent:%16$s;--hprnb-m-label-fg:%17$s;--hprnb-m-font-size:%18$dpx;--hprnb-m-height:%19$dpx;--hprnb-m-lines:%20$d;--hprnb-m-line:%21$dpx;--hprnb-m-pad:%22$dpx;--hprnb-peek:%23$dpx;--hprnb-m-ctrls:%24$d;--hprnb-d-thumb:%25$dpx;--hprnb-m-thumb:%26$dpx',
+			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-accent:%6$s;--hprnb-font-size:%7$dpx;--hprnb-height:%8$dpx;--hprnb-d-lines:%9$d;--hprnb-max:%10$dpx;--hprnb-gutter:%11$dpx;--hprnb-z:%12$d;--hprnb-sep:%13$s;--hprnb-m-bg:%14$s;--hprnb-m-fg:%15$s;--hprnb-m-accent:%16$s;--hprnb-m-label-fg:%17$s;--hprnb-m-font-size:%18$dpx;--hprnb-m-height:%19$dpx;--hprnb-m-lines:%20$d;--hprnb-m-line:%21$dpx;--hprnb-m-pad:%22$dpx;--hprnb-peek:%23$dpx;--hprnb-m-ctrls:%24$d;--hprnb-d-thumb:%25$dpx;--hprnb-m-thumb:%26$dpx;--hprnb-m-card-thumb:%27$dpx;--hprnb-m-card-thumb-h:%28$dpx',
 			self::color( $settings['bg_color'], '#1B1C20' ),
 			self::color( $settings['text_color'], '#F5F5F5' ),
 			self::color( $settings['label_bg_color'], '#CE3029' ),
@@ -174,7 +183,9 @@ final class Renderer {
 			self::peek_height( $settings ),
 			self::mobile_controls( $settings ),
 			(int) ( $settings['desktop_thumb_size'] ?? 32 ),
-			(int) ( $settings['mobile_thumb_size'] ?? 48 )
+			(int) ( $settings['mobile_thumb_size'] ?? 48 ),
+			self::card_metrics( $settings )['thumb'],
+			self::card_metrics( $settings )['thumb_height']
 		);
 	}
 
@@ -210,8 +221,17 @@ final class Renderer {
 			if ( $profile['dot'] ) {
 				$classes[] = 'hprnb-root--' . $p . '-dot';
 			}
-			if ( $profile['lines'] > 1 && 'flow' !== $profile['layout'] ) {
+			if ( $profile['lines'] > 1 && ! in_array( $profile['layout'], array( 'flow', 'card' ), true ) ) {
 				$classes[] = 'hprnb-root--' . $p . '-wrap';
+			}
+			if ( 'inline' === $profile['placement'] ) {
+				// Inside the article instead of pinned to the viewport: no fixed position, no
+				// reserved space, no collapsing. `alignfull` is the WordPress way of telling a
+				// constrained block layout to let the element span the screen.
+				$classes[] = 'hprnb-root--' . $p . '-inflow';
+				if ( ! in_array( 'alignfull', $classes, true ) ) {
+					$classes[] = 'alignfull';
+				}
 			}
 			if ( $profile['thumb'] ) {
 				$classes[] = 'hprnb-root--' . $p . '-thumb';
@@ -231,6 +251,9 @@ final class Renderer {
 		}
 		if ( self::profile( $settings, 'm' )['collapse'] ) {
 			$classes[] = 'hprnb-root--m-collapse';
+		}
+		if ( self::profile( $settings, 'd' )['collapse'] ) {
+			$classes[] = 'hprnb-root--d-collapse';
 		}
 		if ( 'label' === ( $settings['mobile_peek'] ?? 'headline' ) ) {
 			$classes[] = 'hprnb-root--peek-label';
@@ -275,9 +298,9 @@ final class Renderer {
 		$prefix = $mobile ? 'mobile_' : 'desktop_';
 		$mode   = $mobile ? self::mobile_ticker( $settings ) : self::desktop_ticker( $settings );
 		$layout = (string) ( $settings[ $prefix . 'layout' ] ?? ( $mobile ? 'flow' : 'inline' ) );
-		$layout = in_array( $layout, $mobile ? array( 'flow', 'stacked', 'inline' ) : array( 'inline', 'stacked' ), true ) ? $layout : ( $mobile ? 'flow' : 'inline' );
-		if ( 'flow' === $layout && 'rotate' !== $mode ) {
-			$layout = 'stacked'; // The flowing card shows one headline at a time: any other mode uses the label row.
+		$layout = in_array( $layout, $mobile ? array( 'flow', 'stacked', 'inline', 'card' ) : array( 'inline', 'stacked' ), true ) ? $layout : ( $mobile ? 'flow' : 'inline' );
+		if ( in_array( $layout, array( 'flow', 'card' ), true ) && 'rotate' !== $mode ) {
+			$layout = 'stacked'; // The card designs show one headline at a time: any other mode uses the label row.
 		}
 		$label   = (string) ( $settings[ $prefix . 'label_style' ] ?? ( $mobile ? 'pill' : 'strip' ) );
 		$label   = in_array( $label, array( 'pill', 'strip', 'hidden' ), true ) ? $label : ( $mobile ? 'pill' : 'strip' );
@@ -293,10 +316,14 @@ final class Renderer {
 			'progress'       => 'rotate' === $mode && ! empty( $settings[ $prefix . 'show_progress' ] ),
 			'mode'           => $mode,
 			'font_size'      => (int) ( $mobile ? ( $settings['mobile_font_size'] ?? 16 ) : $settings['font_size'] ),
-			// The label row (stacked) or the first line (flow) is what stays visible when collapsed.
-			'collapse'       => $mobile && $stacked && ! empty( $settings['mobile_hide_on_scroll'] ),
+			// The label row (stacked), the first line (flow) or the heading (card) stays visible when
+			// collapsed; on desktop the bar slides away entirely and leaves its chevron tab.
+			'collapse'       => $mobile
+				? ( $stacked && ! empty( $settings['mobile_hide_on_scroll'] ) )
+				: ! empty( $settings['desktop_hide_on_scroll'] ),
+			'placement'      => 'inline' === ( $settings[ $prefix . 'placement' ] ?? 'fixed' ) ? 'inline' : 'fixed',
 			'swipe'          => $mobile && 'rotate' === $mode && ! empty( $settings['mobile_swipe'] ),
-			'thumb'          => ! empty( $settings[ $prefix . 'show_thumbnail' ] ),
+			'thumb'          => ! empty( $settings[ $prefix . 'show_thumbnail' ] ) || 'card' === $layout,
 			'thumb_position' => 'after' === ( $settings[ $prefix . 'thumb_position' ] ?? ( $mobile ? 'after' : 'before' ) ) ? 'after' : 'before',
 			'thumb_size'     => (int) ( $settings[ $prefix . 'thumb_size' ] ?? ( $mobile ? 48 : 32 ) ),
 			'peek'           => 'label' === ( $settings['mobile_peek'] ?? 'headline' ) ? 'label' : 'headline',
@@ -319,7 +346,13 @@ final class Renderer {
 			'lines'    => $profile['lines'],
 			'counter'  => $profile['counter'],
 			'progress' => $profile['progress'],
+			'place'    => $profile['placement'],
 		);
+		if ( 'd' === $p ) {
+			$data['collapse'] = $profile['collapse'];
+			$data['trigger']  = (string) ( $settings['desktop_collapse_mode'] ?? 'scroll' );
+			$data['after']    = (int) ( $settings['desktop_collapse_after'] ?? 120 );
+		}
 		if ( 'm' === $p ) {
 			$data['swipe']    = $profile['swipe'];
 			$data['collapse'] = $profile['collapse'];
@@ -358,6 +391,9 @@ final class Renderer {
 		if ( 'flow' === $profile['layout'] ) {
 			return self::flow_metrics( $settings )['height'];
 		}
+		if ( 'card' === $profile['layout'] ) {
+			return self::card_metrics( $settings )['height'];
+		}
 		$needed = $profile['lines'] * (int) ceil( $profile['font_size'] * self::LINE_HEIGHT ) + self::BLOCK_PAD;
 		if ( 'stacked' === $profile['layout'] ) {
 			$needed += self::STRIP_HEIGHT + self::ROW_GAP;
@@ -386,6 +422,31 @@ final class Renderer {
 			'height' => $height,
 			'pad'    => $pad,
 			'peek'   => $pad + $line + self::PEEK_EXTRA,
+		);
+	}
+
+	/**
+	 * Metrics of the mobile "discover" card: a heading row, then the headline beside a landscape
+	 * image. 16px / 3 lines / a 140px image → line 26, image 140 x 88, height 152, peek 42.
+	 *
+	 * @param array $settings Settings.
+	 * @return array{line:int,thumb:int,thumb_height:int,height:int,pad:int,peek:int}
+	 */
+	public static function card_metrics( array $settings ): array {
+		$profile = self::profile( $settings, 'm' );
+		$line    = (int) round( $profile['font_size'] * self::FLOW_LINE );
+		$thumb   = max( 80, min( 220, (int) ( $settings['mobile_card_thumb'] ?? 140 ) ) );
+		$thumb_h = (int) round( $thumb * self::CARD_RATIO );
+		$body    = max( $profile['lines'] * $line, $thumb_h );
+		$height  = 2 * self::CARD_PAD + self::CARD_HEAD + self::CARD_GAP + $body;
+
+		return array(
+			'line'         => $line,
+			'thumb'        => $thumb,
+			'thumb_height' => $thumb_h,
+			'height'       => max( (int) ( $settings['mobile_bar_height'] ?? 76 ), $height ),
+			'pad'          => self::CARD_PAD,
+			'peek'         => self::CARD_PAD + self::CARD_HEAD + self::PEEK_EXTRA,
 		);
 	}
 
@@ -422,6 +483,9 @@ final class Renderer {
 		$layout = self::profile( $settings, 'm' )['layout'];
 		if ( 'flow' === $layout ) {
 			return self::flow_metrics( $settings )['peek'];
+		}
+		if ( 'card' === $layout ) {
+			return self::card_metrics( $settings )['peek'];
 		}
 		return 'stacked' === $layout ? 36 : self::profile_height( $settings, 'm' );
 	}
@@ -563,7 +627,10 @@ final class Renderer {
 			|| ! empty( $settings['show_relative_time'] )
 			|| 'none' !== self::mobile_ticker( $settings )
 			|| self::profile( $settings, 'm' )['collapse']
+			|| self::profile( $settings, 'd' )['collapse']
 			|| self::profile( $settings, 'm' )['kbd']
+			|| 'inline' === self::profile( $settings, 'm' )['placement']
+			|| 'inline' === self::profile( $settings, 'd' )['placement']
 			|| 'immediate' !== ( $settings['reveal_mode'] ?? 'immediate' );
 	}
 

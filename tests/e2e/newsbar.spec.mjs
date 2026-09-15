@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { setSettings, wp, collectErrors, countRequests, noHorizontalOverflow, routeStaleDocument, OLD } from './helpers.mjs';
+import { setSettings, wp, collectErrors, countRequests, noHorizontalOverflow, routeStaleDocument, defaults, OLD } from './helpers.mjs';
 
 
 const postIds = [];
@@ -990,6 +990,137 @@ test( 'v2.3: reveal threshold, collapse triggers, buttons outside or hidden, acc
 		expect( touchErrors ).toEqual( [] );
 	} finally {
 		await touch.close();
+		setSettings();
+	}
+} );
+
+test( 'v2.4: page types per profile, the bar inside the article, desktop collapse, the "discover" card', async ( { page } ) => {
+	const paragraphs = Array.from( { length: 8 }, ( _, i ) =>
+		`<p>Paragraphe ${ i + 1 }. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.</p>` ).join( '\n' );
+	// Created first, so the newest posts — the ones the bar lists — all carry a picture.
+	const article = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Article de placement', `--post_content=${ paragraphs }`, '--porcelain' ] );
+	const url = new URL( wp( [ 'post', 'url', article ] ) ).pathname;
+	const ids = [];
+	for ( let i = 1; i <= 3; i++ ) {
+		ids.push( wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', `--post_title=Le conseil vote le budget ${ i } et lance les travaux du quartier`, '--porcelain' ] ) );
+	}
+	const media = ids.map( ( id ) => wp( [ 'media', 'import', 'tests/e2e/fixtures/thumb.png', '--post_id=' + id, '--featured_image', '--porcelain' ] ) );
+
+	/** Paragraphs of the article standing before the root in document order. */
+	const paragraphsBefore = () => page.evaluate( () => {
+		const root = document.querySelector( '#hprnb-root' );
+		return Array.from( document.querySelectorAll( '.wp-block-post-content p, .entry-content p' ) )
+			.filter( ( p ) => p.compareDocumentPosition( root ) & Node.DOCUMENT_POSITION_FOLLOWING ).length;
+	} );
+	const reserved = () => page.evaluate( () => ( {
+		offset: getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim(),
+		pad: getComputedStyle( document.body ).paddingBottom,
+		position: getComputedStyle( document.querySelector( '.hprnb-bar' ) ).position,
+		width: Math.round( document.querySelector( '#hprnb-root' ).getBoundingClientRect().width ),
+		left: Math.round( document.querySelector( '#hprnb-root' ).getBoundingClientRect().left ),
+	} ) );
+
+	try {
+		const errors = collectErrors( page );
+		const root = page.locator( '#hprnb-root' );
+		const aside = page.locator( '#hprnb-root .hprnb-bar' );
+
+		// Page types per profile: the front page is dropped for the desktop only.
+		await page.setViewportSize( { width: 1366, height: 800 } );
+		setSettings( { desktop_contexts: { ...defaults.desktop_contexts, front_page: false } } );
+		await page.goto( '/' );
+		await expect( root ).toHaveClass( /hprnb-hide-desktop/ );
+		await expect( root ).not.toHaveClass( /hprnb-device-all/ );
+		expect( await page.evaluate( () => getComputedStyle( document.querySelector( '#hprnb-root' ) ).display ) ).toBe( 'none' );
+		expect( await page.evaluate( () => getComputedStyle( document.body ).paddingBottom ) ).toBe( '0px' );
+		// The article is still allowed, so the bar comes back there.
+		await page.goto( url );
+		await expect( root ).toHaveClass( /hprnb-device-all/ );
+
+		// Both profiles refused: nothing is rendered at all.
+		setSettings( {
+			desktop_contexts: { ...defaults.desktop_contexts, front_page: false },
+			mobile_contexts: { ...defaults.mobile_contexts, front_page: false },
+		} );
+		await page.goto( '/' );
+		await expect( root ).toHaveCount( 0 );
+
+		// Inside the article, desktop, after the 3rd paragraph: a full-width block of the page.
+		setSettings( { desktop_placement: 'inline', desktop_inline_anchor: 'after', desktop_inline_paragraph: 3, rotate_interval: 60000 } );
+		await page.goto( url );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( root ).toHaveClass( /hprnb-root--d-inflow/ );
+		await expect( root ).toHaveClass( /alignfull/ );
+		expect( await paragraphsBefore() ).toBe( 3 );
+		const inline = await reserved();
+		expect( inline.position ).toBe( 'static', 'A block of the page, not pinned to the screen.' );
+		expect( inline.offset ).toBe( '0px', 'It covers nothing, so it reserves nothing.' );
+		expect( inline.pad ).toBe( '0px' );
+		expect( inline.left ).toBe( 0, 'Full bleed even inside a constrained article column.' );
+		expect( inline.width ).toBe( 1366 );
+		expect( await page.evaluate( () => window.hprnbBar.state().offset ) ).toBe( 0 );
+		expect( await noHorizontalOverflow( page ) ).toBe( true );
+
+		// "Before the last N paragraphs" counts from the end.
+		setSettings( { desktop_placement: 'inline', desktop_inline_anchor: 'before_end', desktop_inline_paragraph: 2, rotate_interval: 60000 } );
+		await page.goto( url );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await paragraphsBefore() ).toBe( 6, '8 paragraphs, 2 left behind.' );
+
+		// Collapsing from 768px: past the threshold the bar slides away and leaves a usable tab.
+		setSettings( { desktop_hide_on_scroll: true, desktop_collapse_mode: 'threshold', desktop_collapse_after: 300, rotate_interval: 60000 } );
+		await page.goto( url );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( root ).toHaveClass( /hprnb-root--d-collapse/ );
+		await page.evaluate( () => window.scrollTo( 0, 150 ) );
+		await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
+		await page.evaluate( () => window.scrollTo( 0, 500 ) );
+		await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
+		expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '0px' );
+		// The tab must really be painted, not only positioned.
+		expect( await page.evaluate( () => {
+			const el = document.querySelector( '.hprnb-bar__btn--expand' );
+			const rect = el.getBoundingClientRect();
+			const top = document.elementFromPoint( rect.x + rect.width / 2, rect.y + rect.height / 2 );
+			return el === top || el.contains( top );
+		} ) ).toBe( true );
+		await page.locator( '.hprnb-bar__btn--expand' ).click();
+		await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
+
+		// The "discover" card on a phone: heading row, headline beside a 16:10 image.
+		await page.setViewportSize( { width: 390, height: 780 } );
+		setSettings( { mobile_layout: 'card', mobile_lines: 3, rotate_interval: 60000 } );
+		await page.goto( '/' );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( root ).toHaveClass( /hprnb-root--m-card/ );
+		const thumb = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb' );
+		await expect( thumb ).toBeVisible( { timeout: 10000 } );
+		const image = await thumb.boundingBox();
+		expect( Math.round( image.width ) ).toBe( 140 );
+		expect( Math.round( image.height ) ).toBe( 88, '16:10 box.' );
+		const label = await page.locator( '.hprnb-bar__label' ).boundingBox();
+		expect( label.width ).toBeLessThan( 200, 'The heading shrink-wraps, it is not a full-width band.' );
+		expect( label.y + label.height ).toBeLessThanOrEqual( image.y + 1, 'Heading row above the content row.' );
+		// 14 + 26 + 10 + max(3 x 26, 88) + 14 = 142 → the image drives it.
+		expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 152 );
+		await page.evaluate( () => window.scrollTo( 0, 900 ) );
+		await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
+		expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '42px', 'Only the heading row peeks.' );
+
+		// The card without a picture keeps the whole width for its headline.
+		media.splice( 0 ).forEach( ( id ) => wp( [ 'post', 'delete', id, '--force' ] ) );
+		setSettings( { mobile_layout: 'card', mobile_lines: 3, rotate_interval: 60000 } );
+		await page.goto( '/' );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb' ) ).toHaveCount( 0 );
+		const wide = await page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' ).boundingBox();
+		expect( wide.width ).toBeGreaterThan( 330, 'No image, no reserved column and no gap.' );
+		expect( await noHorizontalOverflow( page ) ).toBe( true );
+		expect( errors ).toEqual( [] );
+	} finally {
+		media.forEach( ( id ) => wp( [ 'post', 'delete', id, '--force' ] ) );
+		ids.forEach( ( id ) => wp( [ 'post', 'delete', id, '--force' ] ) );
+		wp( [ 'post', 'delete', article, '--force' ] );
 		setSettings();
 	}
 } );

@@ -834,6 +834,136 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 }
 
 /* ---------------------------------------------------------------------------
+ * 13 bis. Placement inside the article (setting {desktop|mobile}_placement) and
+ *     collapse from 768px. In flow the bar is a block of the page: no fixed
+ *     position, no reserved body padding, no collapsing. The root spans the
+ *     viewport (full bleed) so the container query of section 14 keeps
+ *     measuring the screen and not the article column.
+ * ------------------------------------------------------------------------- */
+.hprnb-root--d-inflow,
+.hprnb-root--m-inflow {
+	/* The script measures the real gap to the edge of the screen (--hprnb-bleed) and the real
+	   width of the viewport (--hprnb-bleed-w); without it the usual centred formula applies.
+	   The declarations are forced because a constrained block layout centres its children with
+	   `margin-inline: auto !important`, and a classic theme clamps the content width. The root
+	   also carries `alignfull`, which is how a block theme is told to step aside. */
+	inline-size: var(--hprnb-bleed-w, 100vw) !important;
+	max-inline-size: var(--hprnb-bleed-w, 100vw) !important;
+	margin-block: 1.75em;
+	margin-inline-start: calc(-1 * var(--hprnb-bleed, calc(50vw - 50%))) !important;
+	margin-inline-end: 0 !important;
+}
+
+.hprnb-root--d-inflow .hprnb-bar,
+.hprnb-root--m-inflow .hprnb-bar {
+	contain: layout;
+}
+
+@media (min-width: 768px) {
+	.hprnb-root--d-inflow .hprnb-bar {
+		position: static;
+		padding-block-end: 0;
+		transform: none;
+		transition: none;
+	}
+
+	.hprnb-root--d-inflow .hprnb-bar--collapsed {
+		cursor: default;
+	}
+
+	.hprnb-root--d-inflow .hprnb-bar--collapsed .hprnb-bar__link {
+		pointer-events: auto;
+	}
+
+	.hprnb-root--d-inflow .hprnb-bar__btn--expand {
+		display: none !important;
+	}
+
+	body.hprnb-reserve:has(.hprnb-root--d-inflow) {
+		--hprnb-offset: 0px;
+		padding-block-end: 0;
+	}
+
+	/* Collapsed from 768px: the bar slides fully away and leaves its chevron as a small tab
+	   against the bottom edge (nothing is reserved for it). */
+	.hprnb-root--d-collapse .hprnb-bar {
+		transition: transform .28s cubic-bezier(.2, .7, .2, 1);
+		will-change: transform;
+	}
+
+	.hprnb-root--d-collapse:not(.hprnb-root--d-inflow) .hprnb-bar--collapsed {
+		transform: translateY(100%);
+	}
+
+	.hprnb-root--d-collapse:not(.hprnb-root--d-inflow) .hprnb-bar--collapsed .hprnb-bar__controls {
+		position: absolute;
+		inset-block-end: 100%;
+		inset-inline-end: var(--hprnb-gutter);
+		block-size: 30px;
+		padding-inline: 4px;
+		border-start-start-radius: 8px;
+		border-start-end-radius: 8px;
+		background: var(--hprnb-e-bg);
+		box-shadow: 0 -4px 14px rgba(0, 0, 0, .28);
+	}
+
+	/* Section 14 only shows the chevron under 768px: from 768px the desktop tab needs its own
+	   swap, otherwise the base `display: none` of section 7 leaves nothing to click. */
+	.hprnb-root--d-collapse .hprnb-bar--collapsed .hprnb-bar__btn {
+		display: none;
+	}
+
+	.hprnb-root--d-collapse:not(.hprnb-root--d-inflow) .hprnb-bar--collapsed .hprnb-bar__btn--expand {
+		display: inline-flex;
+		min-inline-size: 44px;
+		min-block-size: 30px;
+	}
+
+	.hprnb-root--d-collapse:not(.hprnb-root--d-inflow) .hprnb-bar--collapsed .hprnb-bar__btn--expand svg {
+		transform: rotate(180deg);
+	}
+
+	body.hprnb-reserve.hprnb-is-collapsed {
+		--hprnb-offset: 0px;
+		padding-block-end: 0;
+	}
+}
+
+@media (max-width: 767.98px) {
+	.hprnb-root--m-inflow .hprnb-bar {
+		position: static;
+		padding-block-end: 0;
+		transform: none;
+		transition: none;
+		max-inline-size: none;
+	}
+
+	.hprnb-root--m-inflow .hprnb-bar--collapsed {
+		cursor: default;
+	}
+
+	.hprnb-root--m-inflow .hprnb-bar--collapsed .hprnb-bar__link {
+		pointer-events: auto;
+	}
+
+	.hprnb-root--m-inflow .hprnb-bar__btn--expand {
+		display: none !important;
+	}
+
+	body.hprnb-reserve:has(.hprnb-root--m-inflow) {
+		--hprnb-offset: 0px;
+		padding-block-end: 0;
+	}
+}
+
+/* The empty anchor the script moves the root into when the two profiles ask for two different
+   paragraphs. It never shows anything by itself. */
+.hprnb-slot {
+	display: block;
+	block-size: 0;
+}
+
+/* ---------------------------------------------------------------------------
  * 14. Mobile profile (under 768px) — container query on #hprnb-root.
  *     First the effective tokens are reset to the mobile defaults (so nothing
  *     leaks from the desktop classes), then the hprnb-root--m-* classes apply,
@@ -1162,6 +1292,147 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	}
 
 	.hprnb-root--m-flow .hprnb-bar__progress {
+		block-size: 3px;
+	}
+
+	/* P-card: the "discover" design — a heading row, then the headline beside a landscape image.
+	   Taller than the flowing card and built around its picture, which is always in the markup. */
+	.hprnb-root--m-card .hprnb-bar {
+		--hprnb-e-display: block;
+		--hprnb-e-max: none;
+		--hprnb-e-label-margin: 0;
+		--hprnb-e-card-head: 26px;
+		--hprnb-e-card-gap: 10px;
+		--hprnb-e-card-pad: 14px;
+	}
+
+	.hprnb-root--m-card .hprnb-bar__inner {
+		position: relative;
+		padding: var(--hprnb-e-card-pad) var(--hprnb-gutter);
+		block-size: var(--hprnb-m-height);
+		line-height: var(--hprnb-m-line);
+	}
+
+	/* Heading row: the pill keeps its badge, the strip style becomes a plain bold heading. */
+	.hprnb-root--m-card .hprnb-bar__label {
+		float: none;
+		align-self: center;
+		inline-size: fit-content;
+		block-size: var(--hprnb-e-card-head);
+		max-inline-size: calc(100% - 2 * var(--hprnb-btn));
+		margin: 0 0 var(--hprnb-e-card-gap);
+		line-height: var(--hprnb-e-card-head);
+	}
+
+	.hprnb-root--m-card:where(.hprnb-root--m-label-strip) .hprnb-bar__label {
+		padding-inline: 0;
+		background: transparent;
+		color: var(--hprnb-e-fg);
+		font-size: 15px;
+		letter-spacing: normal;
+		text-transform: none;
+		box-shadow: none;
+	}
+
+	.hprnb-root--m-card .hprnb-bar__counter {
+		display: none;
+	}
+
+	.hprnb-root--m-card .hprnb-bar__viewport,
+	.hprnb-root--m-card .hprnb-bar__list,
+	.hprnb-root--m-card .hprnb-bar__item {
+		display: block;
+		inline-size: auto;
+		max-inline-size: none;
+		margin: 0;
+		padding: 0;
+		overflow: visible;
+		white-space: normal;
+	}
+
+	.hprnb-root--m-card .hprnb-bar__item[hidden] {
+		display: none;
+	}
+
+	.hprnb-root--m-card .hprnb-bar__viewport {
+		overflow: clip;
+		touch-action: pan-y;
+	}
+
+	/* Headline and image side by side; the image keeps its 16:10 box whatever the headline does. */
+	/* Flex and not grid: an article without a picture keeps the whole width, gap included. */
+	.hprnb-root--m-card .hprnb-bar__link {
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+		inline-size: 100%;
+		max-inline-size: none;
+		white-space: normal;
+	}
+
+	.hprnb-root--m-card .hprnb-bar__title {
+		flex: 1 1 auto;
+		min-inline-size: 0;
+	}
+
+	.hprnb-root--m-card .hprnb-bar__thumb {
+		flex: none;
+	}
+
+	.hprnb-root--m-card .hprnb-bar__title {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: var(--hprnb-m-lines);
+		overflow: hidden;
+		max-inline-size: none;
+		font-weight: 700;
+		letter-spacing: -.005em;
+		white-space: normal;
+	}
+
+	.hprnb-root--m-card .hprnb-bar__thumb {
+		order: 2;
+		position: static;
+		display: block;
+		inline-size: var(--hprnb-m-card-thumb);
+		block-size: var(--hprnb-m-card-thumb-h);
+		aspect-ratio: auto;
+		margin: 0;
+		border-radius: 6px;
+		box-shadow: 0 0 0 1px rgba(255, 255, 255, .14);
+		transform: none;
+	}
+
+	.hprnb-root--m-card .hprnb-bar__time {
+		display: none;
+	}
+
+	/* Controls in the top corner of the card, over the heading row. */
+	.hprnb-root--m-card .hprnb-bar__controls {
+		position: absolute;
+		inset-block-start: calc(var(--hprnb-e-card-pad) - 5px);
+		inset-inline-end: calc(var(--hprnb-gutter) - 8px);
+		flex-direction: row;
+		align-items: center;
+		block-size: auto;
+		gap: 2px;
+	}
+
+	.hprnb-root--m-card .hprnb-bar__btn {
+		min-inline-size: 36px;
+		min-block-size: 36px;
+	}
+
+	/* Collapsed: only the heading row shows, the rest slides out of view. */
+	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__viewport {
+		opacity: 0;
+	}
+
+	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__controls {
+		inset-block-start: calc(var(--hprnb-e-card-pad) - 5px);
+	}
+
+	.hprnb-root--m-card .hprnb-bar__progress {
 		block-size: 3px;
 	}
 

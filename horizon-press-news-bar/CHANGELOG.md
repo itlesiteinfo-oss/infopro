@@ -2,6 +2,24 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.4.0] — 2026-09-15
+
+### Ajouté
+
+- **Types de pages par profil** (`desktop_contexts`, `mobile_contexts`) : chaque profil restreint la portée globale de l'onglet Avancé. Un profil refusé sur la page courante reçoit sa classe `hprnb-hide-*` (et l'espace réservé disparaît) ; les deux refusés, rien n'est rendu du tout.
+- **Placement dans l'article** (`{desktop|mobile}_placement`, `_inline_anchor`, `_inline_paragraph`) : la barre peut quitter le bas de l'écran pour devenir un bloc de l'article, **avant** un paragraphe, **après** un paragraphe, ou **avant les N derniers paragraphes** — chaque profil ayant son propre numéro. Dans ce mode elle est en pleine largeur (`alignfull` plus un décalage mesuré par le script, pour sortir d'un gabarit contraint sans déborder), en flux (`position: static`), sans espace réservé (`--hprnb-offset: 0`) et sans repli. Un article sans paragraphe la laisse en bas de l'écran.
+- Quand les deux profils demandent deux paragraphes différents, le serveur place la barre au paragraphe de l'ordinateur et laisse une ancre vide (`.hprnb-slot`) à celui du mobile ; le script déplace la racine sous 768 px et la ramène au-dessus.
+- **Repli à partir de 768 px** (`desktop_hide_on_scroll`, `desktop_collapse_mode`, `desktop_collapse_after`) : mêmes trois moments que sur mobile (en descendant, dès le seuil, toujours repliée). La barre glisse entièrement hors de vue et laisse un petit onglet arrondi contre le bord inférieur ; rien n'est réservé tant qu'elle est repliée.
+- **Second design mobile « Découvrir »** (`mobile_layout = card`, `mobile_card_thumb`) : une ligne de titre, puis le titre sur plusieurs lignes à côté d'une grande image paysage 16:10 (80 à 220 px de large), boutons dans le coin supérieur. Le design est construit autour de son image et l'ajoute toujours au markup ; un article sans image rend toute la largeur au titre, gouttière comprise. Replié, seule la ligne de titre reste visible.
+- La page de réglages sait griser une dépendance sur la **valeur** d'un bouton radio (`depends` en `clé:valeur`) et plus seulement sur une case à cocher.
+
+### Modifié
+
+- `Renderer::profile()` expose `placement`, et `profile_data()` ajoute `place` aux deux profils ainsi que `collapse` / `trigger` / `after` au profil ordinateur.
+- `Settings::wants_thumbnails()` compte le design « Découvrir » : l'image entre dans le markup mis en cache dès qu'il est choisi.
+- Le contrat expose un offset nul pour un profil en flux comme pour une barre repliée sur ordinateur.
+- Budget CSS relevé à 32 Ko.
+
 ## [2.3.0] — 2026-09-15
 
 ### Ajouté

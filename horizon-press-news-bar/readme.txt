@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.3.0
+Stable tag: 2.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,12 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.4.0 =
+* Page types per profile: desktop and mobile each narrow where the bar may appear.
+* The bar can sit inside the article — before a paragraph, after one, or before the last N — with its own paragraph number per profile.
+* Collapsing from 768px, with the same three moments as on mobile; the bar leaves a small tab to bring it back.
+* Second mobile design, "Discover": a heading row, then the headline beside a large landscape image.
 
 = 2.3.0 =
 * When the bar appears: right away, after a scroll distance (recommended on articles), after a share of the page, or near its end. No space is reserved until then.

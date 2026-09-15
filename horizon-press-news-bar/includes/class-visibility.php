@@ -117,6 +117,45 @@ final class Visibility {
 	}
 
 	/**
+	 * Which presentation profiles may appear in the current context: the device switches, narrowed
+	 * by the per-profile page types. Both false means nothing is rendered at all.
+	 *
+	 * @param array $settings Settings.
+	 * @return array{desktop:bool,mobile:bool}
+	 */
+	public static function devices_for_context( array $settings ): array {
+		$key = self::context_key();
+
+		$allows = static function ( string $profile ) use ( $settings, $key ): bool {
+			$map = $settings[ $profile . '_contexts' ] ?? null;
+			if ( ! is_array( $map ) || '' === $key || ! array_key_exists( $key, $map ) ) {
+				return true; // Unknown context or no map: the global scope already had its say.
+			}
+			return ! empty( $map[ $key ] );
+		};
+
+		return array(
+			'desktop' => ! empty( $settings['show_on_desktop'] ) && $allows( 'desktop' ),
+			'mobile'  => ! empty( $settings['show_on_mobile'] ) && $allows( 'mobile' ),
+		);
+	}
+
+	/**
+	 * A copy of the settings whose device switches carry the per-profile page types, so the renderer
+	 * emits the right `hprnb-hide-*` class without ever looking at conditional tags itself.
+	 *
+	 * @param array $settings Settings.
+	 * @return array
+	 */
+	public static function with_context_devices( array $settings ): array {
+		$devices                     = self::devices_for_context( $settings );
+		$settings['show_on_desktop'] = $devices['desktop'];
+		$settings['show_on_mobile']  = $devices['mobile'];
+
+		return $settings;
+	}
+
+	/**
 	 * Whether the current singular object is excluded by ID.
 	 *
 	 * @param array $settings Settings.
@@ -142,6 +181,11 @@ final class Visibility {
 			&& self::device_enabled( $settings )
 			&& self::context_allowed( $settings )
 			&& ! self::is_excluded_id( $settings );
+
+		if ( $display ) {
+			$devices = self::devices_for_context( $settings );
+			$display = $devices['desktop'] || $devices['mobile'];
+		}
 
 		/**
 		 * Filters the final display decision for the current request.

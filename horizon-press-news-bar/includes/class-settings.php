@@ -313,10 +313,73 @@ final class Settings {
 				'min'     => 16,
 				'max'     => 80,
 			),
+			'desktop_contexts'         => array(
+				'type'    => 'bool_map',
+				'default' => $contexts_default,
+				'keys'    => self::CONTEXT_KEYS,
+			),
+			'desktop_placement'        => array(
+				'type'    => 'enum',
+				'default' => 'fixed',
+				'options' => array( 'fixed', 'inline' ),
+			),
+			'desktop_inline_anchor'    => array(
+				'type'    => 'enum',
+				'default' => 'after',
+				'options' => array( 'before', 'after', 'before_end' ),
+			),
+			'desktop_inline_paragraph' => array(
+				'type'    => 'int',
+				'default' => 3,
+				'min'     => 1,
+				'max'     => 30,
+			),
+			'desktop_hide_on_scroll'   => array(
+				'type'    => 'bool',
+				'default' => false,
+			),
+			'desktop_collapse_mode'    => array(
+				'type'    => 'enum',
+				'default' => 'scroll',
+				'options' => array( 'scroll', 'threshold', 'immediate' ),
+			),
+			'desktop_collapse_after'   => array(
+				'type'    => 'int',
+				'default' => 120,
+				'min'     => 0,
+				'max'     => 800,
+			),
 			'mobile_layout'            => array(
 				'type'    => 'enum',
 				'default' => 'flow',
-				'options' => array( 'flow', 'stacked', 'inline' ),
+				'options' => array( 'flow', 'stacked', 'inline', 'card' ),
+			),
+			'mobile_card_thumb'        => array(
+				'type'    => 'int',
+				'default' => 140,
+				'min'     => 80,
+				'max'     => 220,
+			),
+			'mobile_contexts'          => array(
+				'type'    => 'bool_map',
+				'default' => $contexts_default,
+				'keys'    => self::CONTEXT_KEYS,
+			),
+			'mobile_placement'         => array(
+				'type'    => 'enum',
+				'default' => 'fixed',
+				'options' => array( 'fixed', 'inline' ),
+			),
+			'mobile_inline_anchor'     => array(
+				'type'    => 'enum',
+				'default' => 'after',
+				'options' => array( 'before', 'after', 'before_end' ),
+			),
+			'mobile_inline_paragraph'  => array(
+				'type'    => 'int',
+				'default' => 3,
+				'min'     => 1,
+				'max'     => 30,
 			),
 			'mobile_label_style'       => array(
 				'type'    => 'enum',
@@ -643,7 +706,10 @@ final class Settings {
 	 * @return bool
 	 */
 	public static function wants_thumbnails( array $settings ): bool {
-		return ! empty( $settings['desktop_show_thumbnail'] ) || ! empty( $settings['mobile_show_thumbnail'] );
+		// The mobile "card" design is built around its image: it always needs one in the markup.
+		return ! empty( $settings['desktop_show_thumbnail'] )
+			|| ! empty( $settings['mobile_show_thumbnail'] )
+			|| 'card' === ( $settings['mobile_layout'] ?? 'flow' );
 	}
 
 	/**

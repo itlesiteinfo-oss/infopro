@@ -217,7 +217,8 @@ final class Frontend {
 		}
 
 		self::$root_claimed = true;
-		echo Renderer::root( $payload, $settings ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup built and escaped by the Renderer.
+		// The per-profile page types decide, here and nowhere else, which profiles may show.
+		echo Renderer::root( $payload, Visibility::with_context_devices( $settings ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup built and escaped by the Renderer.
 	}
 
 	/**
@@ -243,6 +244,7 @@ final class Frontend {
 	 * @return void
 	 */
 	public static function reset(): void {
+		Placement::reset();
 		self::$settings     = null;
 		self::$eligible     = false;
 		self::$prepared     = false;

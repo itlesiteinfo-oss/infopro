@@ -37,7 +37,7 @@
 	};
 	var PX_KEYS = { font_size: true, max_width: true, gutter: true };
 	var MOBILE_VARS = { mobile_bg_color: '--hprnb-m-bg', mobile_text_color: '--hprnb-m-fg', mobile_accent_color: '--hprnb-m-accent', mobile_label_text_color: '--hprnb-m-label-fg', mobile_font_size: '--hprnb-m-font-size' };
-	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, bar_height: true, align_container: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_bar_height: true, mobile_peek: true, mobile_deep_collapse: true, mobile_kbd_hide: true, theme_offset: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, desktop_thumb_position: true, desktop_thumb_size: true, mobile_thumb_position: true, mobile_thumb_size: true, mobile_controls_layout: true, mobile_controls_place: true, mobile_show_pause: true, mobile_show_close: true, mobile_collapse_mode: true, mobile_collapse_after: true, accent_edge: true, mobile_label_pulse: true, mobile_peek_thumbnail: true, mobile_label_compact: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
+	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, bar_height: true, align_container: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_bar_height: true, mobile_peek: true, mobile_deep_collapse: true, mobile_kbd_hide: true, theme_offset: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, desktop_thumb_position: true, desktop_thumb_size: true, mobile_thumb_position: true, mobile_thumb_size: true, mobile_controls_layout: true, mobile_controls_place: true, mobile_show_pause: true, mobile_show_close: true, mobile_collapse_mode: true, mobile_collapse_after: true, accent_edge: true, mobile_label_pulse: true, mobile_peek_thumbnail: true, mobile_label_compact: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_card_thumb: true, desktop_hide_on_scroll: true, desktop_collapse_mode: true, desktop_collapse_after: true, desktop_placement: true, mobile_placement: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
 	/* Row height of the stacked label strip, row gap, block padding and title line-height: mirrors Renderer::profile_height(). */
 	var STRIP = 22;
 	var ROW_GAP = 4;
@@ -47,6 +47,10 @@
 	var FLOW_LINE = 1.625;
 	var FLOW_PAD = 6;
 	var PEEK_EXTRA = 2;
+	var CARD_HEAD = 26;
+	var CARD_GAP = 10;
+	var CARD_PAD = 14;
+	var CARD_RATIO = 0.625;
 	var reinitTimer = null;
 
 	/** Restarts the interactive script on the preview root (rotation, progress, marquee…). */
@@ -176,13 +180,13 @@
 		var prefix = mobile ? 'mobile_' : 'desktop_';
 		var mode = effectiveMode( p );
 		var layout = valueOf( prefix + 'layout' ) || ( mobile ? 'flow' : 'inline' );
-		if ( layout !== 'stacked' && layout !== 'inline' && layout !== 'flow' ) {
+		if ( layout !== 'stacked' && layout !== 'inline' && layout !== 'flow' && layout !== 'card' ) {
 			layout = mobile ? 'flow' : 'inline';
 		}
-		if ( ! mobile && layout === 'flow' ) {
+		if ( ! mobile && ( layout === 'flow' || layout === 'card' ) ) {
 			layout = 'inline';
 		}
-		if ( layout === 'flow' && mode !== 'rotate' ) {
+		if ( ( layout === 'flow' || layout === 'card' ) && mode !== 'rotate' ) {
 			layout = 'stacked';
 		}
 		var label = valueOf( prefix + 'label_style' ) || ( mobile ? 'pill' : 'strip' );
@@ -199,7 +203,10 @@
 			thumb: valueOf( prefix + 'show_thumbnail' ) === '1',
 			thumbAfter: valueOf( prefix + 'thumb_position' ) === 'after',
 			thumbSize: parseInt( valueOf( prefix + 'thumb_size' ), 10 ) || ( mobile ? 48 : 32 ),
-			collapse: mobile && layout !== 'inline' && valueOf( 'mobile_hide_on_scroll' ) === '1',
+			collapse: mobile
+				? ( layout !== 'inline' && valueOf( 'mobile_hide_on_scroll' ) === '1' )
+				: valueOf( 'desktop_hide_on_scroll' ) === '1',
+			place: valueOf( prefix + 'placement' ) === 'inline' ? 'inline' : 'fixed',
 			swipe: mobile && mode === 'rotate' && valueOf( 'mobile_swipe' ) === '1',
 			peek: valueOf( 'mobile_peek' ) === 'label' ? 'label' : 'headline',
 			deep: mobile && layout !== 'inline' && valueOf( 'mobile_deep_collapse' ) === '1',
@@ -213,6 +220,15 @@
 		var height = Math.max( parseInt( valueOf( 'mobile_bar_height' ), 10 ) || 76, profile.lines * line + 2 * FLOW_PAD );
 		var pad = Math.floor( ( height - profile.lines * line ) / 2 );
 		return { line: line, height: height, pad: pad, peek: pad + line + PEEK_EXTRA };
+	}
+
+	function cardMetrics( profile ) {
+		var line = Math.round( profile.fontSize * FLOW_LINE );
+		var thumb = Math.max( 80, Math.min( 220, parseInt( valueOf( 'mobile_card_thumb' ), 10 ) || 140 ) );
+		var thumbH = Math.round( thumb * CARD_RATIO );
+		var body = Math.max( profile.lines * line, thumbH );
+		var height = Math.max( parseInt( valueOf( 'mobile_bar_height' ), 10 ) || 76, 2 * CARD_PAD + CARD_HEAD + CARD_GAP + body );
+		return { line: line, thumb: thumb, thumbH: thumbH, height: height, pad: CARD_PAD, peek: CARD_PAD + CARD_HEAD + PEEK_EXTRA };
 	}
 
 	function applyVisual() {
@@ -249,7 +265,7 @@
 		var stacked = valueOf( 'mobile_controls_layout' ) !== 'row';
 		previewRoot.classList.toggle( 'hprnb-root--edge', valueOf( 'accent_edge' ) === '1' );
 		previewRoot.classList.toggle( 'hprnb-root--m-ctrl-out', outside );
-		var mobileThumb = valueOf( 'mobile_show_thumbnail' ) === '1';
+		var mobileThumb = valueOf( 'mobile_show_thumbnail' ) === '1' || valueOf( 'mobile_layout' ) === 'card';
 		previewRoot.classList.toggle( 'hprnb-root--m-ctrl-col', stacked && ! outside );
 		previewRoot.classList.toggle( 'hprnb-root--m-peek-thumb', mobileThumb && valueOf( 'mobile_peek_thumbnail' ) === '1' );
 		previewRoot.classList.toggle( 'hprnb-root--m-label-compact', mobileThumb && valueOf( 'mobile_label_compact' ) === '1' );
@@ -262,12 +278,14 @@
 			cls.toggle( 'hprnb-root--' + p + '-inline', profile.layout === 'inline' );
 			cls.toggle( 'hprnb-root--' + p + '-stacked', profile.layout === 'stacked' );
 			cls.toggle( 'hprnb-root--' + p + '-flow', profile.layout === 'flow' );
+			cls.toggle( 'hprnb-root--' + p + '-card', profile.layout === 'card' );
+			cls.toggle( 'hprnb-root--' + p + '-inflow', profile.place === 'inline' );
 			cls.toggle( 'hprnb-root--' + p + '-end', p === 'd' && profile.layout === 'inline' && labelEnd );
 			[ 'pill', 'strip', 'hidden' ].forEach( function ( style ) {
 				cls.toggle( 'hprnb-root--' + p + '-label-' + style, profile.label === style );
 			} );
 			cls.toggle( 'hprnb-root--' + p + '-dot', profile.dot );
-			cls.toggle( 'hprnb-root--' + p + '-wrap', profile.lines > 1 && profile.layout !== 'flow' );
+			cls.toggle( 'hprnb-root--' + p + '-wrap', profile.lines > 1 && profile.layout !== 'flow' && profile.layout !== 'card' );
 			cls.toggle( 'hprnb-root--' + p + '-thumb', profile.thumb );
 			cls.toggle( 'hprnb-root--' + p + '-thumb-after', profile.thumb && profile.thumbAfter );
 			previewRoot.style.setProperty( p === 'm' ? '--hprnb-m-thumb' : '--hprnb-d-thumb', profile.thumbSize + 'px' );
@@ -278,6 +296,14 @@
 				previewRoot.style.setProperty( '--hprnb-m-line', flow.line + 'px' );
 				previewRoot.style.setProperty( '--hprnb-m-pad', flow.pad + 'px' );
 				previewRoot.style.setProperty( '--hprnb-peek', flow.peek + 'px' );
+			} else if ( profile.layout === 'card' ) {
+				var card = cardMetrics( profile );
+				height = card.height;
+				previewRoot.style.setProperty( '--hprnb-m-line', card.line + 'px' );
+				previewRoot.style.setProperty( '--hprnb-m-pad', card.pad + 'px' );
+				previewRoot.style.setProperty( '--hprnb-peek', card.peek + 'px' );
+				previewRoot.style.setProperty( '--hprnb-m-card-thumb', card.thumb + 'px' );
+				previewRoot.style.setProperty( '--hprnb-m-card-thumb-h', card.thumbH + 'px' );
 			} else {
 				height = profile.lines * Math.ceil( profile.fontSize * LINE_HEIGHT ) + BLOCK_PAD + ( profile.layout === 'stacked' ? STRIP + ROW_GAP : 0 );
 				if ( profile.thumb ) {
@@ -296,7 +322,12 @@
 			}
 			previewRoot.style.setProperty( p === 'm' ? '--hprnb-m-height' : '--hprnb-height', height + 'px' );
 			previewRoot.style.setProperty( p === 'm' ? '--hprnb-m-lines' : '--hprnb-d-lines', String( profile.lines ) );
-			var data = { layout: profile.layout, lines: profile.lines, counter: profile.counter, progress: profile.progress };
+			var data = { layout: profile.layout, lines: profile.lines, counter: profile.counter, progress: profile.progress, place: profile.place };
+			if ( p === 'd' ) {
+				data.collapse = profile.collapse;
+				data.trigger = valueOf( 'desktop_collapse_mode' ) || 'scroll';
+				data.after = parseInt( valueOf( 'desktop_collapse_after' ), 10 ) || 0;
+			}
 			if ( p === 'm' ) {
 				data.swipe = profile.swipe;
 				data.collapse = profile.collapse;
@@ -318,6 +349,7 @@
 		previewRoot.classList.toggle( 'hprnb-root--m-sep-loop', mobileSep && valueOf( 'separator_after_last' ) === '1' );
 		previewRoot.classList.toggle( 'hprnb-root--m-colors', valueOf( 'mobile_custom_colors' ) === '1' );
 		previewRoot.classList.toggle( 'hprnb-root--m-collapse', computeProfile( 'm' ).collapse );
+		previewRoot.classList.toggle( 'hprnb-root--d-collapse', computeProfile( 'd' ).collapse );
 		reinitPreview();
 
 		var aside = previewRoot.querySelector( '.hprnb-bar' );
@@ -345,8 +377,12 @@
 
 	function updateDependencies() {
 		Array.prototype.forEach.call( form.querySelectorAll( 'tr[data-hprnb-depends]' ), function ( row ) {
-			var master = form.querySelector( '[name="hprnb_settings[' + row.getAttribute( 'data-hprnb-depends' ) + ']"]' );
-			var active = ! master || master.type !== 'checkbox' || master.checked;
+			// "key" follows a checkbox; "key:value" follows the chosen option of a radio or a select.
+			var spec = row.getAttribute( 'data-hprnb-depends' ).split( ':' );
+			var master = form.querySelector( '[name="hprnb_settings[' + spec[ 0 ] + ']"]' );
+			var active = spec.length > 1
+				? valueOf( spec[ 0 ] ) === spec[ 1 ]
+				: ( ! master || master.type !== 'checkbox' || master.checked );
 			row.classList.toggle( 'hprnb-row--inactive', ! active );
 			Array.prototype.forEach.call( row.querySelectorAll( 'input, select' ), function ( input ) {
 				input.setAttribute( 'aria-disabled', active ? 'false' : 'true' );

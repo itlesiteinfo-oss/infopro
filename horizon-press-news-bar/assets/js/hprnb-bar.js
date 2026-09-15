@@ -133,6 +133,54 @@
 		};
 	}
 
+	/**
+	 * Both profiles asked for the bar inside the article, at two different paragraphs: the server
+	 * rendered it where the desktop wants it and left an empty slot for the phone. Move the root
+	 * between the two, remembering where it came from.
+	 *
+	 * @param {Element} root   The #hprnb-root element.
+	 * @param {boolean} mobile Whether the mobile profile is the active one.
+	 */
+	function relocate( root, mobile ) {
+		var slot = document.querySelector( '.hprnb-slot[data-hprnb-slot="m"]' );
+		if ( ! slot ) {
+			return;
+		}
+		if ( ! root.hprnbHome ) {
+			root.hprnbHome = { parent: root.parentNode, next: root.nextSibling };
+		}
+		var home = root.hprnbHome;
+		if ( mobile ) {
+			if ( root.parentNode !== slot ) {
+				slot.appendChild( root );
+			}
+		} else if ( home.parent && root.parentNode !== home.parent ) {
+			home.parent.insertBefore( root, home.next );
+		}
+	}
+
+	/**
+	 * A bar placed in the article spans the screen. The pure-CSS formula assumes the article column
+	 * is centred, which no theme guarantees, so measure the real gap and the real viewport width.
+	 *
+	 * @param {Element} root The #hprnb-root element.
+	 */
+	function measureBleed( root ) {
+		if ( ! root.classList.contains( 'hprnb-root--d-inflow' ) && ! root.classList.contains( 'hprnb-root--m-inflow' ) ) {
+			return;
+		}
+		var width = document.documentElement.clientWidth;
+		// Neutralise the pull first: the element then sits where the article column puts it, which
+		// is the gap to measure. Reading it back after removing the property would only return the
+		// position the CSS fallback already moved it to.
+		root.style.setProperty( '--hprnb-bleed', '0px' );
+		root.style.setProperty( '--hprnb-bleed-w', width + 'px' );
+		var rect = root.getBoundingClientRect();
+		var rtl = 'rtl' === ( getComputedStyle( root ).direction || 'ltr' );
+		var gap = rtl ? width - rect.right : rect.left;
+		root.style.setProperty( '--hprnb-bleed', Math.round( gap ) + 'px' );
+	}
+
 	/** Re-runs `fn` when `el` is resized (ResizeObserver, else a debounced window resize). */
 	function observeSize( state, el, fn ) {
 		var debounced = debounce( fn, 200 );
@@ -716,7 +764,11 @@
 			var full = parseFloat( cs.getPropertyValue( mobile ? '--hprnb-m-height' : '--hprnb-height' ) ) || aside.offsetHeight;
 			var peek = parseFloat( cs.getPropertyValue( '--hprnb-peek' ) ) || 40;
 			var hidden = aside.hidden || root.hidden || body.classList.contains( 'hprnb-kbd' ) || root.classList.contains( 'hprnb-root--pending' );
-			return { mobile: mobile, collapsed: collapsed, height: full, offset: hidden ? 0 : ( mobile && collapsed ? peek : full ) };
+			// In flow the bar is a block of the page: it covers nothing, so it reserves nothing.
+			// Collapsed, a phone keeps its strip while the desktop bar slides fully away.
+			var inflow = !! profile && profile.place === 'inline';
+			var offset = ( hidden || inflow ) ? 0 : ( collapsed ? ( mobile ? peek : 0 ) : full );
+			return { mobile: mobile, collapsed: collapsed, height: full, offset: offset };
 		}
 
 		function emit() {
@@ -937,6 +989,17 @@
 		var cfg = readConfig( aside, root );
 		var mobile = isNarrow( root );
 		var profile = mobile ? cfg.m : cfg.d;
+		relocate( root, mobile );
+		measureBleed( root );
+		state.on( window, 'resize', debounce( function () {
+			if ( aside.hprnbState === state ) {
+				measureBleed( root );
+			}
+		}, 150 ) );
+		state.add( function () {
+			root.style.removeProperty( '--hprnb-bleed' );
+			root.style.removeProperty( '--hprnb-bleed-w' );
+		} );
 		var mode = mobile ? cfg.tickerMobile : cfg.ticker;
 		var reduced = prefersReducedMotion();
 		var toggle = aside.querySelector( '.hprnb-bar__btn--toggle' );
@@ -980,7 +1043,7 @@
 			setupManual( state, aside, reduced );
 		}
 
-		if ( profile.collapse && ! root.classList.contains( 'hprnb-root--preview' ) ) {
+		if ( profile.collapse && profile.place !== 'inline' && ! root.classList.contains( 'hprnb-root--preview' ) ) {
 			setupCollapse( state, aside, profile, contract );
 		}
 		if ( contract ) {

@@ -158,14 +158,14 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$root     = Renderer::root( $payload, $settings );
 
 		$this->assertStringStartsWith( '<div id="hprnb-root" class="hprnb-root hprnb-device-all hprnb-root--reserve hprnb-root--align hprnb-bar--sep hprnb-bar--sep-loop hprnb-root--d-inline hprnb-root--d-label-pill hprnb-root--d-dot hprnb-root--m-flow hprnb-root--m-label-pill hprnb-root--m-dot hprnb-root--m-collapse hprnb-root--edge hprnb-root--m-ctrl-col hprnb-root--m-pulse-always" data-hprnb-generated="1757600000" data-hprnb-stale="180" data-hprnb-layout="reserve" data-hprnb-empty="0" data-hprnb-desktop="', $root );
-		$this->assertStringContainsString( esc_attr( '{"layout":"inline","lines":1,"counter":false,"progress":false}' ), $root );
-		$this->assertStringContainsString( esc_attr( '{"layout":"flow","lines":2,"counter":false,"progress":true,"swipe":true,"collapse":true,"peek":"headline","deep":true,"kbd":true,"pause":true,"close":true,"trigger":"scroll","after":120}' ), $root );
+		$this->assertStringContainsString( esc_attr( '{"layout":"inline","lines":1,"counter":false,"progress":false,"place":"fixed","collapse":false,"trigger":"scroll","after":120}' ), $root );
+		$this->assertStringContainsString( esc_attr( '{"layout":"flow","lines":2,"counter":false,"progress":true,"place":"fixed","swipe":true,"collapse":true,"peek":"headline","deep":true,"kbd":true,"pause":true,"close":true,"trigger":"scroll","after":120}' ), $root );
 		$this->assertStringContainsString( esc_attr( '{"mode":"immediate","value":400}' ), $root, 'The bar shows up with the page by default.' );
 		$this->assertStringContainsString( 'data-hprnb-endpoint="' . esc_url( rest_url( 'hprnb/v1/items' ) ) . '"', $root );
 		$this->assertStringContainsString( 'data-hprnb-css="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=2.3.0"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=2.4.0"', $root );
 		$this->assertStringContainsString( 'data-hprnb-js', $root, 'The default mobile presentation (rotate, flow card) needs the interactive script.' );
-		$this->assertStringContainsString( 'style="--hprnb-bg:#1B1C20;--hprnb-fg:#F5F5F5;--hprnb-label-bg:#CE3029;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-accent:#CE3029;--hprnb-font-size:15px;--hprnb-height:40px;--hprnb-d-lines:1;--hprnb-max:1230px;--hprnb-gutter:15px;--hprnb-z:99990;--hprnb-sep:&#039;•&#039;;--hprnb-m-bg:#1B1C20;--hprnb-m-fg:#F5F5F5;--hprnb-m-accent:#CE3029;--hprnb-m-label-fg:#FFFFFF;--hprnb-m-font-size:16px;--hprnb-m-height:76px;--hprnb-m-lines:2;--hprnb-m-line:26px;--hprnb-m-pad:12px;--hprnb-peek:40px;--hprnb-m-ctrls:1;--hprnb-d-thumb:32px;--hprnb-m-thumb:48px"', $root );
+		$this->assertStringContainsString( 'style="--hprnb-bg:#1B1C20;--hprnb-fg:#F5F5F5;--hprnb-label-bg:#CE3029;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-accent:#CE3029;--hprnb-font-size:15px;--hprnb-height:40px;--hprnb-d-lines:1;--hprnb-max:1230px;--hprnb-gutter:15px;--hprnb-z:99990;--hprnb-sep:&#039;•&#039;;--hprnb-m-bg:#1B1C20;--hprnb-m-fg:#F5F5F5;--hprnb-m-accent:#CE3029;--hprnb-m-label-fg:#FFFFFF;--hprnb-m-font-size:16px;--hprnb-m-height:76px;--hprnb-m-lines:2;--hprnb-m-line:26px;--hprnb-m-pad:12px;--hprnb-peek:40px;--hprnb-m-ctrls:1;--hprnb-d-thumb:32px;--hprnb-m-thumb:48px;--hprnb-m-card-thumb:140px;--hprnb-m-card-thumb-h:88px"', $root );
 		$this->assertStringNotContainsString( ' hidden', $root );
 		$this->assertStringContainsString( '<aside', $root );
 		$this->assertStringEndsWith( '</aside></div>', $root );
@@ -182,7 +182,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$hybrid_js = $this->with_settings( array( 'close_button' => true, 'show_on_desktop' => false ) );
 		$root = Renderer::root( Renderer::payload( array( $this->item() ), $hybrid_js ), $hybrid_js );
 		$this->assertStringContainsString( 'data-hprnb-js="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=2.3.0"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=2.4.0"', $root );
 		$this->assertStringContainsString( 'hprnb-hide-desktop', $root );
 
 		add_filter( 'hprnb_stale_threshold', static fn() => 900 );
@@ -246,7 +246,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$this->assertNotContains( 'hprnb-root--m-thumb', Renderer::root_classes( array_merge( $images, array( 'mobile_show_thumbnail' => false ) ) ) );
 		$this->assertSame( 64, Renderer::profile_height( $images, 'd' ), 'A 56px image grows the 40px bar (56 + 12 − 4).' );
 		$this->assertSame( 76, Renderer::profile_height( $images, 'm' ), 'The flow card keeps its height: the image is clamped by the stylesheet.' );
-		$this->assertStringContainsString( '--hprnb-d-thumb:56px;--hprnb-m-thumb:48px', Renderer::root_style( $images ) );
+		$this->assertStringContainsString( '--hprnb-d-thumb:56px;--hprnb-m-thumb:48px;--hprnb-m-card-thumb:140px;--hprnb-m-card-thumb-h:88px', Renderer::root_style( $images ) );
 
 		// Stacked buttons (default) take one column whatever their number; side by side, one each.
 		$this->assertSame( 1, Renderer::mobile_controls( $settings ), 'Close above pause: a single column.' );
@@ -278,11 +278,11 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$desktop = array_merge( $settings, array( 'desktop_layout' => 'stacked', 'desktop_lines' => 2, 'ticker_enabled' => false, 'mobile_show_separator' => true, 'mobile_lines' => 1, 'mobile_peek' => 'label', 'mobile_custom_colors' => true ) );
 		$this->assertSame( array( 'hprnb-root', 'hprnb-device-all', 'hprnb-root--reserve', 'hprnb-root--align', 'hprnb-bar--sep', 'hprnb-bar--sep-loop', 'hprnb-root--d-stacked', 'hprnb-root--d-label-pill', 'hprnb-root--d-dot', 'hprnb-root--d-wrap', 'hprnb-root--m-flow', 'hprnb-root--m-label-pill', 'hprnb-root--m-dot', 'hprnb-root--m-sep', 'hprnb-root--m-sep-loop', 'hprnb-root--m-colors', 'hprnb-root--m-collapse', 'hprnb-root--peek-label', 'hprnb-root--edge', 'hprnb-root--m-ctrl-col', 'hprnb-root--m-pulse-always' ), Renderer::root_classes( $desktop ) );
 
-		$this->assertSame( array( 'layout' => 'flow', 'lines' => 2, 'counter' => false, 'progress' => true, 'swipe' => true, 'collapse' => true, 'peek' => 'headline', 'deep' => true, 'kbd' => true, 'pause' => true, 'close' => true, 'trigger' => 'scroll', 'after' => 120 ), Renderer::profile_data( $settings, 'm' ) );
-		$this->assertSame( array( 'layout' => 'inline', 'lines' => 2, 'counter' => false, 'progress' => true, 'swipe' => true, 'collapse' => false, 'peek' => 'headline', 'deep' => false, 'kbd' => true, 'pause' => true, 'close' => true, 'trigger' => 'scroll', 'after' => 120 ), Renderer::profile_data( $inline, 'm' ) );
-		$this->assertSame( array( 'layout' => 'inline', 'lines' => 1, 'counter' => false, 'progress' => false ), Renderer::profile_data( $settings, 'd' ), 'Marquee desktop: no counter, no progress.' );
+		$this->assertSame( array( 'layout' => 'flow', 'lines' => 2, 'counter' => false, 'progress' => true, 'place' => 'fixed', 'swipe' => true, 'collapse' => true, 'peek' => 'headline', 'deep' => true, 'kbd' => true, 'pause' => true, 'close' => true, 'trigger' => 'scroll', 'after' => 120 ), Renderer::profile_data( $settings, 'm' ) );
+		$this->assertSame( array( 'layout' => 'inline', 'lines' => 2, 'counter' => false, 'progress' => true, 'place' => 'fixed', 'swipe' => true, 'collapse' => false, 'peek' => 'headline', 'deep' => false, 'kbd' => true, 'pause' => true, 'close' => true, 'trigger' => 'scroll', 'after' => 120 ), Renderer::profile_data( $inline, 'm' ) );
+		$this->assertSame( array( 'layout' => 'inline', 'lines' => 1, 'counter' => false, 'progress' => false, 'place' => 'fixed', 'collapse' => false, 'trigger' => 'scroll', 'after' => 120 ), Renderer::profile_data( $settings, 'd' ), 'Marquee desktop: no counter, no progress.' );
 		$rotate = array_merge( $settings, array( 'ticker_mode' => 'rotate', 'desktop_show_counter' => true ) );
-		$this->assertSame( array( 'layout' => 'inline', 'lines' => 1, 'counter' => true, 'progress' => true ), Renderer::profile_data( $rotate, 'd' ) );
+		$this->assertSame( array( 'layout' => 'inline', 'lines' => 1, 'counter' => true, 'progress' => true, 'place' => 'fixed', 'collapse' => false, 'trigger' => 'scroll', 'after' => 120 ), Renderer::profile_data( $rotate, 'd' ) );
 
 		$custom = $this->with_settings( array( 'mobile_bg_color' => '#000000', 'mobile_font_size' => 20, 'mobile_lines' => 3, 'mobile_accent_color' => '#0000FF' ) );
 		$style  = Renderer::root_style( $custom );
@@ -324,7 +324,10 @@ class Renderer_Test extends HPRNB_Test_Case {
 
 		// Collapsing off entirely: no class, and the desktop profile never carries these keys.
 		$this->assertNotContains( 'hprnb-root--m-collapse', Renderer::root_classes( $this->with_settings( array( 'mobile_hide_on_scroll' => false ) ) ) );
-		$this->assertArrayNotHasKey( 'trigger', Renderer::profile_data( $settings, 'd' ) );
+		$desktop = Renderer::profile_data( $settings, 'd' );
+		$this->assertFalse( $desktop['collapse'], 'Collapsing from 768px is off by default.' );
+		$this->assertSame( 'scroll', $desktop['trigger'] );
+		$this->assertArrayNotHasKey( 'swipe', $desktop, 'Swiping stays a phone gesture.' );
 
 		// Accent edge, on by default.
 		$this->assertContains( 'hprnb-root--edge', Renderer::root_classes( $settings ) );
