@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.4.0
+Stable tag: 2.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,10 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.4.1 =
+* Fixed: saving the settings hid the bar on the whole site (the per-profile page types were posted under the wrong name). Existing installs are repaired at upgrade.
+* "Discover" design: the image now starts the line under the pill, the headline is two sizes up on as many lines as the image holds, and the close button stands alone in a tab above the corner of the card.
 
 = 2.4.0 =
 * Page types per profile: desktop and mobile each narrow where the bar may appear.

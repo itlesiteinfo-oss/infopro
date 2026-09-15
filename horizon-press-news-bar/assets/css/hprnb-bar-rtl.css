@@ -1295,8 +1295,9 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		block-size: 3px;
 	}
 
-	/* P-card: the "discover" design — a heading row, then the headline beside a landscape image.
-	   Taller than the flowing card and built around its picture, which is always in the markup. */
+	/* P-card: the "discover" design — a heading row, then a large landscape image at the start of
+	   the line with the headline beside it. Built around its picture, which is always in the markup.
+	   The close button is a square tab above the top end corner, outside the card. */
 	.hprnb-root--m-card .hprnb-bar {
 		--hprnb-e-display: block;
 		--hprnb-e-max: none;
@@ -1304,6 +1305,15 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		--hprnb-e-card-head: 26px;
 		--hprnb-e-card-gap: 10px;
 		--hprnb-e-card-pad: 14px;
+		--hprnb-e-card-tab: 46px;
+	}
+
+	/* The tab lives above the bar, which clips its overflow against horizontal scrolling: clip
+	   that axis only, on the bar and on the inner that positions the buttons. */
+	.hprnb-root--m-card .hprnb-bar,
+	.hprnb-root--m-card .hprnb-bar__inner {
+		overflow-x: clip;
+		overflow-y: visible;
 	}
 
 	.hprnb-root--m-card .hprnb-bar__inner {
@@ -1313,13 +1323,14 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		line-height: var(--hprnb-m-line);
 	}
 
-	/* Heading row: the pill keeps its badge, the strip style becomes a plain bold heading. */
+	/* Heading row: the pill keeps its badge and sits above the image; the strip style becomes a
+	   plain bold heading. */
 	.hprnb-root--m-card .hprnb-bar__label {
 		float: none;
 		align-self: center;
 		inline-size: fit-content;
 		block-size: var(--hprnb-e-card-head);
-		max-inline-size: calc(100% - 2 * var(--hprnb-btn));
+		max-inline-size: calc(100% - var(--hprnb-btn));
 		margin: 0 0 var(--hprnb-e-card-gap);
 		line-height: var(--hprnb-e-card-head);
 	}
@@ -1328,7 +1339,7 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		padding-inline: 0;
 		background: transparent;
 		color: var(--hprnb-e-fg);
-		font-size: 15px;
+		font-size: 16px;
 		letter-spacing: normal;
 		text-transform: none;
 		box-shadow: none;
@@ -1359,8 +1370,8 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		touch-action: pan-y;
 	}
 
-	/* Headline and image side by side; the image keeps its 16:10 box whatever the headline does. */
-	/* Flex and not grid: an article without a picture keeps the whole width, gap included. */
+	/* Image first, headline beside it. Flex and not grid: an article without a picture keeps the
+	   whole width, gap included. */
 	.hprnb-root--m-card .hprnb-bar__link {
 		display: flex;
 		align-items: flex-start;
@@ -1370,28 +1381,9 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		white-space: normal;
 	}
 
-	.hprnb-root--m-card .hprnb-bar__title {
-		flex: 1 1 auto;
-		min-inline-size: 0;
-	}
-
 	.hprnb-root--m-card .hprnb-bar__thumb {
+		order: 0;
 		flex: none;
-	}
-
-	.hprnb-root--m-card .hprnb-bar__title {
-		display: -webkit-box;
-		-webkit-box-orient: vertical;
-		-webkit-line-clamp: var(--hprnb-m-lines);
-		overflow: hidden;
-		max-inline-size: none;
-		font-weight: 700;
-		letter-spacing: -.005em;
-		white-space: normal;
-	}
-
-	.hprnb-root--m-card .hprnb-bar__thumb {
-		order: 2;
 		position: static;
 		display: block;
 		inline-size: var(--hprnb-m-card-thumb);
@@ -1403,33 +1395,65 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		transform: none;
 	}
 
+	/* The headline is the point: two sizes up, bold, on as many lines as the image is tall. */
+	.hprnb-root--m-card .hprnb-bar__title {
+		order: 1;
+		flex: 1 1 auto;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: var(--hprnb-m-card-lines, var(--hprnb-m-lines));
+		min-inline-size: 0;
+		max-inline-size: none;
+		overflow: hidden;
+		font-size: calc(var(--hprnb-m-font-size) + 2px);
+		font-weight: 700;
+		letter-spacing: -.01em;
+		line-height: var(--hprnb-m-line);
+		white-space: normal;
+	}
+
 	.hprnb-root--m-card .hprnb-bar__time {
 		display: none;
 	}
 
-	/* Controls in the top corner of the card, over the heading row. */
+	/* The buttons are placed one by one: the container itself has no box. */
 	.hprnb-root--m-card .hprnb-bar__controls {
-		position: absolute;
-		inset-block-start: calc(var(--hprnb-e-card-pad) - 5px);
-		inset-inline-end: calc(var(--hprnb-gutter) - 8px);
-		flex-direction: row;
-		align-items: center;
-		block-size: auto;
-		gap: 2px;
+		display: contents;
 	}
 
 	.hprnb-root--m-card .hprnb-bar__btn {
+		position: absolute;
+		inset-block-start: calc(var(--hprnb-e-card-pad) - 5px);
+		inset-inline-end: calc(var(--hprnb-gutter) - 8px);
 		min-inline-size: 36px;
 		min-block-size: 36px;
 	}
 
-	/* Collapsed: only the heading row shows, the rest slides out of view. */
-	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__viewport {
-		opacity: 0;
+	/* Close: a square tab of the bar's own colour, above the top end corner, outside the card. */
+	.hprnb-root--m-card .hprnb-bar__btn--close {
+		inset-block: auto 100%;
+		inset-inline-end: 0;
+		min-inline-size: 52px;
+		min-block-size: var(--hprnb-e-card-tab);
+		border-radius: 0;
+		border-start-start-radius: 10px;
+		background: var(--hprnb-e-bg);
+		opacity: 1;
+		box-shadow: inset 0 2px 0 var(--hprnb-e-accent);
 	}
 
-	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__controls {
-		inset-block-start: calc(var(--hprnb-e-card-pad) - 5px);
+	.hprnb-root:not(.hprnb-root--edge).hprnb-root--m-card .hprnb-bar__btn--close {
+		box-shadow: none;
+	}
+
+	.hprnb-root--m-card .hprnb-bar__btn--close svg {
+		inline-size: 22px;
+		block-size: 22px;
+	}
+
+	/* Collapsed: only the heading row shows; the tab goes with the rest, the chevron takes its row. */
+	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__viewport {
+		opacity: 0;
 	}
 
 	.hprnb-root--m-card .hprnb-bar__progress {

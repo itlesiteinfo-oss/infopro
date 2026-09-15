@@ -144,10 +144,12 @@ final class Renderer {
 	 * Mobile "card" layout: heading row, gap under it, block padding and the aspect ratio of the
 	 * landscape image (16:10). Mirrored by the stylesheet and the admin script.
 	 */
-	const CARD_HEAD  = 26;
-	const CARD_GAP   = 10;
-	const CARD_PAD   = 14;
-	const CARD_RATIO = 0.625;
+	const CARD_HEAD      = 26;
+	const CARD_GAP       = 10;
+	const CARD_PAD       = 14;
+	const CARD_RATIO     = 0.625;
+	const CARD_FONT_PLUS = 2;
+	const CARD_LINE      = 1.5;
 
 	/**
 	 * Inline CSS variables carried by the root (and by the admin preview root).
@@ -157,7 +159,7 @@ final class Renderer {
 	 */
 	public static function root_style( array $settings ): string {
 		return sprintf(
-			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-accent:%6$s;--hprnb-font-size:%7$dpx;--hprnb-height:%8$dpx;--hprnb-d-lines:%9$d;--hprnb-max:%10$dpx;--hprnb-gutter:%11$dpx;--hprnb-z:%12$d;--hprnb-sep:%13$s;--hprnb-m-bg:%14$s;--hprnb-m-fg:%15$s;--hprnb-m-accent:%16$s;--hprnb-m-label-fg:%17$s;--hprnb-m-font-size:%18$dpx;--hprnb-m-height:%19$dpx;--hprnb-m-lines:%20$d;--hprnb-m-line:%21$dpx;--hprnb-m-pad:%22$dpx;--hprnb-peek:%23$dpx;--hprnb-m-ctrls:%24$d;--hprnb-d-thumb:%25$dpx;--hprnb-m-thumb:%26$dpx;--hprnb-m-card-thumb:%27$dpx;--hprnb-m-card-thumb-h:%28$dpx',
+			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-accent:%6$s;--hprnb-font-size:%7$dpx;--hprnb-height:%8$dpx;--hprnb-d-lines:%9$d;--hprnb-max:%10$dpx;--hprnb-gutter:%11$dpx;--hprnb-z:%12$d;--hprnb-sep:%13$s;--hprnb-m-bg:%14$s;--hprnb-m-fg:%15$s;--hprnb-m-accent:%16$s;--hprnb-m-label-fg:%17$s;--hprnb-m-font-size:%18$dpx;--hprnb-m-height:%19$dpx;--hprnb-m-lines:%20$d;--hprnb-m-line:%21$dpx;--hprnb-m-pad:%22$dpx;--hprnb-peek:%23$dpx;--hprnb-m-ctrls:%24$d;--hprnb-d-thumb:%25$dpx;--hprnb-m-thumb:%26$dpx;--hprnb-m-card-thumb:%27$dpx;--hprnb-m-card-thumb-h:%28$dpx;--hprnb-m-card-lines:%29$d',
 			self::color( $settings['bg_color'], '#1B1C20' ),
 			self::color( $settings['text_color'], '#F5F5F5' ),
 			self::color( $settings['label_bg_color'], '#CE3029' ),
@@ -178,14 +180,15 @@ final class Renderer {
 			(int) ( $settings['mobile_font_size'] ?? 16 ),
 			self::profile_height( $settings, 'm' ),
 			self::profile_lines( $settings, 'm' ),
-			self::flow_metrics( $settings )['line'],
-			self::flow_metrics( $settings )['pad'],
+			self::mobile_metrics( $settings )['line'],
+			self::mobile_metrics( $settings )['pad'],
 			self::peek_height( $settings ),
 			self::mobile_controls( $settings ),
 			(int) ( $settings['desktop_thumb_size'] ?? 32 ),
 			(int) ( $settings['mobile_thumb_size'] ?? 48 ),
 			self::card_metrics( $settings )['thumb'],
-			self::card_metrics( $settings )['thumb_height']
+			self::card_metrics( $settings )['thumb_height'],
+			self::card_metrics( $settings )['lines']
 		);
 	}
 
@@ -266,7 +269,9 @@ final class Renderer {
 			$classes[] = 'hprnb-root--pending';
 		}
 		$outside = 'outside' === ( $settings['mobile_controls_place'] ?? 'inside' );
-		if ( $outside ) {
+		if ( 'card' === self::profile( $settings, 'm' )['layout'] ) {
+			$outside = false; // The "discover" card places its own buttons: the close tab, the pause in the heading.
+		} elseif ( $outside ) {
 			$classes[] = 'hprnb-root--m-ctrl-out';
 		} elseif ( 'row' !== ( $settings['mobile_controls_layout'] ?? 'column' ) ) {
 			// The floating group is a row of its own: the stacked column never applies to it.
@@ -426,6 +431,21 @@ final class Renderer {
 	}
 
 	/**
+	 * Line height and block padding of the mobile card in use (flow or "discover"): the values the
+	 * root exposes as --hprnb-m-line / --hprnb-m-pad.
+	 *
+	 * @param array $settings Settings.
+	 * @return array{line:int,pad:int}
+	 */
+	public static function mobile_metrics( array $settings ): array {
+		$metrics = 'card' === self::profile( $settings, 'm' )['layout'] ? self::card_metrics( $settings ) : self::flow_metrics( $settings );
+		return array(
+			'line' => $metrics['line'],
+			'pad'  => $metrics['pad'],
+		);
+	}
+
+	/**
 	 * Metrics of the mobile "discover" card: a heading row, then the headline beside a landscape
 	 * image. 16px / 3 lines / a 140px image → line 26, image 140 x 88, height 152, peek 42.
 	 *
@@ -434,14 +454,20 @@ final class Renderer {
 	 */
 	public static function card_metrics( array $settings ): array {
 		$profile = self::profile( $settings, 'm' );
-		$line    = (int) round( $profile['font_size'] * self::FLOW_LINE );
+		// The headline is the point of this design: two sizes above the profile, on a looser line.
+		$font    = $profile['font_size'] + self::CARD_FONT_PLUS;
+		$line    = (int) round( $font * self::CARD_LINE );
 		$thumb   = max( 80, min( 220, (int) ( $settings['mobile_card_thumb'] ?? 140 ) ) );
 		$thumb_h = (int) round( $thumb * self::CARD_RATIO );
-		$body    = max( $profile['lines'] * $line, $thumb_h );
-		$height  = 2 * self::CARD_PAD + self::CARD_HEAD + self::CARD_GAP + $body;
+		// As many lines as the image is tall, never fewer than the profile asks for.
+		$lines  = max( $profile['lines'], (int) floor( $thumb_h / $line ) );
+		$body   = max( $lines * $line, $thumb_h );
+		$height = 2 * self::CARD_PAD + self::CARD_HEAD + self::CARD_GAP + $body;
 
 		return array(
+			'font'         => $font,
 			'line'         => $line,
+			'lines'        => $lines,
 			'thumb'        => $thumb,
 			'thumb_height' => $thumb_h,
 			'height'       => max( (int) ( $settings['mobile_bar_height'] ?? 76 ), $height ),
@@ -498,8 +524,8 @@ final class Renderer {
 	 * @return int
 	 */
 	public static function mobile_controls( array $settings ): int {
-		if ( 'outside' === ( $settings['mobile_controls_place'] ?? 'inside' ) ) {
-			return 0; // The buttons float above the bar: the headline takes the whole width.
+		if ( 'outside' === ( $settings['mobile_controls_place'] ?? 'inside' ) || 'card' === self::profile( $settings, 'm' )['layout'] ) {
+			return 0; // The buttons float above the bar (or the card places its own): the headline takes the whole width.
 		}
 		$mode  = self::mobile_ticker( $settings );
 		$pause = ! empty( $settings['mobile_show_pause'] ) && in_array( $mode, array( 'marquee', 'rotate' ), true );

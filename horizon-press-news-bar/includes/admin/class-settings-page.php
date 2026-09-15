@@ -1431,7 +1431,7 @@ final class Settings_Page {
 					printf(
 						'<label for="%1$s" class="hprnb-check"><input type="checkbox" id="%1$s" name="%2$s" value="1"%3$s> %4$s</label>',
 						esc_attr( $context_id ),
-						esc_attr( Settings::OPTION . '[contexts][' . $context_key . ']' ),
+						esc_attr( Settings::OPTION . '[' . $key . '][' . $context_key . ']' ),
 						checked( ! empty( $value[ $context_key ] ), true, false ),
 						esc_html( (string) $context_label )
 					);

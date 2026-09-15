@@ -31,7 +31,7 @@ class Import_Export_Test extends HPRNB_Test_Case {
 	public function test_export_structure() {
 		$data = Import_Export::export_data();
 		$this->assertSame( 'horizon-press-news-bar', $data['_meta']['plugin'] );
-		$this->assertSame( 3, $data['_meta']['schema_version'] );
+		$this->assertSame( 4, $data['_meta']['schema_version'] );
 		$this->assertSame( HPRNB_VERSION, $data['_meta']['plugin_version'] );
 		$this->assertNotFalse( strtotime( $data['_meta']['exported_at'] ) );
 		$this->assertSame( Settings::raw(), $data['settings'] );

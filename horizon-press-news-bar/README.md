@@ -233,7 +233,7 @@ Trois réglages supplémentaires dans la carte **Mobile** : **Boutons** (empilé
 
 **Repli sur ordinateur** : `desktop_hide_on_scroll`, `desktop_collapse_mode` et `desktop_collapse_after` reprennent les trois moments du mobile. La barre glisse entièrement hors de vue et laisse un onglet arrondi contre le bord inférieur, aligné sur la gouttière du conteneur.
 
-**Design « Découvrir » (mobile)** : `mobile_layout = card` affiche une ligne de titre, puis le titre sur `mobile_lines` lignes à côté d'une image paysage 16:10 dont la largeur se règle par `mobile_card_thumb` (80 à 220 px). Le style de label « bandeau » y devient un simple titre en gras, « pastille » conserve la pastille rouge. Replié, seule la ligne de titre reste visible. Un article sans image mise en avant rend toute la largeur au titre.
+**Design « Découvrir » (mobile)** : `mobile_layout = card` affiche une ligne de titre (la pastille, ou un titre en gras sans fond avec le style « bandeau »), puis **l'image paysage 16:10 au début de la ligne, sous la pastille** (à droite sur un site RTL) et **le titre à côté, deux tailles au-dessus de la police mobile**, sur autant de lignes que l'image en tient. La largeur de l'image se règle par `mobile_card_thumb` (80 à 220 px). Le **bouton Fermer est seul, hors de la carte**, dans un onglet carré au-dessus du coin de fin ; le bouton Pause, s'il est activé, reste dans la ligne de titre. Ce design place ses boutons lui-même : les réglages d'emplacement et d'empilement des boutons ne s'y appliquent pas. Replié, seule la ligne de titre reste visible. Un article sans image mise en avant rend toute la largeur au titre.
 
 ## 10. Ticker (optionnel)
 

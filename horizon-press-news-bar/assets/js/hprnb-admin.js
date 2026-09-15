@@ -51,6 +51,8 @@
 	var CARD_GAP = 10;
 	var CARD_PAD = 14;
 	var CARD_RATIO = 0.625;
+	var CARD_FONT_PLUS = 2;
+	var CARD_LINE = 1.5;
 	var reinitTimer = null;
 
 	/** Restarts the interactive script on the preview root (rotation, progress, marquee…). */
@@ -223,12 +225,13 @@
 	}
 
 	function cardMetrics( profile ) {
-		var line = Math.round( profile.fontSize * FLOW_LINE );
+		var line = Math.round( ( profile.fontSize + CARD_FONT_PLUS ) * CARD_LINE );
 		var thumb = Math.max( 80, Math.min( 220, parseInt( valueOf( 'mobile_card_thumb' ), 10 ) || 140 ) );
 		var thumbH = Math.round( thumb * CARD_RATIO );
-		var body = Math.max( profile.lines * line, thumbH );
+		var lines = Math.max( profile.lines, Math.floor( thumbH / line ) );
+		var body = Math.max( lines * line, thumbH );
 		var height = Math.max( parseInt( valueOf( 'mobile_bar_height' ), 10 ) || 76, 2 * CARD_PAD + CARD_HEAD + CARD_GAP + body );
-		return { line: line, thumb: thumb, thumbH: thumbH, height: height, pad: CARD_PAD, peek: CARD_PAD + CARD_HEAD + PEEK_EXTRA };
+		return { line: line, lines: lines, thumb: thumb, thumbH: thumbH, height: height, pad: CARD_PAD, peek: CARD_PAD + CARD_HEAD + PEEK_EXTRA };
 	}
 
 	function applyVisual() {
@@ -261,8 +264,9 @@
 		var minHeight = parseInt( valueOf( 'bar_height' ), 10 ) || 40;
 		previewRoot.classList.toggle( 'hprnb-root--align', valueOf( 'align_container' ) === '1' );
 		previewRoot.classList.toggle( 'hprnb-root--peek-label', valueOf( 'mobile_peek' ) === 'label' );
-		var outside = valueOf( 'mobile_controls_place' ) === 'outside';
-		var stacked = valueOf( 'mobile_controls_layout' ) !== 'row';
+		var cardDesign = computeProfile( 'm' ).layout === 'card';
+		var outside = ! cardDesign && valueOf( 'mobile_controls_place' ) === 'outside';
+		var stacked = ! cardDesign && valueOf( 'mobile_controls_layout' ) !== 'row';
 		previewRoot.classList.toggle( 'hprnb-root--edge', valueOf( 'accent_edge' ) === '1' );
 		previewRoot.classList.toggle( 'hprnb-root--m-ctrl-out', outside );
 		var mobileThumb = valueOf( 'mobile_show_thumbnail' ) === '1' || valueOf( 'mobile_layout' ) === 'card';
@@ -304,6 +308,7 @@
 				previewRoot.style.setProperty( '--hprnb-peek', card.peek + 'px' );
 				previewRoot.style.setProperty( '--hprnb-m-card-thumb', card.thumb + 'px' );
 				previewRoot.style.setProperty( '--hprnb-m-card-thumb-h', card.thumbH + 'px' );
+				previewRoot.style.setProperty( '--hprnb-m-card-lines', String( card.lines ) );
 			} else {
 				height = profile.lines * Math.ceil( profile.fontSize * LINE_HEIGHT ) + BLOCK_PAD + ( profile.layout === 'stacked' ? STRIP + ROW_GAP : 0 );
 				if ( profile.thumb ) {
@@ -318,7 +323,7 @@
 				var wantsPause = valueOf( 'mobile_show_pause' ) === '1' && ( profile.mode === 'marquee' || profile.mode === 'rotate' );
 				var ctrls = ( valueOf( 'close_button' ) === '1' && valueOf( 'mobile_show_close' ) === '1' ) ? 1 : 0;
 				ctrls += wantsPause ? 1 : ( profile.mode === 'manual' ? 2 : 0 );
-				previewRoot.style.setProperty( '--hprnb-m-ctrls', String( outside || ! ctrls ? 0 : ( stacked ? 1 : ctrls ) ) );
+				previewRoot.style.setProperty( '--hprnb-m-ctrls', String( outside || cardDesign || ! ctrls ? 0 : ( stacked ? 1 : ctrls ) ) );
 			}
 			previewRoot.style.setProperty( p === 'm' ? '--hprnb-m-height' : '--hprnb-height', height + 'px' );
 			previewRoot.style.setProperty( p === 'm' ? '--hprnb-m-lines' : '--hprnb-d-lines', String( profile.lines ) );

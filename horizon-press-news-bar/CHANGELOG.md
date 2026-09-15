@@ -2,6 +2,21 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.4.1] — 2026-09-15
+
+### Corrigé
+
+- **La barre disparaissait après un enregistrement** (bug de la 2.4.0) : les listes « Types de pages » des deux profils écrivaient leurs cases sous le nom de la portée globale (`hprnb_settings[contexts][…]`) ; à l'enregistrement, `desktop_contexts` et `mobile_contexts` arrivaient vides, tout passait à faux, les deux profils étaient refusés sur chaque page et rien n'était rendu — l'aperçu, qui ne passe pas par cette vérification, restait normal. Le champ écrit désormais sous sa propre clé. **Schéma 4** : une carte de types entièrement à faux, qui ne pouvait venir que de ce bug, est remise à « tous les types » à la mise à niveau ; une sélection partielle est conservée.
+- Un test PHPUnit rend la page de réglages et vérifie que chaque carte de cases poste sous son propre nom puis survit à `sanitize_form()` ; le scénario Playwright de l'administration vérifie, après « Enregistrer », que le front affiche toujours la barre pour les deux profils.
+
+### Modifié — design « Découvrir »
+
+- **Pastille au-dessus de l'image** : l'image passe au début de la ligne (à droite en RTL), sous la ligne de titre ; le titre se place à côté, vers la fin.
+- **Titre plus grand** : deux tailles au-dessus de la police mobile (16 → 18 px), interligne 1,5, sur autant de lignes que l'image en tient (`Renderer::card_metrics()['lines']`, exposé en `--hprnb-m-card-lines`) et jamais moins que le réglage.
+- **Bouton Fermer seul, hors de la barre** : un onglet carré de la couleur de la barre (52 × 46 px, coin arrondi, liseré d'accent) au-dessus du coin de fin de la carte — à gauche en RTL comme sur la maquette. Le bouton Pause, s'il est activé, reste dans la ligne de titre. Le design place ses boutons lui-même : `mobile_controls_place` et `mobile_controls_layout` ne s'y appliquent pas et `Renderer::mobile_controls()` y renvoie 0.
+- Le style de label « bandeau » devient un titre en gras sans fond de 16 px ; « pastille » garde la pastille rouge.
+- `--hprnb-m-line` et `--hprnb-m-pad` suivent la carte en usage (`Renderer::mobile_metrics()`).
+
 ## [2.4.0] — 2026-09-15
 
 ### Ajouté

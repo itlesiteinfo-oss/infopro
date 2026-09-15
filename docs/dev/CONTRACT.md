@@ -195,6 +195,7 @@ mobile_show_pause: bool true                                (2.3: Pause / Play b
 mobile_show_close: bool true                                (2.3: close button on mobile; close_button must be on too)
 mobile_layout += 'card'                                     (2.4: the "discover" design — heading row, headline beside a landscape image)
 mobile_card_thumb: int 140 [80,220]                         (2.4: width of the card image, in a 16:10 box)
+                                                            (2.4.1: image at the start under the pill, headline +2px on as many lines as the image holds, close alone in a tab above the end corner; controls_place / controls_layout do not apply)
 mobile_contexts: bool_map (same keys as `contexts`; all true) (2.4: narrows the global scope for this profile)
 mobile_placement: enum fixed [fixed,inline]                 (2.4: pinned to the screen, or a block of the article)
 mobile_inline_anchor: enum after [before,after,before_end]   (2.4: where in the article)
@@ -206,6 +207,7 @@ desktop_inline_paragraph: int 3 [1,30]                      (2.4)
 desktop_hide_on_scroll: bool false                          (2.4: collapse from 768px; the bar leaves a chevron tab)
 desktop_collapse_mode: enum scroll [scroll,threshold,immediate] (2.4)
 desktop_collapse_after: int 120 [0,800]                     (2.4)
+Schema 4 (2.4.1): a per-profile contexts map with every key false is the signature of the 2.4.0 form bug and is reset to all true at upgrade.
 mobile_show_separator: bool false
 mobile_custom_colors: bool true
 mobile_bg_color: color #141414

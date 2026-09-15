@@ -180,6 +180,70 @@ class Settings_Test extends HPRNB_Test_Case {
 		$this->assertSame( Settings::defaults(), Settings::get() );
 	}
 
+	/**
+	 * 2.4.0 rendered every "contexts" field under the name of the global scope, so the two per-profile
+	 * page-type maps never reached the form handler and a single save hid the bar everywhere.
+	 */
+	public function test_every_bool_map_field_posts_under_its_own_name() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( Settings::OPTION, Settings::defaults() );
+		Settings::flush();
+
+		ob_start();
+		\HorizonPress\NewsBar\Admin\Settings_Page::render();
+		$html = (string) ob_get_clean();
+
+		foreach ( array( 'contexts', 'desktop_contexts', 'mobile_contexts' ) as $map_key ) {
+			foreach ( Settings::CONTEXT_KEYS as $context ) {
+				$this->assertStringContainsString( 'name="hprnb_settings[' . $map_key . '][' . $context . ']"', $html, $map_key . '/' . $context );
+			}
+		}
+		$this->assertSame( count( Settings::CONTEXT_KEYS ), substr_count( $html, 'name="hprnb_settings[contexts][' ), 'One list for the global scope, not three.' );
+
+		// What the browser posts from that form (every ticked box) keeps every type ticked.
+		preg_match_all( '/<input type="checkbox"[^>]*name="hprnb_settings\[([a-z_]+)\](?:\[([a-z_]+)\])?"[^>]*checked/', $html, $m, PREG_SET_ORDER );
+		$post = array();
+		foreach ( $m as $match ) {
+			if ( '' !== ( $match[2] ?? '' ) ) {
+				$post[ $match[1] ][ $match[2] ] = '1';
+			} else {
+				$post[ $match[1] ] = '1';
+			}
+		}
+		$this->assertSame( '1', $post['show_on_desktop'] ?? null, 'The device switch is among the ticked boxes.' );
+		$clean = Settings::sanitize_form( $post );
+		$this->assertSame( array_fill_keys( Settings::CONTEXT_KEYS, true ), $clean['desktop_contexts'] );
+		$this->assertSame( array_fill_keys( Settings::CONTEXT_KEYS, true ), $clean['mobile_contexts'] );
+		$this->assertTrue( \HorizonPress\NewsBar\Visibility::devices_for_context( $clean )['desktop'] );
+	}
+
+	public function test_schema_4_repairs_the_maps_emptied_by_the_2_4_0_form() {
+		$broken                     = Settings::defaults();
+		$broken['desktop_contexts'] = array_fill_keys( Settings::CONTEXT_KEYS, false );
+		$broken['mobile_contexts']  = array_fill_keys( Settings::CONTEXT_KEYS, false );
+		$broken['contexts']         = array_merge( array_fill_keys( Settings::CONTEXT_KEYS, true ), array( 'search' => false ) );
+		update_option( Settings::OPTION, $broken );
+		update_option( Settings::SCHEMA_OPTION, '3' );
+		Settings::flush();
+
+		Settings::maybe_upgrade();
+
+		$repaired = Settings::get();
+		$this->assertSame( array_fill_keys( Settings::CONTEXT_KEYS, true ), $repaired['desktop_contexts'] );
+		$this->assertSame( array_fill_keys( Settings::CONTEXT_KEYS, true ), $repaired['mobile_contexts'] );
+		$this->assertFalse( $repaired['contexts']['search'], 'The global scope, which the form saved correctly, is left alone.' );
+		$this->assertSame( '4', get_option( Settings::SCHEMA_OPTION ) );
+
+		// A deliberate partial map is not a symptom of the bug: it stays.
+		$chosen                     = Settings::defaults();
+		$chosen['mobile_contexts']  = array_merge( array_fill_keys( Settings::CONTEXT_KEYS, false ), array( 'single_post' => true ) );
+		update_option( Settings::OPTION, $chosen );
+		update_option( Settings::SCHEMA_OPTION, '3' );
+		Settings::flush();
+		Settings::maybe_upgrade();
+		$this->assertSame( $chosen['mobile_contexts'], Settings::get()['mobile_contexts'] );
+	}
+
 	public function test_uninstall_flag() {
 		$this->assertFalse( Settings::uninstall_delete_requested() );
 		Settings::update( array( 'uninstall_delete_data' => true ) );

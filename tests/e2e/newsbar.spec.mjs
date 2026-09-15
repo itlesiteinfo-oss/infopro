@@ -1087,12 +1087,14 @@ test( 'v2.4: page types per profile, the bar inside the article, desktop collaps
 		await page.locator( '.hprnb-bar__btn--expand' ).click();
 		await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
 
-		// The "discover" card on a phone: heading row, headline beside a 16:10 image.
+		// The "discover" card on a phone: the pill above a 16:10 image at the start of the line, the
+		// headline two sizes up beside it, and the close button alone in a tab above the corner.
 		await page.setViewportSize( { width: 390, height: 780 } );
-		setSettings( { mobile_layout: 'card', mobile_lines: 3, rotate_interval: 60000 } );
+		setSettings( { mobile_layout: 'card', rotate_interval: 60000, mobile_show_pause: false, close_button: true } );
 		await page.goto( '/' );
 		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
 		await expect( root ).toHaveClass( /hprnb-root--m-card/ );
+		await expect( root ).not.toHaveClass( /hprnb-root--m-ctrl-col/, 'The card places its own buttons.' );
 		const thumb = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb' );
 		await expect( thumb ).toBeVisible( { timeout: 10000 } );
 		const image = await thumb.boundingBox();
@@ -1100,16 +1102,51 @@ test( 'v2.4: page types per profile, the bar inside the article, desktop collaps
 		expect( Math.round( image.height ) ).toBe( 88, '16:10 box.' );
 		const label = await page.locator( '.hprnb-bar__label' ).boundingBox();
 		expect( label.width ).toBeLessThan( 200, 'The heading shrink-wraps, it is not a full-width band.' );
-		expect( label.y + label.height ).toBeLessThanOrEqual( image.y + 1, 'Heading row above the content row.' );
-		// 14 + 26 + 10 + max(3 x 26, 88) + 14 = 142 → the image drives it.
+		expect( label.y + label.height ).toBeLessThanOrEqual( image.y + 1, 'Heading row above the image.' );
+		expect( Math.round( image.x ) ).toBe( 15, 'The image starts the line, under the pill.' );
+		const headline = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' );
+		const headlineBox = await headline.boundingBox();
+		expect( headlineBox.x ).toBeGreaterThan( image.x + image.width, 'The headline sits beside the image.' );
+		expect( await headline.evaluate( ( el ) => getComputedStyle( el ).fontSize ) ).toBe( '18px', 'Two sizes above the 16px profile.' );
+		expect( await headline.evaluate( ( el ) => getComputedStyle( el ).webkitLineClamp ) ).toBe( '3', 'As many 27px lines as the 88px image holds.' );
+		// 14 + 26 + 10 + max(3 x 27, 88) + 14 = 152 → the image drives it.
 		expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 152 );
+		const barBox = await aside.boundingBox();
+		const tab = page.locator( '.hprnb-bar__btn--close' );
+		const tabBox = await tab.boundingBox();
+		expect( tabBox.y + tabBox.height ).toBeLessThanOrEqual( barBox.y + 1, 'Outside the card, above its top edge.' );
+		expect( Math.round( tabBox.x + tabBox.width ) ).toBe( 390, 'Against the end corner.' );
+		await expect( page.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden( 'Alone: no pause button.' );
+		expect( await page.evaluate( () => {
+			const el = document.querySelector( '.hprnb-bar__btn--close' );
+			const rect = el.getBoundingClientRect();
+			const top = document.elementFromPoint( rect.x + rect.width / 2, rect.y + rect.height / 2 );
+			return el === top || el.contains( top );
+		} ) ).toBe( true, 'Painted, not merely positioned.' );
 		await page.evaluate( () => window.scrollTo( 0, 900 ) );
 		await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
 		expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '42px', 'Only the heading row peeks.' );
+		await page.evaluate( () => window.scrollTo( 0, 0 ) );
+		await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
+		await tab.click();
+		await expect( aside ).toBeHidden( 'The tab really closes the bar.' );
+		// The dismissal is remembered for 24h: forget it before the next page.
+		await page.evaluate( () => { try { localStorage.clear(); } catch ( e ) {} } );
+
+		// Mirrored on an RTL site with an Arabic heading: image on the right, tab on the left.
+		setSettings( { mobile_layout: 'card', rotate_interval: 60000, mobile_show_pause: false, close_button: true, label_text: 'اكتشف المزيد', mobile_label_style: 'strip' } );
+		await page.goto( '/?hprnb_rtl=1' );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await aside.evaluate( ( el ) => getComputedStyle( el ).direction ) ).toBe( 'rtl' );
+		const rtlImage = await thumb.boundingBox();
+		const rtlHeadline = await headline.boundingBox();
+		expect( rtlImage.x ).toBeGreaterThan( rtlHeadline.x + rtlHeadline.width, 'Image at the start, which is the right.' );
+		expect( Math.round( ( await tab.boundingBox() ).x ) ).toBe( 0, 'The tab keeps the end corner: the left.' );
+		expect( await page.locator( '.hprnb-bar__label' ).evaluate( ( el ) => getComputedStyle( el ).backgroundColor ) ).toBe( 'rgba(0, 0, 0, 0)', 'The strip style is a plain bold heading on the card.' );
 
 		// The card without a picture keeps the whole width for its headline.
 		media.splice( 0 ).forEach( ( id ) => wp( [ 'post', 'delete', id, '--force' ] ) );
-		setSettings( { mobile_layout: 'card', mobile_lines: 3, rotate_interval: 60000 } );
+		setSettings( { mobile_layout: 'card', rotate_interval: 60000 } );
 		await page.goto( '/' );
 		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
 		await expect( page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb' ) ).toHaveCount( 0 );
@@ -1281,6 +1318,15 @@ test( 'admin: settings page, live preview, contrast warning, save, export, impor
 	await expect( page.locator( '#hprnb-field-label-text' ) ).toHaveValue( 'LIVE LABEL' );
 	await expect( page.locator( '#hprnb-field-max-items' ) ).toHaveValue( '2' );
 	expect( wp( [ 'option', 'get', 'hprnb_settings', '--format=json' ] ) ).toContain( '"label_text":"LIVE LABEL"' );
+	// A save must never take the bar away: 2.4.0 posted the per-profile page types under the wrong
+	// name, every type came back unticked and the bar vanished from the whole site.
+	const saved = JSON.parse( wp( [ 'option', 'get', 'hprnb_settings', '--format=json' ] ) );
+	expect( Object.values( saved.desktop_contexts ).every( Boolean ) ).toBe( true );
+	expect( Object.values( saved.mobile_contexts ).every( Boolean ) ).toBe( true );
+	await page.goto( '/' );
+	await expect( page.locator( '#hprnb-root' ) ).toHaveClass( /hprnb-device-all/ );
+	await expect( page.locator( '#hprnb-root .hprnb-bar' ) ).toBeVisible();
+	await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar' );
 
 	// Export.
 	const [ download ] = await Promise.all( [ page.waitForEvent( 'download' ), page.click( 'text=Download settings (JSON)' ) ] );

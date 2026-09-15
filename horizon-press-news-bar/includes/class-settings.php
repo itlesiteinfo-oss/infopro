@@ -690,6 +690,17 @@ final class Settings {
 			$upgraded['desktop_show_thumbnail'] = true;
 			$upgraded['mobile_show_thumbnail']  = true;
 		}
+		// Schema 4: 2.4.0 saved the per-profile page types under the wrong form name, so a site that
+		// saved its settings once ended up with every type unticked — and no bar anywhere. An
+		// all-false map could only come from that bug: put it back to "every type".
+		if ( $stored < 4 ) {
+			foreach ( array( 'desktop_contexts', 'mobile_contexts' ) as $map_key ) {
+				$map = $raw[ $map_key ] ?? null;
+				if ( is_array( $map ) && ! in_array( true, array_map( array( self::class, 'to_bool_loose' ), $map ), true ) ) {
+					$upgraded[ $map_key ] = array_fill_keys( self::CONTEXT_KEYS, true );
+				}
+			}
+		}
 		if ( $upgraded !== $raw ) {
 			update_option( self::OPTION, self::sanitize( $upgraded ), true );
 			Invalidation::invalidate();
@@ -914,6 +925,16 @@ final class Settings {
 		}
 
 		return $default;
+	}
+
+	/**
+	 * Loose boolean for stored maps (the strict converter needs a fallback argument).
+	 *
+	 * @param mixed $value Stored value.
+	 * @return bool
+	 */
+	public static function to_bool_loose( $value ): bool {
+		return self::to_bool( $value, false );
 	}
 
 	/**
