@@ -55,6 +55,9 @@
 	   of a collapsed bar that stays visible (first line of the flow card: 12 + 26 + 2). */
 	--hprnb-strip: 22px;
 	--hprnb-peek: 40px;
+	/* Halo of the live dot and of the collapsed pill "beacon" (an rgba fallback, then the accent-based mix). */
+	--hprnb-glow: rgba(206, 48, 41, .55);
+	--hprnb-glow: color-mix(in srgb, var(--hprnb-e-label-bg, #CE3029) 55%, transparent);
 	/* Effective tokens: desktop defaults = classic single line, block label. */
 	--hprnb-e-display: grid;
 	--hprnb-e-bg: var(--hprnb-bg);
@@ -145,7 +148,7 @@
 .hprnb-root--d-label-pill {
 	--hprnb-e-label-align: center;
 	--hprnb-e-label-bs: var(--hprnb-pill);
-	--hprnb-e-label-pad: 0 11px 0 9px;
+	--hprnb-e-label-pad: 12px 14px; /* padding-inline: start end */
 	--hprnb-e-label-size: 11.5px;
 	--hprnb-e-label-tracking: .08em;
 	--hprnb-e-label-transform: uppercase;
@@ -275,7 +278,8 @@
 	block-size: 6px;
 	border-radius: 50%;
 	background: currentColor;
-	animation: hprnb-pulse 1.8s ease-out infinite;
+	box-shadow: 0 0 0 0 rgba(255, 255, 255, .55);
+	animation: hprnb-pulse 1.6s ease-in-out infinite;
 }
 
 .hprnb-bar__label-text {
@@ -426,7 +430,7 @@
 	margin: 0;
 	margin-inline-end: .5em;
 	border: 0;
-	border-radius: 2px;
+	border-radius: 4px;
 	box-shadow: none;
 	vertical-align: middle;
 }
@@ -685,6 +689,10 @@
 	.hprnb-bar__label::before {
 		box-shadow: none;
 	}
+
+	.hprnb-bar--collapsed .hprnb-bar__label {
+		animation: none !important;
+	}
 }
 
 /* ---------------------------------------------------------------------------
@@ -850,7 +858,7 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	.hprnb-root--m-label-pill .hprnb-bar {
 		--hprnb-e-label-align: center;
 		--hprnb-e-label-bs: var(--hprnb-pill);
-		--hprnb-e-label-pad: 0 11px 0 9px;
+		--hprnb-e-label-pad: 12px 14px; /* padding-inline: start end */
 		--hprnb-e-label-size: 11.5px;
 		--hprnb-e-label-tracking: .08em;
 		--hprnb-e-label-transform: uppercase;
@@ -914,7 +922,6 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		margin: 0;
 		padding: 0;
 		white-space: normal;
-		animation: none;
 	}
 
 	.hprnb-root--m-flow .hprnb-bar__item[hidden] {
@@ -922,10 +929,56 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	}
 
 	.hprnb-root--m-flow .hprnb-bar__viewport {
+		position: relative;
 		max-block-size: calc(var(--hprnb-m-lines) * var(--hprnb-m-line));
-		overflow: clip; /* unlike hidden, clip keeps the text flowing around the floating pill */
+		overflow: visible clip; /* clips a third line only; unlike hidden, clip keeps the text flowing around the pill and lets the thumbnail sit beside */
 		transition: opacity .18s;
 		touch-action: pan-y;
+	}
+
+	/* A headline longer than its lines ends with an ellipsis over a short fade (class set by the script);
+	   the collapsed strip shows the same ellipsis at the end of its single line. */
+	.hprnb-root--m-flow .hprnb-bar__viewport::after {
+		content: "…";
+		position: absolute;
+		inset-inline-end: 0;
+		inset-block-end: 0;
+		display: none;
+		padding-inline-start: 28px;
+		background: linear-gradient(to right, transparent, var(--hprnb-e-bg) 45%);
+		font-weight: 600;
+		line-height: var(--hprnb-m-line);
+		pointer-events: none;
+	}
+
+	.hprnb-root--m-flow .hprnb-bar__viewport.is-clipped::after {
+		display: block;
+	}
+
+	.hprnb-root--m-flow .hprnb-bar--collapsed .hprnb-bar__viewport::after {
+		display: block;
+		inset-block-end: auto;
+		inset-block-start: 0;
+	}
+
+	/* Featured image: a small rounded square (one line high) in the controls column, under the buttons,
+	   so it never steals width from the headline. The viewport (its positioned ancestor) clips at its
+	   lines, hence the 1px top offset. */
+	.hprnb-root--m-flow .hprnb-bar__thumb {
+		position: absolute;
+		inset-inline-end: calc(-1 * var(--hprnb-btn) * var(--hprnb-m-ctrls));
+		inset-block-start: calc(var(--hprnb-m-line) + 1px);
+		float: none;
+		display: block;
+		inline-size: calc(var(--hprnb-m-line) - 2px);
+		block-size: calc(var(--hprnb-m-line) - 2px);
+		margin: 0;
+		border-radius: 6px;
+		box-shadow: 0 0 0 1px rgba(255, 255, 255, .14);
+	}
+
+	.hprnb-root--m-flow .hprnb-bar--collapsed .hprnb-bar__thumb {
+		display: none;
 	}
 
 	.hprnb-root--m-flow .hprnb-bar__title {
@@ -1015,6 +1068,16 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		min-block-size: 30px;
 	}
 
+	/* The pill of the collapsed strip pulses like a button: tapping it (or anywhere on the strip) expands. */
+	.hprnb-bar--collapsed .hprnb-bar__label {
+		animation: hprnb-beacon 1.6s ease-in-out infinite;
+		will-change: transform, box-shadow;
+	}
+
+	.hprnb-bar--collapsed .hprnb-bar__label::before {
+		animation-duration: .8s;
+	}
+
 	/* Option "pill only" in the strip: the headline fades out while collapsed. */
 	.hprnb-root--peek-label .hprnb-bar--collapsed .hprnb-bar__viewport {
 		opacity: 0;
@@ -1060,10 +1123,16 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	}
 }
 
+/* Live dot: blinks (opacity + scale) and sends a small halo; the pill "beacon" of the collapsed strip
+   glows in the label colour and breathes so the strip reads as a button. */
 @keyframes hprnb-pulse {
-	0% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 55%, transparent); }
-	70% { box-shadow: 0 0 0 6px color-mix(in srgb, currentColor 0%, transparent); }
-	100% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 0%, transparent); }
+	0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, .55); }
+	50% { opacity: .3; transform: scale(.7); box-shadow: 0 0 0 5px rgba(255, 255, 255, 0); }
+}
+
+@keyframes hprnb-beacon {
+	0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 1px 0 rgba(0, 0, 0, .25), 0 0 0 0 var(--hprnb-glow); }
+	50% { opacity: .8; transform: scale(1.03); box-shadow: 0 1px 0 rgba(0, 0, 0, .25), 0 0 0 7px transparent; }
 }
 
 @keyframes hprnb-rise {

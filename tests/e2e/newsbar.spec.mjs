@@ -581,6 +581,11 @@ test( 'v2: flow card, collapsed strip, chevron, offset contract, deep collapse, 
 	expect( await title.evaluate( ( el ) => getComputedStyle( el ).lineHeight ) ).toBe( '26px' );
 	expect( Math.round( ( await title.boundingBox() ).x ) ).toBe( 15, 'The text block starts at the gutter: the first line flows beside the floating pill.' );
 	expect( Math.round( ( await page.locator( '.hprnb-bar__viewport' ).boundingBox() ).height ) ).toBe( 52, 'Two lines, a third one is clipped.' );
+	// A clipped headline ends with an ellipsis; the pill is roomy and its dot blinks.
+	await expect( page.locator( '.hprnb-bar__viewport' ) ).toHaveClass( /is-clipped/ );
+	expect( await page.locator( '.hprnb-bar__viewport' ).evaluate( ( el ) => getComputedStyle( el, '::after' ).display + getComputedStyle( el, '::after' ).content ) ).toBe( 'block"…"' );
+	expect( await label.evaluate( ( el ) => getComputedStyle( el ).paddingLeft + ' ' + getComputedStyle( el ).paddingRight ) ).toBe( '12px 14px' );
+	expect( await label.evaluate( ( el ) => getComputedStyle( el, '::before' ).animationName ) ).toBe( 'hprnb-pulse' );
 	expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '76px' );
 	expect( await page.evaluate( () => parseFloat( getComputedStyle( document.body ).paddingBottom ) ) ).toBe( 76 );
 	expect( await aside.evaluate( ( el ) => getComputedStyle( el ).backgroundColor ) ).toMatch( /27, 28, 32|0\.105882/ );
@@ -597,6 +602,9 @@ test( 'v2: flow card, collapsed strip, chevron, offset contract, deep collapse, 
 	expect( Math.round( 667 - ( await aside.boundingBox() ).y ) ).toBe( 40 );
 	expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '40px' );
 	expect( await page.evaluate( () => window.__states.map( ( s ) => `${ s.collapsed }:${ s.offset }` ) ) ).toContain( 'true:40' );
+	// The collapsed pill pulses like a button and the single visible line ends with an ellipsis.
+	expect( await label.evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'hprnb-beacon' );
+	expect( await page.locator( '.hprnb-bar__viewport' ).evaluate( ( el ) => getComputedStyle( el, '::after' ).top ) ).toBe( '0px' );
 	const chevron = page.locator( '.hprnb-bar__btn--expand' );
 	await expect( chevron ).toBeVisible();
 	await expect( chevron ).toHaveAttribute( 'aria-label', 'Show the latest news' );
@@ -605,6 +613,7 @@ test( 'v2: flow card, collapsed strip, chevron, offset contract, deep collapse, 
 	await chevron.click();
 	await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
 	await expect( page.locator( 'body' ) ).not.toHaveClass( /hprnb-is-collapsed/ );
+	expect( await label.evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'none' );
 	expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '76px' );
 
 	// "Pill only" strip option.

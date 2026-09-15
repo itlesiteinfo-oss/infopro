@@ -2,6 +2,21 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.0.1] — 2026-09-15
+
+### Ajouté
+
+- Carte mobile : un titre plus long que ses lignes se termine par des **points de suspension** sur un léger fondu (classe `is-clipped` posée par le script, aussi sur la ligne unique du bandeau replié).
+- Bandeau replié : la pastille « En continu » devient un **bouton rouge pulsant** (halo dans la couleur du label, animation `hprnb-beacon`, point accéléré) ; un tap n’importe où déploie la carte.
+- Point « en direct » : un vrai clignotement (opacité + échelle + halo), sans dépendre de `color-mix()`.
+
+### Corrigé
+
+- Le jeton `padding-inline` de la pastille recevait quatre valeurs et tombait à 0 : la pastille a désormais 12 px / 14 px de marge intérieure.
+- Vignette (`show_thumbnail`) dans la carte mobile : elle ne pousse plus le titre à la ligne ; elle devient un carré arrondi de 24 px dans la colonne des boutons, sous Pause / Fermer, masqué dans le bandeau replié. Sur ordinateur, coins arrondis à 4 px.
+- L’animation d’apparition du titre en rotation est rétablie dans la carte mobile.
+- Budget CSS relevé à 22 Ko.
+
 ## [2.0.0] — 2026-09-14
 
 ### Ajouté

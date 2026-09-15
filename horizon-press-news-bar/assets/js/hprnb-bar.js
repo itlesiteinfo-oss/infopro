@@ -357,6 +357,14 @@
 			progress.classList.add( 'is-run' );
 		}
 
+		// A headline taller than its clipped viewport gets an ellipsis (flow card): flagged on the viewport.
+		function checkClip() {
+			if ( aside.hprnbState !== state ) {
+				return;
+			}
+			viewport.classList.toggle( 'is-clipped', viewport.scrollHeight > viewport.clientHeight + 1 );
+		}
+
 		function show( i ) {
 			index = ( i + items.length ) % items.length;
 			forEach( items, function ( li, k ) {
@@ -365,7 +373,13 @@
 			if ( counter ) {
 				counter.textContent = ( index + 1 ) + '/' + items.length;
 			}
+			checkClip();
 		}
+
+		observeSize( state, viewport, checkClip );
+		state.add( function () {
+			viewport.classList.remove( 'is-clipped' );
+		} );
 
 		function stop() {
 			if ( timer !== null ) {

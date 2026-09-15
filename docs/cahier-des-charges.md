@@ -1133,6 +1133,9 @@ Barre de 40 px (+ zone sûre), grille `label | compteur | titre | contrôles` da
 - Repli (`mobile_hide_on_scroll`) : `translateY(100% − peek)`, `cursor: pointer`, liens à `pointer-events: none` (un tap n’ouvre jamais de lien), boutons masqués sauf le chevron `.hprnb-bar__btn--expand` (créé par le script, `aria-label` traduit) ; `mobile_peek = label` efface le titre du bandeau (`hprnb-root--peek-label`) ; `mobile_deep_collapse` : replié d’emblée sans transition si `scrollY > 120` à l’initialisation.
 - `mobile_kbd_hide` : un focus dans un champ de formulaire hors de la barre (sous 768 px) ajoute `body.hprnb-kbd` (barre translatée à 110 %, `--hprnb-offset: 0`) ; retour au blur.
 - Paysage (`max-height: 480px` et `max-width: 1023.98px`) : 44 px, une ligne, jamais de repli (`!important` sur les variables de la racine et du body), chevron masqué.
+- Points de suspension (2.0.1) : le script pose `is-clipped` sur le viewport quand le titre dépasse ses lignes ; un `::after` « … » sur un fondu de 28 px termine la dernière ligne (et la ligne unique du bandeau replié).
+- Vignette (`show_thumbnail`, 2.0.1) : carré arrondi de `ligne − 2` px (24 px) en `position: absolute` dans la colonne des boutons, sous Pause / Fermer, masqué replié ; le viewport n’est rogné que verticalement (`overflow: visible clip`).
+- Pastille (2.0.1) : marge intérieure 12 / 14 px ; point « en direct » clignotant (opacité, échelle, halo) ; en bandeau replié la pastille pulse comme un bouton (`hprnb-beacon`, halo `--hprnb-glow` dans la couleur du label).
 - Motion réduite : aucune translation ni pulsation.
 
 ### 15.8.4 Contrat avec le thème et les autres plugins

@@ -16,7 +16,7 @@ use Gettext\Translations;
 $root    = dirname( __DIR__ );
 $plugin  = $root . '/horizon-press-news-bar';
 $domain  = 'horizon-press-news-bar';
-$version = '2.0.0';
+$version = '2.0.1';
 
 $json    = shell_exec( 'php ' . escapeshellarg( __DIR__ . '/extract-strings.php' ) );
 $entries = json_decode( (string) $json, true );

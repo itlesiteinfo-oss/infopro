@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,10 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.0.1 =
+* Mobile card: clipped headlines end with an ellipsis; the collapsed pill pulses like a button; the live dot really blinks.
+* Fixed the pill padding (12 / 14 px) and the thumbnail in the mobile card (24 px square under the buttons, hidden when collapsed).
 
 = 2.0.0 =
 * "En continu" v2: dark bar (#1b1c20) on both devices, theme-red pill (#ce3029) aligned on the site container (1230 px, 15 px gutter), 40 px desktop bar at 30 px/s with edge fade and 40 px buttons, close button (24 h memory) on by default.
