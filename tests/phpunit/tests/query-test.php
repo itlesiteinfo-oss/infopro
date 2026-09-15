@@ -52,7 +52,7 @@ class Query_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_meta_and_term_cache_flags() {
-		$settings = $this->with_settings( array( 'show_thumbnail' => true ) );
+		$settings = $this->with_settings( array( 'desktop_show_thumbnail' => true ) );
 		$this->assertTrue( Query::args( $settings )['update_post_meta_cache'] );
 
 		update_option( 'permalink_structure', '/%category%/%postname%/' );
@@ -167,7 +167,7 @@ class Query_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_thumbnails_are_resolved_without_n_plus_one() {
-		$settings = $this->with_settings( array( 'show_thumbnail' => true, 'thumbnail_size' => 'thumbnail' ) );
+		$settings = $this->with_settings( array( 'desktop_show_thumbnail' => true, 'thumbnail_size' => 'thumbnail' ) );
 		$file     = DIR_TESTDATA . '/images/canola.jpg';
 
 		$post_ids = array();
@@ -179,7 +179,7 @@ class Query_Test extends HPRNB_Test_Case {
 		}
 
 		// Measure with one post allowed…
-		$one = $this->with_settings( array( 'show_thumbnail' => true, 'max_items' => 1 ) );
+		$one = $this->with_settings( array( 'desktop_show_thumbnail' => true, 'max_items' => 1 ) );
 		wp_cache_flush();
 		wp_load_alloptions();
 		get_option( 'permalink_structure' );

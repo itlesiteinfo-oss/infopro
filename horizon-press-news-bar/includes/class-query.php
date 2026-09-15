@@ -36,7 +36,7 @@ final class Query {
 			'posts_per_page'         => max( 1, (int) $settings['max_items'] ),
 			'no_found_rows'          => true,
 			'update_post_term_cache' => false !== strpos( $permalink_structure, '%category%' ),
-			'update_post_meta_cache' => ! empty( $settings['show_thumbnail'] ),
+			'update_post_meta_cache' => Settings::wants_thumbnails( $settings ),
 			'date_query'             => Time_Window::date_query( $settings, $now ),
 			'orderby'                => 'date',
 			'order'                  => 'date_asc' === $settings['orderby'] ? 'ASC' : 'DESC',
@@ -76,7 +76,7 @@ final class Query {
 		$query = new WP_Query( self::args( $settings, $now ) );
 		$posts = is_array( $query->posts ) ? $query->posts : array();
 
-		if ( ! empty( $settings['show_thumbnail'] ) && ! empty( $posts ) ) {
+		if ( Settings::wants_thumbnails( $settings ) && ! empty( $posts ) ) {
 			update_post_thumbnail_cache( $query );
 		}
 
@@ -133,7 +133,7 @@ final class Query {
 			'thumb'      => null,
 		);
 
-		if ( ! empty( $settings['show_thumbnail'] ) ) {
+		if ( Settings::wants_thumbnails( $settings ) ) {
 			$thumb_id = (int) get_post_thumbnail_id( $post );
 			if ( $thumb_id > 0 ) {
 				$src = wp_get_attachment_image_src( $thumb_id, self::thumbnail_size( $settings ) );

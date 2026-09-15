@@ -666,7 +666,7 @@ Sur cache miss :
 
 Budgets front :
 
-- CSS principal minifié : objectif ≤ 20 Ko (14 Ko en V1.3 : la v2 ajoute la carte mobile, les scénarios clavier / paysage, le contrat d’offset et la compatibilité Jannah)
+- CSS principal minifié : objectif ≤ 24 Ko (20 Ko en 2.0 : la 2.1 ajoute les réglages d'image par profil et le bandeau compact)
 - bootstrap hybride minifié : objectif ≤ 3 Ko ;
 - JS interactif minifié : objectif ≤ 10 Ko ;
 - 0 dépendance tierce ;
@@ -1136,6 +1136,8 @@ Barre de 40 px (+ zone sûre), grille `label | compteur | titre | contrôles` da
 - Points de suspension (2.0.1) : le script pose `is-clipped` sur le viewport quand le titre dépasse ses lignes ; un `::after` « … » sur un fondu de 28 px termine la dernière ligne (et la ligne unique du bandeau replié).
 - Vignette (`show_thumbnail`, 2.0.1) : carré arrondi de `ligne − 2` px (24 px) en `position: absolute` dans la colonne des boutons, sous Pause / Fermer, masqué replié ; le viewport n’est rogné que verticalement (`overflow: visible clip`).
 - Pastille (2.0.1) : marge intérieure 12 / 14 px ; point « en direct » clignotant (opacité, échelle, halo) ; en bandeau replié la pastille pulse comme un bouton (`hprnb-beacon`, halo `--hprnb-glow` dans la couleur du label).
+- Bandeau replié (2.1) : la pastille se réduit à un point rouge de 24 px collé à la gouttière (`hprnb-beacon`), le texte du label est masqué et le fondu de l'ellipse resserré à 18 px ; l'option `mobile_peek = label` conserve la pastille complète.
+- Image par profil (2.1) : `{desktop|mobile}_show_thumbnail`, `{desktop|mobile}_thumb_position` (`before`/`after`) et `{desktop|mobile}_thumb_size` (16–80 px). Le `<img>` entre dans le markup dès qu'un profil l'active (clé de cache) ; l'affichage, l'ordre (flex) et la taille sont des jetons `--hprnb-e-thumb-*` posés par les classes `hprnb-root--{d|m}-thumb[-after]`, hors cache. Sur ordinateur la hauteur de barre suit l'image (`taille + 12 − 4`) ; sur la carte mobile l'image sort du flux dans sa propre colonne (`padding-inline` de l'inner + position absolue centrée), plafonnée à `lignes × interligne − 2`, et la pastille se réduit au point rouge ; dans le bandeau replié l'image et sa colonne disparaissent.
 - Motion réduite : aucune translation ni pulsation.
 
 ### 15.8.4 Contrat avec le thème et les autres plugins

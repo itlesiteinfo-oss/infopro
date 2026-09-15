@@ -10,6 +10,7 @@
  */
 
 use HorizonPress\NewsBar\Renderer;
+use HorizonPress\NewsBar\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -20,7 +21,7 @@ if ( empty( $hprnb_item['title'] ) || empty( $hprnb_item['url'] ) ) {
 	return;
 }
 
-$hprnb_thumb = ( ! empty( $hprnb_settings['show_thumbnail'] ) && ! empty( $hprnb_item['thumb']['url'] ) ) ? $hprnb_item['thumb'] : null;
+$hprnb_thumb = ( Settings::wants_thumbnails( $hprnb_settings ) && ! empty( $hprnb_item['thumb']['url'] ) ) ? $hprnb_item['thumb'] : null;
 ?>
 <li class="hprnb-bar__item">
 	<a class="hprnb-bar__link" href="<?php echo esc_url( $hprnb_item['url'] ); ?>">

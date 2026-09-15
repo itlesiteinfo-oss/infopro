@@ -147,7 +147,7 @@ final class Renderer {
 	 */
 	public static function root_style( array $settings ): string {
 		return sprintf(
-			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-accent:%6$s;--hprnb-font-size:%7$dpx;--hprnb-height:%8$dpx;--hprnb-d-lines:%9$d;--hprnb-max:%10$dpx;--hprnb-gutter:%11$dpx;--hprnb-z:%12$d;--hprnb-sep:%13$s;--hprnb-m-bg:%14$s;--hprnb-m-fg:%15$s;--hprnb-m-accent:%16$s;--hprnb-m-label-fg:%17$s;--hprnb-m-font-size:%18$dpx;--hprnb-m-height:%19$dpx;--hprnb-m-lines:%20$d;--hprnb-m-line:%21$dpx;--hprnb-m-pad:%22$dpx;--hprnb-peek:%23$dpx;--hprnb-m-ctrls:%24$d',
+			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-accent:%6$s;--hprnb-font-size:%7$dpx;--hprnb-height:%8$dpx;--hprnb-d-lines:%9$d;--hprnb-max:%10$dpx;--hprnb-gutter:%11$dpx;--hprnb-z:%12$d;--hprnb-sep:%13$s;--hprnb-m-bg:%14$s;--hprnb-m-fg:%15$s;--hprnb-m-accent:%16$s;--hprnb-m-label-fg:%17$s;--hprnb-m-font-size:%18$dpx;--hprnb-m-height:%19$dpx;--hprnb-m-lines:%20$d;--hprnb-m-line:%21$dpx;--hprnb-m-pad:%22$dpx;--hprnb-peek:%23$dpx;--hprnb-m-ctrls:%24$d;--hprnb-d-thumb:%25$dpx;--hprnb-m-thumb:%26$dpx',
 			self::color( $settings['bg_color'], '#1B1C20' ),
 			self::color( $settings['text_color'], '#F5F5F5' ),
 			self::color( $settings['label_bg_color'], '#CE3029' ),
@@ -171,7 +171,9 @@ final class Renderer {
 			self::flow_metrics( $settings )['line'],
 			self::flow_metrics( $settings )['pad'],
 			self::peek_height( $settings ),
-			self::mobile_controls( $settings )
+			self::mobile_controls( $settings ),
+			(int) ( $settings['desktop_thumb_size'] ?? 32 ),
+			(int) ( $settings['mobile_thumb_size'] ?? 48 )
 		);
 	}
 
@@ -210,6 +212,12 @@ final class Renderer {
 			if ( $profile['lines'] > 1 && 'flow' !== $profile['layout'] ) {
 				$classes[] = 'hprnb-root--' . $p . '-wrap';
 			}
+			if ( $profile['thumb'] ) {
+				$classes[] = 'hprnb-root--' . $p . '-thumb';
+				if ( 'after' === $profile['thumb_position'] ) {
+					$classes[] = 'hprnb-root--' . $p . '-thumb-after';
+				}
+			}
 		}
 		if ( ! empty( $settings['mobile_show_separator'] ) ) {
 			$classes[] = 'hprnb-root--m-sep';
@@ -235,7 +243,7 @@ final class Renderer {
 	 *
 	 * @param array  $settings Settings.
 	 * @param string $p        'd' (desktop, from 768px) or 'm' (mobile, under 768px).
-	 * @return array{layout:string,label:string,dot:bool,counter:bool,lines:int,progress:bool,mode:string,font_size:int,collapse:bool,swipe:bool}
+	 * @return array{layout:string,label:string,dot:bool,counter:bool,lines:int,progress:bool,mode:string,font_size:int,thumb:bool,thumb_position:string,thumb_size:int,collapse:bool,swipe:bool}
 	 */
 	public static function profile( array $settings, string $p ): array {
 		$mobile = ( 'm' === $p );
@@ -252,20 +260,23 @@ final class Renderer {
 		$stacked = ( 'inline' !== $layout );
 
 		return array(
-			'layout'    => $layout,
-			'label'     => $label,
-			'dot'       => 'hidden' !== $label && ! empty( $settings[ $prefix . 'label_dot' ] ),
-			'counter'   => 'rotate' === $mode && ! empty( $settings[ $prefix . 'show_counter' ] ),
-			'lines'     => 'marquee' === $mode ? 1 : $lines,
-			'progress'  => 'rotate' === $mode && ! empty( $settings[ $prefix . 'show_progress' ] ),
-			'mode'      => $mode,
-			'font_size' => (int) ( $mobile ? ( $settings['mobile_font_size'] ?? 16 ) : $settings['font_size'] ),
+			'layout'         => $layout,
+			'label'          => $label,
+			'dot'            => 'hidden' !== $label && ! empty( $settings[ $prefix . 'label_dot' ] ),
+			'counter'        => 'rotate' === $mode && ! empty( $settings[ $prefix . 'show_counter' ] ),
+			'lines'          => 'marquee' === $mode ? 1 : $lines,
+			'progress'       => 'rotate' === $mode && ! empty( $settings[ $prefix . 'show_progress' ] ),
+			'mode'           => $mode,
+			'font_size'      => (int) ( $mobile ? ( $settings['mobile_font_size'] ?? 16 ) : $settings['font_size'] ),
 			// The label row (stacked) or the first line (flow) is what stays visible when collapsed.
-			'collapse'  => $mobile && $stacked && ! empty( $settings['mobile_hide_on_scroll'] ),
-			'swipe'     => $mobile && 'rotate' === $mode && ! empty( $settings['mobile_swipe'] ),
-			'peek'      => 'label' === ( $settings['mobile_peek'] ?? 'headline' ) ? 'label' : 'headline',
-			'deep'      => $mobile && $stacked && ! empty( $settings['mobile_deep_collapse'] ),
-			'kbd'       => $mobile && ! empty( $settings['mobile_kbd_hide'] ),
+			'collapse'       => $mobile && $stacked && ! empty( $settings['mobile_hide_on_scroll'] ),
+			'swipe'          => $mobile && 'rotate' === $mode && ! empty( $settings['mobile_swipe'] ),
+			'thumb'          => ! empty( $settings[ $prefix . 'show_thumbnail' ] ),
+			'thumb_position' => 'after' === ( $settings[ $prefix . 'thumb_position' ] ?? ( $mobile ? 'after' : 'before' ) ) ? 'after' : 'before',
+			'thumb_size'     => (int) ( $settings[ $prefix . 'thumb_size' ] ?? ( $mobile ? 48 : 32 ) ),
+			'peek'           => 'label' === ( $settings['mobile_peek'] ?? 'headline' ) ? 'label' : 'headline',
+			'deep'           => $mobile && $stacked && ! empty( $settings['mobile_deep_collapse'] ),
+			'kbd'            => $mobile && ! empty( $settings['mobile_kbd_hide'] ),
 		);
 	}
 
@@ -321,6 +332,9 @@ final class Renderer {
 		$needed = $profile['lines'] * (int) ceil( $profile['font_size'] * self::LINE_HEIGHT ) + self::BLOCK_PAD;
 		if ( 'stacked' === $profile['layout'] ) {
 			$needed += self::STRIP_HEIGHT + self::ROW_GAP;
+		}
+		if ( $profile['thumb'] ) {
+			$needed = max( $needed, $profile['thumb_size'] + self::BLOCK_PAD - 4 );
 		}
 		return max( (int) $settings['bar_height'], $needed );
 	}

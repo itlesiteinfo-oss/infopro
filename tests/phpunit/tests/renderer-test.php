@@ -71,7 +71,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 	public function test_optional_features_render_only_when_enabled() {
 		$settings = $this->with_settings(
 			array(
-				'show_thumbnail'     => true,
+				'desktop_show_thumbnail' => true,
 				'show_separator'     => true,
 				'separator_char'     => '|',
 				'show_relative_time' => true,
@@ -162,9 +162,9 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$this->assertStringContainsString( esc_attr( '{"layout":"flow","lines":2,"counter":false,"progress":true,"swipe":true,"collapse":true,"peek":"headline","deep":true,"kbd":true}' ), $root );
 		$this->assertStringContainsString( 'data-hprnb-endpoint="' . esc_url( rest_url( 'hprnb/v1/items' ) ) . '"', $root );
 		$this->assertStringContainsString( 'data-hprnb-css="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=2.0.1"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=2.1.0"', $root );
 		$this->assertStringContainsString( 'data-hprnb-js', $root, 'The default mobile presentation (rotate, flow card) needs the interactive script.' );
-		$this->assertStringContainsString( 'style="--hprnb-bg:#1B1C20;--hprnb-fg:#F5F5F5;--hprnb-label-bg:#CE3029;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-accent:#CE3029;--hprnb-font-size:15px;--hprnb-height:40px;--hprnb-d-lines:1;--hprnb-max:1230px;--hprnb-gutter:15px;--hprnb-z:99990;--hprnb-sep:&#039;•&#039;;--hprnb-m-bg:#1B1C20;--hprnb-m-fg:#F5F5F5;--hprnb-m-accent:#CE3029;--hprnb-m-label-fg:#FFFFFF;--hprnb-m-font-size:16px;--hprnb-m-height:76px;--hprnb-m-lines:2;--hprnb-m-line:26px;--hprnb-m-pad:12px;--hprnb-peek:40px;--hprnb-m-ctrls:2"', $root );
+		$this->assertStringContainsString( 'style="--hprnb-bg:#1B1C20;--hprnb-fg:#F5F5F5;--hprnb-label-bg:#CE3029;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-accent:#CE3029;--hprnb-font-size:15px;--hprnb-height:40px;--hprnb-d-lines:1;--hprnb-max:1230px;--hprnb-gutter:15px;--hprnb-z:99990;--hprnb-sep:&#039;•&#039;;--hprnb-m-bg:#1B1C20;--hprnb-m-fg:#F5F5F5;--hprnb-m-accent:#CE3029;--hprnb-m-label-fg:#FFFFFF;--hprnb-m-font-size:16px;--hprnb-m-height:76px;--hprnb-m-lines:2;--hprnb-m-line:26px;--hprnb-m-pad:12px;--hprnb-peek:40px;--hprnb-m-ctrls:2;--hprnb-d-thumb:32px;--hprnb-m-thumb:48px"', $root );
 		$this->assertStringNotContainsString( ' hidden', $root );
 		$this->assertStringContainsString( '<aside', $root );
 		$this->assertStringEndsWith( '</aside></div>', $root );
@@ -181,7 +181,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$hybrid_js = $this->with_settings( array( 'close_button' => true, 'show_on_desktop' => false ) );
 		$root = Renderer::root( Renderer::payload( array( $this->item() ), $hybrid_js ), $hybrid_js );
 		$this->assertStringContainsString( 'data-hprnb-js="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=2.0.1"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=2.1.0"', $root );
 		$this->assertStringContainsString( 'hprnb-hide-desktop', $root );
 
 		add_filter( 'hprnb_stale_threshold', static fn() => 900 );
@@ -231,6 +231,22 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$this->assertSame( 1, Renderer::profile_lines( array_merge( $settings, array( 'desktop_lines' => 3 ) ), 'd' ), 'Marquee (default) is always one line.' );
 		$this->assertSame( 3, Renderer::profile_lines( array_merge( $settings, array( 'desktop_lines' => 3, 'ticker_enabled' => false ) ), 'd' ) );
 		$this->assertSame( 'stacked', Renderer::profile( array_merge( $settings, array( 'mobile_ticker_mode' => 'static' ) ), 'm' )['layout'], 'The flow card needs the rotation: other modes fall back to the label row.' );
+		// Featured image: one switch, one position and one size per profile; shared markup, CSS decides.
+		$this->assertFalse( Settings::wants_thumbnails( $settings ) );
+		$images = array_merge( $settings, array( 'desktop_show_thumbnail' => true, 'mobile_show_thumbnail' => true, 'mobile_thumb_position' => 'after', 'desktop_thumb_size' => 56, 'ticker_enabled' => false ) );
+		$this->assertTrue( Settings::wants_thumbnails( $images ) );
+		$this->assertTrue( Renderer::profile( $images, 'd' )['thumb'] );
+		$this->assertSame( 'before', Renderer::profile( $images, 'd' )['thumb_position'] );
+		$this->assertSame( 'after', Renderer::profile( $images, 'm' )['thumb_position'] );
+		$this->assertSame( 56, Renderer::profile( $images, 'd' )['thumb_size'] );
+		$this->assertContains( 'hprnb-root--d-thumb', Renderer::root_classes( $images ) );
+		$this->assertNotContains( 'hprnb-root--d-thumb-after', Renderer::root_classes( $images ) );
+		$this->assertContains( 'hprnb-root--m-thumb-after', Renderer::root_classes( $images ) );
+		$this->assertNotContains( 'hprnb-root--m-thumb', Renderer::root_classes( array_merge( $images, array( 'mobile_show_thumbnail' => false ) ) ) );
+		$this->assertSame( 64, Renderer::profile_height( $images, 'd' ), 'A 56px image grows the 40px bar (56 + 12 − 4).' );
+		$this->assertSame( 76, Renderer::profile_height( $images, 'm' ), 'The flow card keeps its height: the image is clamped by the stylesheet.' );
+		$this->assertStringContainsString( '--hprnb-d-thumb:56px;--hprnb-m-thumb:48px', Renderer::root_style( $images ) );
+
 		$this->assertSame( 2, Renderer::mobile_controls( $settings ), 'Pause and close.' );
 		$this->assertSame( 3, Renderer::mobile_controls( array_merge( $settings, array( 'mobile_ticker_mode' => 'manual' ) ) ) );
 		$this->assertSame( 1, Renderer::mobile_controls( array_merge( $settings, array( 'mobile_ticker_mode' => 'static', 'close_button' => false ) ) ), 'Never below one (the chevron).' );

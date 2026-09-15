@@ -186,10 +186,6 @@ final class Settings {
 				'min'     => 1,
 				'max'     => 720,
 			),
-			'show_thumbnail'           => array(
-				'type'    => 'bool',
-				'default' => false,
-			),
 			'thumbnail_size'           => array(
 				'type'    => 'key',
 				'default' => 'thumbnail',
@@ -287,6 +283,21 @@ final class Settings {
 				'type'    => 'bool',
 				'default' => true,
 			),
+			'desktop_show_thumbnail'   => array(
+				'type'    => 'bool',
+				'default' => false,
+			),
+			'desktop_thumb_position'   => array(
+				'type'    => 'enum',
+				'default' => 'before',
+				'options' => array( 'before', 'after' ),
+			),
+			'desktop_thumb_size'       => array(
+				'type'    => 'int',
+				'default' => 32,
+				'min'     => 16,
+				'max'     => 80,
+			),
 			'mobile_layout'            => array(
 				'type'    => 'enum',
 				'default' => 'flow',
@@ -352,6 +363,21 @@ final class Settings {
 			'mobile_kbd_hide'          => array(
 				'type'    => 'bool',
 				'default' => true,
+			),
+			'mobile_show_thumbnail'    => array(
+				'type'    => 'bool',
+				'default' => false,
+			),
+			'mobile_thumb_position'    => array(
+				'type'    => 'enum',
+				'default' => 'after',
+				'options' => array( 'before', 'after' ),
+			),
+			'mobile_thumb_size'        => array(
+				'type'    => 'int',
+				'default' => 48,
+				'min'     => 16,
+				'max'     => 80,
 			),
 			'mobile_show_separator'    => array(
 				'type'    => 'bool',
@@ -532,12 +558,35 @@ final class Settings {
 			return;
 		}
 		$raw = get_option( self::OPTION, array() );
-		if ( $stored < 2 && is_array( $raw ) && ! empty( $raw ) ) {
-			update_option( self::OPTION, self::sanitize( array_merge( $raw, self::v2_preset() ) ), true );
+		if ( ! is_array( $raw ) ) {
+			$raw = array();
+		}
+		$upgraded = $raw;
+		if ( $stored < 2 && ! empty( $raw ) ) {
+			$upgraded = array_merge( $upgraded, self::v2_preset() );
+		}
+		// Schema 3: the single `show_thumbnail` switch became one per profile (position and size too).
+		if ( $stored < 3 && ! empty( $raw['show_thumbnail'] ) ) {
+			$upgraded['desktop_show_thumbnail'] = true;
+			$upgraded['mobile_show_thumbnail']  = true;
+		}
+		if ( $upgraded !== $raw ) {
+			update_option( self::OPTION, self::sanitize( $upgraded ), true );
 			Invalidation::invalidate();
 			self::$memo = null;
 		}
 		update_option( self::SCHEMA_OPTION, (string) HPRNB_SCHEMA_VERSION, true );
+	}
+
+	/**
+	 * Whether any profile shows the featured image: the `<img>` then lives in the cached markup and
+	 * each profile hides it or not (classes on the root, outside the cache).
+	 *
+	 * @param array $settings Settings.
+	 * @return bool
+	 */
+	public static function wants_thumbnails( array $settings ): bool {
+		return ! empty( $settings['desktop_show_thumbnail'] ) || ! empty( $settings['mobile_show_thumbnail'] );
 	}
 
 	/**

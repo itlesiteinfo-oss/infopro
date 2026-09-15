@@ -10,6 +10,7 @@
  */
 
 use HorizonPress\NewsBar\Renderer;
+use HorizonPress\NewsBar\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -23,7 +24,7 @@ $hprnb_classes = array(
 	'hprnb-bar--' . ( 'overlay' === $hprnb_settings['layout_mode'] ? 'overlay' : 'reserve' ),
 	'hprnb-bar--ticker-' . $hprnb_ticker,
 );
-if ( ! empty( $hprnb_settings['show_thumbnail'] ) ) {
+if ( Settings::wants_thumbnails( $hprnb_settings ) ) {
 	$hprnb_classes[] = 'hprnb-bar--has-thumbs';
 }
 if ( ! empty( $hprnb_settings['show_relative_time'] ) ) {

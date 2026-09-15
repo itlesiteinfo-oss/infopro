@@ -51,6 +51,8 @@
 	--hprnb-m-line: 26px;
 	--hprnb-m-pad: 12px;
 	--hprnb-m-ctrls: 1;
+	--hprnb-d-thumb: 32px;
+	--hprnb-m-thumb: 48px;
 	/* Label row of the stacked layout (Renderer::STRIP_HEIGHT / ROW_GAP / BLOCK_PAD) and the part
 	   of a collapsed bar that stays visible (first line of the flow card: 12 + 26 + 2). */
 	--hprnb-strip: 22px;
@@ -94,7 +96,10 @@
 	--hprnb-e-item-is: auto;
 	--hprnb-e-sep: none;
 	--hprnb-e-sep-last: none;
-	--hprnb-e-thumb-min: 32px;
+	--hprnb-e-thumb-display: none;
+	--hprnb-e-thumb-order: 0;
+	--hprnb-e-thumb-size: var(--hprnb-d-thumb);
+	--hprnb-e-thumb-mi: 0 .6em;
 	display: block;
 	inline-size: 100%;
 	margin: 0;
@@ -130,7 +135,6 @@
 	--hprnb-e-max: 1200px;
 	--hprnb-e-list-pad: 0;
 	--hprnb-e-title-weight: 600;
-	--hprnb-e-thumb-min: 0px;
 }
 
 /* Compact label typography: the stacked label row (22px) and the v2 pill (24px badge, 11.5px caps).
@@ -182,6 +186,16 @@
 
 .hprnb-root--d-dot {
 	--hprnb-e-dot: block;
+}
+
+/* Featured image of each headline: shown per profile, before or after the title. */
+.hprnb-root--d-thumb {
+	--hprnb-e-thumb-display: block;
+}
+
+.hprnb-root--d-thumb-after {
+	--hprnb-e-thumb-order: 2;
+	--hprnb-e-thumb-mi: .6em 0;
 }
 
 /* Several headline lines outside the rotation: wrapped cards in the scrolling list. */
@@ -356,6 +370,7 @@
 
 /* One line with an ellipsis by default; a -webkit-box clamped to --hprnb-e-lines when wrapping. */
 .hprnb-bar__title {
+	order: 1;
 	display: var(--hprnb-e-title-display);
 	-webkit-box-orient: vertical;
 	-webkit-line-clamp: var(--hprnb-e-lines);
@@ -418,17 +433,19 @@
 	content: none;
 }
 
-/* Thumbnail: as tall as the headline lines, at least --hprnb-e-thumb-min (square, cropped). */
+/* Thumbnail: a square of --hprnb-e-thumb-size, cropped, before or after the title (flex order).
+   Hidden by default: each profile opts in (hprnb-root--{d|m}-thumb), the markup is shared. */
 .hprnb-bar__thumb {
 	flex: none;
-	display: block;
-	block-size: max(calc(var(--hprnb-e-lines) * 1.3em), var(--hprnb-e-thumb-min));
-	inline-size: auto;
+	order: var(--hprnb-e-thumb-order);
+	display: var(--hprnb-e-thumb-display);
+	inline-size: var(--hprnb-e-thumb-size);
+	block-size: var(--hprnb-e-thumb-size);
 	max-inline-size: none;
 	aspect-ratio: 1;
 	object-fit: cover;
 	margin: 0;
-	margin-inline-end: .5em;
+	margin-inline: var(--hprnb-e-thumb-mi);
 	border: 0;
 	border-radius: 4px;
 	box-shadow: none;
@@ -437,6 +454,7 @@
 
 /* Relative / absolute time. */
 .hprnb-bar__time {
+	order: 3;
 	flex: none;
 	margin-inline-start: .5em;
 	font-size: .85em;
@@ -826,7 +844,10 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		--hprnb-e-item-is: auto;
 		--hprnb-e-sep: none;
 		--hprnb-e-sep-last: none;
-		--hprnb-e-thumb-min: 32px;
+		--hprnb-e-thumb-display: none;
+		--hprnb-e-thumb-order: 0;
+		--hprnb-e-thumb-size: var(--hprnb-m-thumb);
+		--hprnb-e-thumb-mi: 0 .6em;
 	}
 
 	.hprnb-root--m-end .hprnb-bar {
@@ -842,7 +863,6 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		--hprnb-e-max: none;
 		--hprnb-e-list-pad: 0;
 		--hprnb-e-title-weight: 600;
-		--hprnb-e-thumb-min: 0px;
 	}
 
 	.hprnb-root--m-stacked .hprnb-bar {
@@ -961,24 +981,46 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		inset-block-start: 0;
 	}
 
-	/* Featured image: a small rounded square (one line high) in the controls column, under the buttons,
-	   so it never steals width from the headline. The viewport (its positioned ancestor) clips at its
-	   lines, hence the 1px top offset. */
+	/* Featured image: its own column, out of the text flow (a news card), centred on the headline
+	   block and never taller than it, so the card keeps its height whatever the configured size. */
+	.hprnb-root--m-flow .hprnb-bar {
+		--hprnb-e-thumb-fit: min(var(--hprnb-e-thumb-size), calc(var(--hprnb-m-lines) * var(--hprnb-m-line) - 2px));
+		--hprnb-e-thumb-col: calc(var(--hprnb-e-thumb-fit) + 10px);
+	}
+
 	.hprnb-root--m-flow .hprnb-bar__thumb {
 		position: absolute;
-		inset-inline-end: calc(-1 * var(--hprnb-btn) * var(--hprnb-m-ctrls));
-		inset-block-start: calc(var(--hprnb-m-line) + 1px);
+		inset-block-start: 50%;
+		inset-inline-start: calc(-1 * var(--hprnb-e-thumb-col));
 		float: none;
-		display: block;
-		inline-size: calc(var(--hprnb-m-line) - 2px);
-		block-size: calc(var(--hprnb-m-line) - 2px);
+		inline-size: var(--hprnb-e-thumb-fit);
+		block-size: var(--hprnb-e-thumb-fit);
 		margin: 0;
 		border-radius: 6px;
 		box-shadow: 0 0 0 1px rgba(255, 255, 255, .14);
+		transform: translateY(-50%);
 	}
 
+	.hprnb-root--m-flow:where(.hprnb-root--m-thumb) .hprnb-bar__inner {
+		padding-inline-start: calc(var(--hprnb-gutter) + var(--hprnb-e-thumb-col));
+	}
+
+	/* After the headline: between the text and the buttons. */
+	.hprnb-root--m-flow:where(.hprnb-root--m-thumb-after) .hprnb-bar__inner {
+		padding-inline: var(--hprnb-gutter) calc(var(--hprnb-gutter) + var(--hprnb-btn) * var(--hprnb-m-ctrls) + var(--hprnb-e-thumb-col));
+	}
+
+	.hprnb-root--m-flow:where(.hprnb-root--m-thumb-after) .hprnb-bar__thumb {
+		inset-inline: auto calc(-1 * var(--hprnb-e-thumb-col));
+	}
+
+	/* Collapsed strip: the image would eat the single visible line, and its column with it. */
 	.hprnb-root--m-flow .hprnb-bar--collapsed .hprnb-bar__thumb {
 		display: none;
+	}
+
+	.hprnb-root--m-flow .hprnb-bar--collapsed .hprnb-bar__inner {
+		padding-inline: var(--hprnb-gutter) calc(var(--hprnb-gutter) + var(--hprnb-btn) * var(--hprnb-m-ctrls));
 	}
 
 	.hprnb-root--m-flow .hprnb-bar__title {
@@ -1007,6 +1049,16 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 
 	.hprnb-root--m-dot .hprnb-bar {
 		--hprnb-e-dot: block;
+	}
+
+	/* Featured image of each headline: shown per profile, before or after the title. */
+	.hprnb-root--m-thumb .hprnb-bar {
+		--hprnb-e-thumb-display: block;
+	}
+
+	.hprnb-root--m-thumb-after .hprnb-bar {
+		--hprnb-e-thumb-order: 2;
+		--hprnb-e-thumb-mi: .6em 0;
 	}
 
 	.hprnb-root--m-wrap .hprnb-bar {
@@ -1076,6 +1128,34 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 
 	.hprnb-bar--collapsed .hprnb-bar__label::before {
 		animation-duration: .8s;
+	}
+
+	/* …and shrinks to a round beacon so the headline gets the width back (peek = headline).
+	   The "label only" option keeps the full pill instead. The card does the same when an image
+	   takes its own column: the red dot carries the "live" signal, the headline keeps the width. */
+	.hprnb-root--m-flow:where(.hprnb-root--m-thumb) .hprnb-bar__label,
+	.hprnb-root--m-flow:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label {
+		inline-size: var(--hprnb-pill);
+		min-inline-size: var(--hprnb-pill);
+		padding-inline: 0;
+		margin-inline-end: 9px;
+		justify-content: center;
+	}
+
+	.hprnb-root--m-flow:where(.hprnb-root--m-thumb) .hprnb-bar__label-text,
+	.hprnb-root--m-flow:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label-text {
+		display: none;
+	}
+
+	/* The beacon always shows its dot, even when the live dot option is off. */
+	.hprnb-root--m-flow:where(.hprnb-root--m-thumb) .hprnb-bar__label::before,
+	.hprnb-root--m-flow:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label::before {
+		display: block;
+	}
+
+	/* Tighter fade in the strip: every pixel goes to the headline. */
+	.hprnb-root--m-flow .hprnb-bar--collapsed .hprnb-bar__viewport::after {
+		padding-inline-start: 18px;
 	}
 
 	/* Option "pill only" in the strip: the headline fades out while collapsed. */

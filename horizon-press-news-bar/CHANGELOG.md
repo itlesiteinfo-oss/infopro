@@ -2,6 +2,20 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.1.0] — 2026-09-15
+
+### Ajouté
+
+- **Image par profil** : `desktop_show_thumbnail` / `mobile_show_thumbnail` (case à cocher), `desktop_thumb_position` / `mobile_thumb_position` (avant ou après le titre) et `desktop_thumb_size` / `mobile_thumb_size` (16 à 80 px). Les deux profils partagent le même `<img>` dans le markup ; chacun l'affiche, le positionne et le dimensionne par CSS. Le réglage `show_thumbnail` unique disparaît (schéma 3 : une installation qui l'avait activé reçoit les deux cases cochées).
+- Ordinateur : l'image se place avant ou après le titre (ordre flex) ; la barre grandit si l'image dépasse la hauteur des lignes.
+- Carte mobile : l'image occupe **sa propre colonne** hors du flux du texte (avant ou après le titre, devant les boutons), centrée sur le bloc de titre et plafonnée à sa hauteur — la carte garde sa hauteur quelle que soit la taille choisie. Avec une image, la pastille se réduit au point rouge pour laisser toute la largeur au titre ; elle disparaît dans le bandeau replié, colonne comprise.
+- La taille source WordPress (`thumbnail_size`) passe dans l'onglet Avancé, partagée par les deux profils.
+
+### Modifié
+
+- **Bandeau replié** : la pastille devient un point rouge pulsant de 24 px collé à la gouttière (au lieu de la pastille complète), le fondu des points de suspension est resserré — le titre gagne près de 90 px. L'option « pastille seule » conserve la pastille complète.
+- Budget CSS relevé à 24 Ko.
+
 ## [2.0.1] — 2026-09-15
 
 ### Ajouté

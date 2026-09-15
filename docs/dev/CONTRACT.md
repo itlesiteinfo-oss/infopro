@@ -160,7 +160,10 @@ desktop_label_style: enum strip [strip,pill,hidden]
 desktop_label_dot: bool false
 desktop_show_counter: bool false                            (rotate mode)
 desktop_lines: int 1 [1,4]                                  (headline lines; the bar height follows)
-desktop_show_progress: bool true                            (rotate mode)
+desktop_show_progress: bool true
+desktop_show_thumbnail: bool false                          (the <img> enters the cached markup as soon as one profile asks for it)
+desktop_thumb_position: enum before [before,after]
+desktop_thumb_size: int 32 [16,80]                            (rotate mode)
 mobile_layout: enum flow [flow,stacked,inline]              (flow = v2 card: pill floating at the head of the two-line headline, rotation only; inline = label first)
 mobile_label_style: enum pill [pill,strip,hidden]
 mobile_label_dot: bool false
@@ -175,6 +178,9 @@ mobile_hide_on_scroll: bool true
 mobile_peek: enum headline [headline,label]                 (collapsed strip: pill + first line, or pill only)
 mobile_deep_collapse: bool true                             (start collapsed when landing further than 120px down)
 mobile_kbd_hide: bool true                                  (slide away while a form field is active)
+mobile_show_thumbnail: bool false
+mobile_thumb_position: enum after [before,after]
+mobile_thumb_size: int 48 [16,80]                           (clamped to the headline block on the flow card)
 mobile_show_separator: bool false
 mobile_custom_colors: bool true
 mobile_bg_color: color #141414
@@ -338,7 +344,8 @@ public static function profile_data( array $settings, string $p ): array;   // {
 public static function profile_lines( array $settings, string $p ): int;
 public static function flow_metrics( array $settings ): array;         // {line, height, pad, peek}: line = round(font × 1.625), height = max(mobile_bar_height, lines × line + 12), peek = pad + line + 2
 public static function peek_height( array $settings ): int;            // collapsed strip: flow → peek, stacked → 36, inline → bar height
-public static function mobile_controls( array $settings ): int;        // buttons under 768px (pause/prev-next + close), never below 1 (--hprnb-m-ctrls)
+public static function mobile_controls( array $settings ): int;
+// Settings::wants_thumbnails( array $settings ): bool                   — either profile shows the featured image        // buttons under 768px (pause/prev-next + close), never below 1 (--hprnb-m-ctrls)
 public static function profile_height( array $settings, string $p ): int;   // max( bar_height, lines × ceil( font × 1.3 ) + 12 [+ 22 + 4 when stacked] ) — STRIP_HEIGHT / ROW_GAP / BLOCK_PAD / LINE_HEIGHT
 public static function root_classes( array $settings ): array;           // hprnb-root, device, layout, separator (hprnb-bar--sep[-loop]), per profile hprnb-root--{d|m}-{inline|stacked}, hprnb-root--d-end, -label-{pill|strip|hidden}, -dot, -wrap; hprnb-root--m-sep[-loop], -m-colors, -m-collapse
 public static function relative_time_label( int $timestamp, array $settings, ?int $now = null ): string; // within relative_time_max_hours: sprintf( __( '%s ago' ), human_time_diff( $ts, $now ) ), else wp_date( date_format . ' ' . time_format, $ts )

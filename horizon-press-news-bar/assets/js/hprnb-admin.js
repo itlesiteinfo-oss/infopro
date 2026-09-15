@@ -37,7 +37,7 @@
 	};
 	var PX_KEYS = { font_size: true, max_width: true, gutter: true };
 	var MOBILE_VARS = { mobile_bg_color: '--hprnb-m-bg', mobile_text_color: '--hprnb-m-fg', mobile_accent_color: '--hprnb-m-accent', mobile_label_text_color: '--hprnb-m-label-fg', mobile_font_size: '--hprnb-m-font-size' };
-	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, bar_height: true, align_container: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_bar_height: true, mobile_peek: true, mobile_deep_collapse: true, mobile_kbd_hide: true, theme_offset: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
+	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, bar_height: true, align_container: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_bar_height: true, mobile_peek: true, mobile_deep_collapse: true, mobile_kbd_hide: true, theme_offset: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, desktop_thumb_position: true, desktop_thumb_size: true, mobile_thumb_position: true, mobile_thumb_size: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
 	/* Row height of the stacked label strip, row gap, block padding and title line-height: mirrors Renderer::profile_height(). */
 	var STRIP = 22;
 	var ROW_GAP = 4;
@@ -196,6 +196,9 @@
 			progress: mode === 'rotate' && valueOf( prefix + 'show_progress' ) === '1',
 			mode: mode,
 			fontSize: parseInt( valueOf( mobile ? 'mobile_font_size' : 'font_size' ), 10 ) || ( mobile ? 16 : 14 ),
+			thumb: valueOf( prefix + 'show_thumbnail' ) === '1',
+			thumbAfter: valueOf( prefix + 'thumb_position' ) === 'after',
+			thumbSize: parseInt( valueOf( prefix + 'thumb_size' ), 10 ) || ( mobile ? 48 : 32 ),
 			collapse: mobile && layout !== 'inline' && valueOf( 'mobile_hide_on_scroll' ) === '1',
 			swipe: mobile && mode === 'rotate' && valueOf( 'mobile_swipe' ) === '1',
 			peek: valueOf( 'mobile_peek' ) === 'label' ? 'label' : 'headline',
@@ -254,6 +257,9 @@
 			} );
 			cls.toggle( 'hprnb-root--' + p + '-dot', profile.dot );
 			cls.toggle( 'hprnb-root--' + p + '-wrap', profile.lines > 1 && profile.layout !== 'flow' );
+			cls.toggle( 'hprnb-root--' + p + '-thumb', profile.thumb );
+			cls.toggle( 'hprnb-root--' + p + '-thumb-after', profile.thumb && profile.thumbAfter );
+			previewRoot.style.setProperty( p === 'm' ? '--hprnb-m-thumb' : '--hprnb-d-thumb', profile.thumbSize + 'px' );
 			var height;
 			if ( profile.layout === 'flow' ) {
 				var flow = flowMetrics( profile );
@@ -263,6 +269,9 @@
 				previewRoot.style.setProperty( '--hprnb-peek', flow.peek + 'px' );
 			} else {
 				height = profile.lines * Math.ceil( profile.fontSize * LINE_HEIGHT ) + BLOCK_PAD + ( profile.layout === 'stacked' ? STRIP + ROW_GAP : 0 );
+				if ( profile.thumb ) {
+					height = Math.max( height, profile.thumbSize + BLOCK_PAD - 4 );
+				}
 				height = Math.max( minHeight, height );
 				if ( p === 'm' ) {
 					previewRoot.style.setProperty( '--hprnb-peek', ( profile.layout === 'stacked' ? 36 : height ) + 'px' );

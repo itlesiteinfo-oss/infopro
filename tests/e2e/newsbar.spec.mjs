@@ -602,6 +602,11 @@ test( 'v2: flow card, collapsed strip, chevron, offset contract, deep collapse, 
 	expect( Math.round( 667 - ( await aside.boundingBox() ).y ) ).toBe( 40 );
 	expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '40px' );
 	expect( await page.evaluate( () => window.__states.map( ( s ) => `${ s.collapsed }:${ s.offset }` ) ) ).toContain( 'true:40' );
+	// The collapsed pill shrinks to a round beacon, hard against the gutter, and pulses like a button.
+	expect( await label.evaluate( ( el ) => getComputedStyle( el ).inlineSize ) ).toBe( '24px' );
+	expect( Math.round( ( await label.boundingBox() ).x ) ).toBeLessThanOrEqual( 15 );
+	expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => getComputedStyle( el ).display ) ).toBe( 'none' );
+	expect( await label.evaluate( ( el ) => getComputedStyle( el, '::before' ).display ) ).toBe( 'block' );
 	// The collapsed pill pulses like a button and the single visible line ends with an ellipsis.
 	expect( await label.evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'hprnb-beacon' );
 	expect( await page.locator( '.hprnb-bar__viewport' ).evaluate( ( el ) => getComputedStyle( el, '::after' ).top ) ).toBe( '0px' );
@@ -690,6 +695,86 @@ test( 'v2: flow card, collapsed strip, chevron, offset contract, deep collapse, 
 	expect( Math.round( ( await page.locator( '.hprnb-bar__inner' ).boundingBox() ).width ) ).toBe( 1366 );
 	expect( await noHorizontalOverflow( page ) ).toBe( true );
 	expect( errors ).toEqual( [] );
+} );
+
+test( 'featured image: one switch, position and size per profile, own column on the mobile card', async ( { page } ) => {
+	const ids = [];
+	for ( let i = 1; i <= 3; i++ ) {
+		ids.push( wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', `--post_title=Image ${ i } — lorem ipsum dolor sit amet consectetur adipiscing elit sed`, '--porcelain' ] ) );
+	}
+	const media = ids.map( ( id ) => wp( [ 'media', 'import', 'tests/e2e/fixtures/thumb.png', '--post_id=' + id, '--featured_image', '--porcelain' ] ) );
+	try {
+		const errors = collectErrors( page );
+		const root = page.locator( '#hprnb-root' );
+		const aside = page.locator( '#hprnb-root .hprnb-bar' );
+		const thumb = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb' ).first();
+		const title = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' ).first();
+
+		// Off on both profiles: no image in the markup at all.
+		setSettings();
+		await page.setViewportSize( { width: 1366, height: 800 } );
+		await page.goto( '/' );
+		await expect( page.locator( '.hprnb-bar__thumb' ) ).toHaveCount( 0 );
+		await expect( aside ).not.toHaveClass( /hprnb-bar--has-thumbs/ );
+
+		// Desktop only: the markup carries the image, the mobile profile hides it.
+		setSettings( { desktop_show_thumbnail: true, ticker_enabled: false } );
+		await page.goto( '/' );
+		await expect( aside ).toHaveClass( /hprnb-bar--has-thumbs/ );
+		await expect( root ).toHaveClass( /hprnb-root--d-thumb(\s|$)/ );
+		await expect( root ).not.toHaveClass( /hprnb-root--m-thumb/ );
+		await expect( thumb ).toBeVisible();
+		const size = await thumb.boundingBox();
+		expect( Math.round( size.width ) ).toBe( 32 );
+		expect( Math.round( size.height ) ).toBe( 32 );
+		expect( size.x ).toBeLessThan( ( await title.boundingBox() ).x, 'Default position: before the headline.' );
+		expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 40 );
+
+		// Desktop, after the headline and bigger: the bar grows with it.
+		setSettings( { desktop_show_thumbnail: true, desktop_thumb_position: 'after', desktop_thumb_size: 56, ticker_enabled: false } );
+		await page.goto( '/' );
+		await expect( root ).toHaveClass( /hprnb-root--d-thumb-after/ );
+		expect( ( await thumb.boundingBox() ).x ).toBeGreaterThan( ( await title.boundingBox() ).x );
+		expect( Math.round( ( await thumb.boundingBox() ).width ) ).toBe( 56 );
+		expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 64, '56 + 12 − 4' );
+		expect( await page.evaluate( () => parseFloat( getComputedStyle( document.body ).paddingBottom ) ) ).toBe( 64 );
+		expect( await noHorizontalOverflow( page ) ).toBe( true );
+
+		// Mobile card: its own column before the headline; the pill becomes the red dot to keep the width.
+		await page.setViewportSize( { width: 375, height: 667 } );
+		setSettings( { mobile_show_thumbnail: true, mobile_thumb_position: 'before', rotate_interval: 60000 } );
+		await page.goto( '/' );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( root ).toHaveClass( /hprnb-root--m-thumb(\s|$)/ );
+		await expect( root ).not.toHaveClass( /hprnb-root--d-thumb/ );
+		const image = await thumb.boundingBox();
+		expect( Math.round( image.width ) ).toBe( 48 );
+		expect( Math.round( image.x ) ).toBe( 15, 'Flush with the gutter, out of the text flow.' );
+		expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 76, 'The card keeps its height.' );
+		const viewport = await page.locator( '.hprnb-bar__viewport' ).boundingBox();
+		expect( Math.round( viewport.x ) ).toBe( 73, 'The headline column starts after the image column.' );
+		expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => getComputedStyle( el ).display ) ).toBe( 'none' );
+
+		// Oversized image: clamped to the headline block, the card never grows.
+		setSettings( { mobile_show_thumbnail: true, mobile_thumb_size: 80, rotate_interval: 60000 } );
+		await page.goto( '/' );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( Math.round( ( await thumb.boundingBox() ).height ) ).toBe( 50, '2 × 26 − 2' );
+		expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 76 );
+		expect( ( await thumb.boundingBox() ).x ).toBeGreaterThan( 200, 'Default position: after the headline, before the buttons.' );
+
+		// Collapsed strip: the image and its column step aside for the headline.
+		await page.evaluate( () => window.scrollTo( 0, 700 ) );
+		await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
+		await expect( thumb ).toBeHidden();
+		expect( Math.round( ( await page.locator( '.hprnb-bar__viewport' ).boundingBox() ).width ) ).toBe( 265 );
+		expect( await noHorizontalOverflow( page ) ).toBe( true );
+		expect( errors ).toEqual( [] );
+	} finally {
+		media.forEach( ( id ) => wp( [ 'post', 'delete', id, '--force' ] ) );
+		ids.forEach( ( id ) => wp( [ 'post', 'delete', id, '--force' ] ) );
+		setSettings();
+	}
 } );
 
 test( 'php mode and empty states', async ( { page } ) => {
@@ -927,7 +1012,7 @@ test( 'accessibility: axe-core audit of the bar and visible keyboard focus', asy
 	const axePath = new URL( '../../node_modules/axe-core/axe.min.js', import.meta.url ).pathname;
 	const variants = [
 		{ name: 'default', settings: {} },
-		{ name: 'marquee+close+time+thumbs', settings: { ticker_enabled: true, ticker_mode: 'marquee', close_button: true, show_relative_time: true, show_thumbnail: true, show_separator: true } },
+		{ name: 'marquee+close+time+thumbs', settings: { ticker_enabled: true, ticker_mode: 'marquee', close_button: true, show_relative_time: true, desktop_show_thumbnail: true, mobile_show_thumbnail: true, show_separator: true } },
 		{ name: 'rotate', settings: { ticker_enabled: true, ticker_mode: 'rotate' } },
 		{ name: 'manual', settings: { ticker_enabled: true, ticker_mode: 'manual' } },
 	];
