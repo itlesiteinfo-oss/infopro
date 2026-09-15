@@ -69,9 +69,9 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_asset_budgets() {
-		$this->assertLessThanOrEqual( 26 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
+		$this->assertLessThanOrEqual( 28 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
 		$this->assertLessThanOrEqual( 3 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bootstrap.min.js' ) );
-		$this->assertLessThanOrEqual( 13 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
+		$this->assertLessThanOrEqual( 15 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
 	}
 
 	/**
@@ -94,7 +94,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 				if ( '.hprnb-root' === $selector ) {
 					continue; // The mobile reset of every token has no desktop counterpart (the root defaults play that role).
 				}
-				if ( preg_match( '/P-colors|P-collapse|P-flow|P-ctrl-col|P-peek-thumb|P-pulse-|P-label-compact|hprnb-bar--collapsed|peek-label/', $selector ) ) {
+				if ( preg_match( '/P-colors|P-collapse|P-flow|P-ctrl-col|P-ctrl-out|P-peek-thumb|P-pulse-|P-label-compact|hprnb-bar--collapsed|peek-label/', $selector ) ) {
 					continue; // Mobile-only features (palette, collapse, flow card, strip, stacked buttons, pulse).
 				}
 				$declarations = array_filter( array_map( 'trim', explode( ';', $rule[2] ) ) );
@@ -119,7 +119,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	public function test_plugin_headers() {
 		$data = get_plugin_data( HPRNB_FILE, false, false );
 		$this->assertSame( 'Horizon Press News Bar', $data['Name'] );
-		$this->assertSame( '2.2.0', $data['Version'] );
+		$this->assertSame( '2.3.0', $data['Version'] );
 		$this->assertSame( '6.6', $data['RequiresWP'] );
 		$this->assertSame( '8.0', $data['RequiresPHP'] );
 		$this->assertSame( 'horizon-press-news-bar', $data['TextDomain'] );

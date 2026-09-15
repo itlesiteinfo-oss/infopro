@@ -215,6 +215,16 @@ Chaque profil a ses trois réglages dans l'onglet **Affichage** : **Image** (cas
 
 Trois réglages supplémentaires dans la carte **Mobile** : **Boutons** (empilés, Fermer au-dessus de Pause, sur une colonne — défaut — ou côte à côte), **Pastille clignotante** (toujours, seulement dans le bandeau replié, jamais) et **Image dans le bandeau replié** (l'image reste entre le titre et le chevron, redimensionnée pour ne jamais dépasser une ligne). Une quatrième case, **Pastille compacte avec une image**, réduit la pastille à son point rouge quand une image est affichée ; désactivée par défaut, la carte garde donc la pastille rouge complète avec son texte. Empiler les boutons ramène la colonne de contrôles à une largeur de bouton : `Renderer::mobile_controls()` renvoie le nombre de colonnes et la réservation de largeur suit.
 
+## 9 septies. Apparition, repli et boutons paramétrables (2.3)
+
+**Moment d'apparition** (carte *Apparition de la barre*, onglet Affichage, les deux profils) : `reveal_mode` choisit entre *immédiatement* (défaut), *après une distance de défilement* (`reveal_value`, 400 px par défaut — le meilleur choix dans un article : l'ouverture de la page reste dégagée), *après une proportion de la page lue* (en %) et *vers la fin de la page* (90 %). Tant que le seuil n'est pas franchi, aucun espace n'est réservé (`body.hprnb-pending`, `--hprnb-offset: 0px`) et la barre reste hors champ ; une fois apparue, elle reste.
+
+**Moment du repli sur mobile** (carte *Mobile*) : `mobile_hide_on_scroll` décide si la carte se replie ; `mobile_collapse_mode` décide quand — en descendant au-delà du seuil et rouverte en remontant (défaut), dès le seuil franchi et repliée pour de bon, ou toujours repliée (le lecteur ouvre la carte d'une pression). `mobile_collapse_after` fixe le seuil, de 0 à 800 px.
+
+**Boutons Pause et Fermer** : `mobile_controls_place` les sort de la barre en un petit groupe flottant arrondi juste au-dessus d'elle (le titre prend alors toute la largeur), et `mobile_show_pause` / `mobile_show_close` masquent chacun le sien sur mobile. Les deux masqués, la carte déployée occupe toute la largeur ; seul le bandeau replié réserve la colonne de son chevron.
+
+**Liseré d'accent** (`accent_edge`, activé, onglet Couleurs) : un trait de 2 px de la couleur d'accent sur le bord supérieur de la barre, que la progression de la rotation vient remplir.
+
 ## 10. Ticker (optionnel)
 
 Désactivé par défaut. Trois modes :

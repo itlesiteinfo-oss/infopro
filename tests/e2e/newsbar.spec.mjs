@@ -855,6 +855,145 @@ test( 'mobile: stacked buttons, pulsing pill with its text, image kept in the co
 	}
 } );
 
+test( 'v2.3: reveal threshold, collapse triggers, buttons outside or hidden, accent edge, pause on touch', async ( { page, browser } ) => {
+	const errors = collectErrors( page );
+	const root = page.locator( '#hprnb-root' );
+	const aside = page.locator( '#hprnb-root .hprnb-bar' );
+	const viewport = page.locator( '.hprnb-bar__viewport' );
+	const peek = () => page.evaluate( () => {
+		const rect = document.querySelector( '.hprnb-bar' ).getBoundingClientRect();
+		return Math.round( window.innerHeight - rect.top );
+	} );
+	await page.setViewportSize( { width: 375, height: 667 } );
+
+	// The bar waits for 400px of scrolling: nothing is shown and no space is reserved until then.
+	setSettings( { reveal_mode: 'scroll', reveal_value: 400, rotate_interval: 60000 } );
+	await page.goto( '/' );
+	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+	await expect( root ).toHaveClass( /hprnb-root--pending/ );
+	await expect( page.locator( 'body' ) ).toHaveClass( /hprnb-pending/ );
+	expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '0px' );
+	expect( await page.evaluate( () => getComputedStyle( document.body ).paddingBottom ) ).toBe( '0px' );
+	expect( await page.evaluate( () => window.hprnbBar.state().offset ) ).toBe( 0 );
+	expect( await peek() ).toBeLessThanOrEqual( 0, 'Out of view.' );
+
+	// Past the threshold it comes in and reserves its space for good.
+	await page.evaluate( () => window.scrollTo( 0, 500 ) );
+	await expect( root ).not.toHaveClass( /hprnb-root--pending/ );
+	await expect( page.locator( 'body' ) ).not.toHaveClass( /hprnb-pending/ );
+	await expect.poll( peek ).toBeGreaterThan( 0 );
+	expect( await page.evaluate( () => parseInt( getComputedStyle( document.body ).paddingBottom, 10 ) ) ).toBeGreaterThan( 0 );
+	await page.evaluate( () => window.scrollTo( 0, 0 ) );
+	await expect( root ).not.toHaveClass( /hprnb-root--pending/, 'Once shown it stays.' );
+
+	// A percentage of the page works the same way.
+	setSettings( { reveal_mode: 'percent', reveal_value: 50, rotate_interval: 60000 } );
+	await page.goto( '/' );
+	await expect( root ).toHaveClass( /hprnb-root--pending/ );
+	await page.evaluate( () => window.scrollTo( 0, document.documentElement.scrollHeight ) );
+	await expect( root ).not.toHaveClass( /hprnb-root--pending/ );
+
+	// Collapse on a threshold: it waits for 300px, then stays collapsed on the way back up.
+	setSettings( { mobile_collapse_mode: 'threshold', mobile_collapse_after: 300, rotate_interval: 60000 } );
+	await page.goto( '/' );
+	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+	await page.evaluate( () => window.scrollTo( 0, 200 ) );
+	await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
+	await page.evaluate( () => window.scrollTo( 0, 400 ) );
+	await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
+	await page.evaluate( () => window.scrollTo( 0, 350 ) );
+	await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
+
+	// Always collapsed: the strip is the default state and a tap opens the card.
+	setSettings( { mobile_collapse_mode: 'immediate', rotate_interval: 60000 } );
+	await page.goto( '/' );
+	await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
+	await page.locator( '.hprnb-bar__btn--expand' ).click();
+	await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
+
+	// Collapsing turned off entirely: no class, no chevron, whatever the scrolling.
+	setSettings( { mobile_hide_on_scroll: false, rotate_interval: 60000 } );
+	await page.goto( '/' );
+	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+	await expect( root ).not.toHaveClass( /hprnb-root--m-collapse/ );
+	await page.evaluate( () => window.scrollTo( 0, 900 ) );
+	await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
+	await expect( page.locator( '.hprnb-bar__btn--expand' ) ).toHaveCount( 0 );
+
+	// Buttons inside (default) versus floating above the bar: the headline gains the width.
+	setSettings( { rotate_interval: 60000 } );
+	await page.goto( '/' );
+	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+	const insideWidth = ( await viewport.boundingBox() ).width;
+	setSettings( { mobile_controls_place: 'outside', rotate_interval: 60000 } );
+	await page.goto( '/' );
+	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+	await expect( root ).toHaveClass( /hprnb-root--m-ctrl-out/ );
+	const barBox = await aside.boundingBox();
+	const outClose = await page.locator( '.hprnb-bar__btn--close' ).boundingBox();
+	const outToggle = await page.locator( '.hprnb-bar__btn--toggle' ).boundingBox();
+	expect( outClose.y + outClose.height ).toBeLessThanOrEqual( barBox.y + 1, 'Above the bar.' );
+	expect( Math.round( outToggle.y ) ).toBe( Math.round( outClose.y ), 'Side by side.' );
+	expect( ( await viewport.boundingBox() ).width ).toBeGreaterThan( insideWidth );
+	// Placed outside the bar, which clips its own overflow: they must really be painted, not just
+	// positioned — a hit test at their centre catches the clipping the bounding box cannot see.
+	const painted = ( selector ) => page.evaluate( ( sel ) => {
+		const el = document.querySelector( sel );
+		const rect = el.getBoundingClientRect();
+		const top = document.elementFromPoint( rect.x + rect.width / 2, rect.y + rect.height / 2 );
+		return el === top || el.contains( top );
+	}, selector );
+	expect( await painted( '.hprnb-bar__btn--close' ) ).toBe( true );
+	expect( await painted( '.hprnb-bar__btn--toggle' ) ).toBe( true );
+	await expect( root ).not.toHaveClass( /hprnb-root--m-ctrl-col/, 'The floating group is a row of its own.' );
+	await page.locator( '.hprnb-bar__btn--toggle' ).click();
+	await expect( aside ).toHaveClass( /hprnb-bar--paused/, 'And really clickable.' );
+	await page.locator( '.hprnb-bar__btn--toggle' ).click();
+
+	// Each button can be hidden on mobile on its own.
+	setSettings( { mobile_show_pause: false, mobile_show_close: false, rotate_interval: 60000 } );
+	await page.goto( '/' );
+	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+	await expect( page.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden();
+	await expect( page.locator( '.hprnb-bar__btn--close' ) ).toBeHidden();
+	expect( ( await viewport.boundingBox() ).width ).toBeGreaterThan( insideWidth );
+
+	// The accent edge, on by default and switchable.
+	const edge = () => aside.evaluate( ( el ) => getComputedStyle( el ).boxShadow );
+	expect( await edge() ).toContain( 'rgb(206, 48, 41) 0px 2px 0px 0px inset' );
+	setSettings( { accent_edge: false, rotate_interval: 60000 } );
+	await page.goto( '/' );
+	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+	expect( await edge() ).not.toContain( 'rgb(206, 48, 41) 0px 2px 0px 0px inset' );
+	expect( await noHorizontalOverflow( page ) ).toBe( true );
+	expect( errors ).toEqual( [] );
+
+	// Touch: tapping Pause twice really resumes — the emulated hover must not keep it paused.
+	setSettings( { rotate_interval: 3000 } );
+	const touch = await browser.newContext( { viewport: { width: 375, height: 667 }, hasTouch: true, isMobile: true } );
+	const tap = await touch.newPage();
+	try {
+		const touchErrors = collectErrors( tap );
+		await tap.goto( 'http://127.0.0.1:8080/' );
+		const touchBar = tap.locator( '#hprnb-root .hprnb-bar' );
+		await expect( touchBar ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await tap.evaluate( () => window.matchMedia( '(hover: hover) and (pointer: fine)' ).matches ) ).toBe( false );
+		const first = await tap.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__link' ).first().innerText();
+		await tap.locator( '.hprnb-bar__btn--toggle' ).tap();
+		await expect( touchBar ).toHaveClass( /hprnb-bar--paused/ );
+		await tap.locator( '.hprnb-bar__btn--toggle' ).tap();
+		await expect( touchBar ).not.toHaveClass( /hprnb-bar--paused/ );
+		await expect( tap.locator( '.hprnb-bar__btn--toggle' ) ).toHaveAttribute( 'aria-label', /Pause/ );
+		await expect
+			.poll( async () => tap.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__link' ).first().innerText(), { timeout: 15000 } )
+			.not.toBe( first );
+		expect( touchErrors ).toEqual( [] );
+	} finally {
+		await touch.close();
+		setSettings();
+	}
+} );
+
 test( 'php mode and empty states', async ( { page } ) => {
 	setSettings( { render_mode: 'php' } );
 	await page.goto( '/' );

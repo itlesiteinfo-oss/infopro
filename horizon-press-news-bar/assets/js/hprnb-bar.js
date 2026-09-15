@@ -186,7 +186,10 @@
 				update();
 			} );
 		}
-		if ( cfg.hover ) {
+		// Only a real mouse can "hover": on a touch screen the emulated hover after a tap never ends,
+		// which used to leave the bar paused with the Play icon stuck.
+		var canHover = ! window.matchMedia || window.matchMedia( '(hover: hover) and (pointer: fine)' ).matches;
+		if ( cfg.hover && canHover ) {
 			state.on( aside, 'mouseenter', function () {
 				st.hover = true;
 				update();
@@ -194,6 +197,12 @@
 			state.on( aside, 'mouseleave', function () {
 				st.hover = false;
 				update();
+			} );
+			state.on( aside, 'pointerdown', function ( event ) {
+				if ( event.pointerType && event.pointerType !== 'mouse' && st.hover ) {
+					st.hover = false; // Hybrid device: the finger wins over the stale hover.
+					update();
+				}
 			} );
 		}
 		state.on( region, 'focusin', function () {
@@ -632,6 +641,63 @@
 	}
 
 	/* ------------------------------------------------------------------ */
+	/* Reveal: the bar may wait before showing up (settings reveal_mode)   */
+	/* ------------------------------------------------------------------ */
+
+	function setupReveal( state, root, contract ) {
+		var cfg = parseJson( root.getAttribute( 'data-hprnb-reveal' ) );
+		var mode = cfg && cfg.mode ? cfg.mode : 'immediate';
+		if ( 'immediate' === mode || ! root.classList.contains( 'hprnb-root--pending' ) ) {
+			return;
+		}
+		var body = document.body;
+		var value = typeof cfg.value === 'number' ? cfg.value : 400;
+
+		function reached() {
+			var y = window.scrollY;
+			if ( 'scroll' === mode ) {
+				return y >= value;
+			}
+			var scrollable = Math.max( 1, document.documentElement.scrollHeight - window.innerHeight );
+			return ( y / scrollable ) * 100 >= value;
+		}
+
+		function reveal() {
+			root.classList.remove( 'hprnb-root--pending' );
+			body.classList.remove( 'hprnb-pending' );
+			if ( contract ) {
+				contract.emit();
+			}
+		}
+
+		state.add( function () {
+			// destroy() must not leave a half-revealed bar behind.
+			root.classList.remove( 'hprnb-root--pending' );
+			body.classList.remove( 'hprnb-pending' );
+		} );
+
+		if ( reached() ) {
+			reveal();
+			return;
+		}
+		var ticking = false;
+		function onScroll() {
+			if ( ticking ) {
+				return;
+			}
+			ticking = true;
+			window.requestAnimationFrame( function () {
+				ticking = false;
+				if ( reached() ) {
+					reveal();
+					window.removeEventListener( 'scroll', onScroll );
+				}
+			} );
+		}
+		state.on( window, 'scroll', onScroll, { passive: true } );
+	}
+
+	/* ------------------------------------------------------------------ */
 	/* Contract with the theme and other plugins (v2)                      */
 	/*   --hprnb-offset on <body>: visible height of the bar (0 when hidden)*/
 	/*   body.hprnb-is-collapsed / body.hprnb-kbd, document "hprnb:state"  */
@@ -649,7 +715,7 @@
 			var cs = getComputedStyle( body );
 			var full = parseFloat( cs.getPropertyValue( mobile ? '--hprnb-m-height' : '--hprnb-height' ) ) || aside.offsetHeight;
 			var peek = parseFloat( cs.getPropertyValue( '--hprnb-peek' ) ) || 40;
-			var hidden = aside.hidden || root.hidden || body.classList.contains( 'hprnb-kbd' );
+			var hidden = aside.hidden || root.hidden || body.classList.contains( 'hprnb-kbd' ) || root.classList.contains( 'hprnb-root--pending' );
 			return { mobile: mobile, collapsed: collapsed, height: full, offset: hidden ? 0 : ( mobile && collapsed ? peek : full ) };
 		}
 
@@ -736,6 +802,8 @@
 		var lastY = window.scrollY;
 		var ticking = false;
 		var holdUntil = 0;
+		var after = typeof profile.after === 'number' ? Math.max( 0, profile.after ) : TOP_ZONE;
+		var trigger = profile.trigger || 'scroll';
 
 		function set( collapsed ) {
 			if ( aside.classList.contains( 'hprnb-bar--collapsed' ) === collapsed ) {
@@ -767,8 +835,9 @@
 			chevron.parentNode.removeChild( chevron );
 		} );
 
-		// Landing in the middle of the page (anchor, back navigation): start collapsed, without a slide.
-		if ( profile.deep && window.scrollY > TOP_ZONE && ! isShortScreen() ) {
+		// Always collapsed (the reader opens it on demand), or landing past the threshold: start
+		// collapsed, without a slide.
+		if ( ( 'immediate' === trigger || ( profile.deep && window.scrollY > after ) ) && ! isShortScreen() ) {
 			aside.style.transition = 'none';
 			set( true );
 			void aside.offsetHeight;
@@ -789,9 +858,15 @@
 				}
 				if ( isShortScreen() ) {
 					set( false );
-				} else if ( y > lastY + 8 && y > TOP_ZONE ) {
+				} else if ( 'immediate' === trigger ) {
+					lastY = y;
+					return; // Only a tap opens it.
+				} else if ( 'threshold' === trigger ) {
+					// Collapse once past the threshold and stay collapsed until the reader taps.
+					set( y > after );
+				} else if ( y > lastY + 8 && y > after ) {
 					set( true );
-				} else if ( y < lastY - 8 || y <= TOP_ZONE ) {
+				} else if ( y < lastY - 8 || y <= after ) {
 					set( false );
 				}
 				lastY = y;
@@ -873,12 +948,17 @@
 		state.addClass( aside, 'hprnb-bar--reduced', reduced );
 		state.addClass( aside, 'hprnb-bar--rtl', isRtl( aside ) );
 
-		// Buttons that make no sense for the effective mode are hidden.
-		state.hide( toggle, mode !== 'marquee' && mode !== 'rotate' );
+		// Buttons that make no sense for the effective mode are hidden; under 768px each one can also
+		// be switched off in the settings.
+		var wantsPause = ! mobile || profile.pause !== false;
+		var wantsClose = ! mobile || profile.close !== false;
+		state.hide( toggle, ( mode !== 'marquee' && mode !== 'rotate' ) || ! wantsPause );
 		state.hide( prev, mode !== 'manual' );
 		state.hide( next, mode !== 'manual' );
+		state.hide( aside.querySelector( '.hprnb-bar__btn--close' ), ! wantsClose );
 
 		var contract = setupContract( state, root, aside, profile, mobile );
+		setupReveal( state, root, contract );
 		setupClose( state, root, aside, cfg, contract );
 		if ( cfg.reltime ) {
 			setupRelativeTime( state, aside, cfg );

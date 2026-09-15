@@ -19,7 +19,7 @@ through `languages/horizon-press-news-bar-fr_FR.po/.mo`.
 - No translation function may run before the `init` hook.
 - Every executable PHP file starts with an `ABSPATH` guard (`defined( 'ABSPATH' ) || exit;`).
 - `wp_is_mobile()` is never used. Device visibility is CSS only (768px fixed breakpoint).
-- Contract with the theme and other plugins (v2): `--hprnb-offset` on `<body>` (visible height: 40 desktop, 76 / 40 mobile, 0 while hidden), `body.hprnb-is-collapsed`, `body.hprnb-kbd`, `body.hprnb-theme-offset`, `document` event `hprnb:state` with `{ mobile, collapsed, height, offset }`, `window.hprnbBar.state()`. Nothing foreign is ever inserted in the bar.
+- Contract with the theme and other plugins (v2): `--hprnb-offset` on `<body>` (visible height: 40 desktop, 76 / 40 mobile, 0 while hidden), `body.hprnb-is-collapsed`, `body.hprnb-kbd`, `body.hprnb-theme-offset`, `document` event `hprnb:state` with `{ mobile, collapsed, height, offset }`, `window.hprnbBar.state()`, and `body.hprnb-pending` while the bar waits for its reveal threshold (2.3: `--hprnb-offset` is then 0 and no space is reserved). Nothing foreign is ever inserted in the bar.
 - Escaping at output: `esc_html()`, `esc_attr()`, `esc_url()`; colours validated with
   `sanitize_hex_color()` at input; IDs with `absint()`.
 - No `console.log` in production JS. All `localStorage`/`sessionStorage` access in `try/catch`.
@@ -151,6 +151,9 @@ dismiss_duration_hours: int 24 [1,720]
 show_on_desktop: bool true
 show_on_mobile: bool true
 accent_color: color #CE3029                                 (progress line, hover underline)
+accent_edge: bool true                                      (2.3: 2px accent line on the top edge, filled by the rotation progress)
+reveal_mode: enum immediate [immediate,scroll,percent,end]  (2.3: when the bar appears; both profiles)
+reveal_value: int 400 [0,4000]                              (2.3: px of scrolling, or % of the page for `percent`; `end` is fixed at 90)
 align_container: bool true                                  (content aligned on the site container)
 max_width: int 1230 [960,1920]
 gutter: int 15 [0,40]
@@ -185,6 +188,11 @@ mobile_controls_layout: enum column [column,row]             (column = close abo
 mobile_peek_thumbnail: bool true                            (image kept in the collapsed strip, one line tall)
 mobile_label_pulse: enum always [always,collapsed,never]     (hprnb-beacon on the pill)
 mobile_label_compact: bool false                            (pill shrinks to its dot when an image is shown)
+mobile_collapse_mode: enum scroll [scroll,threshold,immediate] (2.3: on the way down / past the threshold for good / always collapsed)
+mobile_collapse_after: int 120 [0,800]                      (2.3: collapse threshold in px; ignored when always collapsed)
+mobile_controls_place: enum inside [inside,outside]         (2.3: outside = floating group above the bar, --hprnb-m-ctrls 0)
+mobile_show_pause: bool true                                (2.3: Pause / Play button on mobile)
+mobile_show_close: bool true                                (2.3: close button on mobile; close_button must be on too)
 mobile_show_separator: bool false
 mobile_custom_colors: bool true
 mobile_bg_color: color #141414

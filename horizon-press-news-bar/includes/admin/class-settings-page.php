@@ -227,6 +227,11 @@ final class Settings_Page {
 				'title' => __( 'Display', 'horizon-press-news-bar' ),
 				'cards' => array(
 					array(
+						'title'       => __( 'Appearance of the bar', 'horizon-press-news-bar' ),
+						'description' => __( 'Both profiles: the bar can wait for the reader instead of showing up with the page.', 'horizon-press-news-bar' ),
+						'keys'        => array( 'reveal_mode', 'reveal_value' ),
+					),
+					array(
 						'title'       => __( 'Desktop', 'horizon-press-news-bar' ),
 						'description' => __( 'From 768 px: a fixed bar with a continuous scroll, aligned on the site container.', 'horizon-press-news-bar' ),
 						'switch'      => 'show_on_desktop',
@@ -236,7 +241,7 @@ final class Settings_Page {
 						'title'       => __( 'Mobile', 'horizon-press-news-bar' ),
 						'description' => __( 'Under 768 px: the label opens the headline, which runs on two lines; the first line becomes the collapsed strip while scrolling down.', 'horizon-press-news-bar' ),
 						'switch'      => 'show_on_mobile',
-						'keys'        => array( 'mobile_layout', 'mobile_bar_height', 'mobile_lines', 'mobile_font_size', 'mobile_ticker_mode', 'rotate_interval', 'mobile_hide_on_scroll', 'mobile_peek', 'mobile_deep_collapse', 'mobile_kbd_hide', 'mobile_controls_layout', 'mobile_show_progress', 'mobile_swipe', 'mobile_label_style', 'mobile_label_dot', 'mobile_label_pulse', 'mobile_show_counter', 'mobile_show_thumbnail', 'mobile_thumb_position', 'mobile_thumb_size', 'mobile_peek_thumbnail', 'mobile_label_compact', 'mobile_show_separator' ),
+						'keys'        => array( 'mobile_layout', 'mobile_bar_height', 'mobile_lines', 'mobile_font_size', 'mobile_ticker_mode', 'rotate_interval', 'mobile_hide_on_scroll', 'mobile_peek', 'mobile_deep_collapse', 'mobile_kbd_hide', 'mobile_collapse_mode', 'mobile_collapse_after', 'mobile_controls_place', 'mobile_show_pause', 'mobile_show_close', 'mobile_controls_layout', 'mobile_show_progress', 'mobile_swipe', 'mobile_label_style', 'mobile_label_dot', 'mobile_label_pulse', 'mobile_show_counter', 'mobile_show_thumbnail', 'mobile_thumb_position', 'mobile_thumb_size', 'mobile_peek_thumbnail', 'mobile_label_compact', 'mobile_show_separator' ),
 					),
 				),
 			),
@@ -247,7 +252,7 @@ final class Settings_Page {
 						'title'       => __( 'Palette', 'horizon-press-news-bar' ),
 						'description' => __( 'One palette for desktop and mobile. The theme red is only used for the label pill: that is what catches the eye.', 'horizon-press-news-bar' ),
 						'presets'     => true,
-						'keys'        => array( 'bg_color', 'text_color', 'label_bg_color', 'label_text_color', 'accent_color', 'link_hover_color' ),
+						'keys'        => array( 'bg_color', 'text_color', 'label_bg_color', 'label_text_color', 'accent_color', 'link_hover_color', 'accent_edge' ),
 					),
 					array(
 						'title'       => __( 'Dedicated mobile palette', 'horizon-press-news-bar' ),
@@ -733,6 +738,45 @@ final class Settings_Page {
 				'desc'    => __( '16 to 80 px, square. Never taller than the headline block, so the card keeps its height.', 'horizon-press-news-bar' ),
 				'depends' => 'mobile_show_thumbnail',
 			),
+			'mobile_collapse_mode'     => array(
+				'section' => 'mobile',
+				'type'    => 'radio',
+				'label'   => __( 'When it collapses', 'horizon-press-news-bar' ),
+				'options' => array(
+					'scroll'    => __( 'While scrolling down past the threshold; expands again when scrolling up', 'horizon-press-news-bar' ),
+					'threshold' => __( 'As soon as the threshold is passed, and it stays collapsed', 'horizon-press-news-bar' ),
+					'immediate' => __( 'Always collapsed — the reader opens it with a tap', 'horizon-press-news-bar' ),
+				),
+				'depends' => 'mobile_hide_on_scroll',
+			),
+			'mobile_collapse_after'    => array(
+				'section' => 'mobile',
+				'type'    => 'number',
+				'label'   => __( 'Collapse threshold (px)', 'horizon-press-news-bar' ),
+				'desc'    => __( '0 to 800 px of scrolling; 120 px by default. Ignored when the bar is always collapsed.', 'horizon-press-news-bar' ),
+				'depends' => 'mobile_hide_on_scroll',
+			),
+			'mobile_controls_place'    => array(
+				'section' => 'mobile',
+				'type'    => 'radio',
+				'label'   => __( 'Buttons placement', 'horizon-press-news-bar' ),
+				'options' => array(
+					'inside'  => __( 'Inside the bar', 'horizon-press-news-bar' ),
+					'outside' => __( 'Floating just above the bar — the headline then takes the whole width', 'horizon-press-news-bar' ),
+				),
+			),
+			'mobile_show_pause'        => array(
+				'section' => 'mobile',
+				'type'    => 'checkbox',
+				'label'   => __( 'Pause button', 'horizon-press-news-bar' ),
+				'text'    => __( 'Show the Pause / Play button on mobile.', 'horizon-press-news-bar' ),
+			),
+			'mobile_show_close'        => array(
+				'section' => 'mobile',
+				'type'    => 'checkbox',
+				'label'   => __( 'Close button', 'horizon-press-news-bar' ),
+				'text'    => __( 'Show the close button on mobile (it must also be enabled in the Closing tab).', 'horizon-press-news-bar' ),
+			),
 			'mobile_controls_layout'   => array(
 				'section' => 'mobile',
 				'type'    => 'radio',
@@ -855,6 +899,30 @@ final class Settings_Page {
 				'section' => 'behavior',
 				'type'    => 'number',
 				'label'   => __( 'Closing duration (hours)', 'horizon-press-news-bar' ),
+			),
+			'reveal_mode'              => array(
+				'section' => 'appearance',
+				'type'    => 'radio',
+				'label'   => __( 'When the bar appears', 'horizon-press-news-bar' ),
+				'options' => array(
+					'immediate' => __( 'Right away, with the page', 'horizon-press-news-bar' ),
+					'scroll'    => __( 'After a scroll distance — recommended on articles: the opening of the page stays clear', 'horizon-press-news-bar' ),
+					'percent'   => __( 'After a share of the page has been read', 'horizon-press-news-bar' ),
+					'end'       => __( 'Near the end of the page (90 %)', 'horizon-press-news-bar' ),
+				),
+				'desc'    => __( 'Until then no space is reserved and the bar stays out of view; once it appears it stays.', 'horizon-press-news-bar' ),
+			),
+			'reveal_value'             => array(
+				'section' => 'appearance',
+				'type'    => 'number',
+				'label'   => __( 'Threshold', 'horizon-press-news-bar' ),
+				'desc'    => __( 'Pixels of scrolling, or percentage of the page for the share option. 400 px is a good start on an article.', 'horizon-press-news-bar' ),
+			),
+			'accent_edge'              => array(
+				'section' => 'appearance',
+				'type'    => 'checkbox',
+				'label'   => __( 'Accent edge', 'horizon-press-news-bar' ),
+				'text'    => __( 'Draw a 2 px line of the accent colour along the top edge; the rotation progress fills that same edge.', 'horizon-press-news-bar' ),
 			),
 			'theme_offset'             => array(
 				'section' => 'behavior',

@@ -95,6 +95,7 @@ final class Renderer {
 			'data-hprnb-empty'     => $empty ? '1' : '0',
 			'data-hprnb-desktop'   => (string) wp_json_encode( self::profile_data( $settings, 'd' ) ),
 			'data-hprnb-mobile'    => (string) wp_json_encode( self::profile_data( $settings, 'm' ) ),
+			'data-hprnb-reveal'    => (string) wp_json_encode( self::reveal_data( $settings ) ),
 		);
 
 		$urls = array();
@@ -234,7 +235,18 @@ final class Renderer {
 		if ( 'label' === ( $settings['mobile_peek'] ?? 'headline' ) ) {
 			$classes[] = 'hprnb-root--peek-label';
 		}
-		if ( 'row' !== ( $settings['mobile_controls_layout'] ?? 'column' ) ) {
+		if ( ! empty( $settings['accent_edge'] ) ) {
+			$classes[] = 'hprnb-root--edge';
+		}
+		if ( 'immediate' !== ( $settings['reveal_mode'] ?? 'immediate' ) ) {
+			// Server-rendered so the bar never flashes before the reader reaches the threshold.
+			$classes[] = 'hprnb-root--pending';
+		}
+		$outside = 'outside' === ( $settings['mobile_controls_place'] ?? 'inside' );
+		if ( $outside ) {
+			$classes[] = 'hprnb-root--m-ctrl-out';
+		} elseif ( 'row' !== ( $settings['mobile_controls_layout'] ?? 'column' ) ) {
+			// The floating group is a row of its own: the stacked column never applies to it.
 			$classes[] = 'hprnb-root--m-ctrl-col';
 		}
 		if ( ! empty( $settings['mobile_show_thumbnail'] ) ) {
@@ -314,6 +326,10 @@ final class Renderer {
 			$data['peek']     = $profile['peek'];
 			$data['deep']     = $profile['deep'];
 			$data['kbd']      = $profile['kbd'];
+			$data['pause']    = ! empty( $settings['mobile_show_pause'] );
+			$data['close']    = ! empty( $settings['mobile_show_close'] );
+			$data['trigger']  = (string) ( $settings['mobile_collapse_mode'] ?? 'scroll' );
+			$data['after']    = (int) ( $settings['mobile_collapse_after'] ?? 120 );
 		}
 		return $data;
 	}
@@ -374,6 +390,28 @@ final class Renderer {
 	}
 
 	/**
+	 * When the bar is allowed to appear: right away, after a scroll distance, after a share of the
+	 * page, or near its end. Read by the interactive script (data-hprnb-reveal).
+	 *
+	 * @param array $settings Settings.
+	 * @return array{mode:string,value:int}
+	 */
+	public static function reveal_data( array $settings ): array {
+		$mode  = (string) ( $settings['reveal_mode'] ?? 'immediate' );
+		$mode  = in_array( $mode, array( 'immediate', 'scroll', 'percent', 'end' ), true ) ? $mode : 'immediate';
+		$value = (int) ( $settings['reveal_value'] ?? 400 );
+		if ( 'percent' === $mode ) {
+			$value = max( 1, min( 100, $value ) );
+		} elseif ( 'end' === $mode ) {
+			$value = 90;
+		}
+		return array(
+			'mode'  => $mode,
+			'value' => $value,
+		);
+	}
+
+	/**
 	 * Height of the collapsed strip under 768px: the first line of the flow card, or the label row
 	 * of the stacked layout (6 + 22 + 8). Also the mobile `--hprnb-offset` while collapsed.
 	 *
@@ -396,17 +434,25 @@ final class Renderer {
 	 * @return int
 	 */
 	public static function mobile_controls( array $settings ): int {
-		if ( 'row' !== ( $settings['mobile_controls_layout'] ?? 'column' ) ) {
-			return 1;
+		if ( 'outside' === ( $settings['mobile_controls_place'] ?? 'inside' ) ) {
+			return 0; // The buttons float above the bar: the headline takes the whole width.
 		}
 		$mode  = self::mobile_ticker( $settings );
-		$count = ! empty( $settings['close_button'] ) ? 1 : 0;
-		if ( in_array( $mode, array( 'marquee', 'rotate' ), true ) ) {
+		$pause = ! empty( $settings['mobile_show_pause'] ) && in_array( $mode, array( 'marquee', 'rotate' ), true );
+		$count = ( ! empty( $settings['close_button'] ) && ! empty( $settings['mobile_show_close'] ) ) ? 1 : 0;
+		if ( $pause ) {
 			++$count;
 		} elseif ( 'manual' === $mode ) {
 			$count += 2;
 		}
-		return max( 1, $count );
+		if ( 0 === $count ) {
+			return 0; // Both buttons hidden: the open card takes the whole width (the collapsed
+			// strip still reserves one column for its chevron, in the stylesheet).
+		}
+		if ( 'row' !== ( $settings['mobile_controls_layout'] ?? 'column' ) ) {
+			return 1;
+		}
+		return $count;
 	}
 
 	/**
@@ -517,7 +563,8 @@ final class Renderer {
 			|| ! empty( $settings['show_relative_time'] )
 			|| 'none' !== self::mobile_ticker( $settings )
 			|| self::profile( $settings, 'm' )['collapse']
-			|| self::profile( $settings, 'm' )['kbd'];
+			|| self::profile( $settings, 'm' )['kbd']
+			|| 'immediate' !== ( $settings['reveal_mode'] ?? 'immediate' );
 	}
 
 	/**

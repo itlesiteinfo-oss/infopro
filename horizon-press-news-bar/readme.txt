@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.2.0
+Stable tag: 2.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,13 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.3.0 =
+* When the bar appears: right away, after a scroll distance (recommended on articles), after a share of the page, or near its end. No space is reserved until then.
+* When the mobile strip collapses: on the way down past a threshold, at the threshold for good, or always collapsed.
+* Pause and Close can float just above the bar, and each can be hidden on mobile.
+* Accent edge along the top of the bar, filled by the rotation progress.
+* Fixed the Pause button staying stuck on touch screens (an emulated hover kept the rotation paused).
 
 = 2.2.0 =
 * Mobile card: close above pause in a single column (option), the headline gains 40 px.

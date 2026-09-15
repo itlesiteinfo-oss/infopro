@@ -2,6 +2,27 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.3.0] — 2026-09-15
+
+### Ajouté
+
+- **Moment d'apparition de la barre** (`reveal_mode`, `reveal_value` ; les deux profils) : immédiatement (défaut, comportement inchangé), après une distance de défilement (400 px par défaut — recommandé dans un article), après une proportion de la page lue, ou vers la fin de la page (90 %). Tant que le seuil n'est pas franchi, aucun espace n'est réservé (`body.hprnb-pending`, `--hprnb-offset: 0px`) et la barre reste hors champ ; une fois apparue, elle reste.
+- **Moment du repli sur mobile** (`mobile_collapse_mode`, `mobile_collapse_after`) : en descendant au-delà du seuil et rouverte en remontant (défaut), dès le seuil franchi et repliée pour de bon, ou toujours repliée — le lecteur ouvre la carte d'une pression. Le seuil va de 0 à 800 px (120 px par défaut). Le repli lui-même reste gouverné par `mobile_hide_on_scroll`.
+- **Boutons Pause et Fermer sortis de la barre** (`mobile_controls_place`) : un petit groupe flottant arrondi juste au-dessus du coin supérieur de la barre, en verre dépoli ; le titre récupère alors toute la largeur.
+- **Affichage de chaque bouton sur mobile** (`mobile_show_pause`, `mobile_show_close`) : les deux masqués, la carte déployée prend toute la largeur et seul le bandeau replié réserve la colonne de son chevron.
+- **Liseré d'accent** (`accent_edge`, activé par défaut) : un trait de 2 px de la couleur d'accent sur le bord supérieur de la barre, que la progression de la rotation vient remplir — la barre se détache nettement du contenu du site sans toucher au contraste du texte.
+
+### Corrigé
+
+- **Bouton Pause bloqué au toucher** : sur mobile, un tap laissait un survol émulé permanent et « Pause sur survol » maintenait la rotation en pause après la reprise (icône Lecture figée). Les écouteurs de survol ne sont plus posés que sur un pointeur fin qui sait survoler (`(hover: hover) and (pointer: fine)`) et tout `pointerdown` non-souris efface l'état de survol.
+
+### Modifié
+
+- `Renderer::mobile_controls()` peut renvoyer 0 : boutons sortis de la barre, ou les deux masqués. La gouttière du chevron du bandeau replié est désormais réservée par la feuille de style (`max(var(--hprnb-m-ctrls), 1)`), plus par le compte des boutons.
+- L'aperçu de l'administration reflète les deux nouveaux interrupteurs de boutons et le seuil de repli sans enregistrement.
+- Le groupe de boutons sorti de la barre force `overflow-x: clip; overflow-y: visible` sur `.hprnb-bar` et `.hprnb-bar__inner` (sans quoi il était rogné et invisible), n'hérite plus de la classe d'empilement et passe à 96 % d'opacité pour ne pas dépendre de `backdrop-filter`.
+- Budget CSS relevé à 28 Ko, budget du script de la barre à 15 Ko.
+
 ## [2.2.0] — 2026-09-15
 
 ### Ajouté

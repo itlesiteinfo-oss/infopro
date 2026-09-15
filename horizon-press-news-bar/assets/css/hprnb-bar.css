@@ -235,6 +235,23 @@
 	-webkit-font-smoothing: antialiased;
 }
 
+/* Accent edge: a 2px line of the accent colour on the top edge — the bar reads as an alert strip
+   even over a busy page, and the rotation progress line fills that same edge. */
+.hprnb-root--edge .hprnb-bar {
+	box-shadow: inset 0 2px 0 var(--hprnb-e-accent), 0 -8px 28px rgba(0, 0, 0, .28);
+}
+
+/* The bar waits for the reader (reveal_mode): rendered, but out of view and out of the way. */
+.hprnb-root--pending .hprnb-bar {
+	transform: translateY(110%);
+	pointer-events: none;
+}
+
+body.hprnb-reserve.hprnb-pending {
+	--hprnb-offset: 0px;
+	padding-block-end: 0;
+}
+
 .hprnb-bar *,
 .hprnb-bar *::before,
 .hprnb-bar *::after {
@@ -704,6 +721,10 @@
 		transition: none;
 	}
 
+	.hprnb-root--pending .hprnb-bar {
+		transform: translateY(110%);
+	}
+
 	.hprnb-bar__label::before {
 		box-shadow: none;
 	}
@@ -772,8 +793,13 @@ html.hprnb-dismissed body.hprnb-reserve {
 		--hprnb-offset: var(--hprnb-peek, 40px);
 	}
 
-	body.hprnb-reserve.hprnb-kbd {
+	body.hprnb-reserve.hprnb-kbd,
+	body.hprnb-reserve.hprnb-pending {
 		--hprnb-offset: 0px;
+	}
+
+	body.hprnb-reserve.hprnb-pending {
+		padding-block-end: 0;
 	}
 }
 
@@ -1023,13 +1049,13 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	}
 
 	.hprnb-root--m-flow .hprnb-bar--collapsed .hprnb-bar__inner {
-		padding-inline: var(--hprnb-gutter) calc(var(--hprnb-gutter) + var(--hprnb-btn) * var(--hprnb-m-ctrls));
+		padding-inline: var(--hprnb-gutter) calc(var(--hprnb-gutter) + var(--hprnb-btn) * max(var(--hprnb-m-ctrls), 1));
 	}
 
 	/* …unless the image is kept in the strip: it then sits at the end of the single line,
 	   between the headline and the chevron, resized so it never exceeds one line. */
 	.hprnb-root--m-flow:where(.hprnb-root--m-peek-thumb) .hprnb-bar--collapsed .hprnb-bar__inner {
-		padding-inline-end: calc(var(--hprnb-gutter) + var(--hprnb-btn) * var(--hprnb-m-ctrls) + var(--hprnb-e-peek-thumb-col));
+		padding-inline-end: calc(var(--hprnb-gutter) + var(--hprnb-btn) * max(var(--hprnb-m-ctrls), 1) + var(--hprnb-e-peek-thumb-col));
 	}
 
 	.hprnb-root--m-flow:where(.hprnb-root--m-peek-thumb) .hprnb-bar--collapsed .hprnb-bar__thumb {
@@ -1078,6 +1104,61 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	/* Collapsed: only the chevron is left, centred on the single visible line. */
 	.hprnb-root--m-flow:where(.hprnb-root--m-ctrl-col) .hprnb-bar--collapsed .hprnb-bar__controls {
 		block-size: var(--hprnb-m-line);
+	}
+
+	/* Buttons outside the bar: a small floating group just above its top-right corner. The card then
+	   reserves nothing for them (--hprnb-m-ctrls = 0) and the headline runs edge to edge. */
+	/* The group sits outside the bar, which clips its overflow to keep the page free of horizontal
+	   scrolling: clip that axis only and let the block axis show the group. */
+	.hprnb-root--m-ctrl-out .hprnb-bar,
+	.hprnb-root--m-ctrl-out .hprnb-bar__inner {
+		overflow-x: clip;
+		overflow-y: visible;
+	}
+
+	.hprnb-root--m-ctrl-out .hprnb-bar__controls {
+		position: absolute;
+		inset-block: auto 100%;
+		inset-inline: auto var(--hprnb-gutter);
+		flex-direction: row;
+		align-items: center;
+		block-size: auto;
+		gap: 4px;
+		margin-block-end: 8px;
+		padding: 3px;
+		border-radius: 999px;
+		/* Nearly opaque: the group floats over the page, so the icons must read without relying on
+		   backdrop-filter, which not every browser applies. */
+		background: color-mix(in srgb, var(--hprnb-e-bg) 96%, transparent);
+		box-shadow: 0 2px 10px rgba(0, 0, 0, .45), inset 0 0 0 1px color-mix(in srgb, var(--hprnb-e-fg) 22%, transparent);
+		-webkit-backdrop-filter: blur(10px);
+		backdrop-filter: blur(10px);
+	}
+
+	.hprnb-root--m-ctrl-out .hprnb-bar__btn {
+		flex: none;
+		min-inline-size: 34px;
+		min-block-size: 34px;
+		border-radius: 999px;
+	}
+
+	.hprnb-root--m-ctrl-out .hprnb-bar__btn svg {
+		inline-size: 18px;
+		block-size: 18px;
+	}
+
+	/* Collapsed, the group follows the strip (and keeps the chevron reachable). The strip reserves
+	   nothing for it either: the chevron floats with the rest of the group. */
+	.hprnb-root--m-ctrl-out .hprnb-bar--collapsed .hprnb-bar__controls {
+		align-items: center;
+	}
+
+	.hprnb-root--m-ctrl-out .hprnb-bar--collapsed .hprnb-bar__inner {
+		padding-inline-end: var(--hprnb-gutter);
+	}
+
+	.hprnb-root--m-ctrl-out:where(.hprnb-root--m-peek-thumb) .hprnb-bar--collapsed .hprnb-bar__inner {
+		padding-inline-end: calc(var(--hprnb-gutter) + var(--hprnb-e-peek-thumb-col));
 	}
 
 	.hprnb-root--m-flow .hprnb-bar__progress {

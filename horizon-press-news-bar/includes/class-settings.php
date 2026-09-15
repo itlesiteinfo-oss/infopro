@@ -243,6 +243,21 @@ final class Settings {
 				'min'     => 1,
 				'max'     => 720,
 			),
+			'reveal_mode'              => array(
+				'type'    => 'enum',
+				'default' => 'immediate',
+				'options' => array( 'immediate', 'scroll', 'percent', 'end' ),
+			),
+			'reveal_value'             => array(
+				'type'    => 'int',
+				'default' => 400,
+				'min'     => 0,
+				'max'     => 4000,
+			),
+			'accent_edge'              => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
 			'theme_offset'             => array(
 				'type'    => 'bool',
 				'default' => true,
@@ -378,6 +393,30 @@ final class Settings {
 				'default' => 48,
 				'min'     => 16,
 				'max'     => 80,
+			),
+			'mobile_collapse_mode'     => array(
+				'type'    => 'enum',
+				'default' => 'scroll',
+				'options' => array( 'scroll', 'threshold', 'immediate' ),
+			),
+			'mobile_collapse_after'    => array(
+				'type'    => 'int',
+				'default' => 120,
+				'min'     => 0,
+				'max'     => 800,
+			),
+			'mobile_controls_place'    => array(
+				'type'    => 'enum',
+				'default' => 'inside',
+				'options' => array( 'inside', 'outside' ),
+			),
+			'mobile_show_pause'        => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
+			'mobile_show_close'        => array(
+				'type'    => 'bool',
+				'default' => true,
 			),
 			'mobile_controls_layout'   => array(
 				'type'    => 'enum',
