@@ -708,7 +708,7 @@
 		box-shadow: none;
 	}
 
-	.hprnb-bar--collapsed .hprnb-bar__label {
+	.hprnb-bar__label {
 		animation: none !important;
 	}
 }
@@ -986,6 +986,9 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	.hprnb-root--m-flow .hprnb-bar {
 		--hprnb-e-thumb-fit: min(var(--hprnb-e-thumb-size), calc(var(--hprnb-m-lines) * var(--hprnb-m-line) - 2px));
 		--hprnb-e-thumb-col: calc(var(--hprnb-e-thumb-fit) + 10px);
+		/* Collapsed strip: never taller than the single visible line. */
+		--hprnb-e-peek-thumb: min(var(--hprnb-e-thumb-size), calc(var(--hprnb-m-line) - 4px));
+		--hprnb-e-peek-thumb-col: calc(var(--hprnb-e-peek-thumb) + 8px);
 	}
 
 	.hprnb-root--m-flow .hprnb-bar__thumb {
@@ -1014,13 +1017,28 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		inset-inline: auto calc(-1 * var(--hprnb-e-thumb-col));
 	}
 
-	/* Collapsed strip: the image would eat the single visible line, and its column with it. */
+	/* Collapsed strip: the image column steps aside (the headline takes the width back). */
 	.hprnb-root--m-flow .hprnb-bar--collapsed .hprnb-bar__thumb {
 		display: none;
 	}
 
 	.hprnb-root--m-flow .hprnb-bar--collapsed .hprnb-bar__inner {
 		padding-inline: var(--hprnb-gutter) calc(var(--hprnb-gutter) + var(--hprnb-btn) * var(--hprnb-m-ctrls));
+	}
+
+	/* …unless the image is kept in the strip: it then sits at the end of the single line,
+	   between the headline and the chevron, resized so it never exceeds one line. */
+	.hprnb-root--m-flow:where(.hprnb-root--m-peek-thumb) .hprnb-bar--collapsed .hprnb-bar__inner {
+		padding-inline-end: calc(var(--hprnb-gutter) + var(--hprnb-btn) * var(--hprnb-m-ctrls) + var(--hprnb-e-peek-thumb-col));
+	}
+
+	.hprnb-root--m-flow:where(.hprnb-root--m-peek-thumb) .hprnb-bar--collapsed .hprnb-bar__thumb {
+		display: block;
+		inset-block-start: calc(var(--hprnb-m-line) / 2);
+		inset-inline: auto calc(-1 * var(--hprnb-e-peek-thumb-col));
+		inline-size: var(--hprnb-e-peek-thumb);
+		block-size: var(--hprnb-e-peek-thumb);
+		border-radius: 4px;
 	}
 
 	.hprnb-root--m-flow .hprnb-bar__title {
@@ -1037,6 +1055,29 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		inset-inline-end: calc(var(--hprnb-gutter) - 8px);
 		inset-block-start: calc(var(--hprnb-m-pad) + (var(--hprnb-m-line) - var(--hprnb-btn)) / 2);
 		block-size: var(--hprnb-btn);
+	}
+
+	/* Stacked (close above pause): the column is one button wide, so the headline gains the rest.
+	   The buttons share the height of the headline block. */
+	.hprnb-root--m-flow:where(.hprnb-root--m-ctrl-col) .hprnb-bar__controls {
+		flex-direction: column-reverse;
+		align-items: stretch;
+		gap: 2px;
+	}
+
+	.hprnb-root--m-flow:where(.hprnb-root--m-ctrl-col) .hprnb-bar__controls {
+		inset-block-start: var(--hprnb-m-pad);
+		block-size: calc(var(--hprnb-m-lines) * var(--hprnb-m-line));
+	}
+
+	.hprnb-root--m-flow:where(.hprnb-root--m-ctrl-col) .hprnb-bar__btn {
+		flex: 1 1 0;
+		min-block-size: 0;
+	}
+
+	/* Collapsed: only the chevron is left, centred on the single visible line. */
+	.hprnb-root--m-flow:where(.hprnb-root--m-ctrl-col) .hprnb-bar--collapsed .hprnb-bar__controls {
+		block-size: var(--hprnb-m-line);
 	}
 
 	.hprnb-root--m-flow .hprnb-bar__progress {
@@ -1120,8 +1161,10 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		min-block-size: 30px;
 	}
 
-	/* The pill of the collapsed strip pulses like a button: tapping it (or anywhere on the strip) expands. */
-	.hprnb-bar--collapsed .hprnb-bar__label {
+	/* The pill pulses like a button: always (open card included) or only in the collapsed strip. */
+	.hprnb-root--m-pulse-always .hprnb-bar__label,
+	.hprnb-root--m-pulse-collapsed .hprnb-bar--collapsed .hprnb-bar__label,
+	.hprnb-root--m-pulse-always .hprnb-bar--collapsed .hprnb-bar__label {
 		animation: hprnb-beacon 1.6s ease-in-out infinite;
 		will-change: transform, box-shadow;
 	}
@@ -1133,7 +1176,7 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	/* …and shrinks to a round beacon so the headline gets the width back (peek = headline).
 	   The "label only" option keeps the full pill instead. The card does the same when an image
 	   takes its own column: the red dot carries the "live" signal, the headline keeps the width. */
-	.hprnb-root--m-flow:where(.hprnb-root--m-thumb) .hprnb-bar__label,
+	.hprnb-root--m-flow:where(.hprnb-root--m-label-compact) .hprnb-bar__label,
 	.hprnb-root--m-flow:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label {
 		inline-size: var(--hprnb-pill);
 		min-inline-size: var(--hprnb-pill);
@@ -1142,13 +1185,13 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		justify-content: center;
 	}
 
-	.hprnb-root--m-flow:where(.hprnb-root--m-thumb) .hprnb-bar__label-text,
+	.hprnb-root--m-flow:where(.hprnb-root--m-label-compact) .hprnb-bar__label-text,
 	.hprnb-root--m-flow:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label-text {
 		display: none;
 	}
 
 	/* The beacon always shows its dot, even when the live dot option is off. */
-	.hprnb-root--m-flow:where(.hprnb-root--m-thumb) .hprnb-bar__label::before,
+	.hprnb-root--m-flow:where(.hprnb-root--m-label-compact) .hprnb-bar__label::before,
 	.hprnb-root--m-flow:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label::before {
 		display: block;
 	}

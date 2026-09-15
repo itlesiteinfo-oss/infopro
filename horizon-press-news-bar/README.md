@@ -141,7 +141,7 @@ Il n’existe pas de mode « REST seul ».
 
 - **Cache hit** : 0 `WP_Query` de contenu, aucun parcours d’articles, aucun N+1. Avec un object cache persistant, aucun accès SQL propre à l’extension ; **sans** object cache persistant, WordPress lit le transient dans `wp_options` (un accès technique). Cette extension ne promet donc jamais « 0 SQL absolu ».
 - **Cache miss** : une requête principale `WP_Query` ; avec les miniatures, deux à trois requêtes supplémentaires bornées (métadonnées, fichiers joints) via `update_post_thumbnail_cache()`, jamais une requête par article.
-- Budgets front (minifiés) : CSS ≈ 22,8 Ko (profils, carte mobile v2, scénarios et compatibilité Jannah compris), bootstrap ≈ 2,4 Ko, JS interactif ≈ 12 Ko. Le JS interactif n’est chargé que si le ticker, le bouton fermer, l’heure relative, le mode de défilement mobile ou le repli au défilement en a besoin.
+- Budgets front (minifiés) : CSS ≈ 24,7 Ko (profils, carte mobile v2, scénarios et compatibilité Jannah compris), bootstrap ≈ 2,4 Ko, JS interactif ≈ 12 Ko. Le JS interactif n’est chargé que si le ticker, le bouton fermer, l’heure relative, le mode de défilement mobile ou le repli au défilement en a besoin.
 
 ## 6. Endpoint REST public
 
@@ -210,6 +210,10 @@ La 2.0 applique le cahier des charges client v1.1 : fond sombre `#1B1C20` sur le
 ## 9 quinquies. Image des articles (2.1)
 
 Chaque profil a ses trois réglages dans l'onglet **Affichage** : **Image** (case à cocher), **Position de l'image** (avant ou après le titre) et **Taille de l'image** (16 à 80 px, carrée). Le markup mis en cache porte une seule fois l'`<img>` dès qu'un profil l'active ; les classes `hprnb-root--{d|m}-thumb` et `hprnb-root--{d|m}-thumb-after` et les variables `--hprnb-d-thumb` / `--hprnb-m-thumb` font le reste, hors cache. Sur ordinateur l'image suit ou précède le titre (ordre flex) et la barre grandit si elle dépasse les lignes ; sur la carte mobile elle occupe sa propre colonne hors du flux, centrée et plafonnée à la hauteur du bloc de titre (la carte ne se déforme jamais), la pastille se réduisant au point rouge pour laisser la largeur au titre. Dans le bandeau replié, l'image et sa colonne s'effacent. La taille source WordPress (`thumbnail_size`) est commune aux deux profils, dans l'onglet Avancé.
+
+## 9 sexies. Bandeau replié et boutons (2.2)
+
+Trois réglages supplémentaires dans la carte **Mobile** : **Boutons** (empilés, Fermer au-dessus de Pause, sur une colonne — défaut — ou côte à côte), **Pastille clignotante** (toujours, seulement dans le bandeau replié, jamais) et **Image dans le bandeau replié** (l'image reste entre le titre et le chevron, redimensionnée pour ne jamais dépasser une ligne). Une quatrième case, **Pastille compacte avec une image**, réduit la pastille à son point rouge quand une image est affichée ; désactivée par défaut, la carte garde donc la pastille rouge complète avec son texte. Empiler les boutons ramène la colonne de contrôles à une largeur de bouton : `Renderer::mobile_controls()` renvoie le nombre de colonnes et la réservation de largeur suit.
 
 ## 10. Ticker (optionnel)
 

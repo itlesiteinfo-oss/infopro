@@ -2,6 +2,21 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.2.0] — 2026-09-15
+
+### Ajouté
+
+- **Boutons empilés sur la carte mobile** (`mobile_controls_layout`, défaut « empilés ») : Fermer au-dessus de Pause, sur une seule colonne au lieu de deux — le titre gagne 40 px. L'option « côte à côte » rétablit l'ancienne rangée.
+- **Image conservée dans le bandeau replié** (`mobile_peek_thumbnail`, défaut activé) : elle se place entre le titre et le chevron, redimensionnée pour ne jamais dépasser la hauteur d'une ligne (22 px pour un interligne de 26 px).
+- **Pastille clignotante paramétrable** (`mobile_label_pulse` : toujours par défaut, seulement repliée, jamais) : la carte déployée garde la pastille rouge d'origine **avec son texte** et respire comme un bouton ; le mouvement réduit désactive toujours l'animation.
+- `mobile_label_compact` (désactivé par défaut) pour retrouver la pastille réduite au point rouge quand une image est affichée.
+
+### Modifié
+
+- Avec une image, la carte mobile conserve désormais la pastille complète (la réduction au point rouge de la 2.1.0 devient optionnelle).
+- `Renderer::mobile_controls()` renvoie le nombre de **colonnes** de boutons (1 quand ils sont empilés) : la réservation de largeur suit.
+- Budget CSS relevé à 26 Ko.
+
 ## [2.1.0] — 2026-09-15
 
 ### Ajouté

@@ -234,6 +234,19 @@ final class Renderer {
 		if ( 'label' === ( $settings['mobile_peek'] ?? 'headline' ) ) {
 			$classes[] = 'hprnb-root--peek-label';
 		}
+		if ( 'row' !== ( $settings['mobile_controls_layout'] ?? 'column' ) ) {
+			$classes[] = 'hprnb-root--m-ctrl-col';
+		}
+		if ( ! empty( $settings['mobile_show_thumbnail'] ) ) {
+			if ( ! empty( $settings['mobile_peek_thumbnail'] ) ) {
+				$classes[] = 'hprnb-root--m-peek-thumb';
+			}
+			if ( ! empty( $settings['mobile_label_compact'] ) ) {
+				$classes[] = 'hprnb-root--m-label-compact';
+			}
+		}
+		$pulse     = (string) ( $settings['mobile_label_pulse'] ?? 'always' );
+		$classes[] = 'hprnb-root--m-pulse-' . ( in_array( $pulse, array( 'always', 'collapsed', 'never' ), true ) ? $pulse : 'always' );
 
 		return $classes;
 	}
@@ -376,12 +389,16 @@ final class Renderer {
 	}
 
 	/**
-	 * Number of control buttons shown under 768px (the flow card reserves their width).
+	 * Width the control buttons take under 768px, in button columns: one when they are stacked
+	 * (`mobile_controls_layout = column`, close above pause), otherwise one per button.
 	 *
 	 * @param array $settings Settings.
 	 * @return int
 	 */
 	public static function mobile_controls( array $settings ): int {
+		if ( 'row' !== ( $settings['mobile_controls_layout'] ?? 'column' ) ) {
+			return 1;
+		}
 		$mode  = self::mobile_ticker( $settings );
 		$count = ! empty( $settings['close_button'] ) ? 1 : 0;
 		if ( in_array( $mode, array( 'marquee', 'rotate' ), true ) ) {

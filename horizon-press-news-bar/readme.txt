@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.1.0
+Stable tag: 2.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,11 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.2.0 =
+* Mobile card: close above pause in a single column (option), the headline gains 40 px.
+* The featured image can stay in the collapsed strip, resized to a single line (option).
+* The red pill keeps its text on the open card and pulses like a button; the pulse is configurable (always / collapsed only / never).
 
 = 2.1.0 =
 * Featured image: a switch, a position (before / after the headline) and a size per profile, desktop and mobile.

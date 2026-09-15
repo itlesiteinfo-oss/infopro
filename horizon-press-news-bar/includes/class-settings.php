@@ -379,6 +379,24 @@ final class Settings {
 				'min'     => 16,
 				'max'     => 80,
 			),
+			'mobile_controls_layout'   => array(
+				'type'    => 'enum',
+				'default' => 'column',
+				'options' => array( 'column', 'row' ),
+			),
+			'mobile_peek_thumbnail'    => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
+			'mobile_label_pulse'       => array(
+				'type'    => 'enum',
+				'default' => 'always',
+				'options' => array( 'always', 'collapsed', 'never' ),
+			),
+			'mobile_label_compact'     => array(
+				'type'    => 'bool',
+				'default' => false,
+			),
 			'mobile_show_separator'    => array(
 				'type'    => 'bool',
 				'default' => false,

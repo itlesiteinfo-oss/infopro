@@ -181,6 +181,10 @@ mobile_kbd_hide: bool true                                  (slide away while a 
 mobile_show_thumbnail: bool false
 mobile_thumb_position: enum after [before,after]
 mobile_thumb_size: int 48 [16,80]                           (clamped to the headline block on the flow card)
+mobile_controls_layout: enum column [column,row]             (column = close above pause, one button-wide column)
+mobile_peek_thumbnail: bool true                            (image kept in the collapsed strip, one line tall)
+mobile_label_pulse: enum always [always,collapsed,never]     (hprnb-beacon on the pill)
+mobile_label_compact: bool false                            (pill shrinks to its dot when an image is shown)
 mobile_show_separator: bool false
 mobile_custom_colors: bool true
 mobile_bg_color: color #141414

@@ -666,7 +666,7 @@ Sur cache miss :
 
 Budgets front :
 
-- CSS principal minifié : objectif ≤ 24 Ko (20 Ko en 2.0 : la 2.1 ajoute les réglages d'image par profil et le bandeau compact)
+- CSS principal minifié : objectif ≤ 26 Ko (24 Ko en 2.1 : la 2.2 ajoute les boutons empilés, l'image du bandeau et les modes de clignotement)
 - bootstrap hybride minifié : objectif ≤ 3 Ko ;
 - JS interactif minifié : objectif ≤ 10 Ko ;
 - 0 dépendance tierce ;
@@ -1138,6 +1138,9 @@ Barre de 40 px (+ zone sûre), grille `label | compteur | titre | contrôles` da
 - Pastille (2.0.1) : marge intérieure 12 / 14 px ; point « en direct » clignotant (opacité, échelle, halo) ; en bandeau replié la pastille pulse comme un bouton (`hprnb-beacon`, halo `--hprnb-glow` dans la couleur du label).
 - Bandeau replié (2.1) : la pastille se réduit à un point rouge de 24 px collé à la gouttière (`hprnb-beacon`), le texte du label est masqué et le fondu de l'ellipse resserré à 18 px ; l'option `mobile_peek = label` conserve la pastille complète.
 - Image par profil (2.1) : `{desktop|mobile}_show_thumbnail`, `{desktop|mobile}_thumb_position` (`before`/`after`) et `{desktop|mobile}_thumb_size` (16–80 px). Le `<img>` entre dans le markup dès qu'un profil l'active (clé de cache) ; l'affichage, l'ordre (flex) et la taille sont des jetons `--hprnb-e-thumb-*` posés par les classes `hprnb-root--{d|m}-thumb[-after]`, hors cache. Sur ordinateur la hauteur de barre suit l'image (`taille + 12 − 4`) ; sur la carte mobile l'image sort du flux dans sa propre colonne (`padding-inline` de l'inner + position absolue centrée), plafonnée à `lignes × interligne − 2`, et la pastille se réduit au point rouge ; dans le bandeau replié l'image et sa colonne disparaissent.
+- Boutons de la carte (2.2) : `mobile_controls_layout` (`column` par défaut : Fermer au-dessus de Pause, `column-reverse`, colonne d'une largeur de bouton dont la hauteur suit le bloc de titre ; `row` : rangée classique). `Renderer::mobile_controls()` renvoie le nombre de **colonnes** (1 si empilés) et `--hprnb-m-ctrls` réserve la largeur correspondante ; le bandeau replié ramène la colonne à une ligne.
+- Image du bandeau replié (2.2) : `mobile_peek_thumbnail` (défaut activé) place l'image entre le titre et le chevron, dimensionnée à `min(taille, interligne − 4)` et centrée sur la ligne visible, la réservation de largeur suivant (`--hprnb-e-peek-thumb-col`).
+- Pastille clignotante (2.2) : `mobile_label_pulse` (`always` par défaut, `collapsed`, `never`) anime `hprnb-beacon` sur la pastille ; la carte déployée conserve la pastille complète avec son texte, `mobile_label_compact` (désactivé par défaut) la réduisant au point rouge en présence d'une image. Le mouvement réduit supprime toute animation de la pastille.
 - Motion réduite : aucune translation ni pulsation.
 
 ### 15.8.4 Contrat avec le thème et les autres plugins

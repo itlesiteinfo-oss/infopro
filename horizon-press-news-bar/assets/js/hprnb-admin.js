@@ -37,7 +37,7 @@
 	};
 	var PX_KEYS = { font_size: true, max_width: true, gutter: true };
 	var MOBILE_VARS = { mobile_bg_color: '--hprnb-m-bg', mobile_text_color: '--hprnb-m-fg', mobile_accent_color: '--hprnb-m-accent', mobile_label_text_color: '--hprnb-m-label-fg', mobile_font_size: '--hprnb-m-font-size' };
-	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, bar_height: true, align_container: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_bar_height: true, mobile_peek: true, mobile_deep_collapse: true, mobile_kbd_hide: true, theme_offset: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, desktop_thumb_position: true, desktop_thumb_size: true, mobile_thumb_position: true, mobile_thumb_size: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
+	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, bar_height: true, align_container: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_bar_height: true, mobile_peek: true, mobile_deep_collapse: true, mobile_kbd_hide: true, theme_offset: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, desktop_thumb_position: true, desktop_thumb_size: true, mobile_thumb_position: true, mobile_thumb_size: true, mobile_controls_layout: true, mobile_label_pulse: true, mobile_peek_thumbnail: true, mobile_label_compact: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
 	/* Row height of the stacked label strip, row gap, block padding and title line-height: mirrors Renderer::profile_height(). */
 	var STRIP = 22;
 	var ROW_GAP = 4;
@@ -245,6 +245,14 @@
 		var minHeight = parseInt( valueOf( 'bar_height' ), 10 ) || 40;
 		previewRoot.classList.toggle( 'hprnb-root--align', valueOf( 'align_container' ) === '1' );
 		previewRoot.classList.toggle( 'hprnb-root--peek-label', valueOf( 'mobile_peek' ) === 'label' );
+		var stacked = valueOf( 'mobile_controls_layout' ) !== 'row';
+		var mobileThumb = valueOf( 'mobile_show_thumbnail' ) === '1';
+		previewRoot.classList.toggle( 'hprnb-root--m-ctrl-col', stacked );
+		previewRoot.classList.toggle( 'hprnb-root--m-peek-thumb', mobileThumb && valueOf( 'mobile_peek_thumbnail' ) === '1' );
+		previewRoot.classList.toggle( 'hprnb-root--m-label-compact', mobileThumb && valueOf( 'mobile_label_compact' ) === '1' );
+		[ 'always', 'collapsed', 'never' ].forEach( function ( mode ) {
+			previewRoot.classList.toggle( 'hprnb-root--m-pulse-' + mode, ( valueOf( 'mobile_label_pulse' ) || 'always' ) === mode );
+		} );
 		[ 'd', 'm' ].forEach( function ( p ) {
 			var profile = computeProfile( p );
 			var cls = previewRoot.classList;
@@ -279,7 +287,7 @@
 			}
 			if ( p === 'm' ) {
 				var ctrls = ( valueOf( 'close_button' ) === '1' ? 1 : 0 ) + ( profile.mode === 'marquee' || profile.mode === 'rotate' ? 1 : ( profile.mode === 'manual' ? 2 : 0 ) );
-				previewRoot.style.setProperty( '--hprnb-m-ctrls', String( Math.max( 1, ctrls ) ) );
+				previewRoot.style.setProperty( '--hprnb-m-ctrls', String( stacked ? 1 : Math.max( 1, ctrls ) ) );
 			}
 			previewRoot.style.setProperty( p === 'm' ? '--hprnb-m-height' : '--hprnb-height', height + 'px' );
 			previewRoot.style.setProperty( p === 'm' ? '--hprnb-m-lines' : '--hprnb-d-lines', String( profile.lines ) );
