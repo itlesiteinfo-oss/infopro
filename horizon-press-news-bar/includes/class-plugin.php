@@ -74,6 +74,7 @@ final class Plugin {
 		if ( is_admin() ) {
 			Admin\Admin::register();
 			Admin\Import_Export::register();
+			Admin\Post_Controls::register();
 		}
 	}
 

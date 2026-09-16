@@ -162,11 +162,33 @@ final class Visibility {
 	 * @return bool
 	 */
 	public static function is_excluded_id( array $settings ): bool {
-		if ( empty( $settings['display_exclude_ids'] ) || ! is_singular() ) {
+		if ( ! is_singular() ) {
 			return false;
 		}
 		$id = (int) get_queried_object_id();
-		return $id > 0 && in_array( $id, array_map( 'intval', (array) $settings['display_exclude_ids'] ), true );
+		if ( $id <= 0 ) {
+			return false;
+		}
+		if ( self::is_hidden_by_post( $id ) ) {
+			return true;
+		}
+		if ( empty( $settings['display_exclude_ids'] ) ) {
+			return false;
+		}
+		return in_array( $id, array_map( 'intval', (array) $settings['display_exclude_ids'] ), true );
+	}
+
+	/**
+	 * Whether the author ticked "Never show the bar on this page" on the edit screen.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return bool
+	 */
+	public static function is_hidden_by_post( int $post_id ): bool {
+		if ( $post_id <= 0 ) {
+			return false;
+		}
+		return '1' === (string) get_post_meta( $post_id, Settings::META_HIDE, true );
 	}
 
 	/**

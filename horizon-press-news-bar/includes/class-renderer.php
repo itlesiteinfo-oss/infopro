@@ -155,7 +155,7 @@ final class Renderer {
 	const CARD_LINE      = 1.24;
 	const CARD_LABEL     = 20;
 	const CARD_ROW       = 6;
-	const CARD_LINES     = 2;
+	const CARD_LINES_MAX = 3;
 	const CARD_FLOAT     = 8;
 
 	/**
@@ -275,6 +275,9 @@ final class Renderer {
 		if ( 'immediate' !== ( $settings['reveal_mode'] ?? 'immediate' ) ) {
 			// Server-rendered so the bar never flashes before the reader reaches the threshold.
 			$classes[] = 'hprnb-root--pending';
+			// The entrance carries its own transition: the script removes the pending class, not
+			// this one, so the bar slides in whether or not the profile folds away afterwards.
+			$classes[] = 'hprnb-root--reveal';
 		}
 		$outside = 'outside' === ( $settings['mobile_controls_place'] ?? 'inside' );
 		if ( 'card' === self::profile( $settings, 'm' )['layout'] ) {
@@ -455,7 +458,9 @@ final class Renderer {
 
 	/**
 	 * Metrics of the mobile "discover" card: a heading row, then the headline beside a landscape
-	 * image. 16px / 3 lines / a 140px image → line 26, image 140 x 88, height 152, peek 42.
+	 * image. The headline follows `mobile_lines`, capped at CARD_LINES_MAX so a floating card stays
+	 * a card. 16px / 2 lines / a 96px image → line 22, image 96 x 75, height 99, peek 36; the same
+	 * at 3 lines → height 116 (118 with the widest image).
 	 *
 	 * @param array $settings Settings.
 	 * @return array{line:int,thumb:int,thumb_height:int,height:int,pad:int,peek:int}
@@ -467,8 +472,8 @@ final class Renderer {
 		$line    = (int) round( $font * self::CARD_LINE );
 		$thumb   = max( 72, min( 120, (int) ( $settings['mobile_card_thumb'] ?? 96 ) ) );
 		$thumb_h = (int) round( $thumb * self::CARD_RATIO );
-		// Label row, then the headline on two lines at most: a third line would make the card jump.
-		$lines  = self::CARD_LINES;
+		// Label row, then the headline over as many lines as the profile asks, up to the card cap.
+		$lines  = max( 1, min( self::CARD_LINES_MAX, (int) $profile['lines'] ) );
 		$text   = self::CARD_LABEL + self::CARD_ROW + $lines * $line;
 		$body   = max( $thumb_h, $text );
 		$height = 2 * self::CARD_PAD + $body;

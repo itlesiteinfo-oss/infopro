@@ -682,9 +682,9 @@ Export JSON: `{ "_meta": { "plugin": "horizon-press-news-bar", "schema_version":
 
 - `Activator::activate( $network_wide )`: compatibility check (PHP ≥ 8.1, WP ≥ 6.6) → on failure `deactivate_plugins( HPRNB_BASENAME )` + `wp_die( message, title, [ 'back_link' => true ] )`; else `add_option( 'hprnb_settings', Settings::defaults(), '', true )`, `add_option( 'hprnb_cache_epoch', wp_generate_uuid4(), '', true )`, `add_option( 'hprnb_schema_version', '1', '', true )`. Multisite network-wide: loop `get_sites( [ 'fields' => 'ids', 'number' => 500 ] )` with `switch_to_blog()`. No rewrite flush, no cron, no table, no redirect.
 - `Activator::deactivate()`: keep settings; `Invalidation::invalidate()`.
-- `uninstall.php`: guard `WP_UNINSTALL_PLUGIN`; load autoloader + Settings; if `Settings::uninstall_delete_requested()` → `delete_option` for the three options (per site on multisite, capped 500 sites). Never delete posts/media/terms.
+- `uninstall.php`: guard `WP_UNINSTALL_PLUGIN`; load autoloader + Settings; if `Settings::uninstall_delete_requested()` → `delete_option` for the three options **and `delete_post_meta_by_key()` for `_hprnb_exclude_item` and `_hprnb_hide_bar`** (per site on multisite, capped 500 sites). Never delete posts/media/terms.
 - Main file: if PHP or WP is too old, register an admin notice and return without loading anything else (never fatal).
-- `Plugin::instance()->register()` on `plugins_loaded`: `load_plugin_textdomain` on `init`; then `Invalidation`, `Assets`, `Frontend`, `Rest_Controller`, `Shortcode`, `Admin` (only when `is_admin()`), `Preview` (rest) registrations.
+- `Plugin::instance()->register()` on `plugins_loaded`: `load_plugin_textdomain` on `init`; then `Invalidation`, `Assets`, `Frontend`, `Rest_Controller`, `Shortcode`, `Admin` and `Post_Controls` (only when `is_admin()`), `Preview` (rest) registrations.
 
 ## 18. Developer hooks (documented in README)
 
@@ -694,3 +694,38 @@ Filters: `hprnb_settings( array $settings )`, `hprnb_query_args( array $args, ar
 `hprnb_bar_html( string $html, array $items, array $settings )`.
 Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( array $items, array $settings )`,
 `hprnb_cache_invalidated()`.
+
+## 19. Per-post controls (2.6.0)
+
+- Post meta, both protected by their leading underscore, declared on `Settings` so the front end never
+  loads an admin class: `Settings::META_EXCLUDE = '_hprnb_exclude_item'`, `Settings::META_HIDE = '_hprnb_hide_bar'`.
+  Stored as the string `'1'` when on, **deleted** when off (never an empty row).
+- `Admin\Post_Controls::register()`: `add_meta_box` (context `side`) on every `public` post type except
+  `attachment` (filter `hprnb_post_control_types`), plus `save_post` at priority 10. The exclude checkbox
+  is rendered on `post` only. Nonce action and field name `hprnb_post_controls`.
+- `save()` returns early on `DOING_AUTOSAVE`, on a revision or autosave, on a **missing** nonce field (so a
+  REST, quick-edit or bulk-edit save leaves both flags untouched), on an invalid nonce, without
+  `current_user_can( 'edit_post', $post_id )`, and for a post type outside the list.
+- `Query::args()` always adds `meta_query => [ [ 'key' => META_EXCLUDE, 'compare' => 'NOT EXISTS' ] ]`,
+  inserted **before** the `hprnb_query_args` filter so a site can still override it. SQL-side, so
+  `posts_per_page` refills the bar instead of shrinking it.
+- `Visibility::is_hidden_by_post( int $post_id ): bool` is ORed into `is_excluded_id()`, which now runs
+  whenever `is_singular()` even with an empty `display_exclude_ids`. `Shortcode::render()` and
+  `Frontend::shortcode_expected()` consult the same helper.
+- `Invalidation::on_post_meta()` watches `_thumbnail_id`, `META_EXCLUDE` and `META_HIDE`. `META_HIDE`
+  rotates the epoch on any post type (the reserved height and the anti-flash script depend on it);
+  the other two only for `post`. Neither meta key is in `Cache::PAYLOAD_KEYS`: one payload still serves
+  the whole site.
+
+## 20. Root classes and card metrics (2.6.0)
+
+- `hprnb-root--reveal` is emitted alongside `hprnb-root--pending` whenever `reveal_mode !== 'immediate'`,
+  and carries `transition: transform .28s cubic-bezier(.2,.7,.2,1)` at the top level of the stylesheet.
+  The script removes `hprnb-root--pending`, never `hprnb-root--reveal`, so the entrance slides whether or
+  not the profile folds. The reduced-motion block neutralises `.hprnb-bar`, `.hprnb-root--m-collapse .hprnb-bar`,
+  `.hprnb-root--d-collapse .hprnb-bar` and `.hprnb-root--reveal .hprnb-bar` at the same weight.
+- `Renderer::CARD_LINES_MAX = 3`. `card_metrics()` uses `max( 1, min( CARD_LINES_MAX, $profile['lines'] ) )`,
+  so the discover card follows `mobile_lines` like every other mobile layout (marquee still flattens to 1).
+  `--hprnb-m-card-lines` carries the effective count; `hprnb-admin.js` applies the identical clamp so the
+  live preview and the height hint cannot drift from the front end.
+- Admin `depends` supports `key`, `key:value` **and `key:a|b`** (any of several options of one control).

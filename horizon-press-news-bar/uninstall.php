@@ -28,6 +28,8 @@ function hprnb_uninstall_site() {
 	delete_option( HorizonPress\NewsBar\Settings::OPTION );
 	delete_option( HorizonPress\NewsBar\Settings::EPOCH_OPTION );
 	delete_option( HorizonPress\NewsBar\Settings::SCHEMA_OPTION );
+	delete_post_meta_by_key( HorizonPress\NewsBar\Settings::META_EXCLUDE );
+	delete_post_meta_by_key( HorizonPress\NewsBar\Settings::META_HIDE );
 }
 
 if ( is_multisite() ) {

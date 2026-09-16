@@ -30,6 +30,16 @@ final class Settings {
 	const SCHEMA_OPTION = 'hprnb_schema_version';
 
 	/**
+	 * Post meta: this article is never listed among the headlines.
+	 */
+	const META_EXCLUDE = '_hprnb_exclude_item';
+
+	/**
+	 * Post meta: the bar is never displayed on this post's own page.
+	 */
+	const META_HIDE = '_hprnb_hide_bar';
+
+	/**
 	 * Maximum number of IDs kept in a list setting.
 	 */
 	const MAX_LIST_ITEMS = 500;

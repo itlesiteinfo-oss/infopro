@@ -233,7 +233,7 @@ Trois réglages supplémentaires dans la carte **Mobile** : **Boutons** (empilé
 
 **Repli sur ordinateur** : `desktop_hide_on_scroll`, `desktop_collapse_mode` et `desktop_collapse_after` reprennent les trois moments du mobile. La barre glisse entièrement hors de vue et laisse un onglet arrondi contre le bord inférieur, aligné sur la gouttière du conteneur.
 
-**Design « Découvrir » (mobile)** : `mobile_layout = card` est une **carte flottante compacte**, détachée des bords de 8 px, coins de 12 px, ombre discrète, zone sûre iOS appliquée une seule fois. Elle place **l'image 5:4 au début de la ligne** (à droite sur un site RTL) et, à côté, **la pastille sur la première ligne puis le titre à partir de la deuxième**, en 18 px gras sur **deux lignes au maximum**. La largeur de l'image se règle par `mobile_card_thumb` (72 à 120 px, 96 par défaut) et **c'est elle qui règle la hauteur** : 99 px par défaut, 94 px au minimum, 118 px au maximum. Sous 360 px de large, l'image se réduit à 72 px. Le style de label « bandeau » y devient un titre en gras sans fond ; « pastille » garde la pastille rouge, plus compacte qu'ailleurs.
+**Design « Découvrir » (mobile)** : `mobile_layout = card` est une **carte flottante compacte**, détachée des bords de 8 px, coins de 12 px, ombre discrète, zone sûre iOS appliquée une seule fois. Elle place **l'image 5:4 au début de la ligne** (à droite sur un site RTL) et, à côté, **la pastille sur la première ligne puis le titre à partir de la deuxième**, en 18 px gras sur **deux lignes par défaut, trois au maximum** (voir § 9 decies). La largeur de l'image se règle par `mobile_card_thumb` (72 à 120 px, 96 par défaut) et, sur deux lignes, **c'est elle qui règle la hauteur** : 99 px par défaut, 94 px au minimum, 118 px au maximum. Sous 360 px de large, l'image se réduit à 72 px. Le style de label « bandeau » y devient un titre en gras sans fond ; « pastille » garde la pastille rouge, plus compacte qu'ailleurs.
 
 Le **bouton Fermer est à l'intérieur de la carte**, dans son coin supérieur de fin, sur un fond légèrement éclairci, avec une cible tactile de 44 × 44 px qui ne déborde jamais sur le titre ; le bouton Pause, s'il est activé, se place juste à côté. Leur colonne est réservée dans la colonne de texte, si bien que ni la pastille ni le titre ne passent derrière eux. Ce design place ses boutons lui-même : les réglages d'emplacement et d'empilement ne s'y appliquent pas.
 
@@ -252,6 +252,21 @@ Le **bouton Fermer est à l'intérieur de la carte**, dans son coin supérieur d
 Le temps de lecture est **actif** : suspendu quand l'onglet passe en arrière-plan et après une minute sans activité. Dix réglages (cinq par profil), par défaut mobile 55 % / 15 s / 300 px / 75 % / 25 s et ordinateur 50 % / 12 s / 350 px / 65 % / 20 s. **Aucune installation existante ne bascule en `smart` d'elle-même.** Une fermeture n'est jamais contournée, et `smart` n'interfère pas avec le repli : il décide seulement du moment de la première apparition.
 
 **Mesure** : trois évènements non bloquants poussés sur `window.dataLayer` et émis sur `document` — `hprnb_impression`, `hprnb_click`, `hprnb_close` — avec `trigger_reason` (`article_end`, `scroll_up_intent`, `engaged_reader`, `legacy_immediate`, `legacy_scroll`, `legacy_percent`, `legacy_end`), `device`, `current_article_id`, `recommended_article_id`, `items`, et pour le mode intelligent `article_progress`, `active_reading_time` et `article_found`. Aucun appel réseau : sans `dataLayer`, la barre s'affiche exactement pareil.
+
+## 9 decies. Contrôle par article et page de réglages (2.6)
+
+**Bloc « Barre d'actualités » sur l'écran d'édition** de chaque article et page, avec deux cases indépendantes :
+
+- *Ne jamais lister cet article dans la barre* — le titre sort de la barre sur tout le site. Articles seuls : une page n'est jamais un titre. C'est une clause SQL (`meta_query` `NOT EXISTS`) dans `Query::args()`, donc la barre **se remplit à nouveau** au lieu de rétrécir sous `max_items`.
+- *Ne jamais afficher la barre sur cette page* — aucune barre pour le lecteur de cette page, quels que soient les types de pages autorisés. Vaut aussi pour le shortcode et pour l'espace réservé.
+
+Clés de métadonnée `_hprnb_exclude_item` et `_hprnb_hide_bar`, protégées par leur tiret bas. Les deux font tourner l'époque de cache, aucune n'entre dans la clé de cache : un seul payload sert tout le site. Nonce dédié, `edit_post`, sauvegardes automatiques et révisions ignorées ; une sauvegarde sans le bloc laisse les drapeaux intacts. `uninstall.php` les nettoie derrière l'option d'effacement.
+
+**Lignes du titre sur mobile** : la carte « Découvrir » honore `mobile_lines` comme les autres designs, avec un plafond propre de **3 lignes**. À 16 px : 99 px sur deux lignes, **116 px sur trois** (118 px avec l'image la plus large). Le bandeau replié reste d'une ligne quel que soit le réglage.
+
+**Page de réglages** : six onglets nommés d'après la question posée — Contenu, **Où**, **Apparition et repli**, Ordinateur et mobile, Couleurs, Avancé. Les types de pages ont **un seul endroit** (la portée globale ouvre l'onglet Où ; les deux listes par appareil sont un affinage facultatif présenté dessous). L'interrupteur de repli s'appelle *Replier la barre* et est l'interrupteur d'en-tête de sa carte — décoché, `collapse_mode` et `collapse_after` sont inertes, « Toujours repliée » comprise. Chaque carte qui le mérite porte un dépliant **« Cas d'usage courants »**. Aucun réglage supprimé, aucun schéma modifié.
+
+**Nouvelle classe racine `hprnb-root--reveal`** : l'animation d'entrée porte sa propre transition au lieu d'emprunter celle du repli, qui est désactivé par défaut sur ordinateur.
 
 ## 10. Ticker (optionnel)
 

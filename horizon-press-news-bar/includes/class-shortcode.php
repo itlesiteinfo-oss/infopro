@@ -54,6 +54,9 @@ final class Shortcode {
 		if ( Visibility::is_absolute_exclusion() ) {
 			return '';
 		}
+		if ( is_singular() && Visibility::is_hidden_by_post( (int) get_queried_object_id() ) ) {
+			return '';
+		}
 		if ( Frontend::root_claimed() ) {
 			return '';
 		}

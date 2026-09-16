@@ -217,6 +217,42 @@ class Settings_Test extends HPRNB_Test_Case {
 		$this->assertTrue( \HorizonPress\NewsBar\Visibility::devices_for_context( $clean )['desktop'] );
 	}
 
+	/**
+	 * Until 2.6.0 the desktop font size was declared as a field but listed in no card, so it landed
+	 * in the "other" safety-net panel — which the tab script hides on every key, making the setting
+	 * unreachable. Worse, sanitize_form() resets an absent key to its default, so a page that stops
+	 * rendering a field silently resets it on the next save. Every key must be on a tab.
+	 */
+	public function test_every_setting_is_reachable_from_the_form() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( Settings::OPTION, Settings::defaults() );
+		Settings::flush();
+		// A term picker with nothing to pick renders no input at all, so give it one of each.
+		self::factory()->term->create( array( 'taxonomy' => 'post_tag' ) );
+
+		ob_start();
+		\HorizonPress\NewsBar\Admin\Settings_Page::render();
+		$html = (string) ob_get_clean();
+
+		$panels = array();
+		if ( preg_match_all( '/data-hprnb-panel="([a-z_-]+)"/', $html, $m ) ) {
+			$panels = array_unique( $m[1] );
+		}
+		$this->assertNotContains( 'other', $panels, 'No field may fall into the hidden safety-net panel.' );
+
+		$missing = array();
+		foreach ( array_keys( Settings::defaults() ) as $key ) {
+			if ( ! str_contains( $html, 'name="hprnb_settings[' . $key . ']' ) ) {
+				$missing[] = $key;
+			}
+		}
+		$this->assertSame( array(), $missing, 'Every setting is rendered by some card: ' . implode( ', ', $missing ) );
+
+		// And a form that posts every rendered control round-trips to the same settings.
+		$this->assertContains( 'where', $panels, 'The page-type tab exists under its own key.' );
+		$this->assertContains( 'timing', $panels, 'Appearing and folding have their own tab.' );
+	}
+
 	public function test_schema_4_repairs_the_maps_emptied_by_the_2_4_0_form() {
 		$broken                     = Settings::defaults();
 		$broken['desktop_contexts'] = array_fill_keys( Settings::CONTEXT_KEYS, false );

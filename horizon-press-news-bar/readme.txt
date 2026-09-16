@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.5.0
+Stable tag: 2.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,14 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.6.0 =
+* New: a "News Bar" box on every post and page edit screen — keep one article out of the bar, or keep the bar off one page. Two independent switches.
+* Fixed: the "Discover" mobile card ignored the headline line count. It now honours it, up to three lines (116px instead of 99px).
+* Fixed: the desktop font size was declared but listed on no tab, so it was unreachable in the admin and reset on every save.
+* Fixed: a bar waiting for the reader snapped into place instead of sliding whenever folding was off (the desktop default).
+* Fixed: prefers-reduced-motion did not cover the desktop bar.
+* Settings page reorganised into six tabs named after the question they answer, with worked examples; one single place decides the page types; the folding switch reads as a switch.
 
 = 2.5.0 =
 * Fixed: a bar with a single headline no longer draws a separator behind it, in every ticker mode and both directions.

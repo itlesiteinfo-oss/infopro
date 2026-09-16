@@ -247,6 +247,14 @@
 	pointer-events: none;
 }
 
+/* ...and slides in when its moment comes. Until 2.6.0 this transition was borrowed from the
+   collapse switch, so a bar that waited for the reader snapped into place whenever folding was
+   off — which is the desktop default. The entrance owns it now, on both profiles. */
+.hprnb-root--reveal .hprnb-bar {
+	transition: transform .28s cubic-bezier(.2, .7, .2, 1);
+	will-change: transform;
+}
+
 body.hprnb-reserve.hprnb-pending {
 	--hprnb-offset: 0px;
 	padding-block-end: 0;
@@ -728,7 +736,9 @@ body.hprnb-reserve.hprnb-pending {
 	}
 
 	.hprnb-bar,
-	.hprnb-root--m-collapse .hprnb-bar {
+	.hprnb-root--m-collapse .hprnb-bar,
+	.hprnb-root--d-collapse .hprnb-bar,
+	.hprnb-root--reveal .hprnb-bar {
 		transition: none;
 	}
 
@@ -1432,14 +1442,15 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	}
 
 	/* Deliberately not positioned: the picture hangs off .hprnb-bar__inner, so this clip never
-	   reaches it and the picture can be taller than the two lines of headline beside it. */
+	   reaches it and the picture can be taller than the headline beside it. */
 	.hprnb-root--m-card .hprnb-bar__viewport {
 		max-block-size: calc(var(--hprnb-m-card-lines, 2) * var(--hprnb-m-line));
 		overflow: visible clip;
 		touch-action: pan-y;
 	}
 
-	/* The headline is the point of the card: two sizes up, bold, never more than two lines. */
+	/* The headline is the point of the card: two sizes up, bold, over as many lines as the profile
+	   asks (--hprnb-m-card-lines, 1 to 3 — the PHP caps it and the height follows). */
 	.hprnb-root--m-card .hprnb-bar__title {
 		display: -webkit-box;
 		-webkit-box-orient: vertical;

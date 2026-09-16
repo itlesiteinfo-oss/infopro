@@ -1530,8 +1530,8 @@ test( 'admin: settings page, live preview, contrast warning, save, export, impor
 	await page.locator( '#hprnb-field-text-color' ).dispatchEvent( 'input' );
 	await expect( page.locator( '#hprnb-contrast-text' ) ).toBeHidden();
 
-	// Content refresh through the private endpoint.
-	await page.click( '[data-hprnb-tab="display"]' );
+	// Content refresh through the private endpoint. v2.6: how many articles is a Content question.
+	await page.click( '[data-hprnb-tab="content"]' );
 	await page.fill( '#hprnb-field-max-items', '2' );
 	await page.click( '#hprnb-preview-refresh' );
 	await expect.poll( () => previews.length ).toBeGreaterThanOrEqual( 1 );
@@ -1790,4 +1790,151 @@ test( 'mobile stacked presentation: pill, counter, progress, rotation, swipe, co
 	await expect( page.locator( '.hprnb-bar__progress' ) ).toHaveCount( 0 );
 	await expect( toggle ).toBeHidden();
 	expect( await noHorizontalOverflow( page ) ).toBe( true );
+} );
+
+test( 'v2.6: the discover card honours the headline line count, up to its own cap of three', async ( { page } ) => {
+	const errors = collectErrors( page );
+	await page.setViewportSize( { width: 390, height: 780 } );
+
+	const headline = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' );
+	const aside = page.locator( '#hprnb-root .hprnb-bar' );
+
+	// Two lines: the picture still sets the height, exactly as in 2.5.
+	setSettings( { mobile_layout: 'card', mobile_lines: 2, rotate_interval: 60000, mobile_show_pause: false } );
+	await page.goto( '/' );
+	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+	expect( await headline.evaluate( ( el ) => getComputedStyle( el ).webkitLineClamp ) ).toBe( '2' );
+	expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 99 );
+
+	// Three lines: the clamp, the card and the space the page reserves all move together.
+	setSettings( { mobile_layout: 'card', mobile_lines: 3, rotate_interval: 60000, mobile_show_pause: false } );
+	await page.goto( '/' );
+	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+	expect( await headline.evaluate( ( el ) => getComputedStyle( el ).webkitLineClamp ) ).toBe( '3' );
+	expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 116 );
+	expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-m-height' ).trim() ) ).toBe( '116px' );
+
+	// A long headline really uses the third line and is still clipped, never overflowing the card.
+	// Rename the post the card is actually showing, not whichever one the database lists first.
+	const shown = await page.locator( '.hprnb-bar__item:not([hidden])' ).getAttribute( 'data-hprnb-id' );
+	const original = wp( [ 'post', 'get', shown, '--field=post_title' ] );
+	wp( [ 'post', 'update', shown, '--post_title=Un titre deliberement tres long qui ne tient pas sur une seule ligne et qui doit deborder sur une troisieme ligne avant d etre coupe proprement par le clamp' ] );
+	wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+	await page.goto( '/' );
+	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+	const box = await headline.boundingBox();
+	const cardBox = await aside.boundingBox();
+	expect( Math.round( box.height ) ).toBe( 66, 'Three 22px lines.' );
+	expect( box.y + box.height ).toBeLessThanOrEqual( cardBox.y + cardBox.height + 1, 'Clipped inside the card.' );
+	expect( await headline.evaluate( ( el ) => el.scrollHeight > el.clientHeight ) ).toBe( true, 'And the rest is really clamped away.' );
+
+	// The collapsed strip stays one line whatever the count.
+	expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-peek' ).trim() ) ).toBe( '36px' );
+	expect( await noHorizontalOverflow( page ) ).toBe( true );
+
+	wp( [ 'post', 'update', shown, `--post_title=${ original }` ] );
+	expect( errors ).toEqual( [] );
+} );
+
+test( 'v2.6: a per-post switch keeps one article out of the bar, and the bar off one page', async ( { page } ) => {
+	const errors = collectErrors( page );
+	setSettings( { max_items: 2, window_value: 72, window_unit: 'hours' } );
+
+	const ids = wp( [ 'post', 'list', '--post_type=post', '--post_status=publish', '--posts_per_page=3', '--field=ID', '--orderby=date', '--order=DESC' ] ).split( '\n' ).filter( Boolean );
+	expect( ids.length ).toBeGreaterThanOrEqual( 3 );
+	const [ newest, second, third ] = ids;
+
+	await page.goto( '/' );
+	const items = page.locator( '#hprnb-root .hprnb-bar__list:not(.hprnb-bar__list--clone) .hprnb-bar__item' );
+	await expect( items ).toHaveCount( 2 );
+	const before = await items.evaluateAll( ( els ) => els.map( ( el ) => el.getAttribute( 'data-hprnb-id' ) ) );
+	expect( before ).toContain( second );
+
+	// "Never list this article in the bar": it leaves, and the next one takes its place.
+	wp( [ 'post', 'meta', 'update', second, '_hprnb_exclude_item', '1' ] );
+	await page.goto( '/' );
+	await expect( items ).toHaveCount( 2, 'The bar refills rather than shrinking.' );
+	const after = await items.evaluateAll( ( els ) => els.map( ( el ) => el.getAttribute( 'data-hprnb-id' ) ) );
+	expect( after ).not.toContain( second );
+	expect( after ).toContain( newest );
+	expect( after ).toContain( third );
+
+	// Unticking brings it straight back — the epoch rotated, no stale transient.
+	wp( [ 'post', 'meta', 'delete', second, '_hprnb_exclude_item' ] );
+	await page.goto( '/' );
+	expect( await items.evaluateAll( ( els ) => els.map( ( el ) => el.getAttribute( 'data-hprnb-id' ) ) ) ).toContain( second );
+
+	// "Never show the bar on this page": no root, no reserved space, on that page only.
+	await page.goto( `/?p=${ newest }` );
+	await expect( page.locator( '#hprnb-root' ) ).toHaveCount( 1 );
+	wp( [ 'post', 'meta', 'update', newest, '_hprnb_hide_bar', '1' ] );
+	await page.goto( `/?p=${ newest }` );
+	await expect( page.locator( '#hprnb-root' ) ).toHaveCount( 0 );
+	await expect( page.locator( 'body.hprnb-reserve' ) ).toHaveCount( 0, 'And nothing is reserved for it either.' );
+	expect( await page.locator( '.hprnb-bar__item' ).count() ).toBe( 0 );
+
+	// The headline itself is untouched elsewhere: the two switches are independent.
+	await page.goto( `/?p=${ third }` );
+	await expect( page.locator( '#hprnb-root' ) ).toHaveCount( 1 );
+	expect( await items.evaluateAll( ( els ) => els.map( ( el ) => el.getAttribute( 'data-hprnb-id' ) ) ) ).toContain( newest );
+
+	wp( [ 'post', 'meta', 'delete', newest, '_hprnb_hide_bar' ] );
+	expect( errors ).toEqual( [] );
+} );
+
+test( 'v2.6: the settings page names what it does — page types, appearing, folding', async ( { page } ) => {
+	const errors = collectErrors( page );
+	setSettings( {} );
+	await page.goto( '/wp-login.php' );
+	await page.fill( '#user_login', 'admin' );
+	await page.fill( '#user_pass', 'admin' );
+	await page.click( '#wp-submit' );
+	await page.waitForURL( /wp-admin/ );
+	await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar' );
+
+	// The six tabs, and no hidden "other" panel swallowing a setting.
+	for ( const tab of [ 'content', 'where', 'timing', 'display', 'colors', 'advanced' ] ) {
+		await expect( page.locator( `[data-hprnb-tab="${ tab }"]` ) ).toHaveCount( 1 );
+	}
+	await expect( page.locator( '[data-hprnb-panel="other"]' ) ).toHaveCount( 0 );
+
+	// The desktop font size was unreachable until 2.6: it now lives on a visible tab.
+	await page.click( '[data-hprnb-tab="display"]' );
+	await expect( page.locator( '#hprnb-field-font-size' ) ).toBeVisible();
+
+	// Page types: one control, and the nine boxes grey out until the scope uses them.
+	await page.click( '[data-hprnb-tab="where"]' );
+	const contextRow = page.locator( 'tr[data-hprnb-depends="display_scope:custom"]' );
+	await expect( contextRow ).toHaveClass( /hprnb-row--inactive/ );
+	await page.check( '#hprnb-field-display-scope-custom' );
+	await expect( contextRow ).not.toHaveClass( /hprnb-row--inactive/ );
+	await expect( page.locator( 'input[name="hprnb_settings[contexts][single_post]"]' ) ).toBeVisible();
+
+	// Folding: a plain on/off per device, with its timing underneath.
+	await page.click( '[data-hprnb-tab="timing"]' );
+	await expect( page.locator( '#hprnb-field-reveal-mode-smart' ) ).toBeVisible();
+	const desktopFold = page.locator( '#hprnb-field-desktop-hide-on-scroll' );
+	await expect( desktopFold ).not.toBeChecked();
+	const desktopWhen = page.locator( 'tr[data-hprnb-depends="desktop_hide_on_scroll"]' ).first();
+	await expect( desktopWhen ).toHaveClass( /hprnb-row--inactive/, 'Folding off: its timing is inert and says so.' );
+	await desktopFold.setChecked( true, { force: true } );
+	await expect( desktopWhen ).not.toHaveClass( /hprnb-row--inactive/ );
+
+	// The appearance threshold follows more than one mode — the new "a|b" dependency.
+	const thresholdRow = page.locator( 'tr[data-hprnb-depends="reveal_mode:scroll|percent"]' );
+	await expect( thresholdRow ).toHaveCount( 1 );
+	await page.check( '#hprnb-field-reveal-mode-immediate' );
+	await expect( thresholdRow ).toHaveClass( /hprnb-row--inactive/ );
+	await page.check( '#hprnb-field-reveal-mode-scroll' );
+	await expect( thresholdRow ).not.toHaveClass( /hprnb-row--inactive/ );
+	await page.check( '#hprnb-field-reveal-mode-percent' );
+	await expect( thresholdRow ).not.toHaveClass( /hprnb-row--inactive/, 'Both modes use it.' );
+
+	// The worked examples are help, closed by default, never inputs.
+	const scenarios = page.locator( '.hprnb-scenarios' );
+	expect( await scenarios.count() ).toBeGreaterThan( 0 );
+	expect( await scenarios.first().evaluate( ( el ) => el.open ) ).toBe( false );
+	expect( await scenarios.first().locator( 'input, select' ).count() ).toBe( 0 );
+
+	expect( errors ).toEqual( [] );
 } );

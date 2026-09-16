@@ -145,7 +145,7 @@ final class Invalidation {
 	}
 
 	/**
-	 * Featured image changed on a post.
+	 * Featured image or a per-post news-bar flag changed on a post.
 	 *
 	 * @param mixed $meta_id   Meta ID.
 	 * @param mixed $object_id Post ID.
@@ -153,7 +153,14 @@ final class Invalidation {
 	 * @return void
 	 */
 	public static function on_post_meta( $meta_id, $object_id, $meta_key ): void {
-		if ( '_thumbnail_id' !== $meta_key ) {
+		$watched = array( '_thumbnail_id', Settings::META_EXCLUDE, Settings::META_HIDE );
+		if ( ! in_array( (string) $meta_key, $watched, true ) ) {
+			return;
+		}
+		if ( Settings::META_HIDE === (string) $meta_key ) {
+			// Presence only, on any post type: nothing cached depends on it, but the reserved
+			// height and the anti-flash script do, so the rendered page must be re-derived.
+			self::invalidate();
 			return;
 		}
 		if ( 'post' === get_post_type( (int) $object_id ) ) {

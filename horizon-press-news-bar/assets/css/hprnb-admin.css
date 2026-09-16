@@ -44,6 +44,31 @@
 	opacity: .5;
 }
 
+/* Worked examples under a card: help, never settings, so they stay closed by default. */
+.hprnb-scenarios {
+	border-inline-start: 3px solid #2271b1;
+	background: #f6f7f7;
+}
+
+.hprnb-scenarios__list {
+	margin: 0 0 10px;
+}
+
+.hprnb-scenarios__title {
+	margin-block-start: 10px;
+	font-weight: 600;
+}
+
+.hprnb-scenarios__title:first-child {
+	margin-block-start: 0;
+}
+
+.hprnb-scenarios__body {
+	margin: 2px 0 0;
+	color: #50575e;
+	max-inline-size: 70ch;
+}
+
 .hprnb-radio,
 .hprnb-check {
 	display: block;

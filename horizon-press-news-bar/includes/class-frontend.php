@@ -243,6 +243,9 @@ final class Frontend {
 		if ( Visibility::is_absolute_exclusion() || ! is_singular() ) {
 			return false;
 		}
+		if ( Visibility::is_hidden_by_post( (int) get_queried_object_id() ) ) {
+			return false;
+		}
 		$post = get_post();
 		return $post instanceof \WP_Post && has_shortcode( (string) $post->post_content, Shortcode::TAG );
 	}

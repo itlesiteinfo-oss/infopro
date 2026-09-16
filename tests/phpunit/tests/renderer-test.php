@@ -163,7 +163,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$this->assertStringContainsString( esc_attr( '{"mode":"immediate","value":400}' ), $root, 'The bar shows up with the page by default.' );
 		$this->assertStringContainsString( 'data-hprnb-endpoint="' . esc_url( rest_url( 'hprnb/v1/items' ) ) . '"', $root );
 		$this->assertStringContainsString( 'data-hprnb-css="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=2.5.0"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=2.6.0"', $root );
 		$this->assertStringContainsString( 'data-hprnb-js', $root, 'The default mobile presentation (rotate, flow card) needs the interactive script.' );
 		$this->assertStringContainsString( 'style="--hprnb-bg:#1B1C20;--hprnb-fg:#F5F5F5;--hprnb-label-bg:#CE3029;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-accent:#CE3029;--hprnb-font-size:15px;--hprnb-height:40px;--hprnb-d-lines:1;--hprnb-max:1230px;--hprnb-gutter:15px;--hprnb-z:99990;--hprnb-sep:&#039;•&#039;;--hprnb-m-bg:#1B1C20;--hprnb-m-fg:#F5F5F5;--hprnb-m-accent:#CE3029;--hprnb-m-label-fg:#FFFFFF;--hprnb-m-font-size:16px;--hprnb-m-height:76px;--hprnb-m-lines:2;--hprnb-m-line:26px;--hprnb-m-pad:12px;--hprnb-peek:40px;--hprnb-m-ctrls:1;--hprnb-d-thumb:32px;--hprnb-m-thumb:48px;--hprnb-m-card-thumb:96px;--hprnb-m-card-thumb-h:75px;--hprnb-m-card-lines:2;--hprnb-m-gap:0px"', $root );
 		$this->assertStringNotContainsString( ' hidden', $root );
@@ -182,7 +182,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$hybrid_js = $this->with_settings( array( 'close_button' => true, 'show_on_desktop' => false ) );
 		$root = Renderer::root( Renderer::payload( array( $this->item() ), $hybrid_js ), $hybrid_js );
 		$this->assertStringContainsString( 'data-hprnb-js="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=2.5.0"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=2.6.0"', $root );
 		$this->assertStringContainsString( 'hprnb-hide-desktop', $root );
 
 		add_filter( 'hprnb_stale_threshold', static fn() => 900 );
@@ -298,6 +298,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		// Immediate by default: nothing pending, no interactive JS needed for that alone.
 		$this->assertSame( array( 'mode' => 'immediate', 'value' => 400 ), Renderer::reveal_data( $settings ) );
 		$this->assertNotContains( 'hprnb-root--pending', Renderer::root_classes( $settings ) );
+		$this->assertNotContains( 'hprnb-root--reveal', Renderer::root_classes( $settings ), 'Nothing to slide in.' );
 		$this->assertStringContainsString( 'data-hprnb-reveal="{&quot;mode&quot;:&quot;immediate&quot;,&quot;value&quot;:400}"', Renderer::root( Renderer::payload( array(), $settings ), $settings ) );
 
 		// A scroll distance, a share of the page (clamped to 1-100) and the end of the page (90 %).
@@ -305,6 +306,15 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$this->assertSame( array( 'mode' => 'scroll', 'value' => 600 ), Renderer::reveal_data( $scroll ) );
 		$this->assertContains( 'hprnb-root--pending', Renderer::root_classes( $scroll ) );
 		$this->assertTrue( Renderer::needs_interactive_js( $scroll ), 'The threshold is watched by the script.' );
+
+		// 2.6.0: the entrance owns its transition instead of borrowing the collapse one, which the
+		// desktop profile does not switch on by default — the bar used to snap into place.
+		$this->assertContains( 'hprnb-root--reveal', Renderer::root_classes( $scroll ) );
+		$no_fold = $this->with_settings( array( 'reveal_mode' => 'smart', 'desktop_hide_on_scroll' => false, 'mobile_hide_on_scroll' => false ) );
+		$classes = Renderer::root_classes( $no_fold );
+		$this->assertContains( 'hprnb-root--reveal', $classes, 'Folding off, the slide still belongs to the entrance.' );
+		$this->assertNotContains( 'hprnb-root--d-collapse', $classes );
+		$this->assertNotContains( 'hprnb-root--m-collapse', $classes );
 		$percent = $this->with_settings( array( 'reveal_mode' => 'percent', 'reveal_value' => 4000 ) );
 		$this->assertSame( array( 'mode' => 'percent', 'value' => 100 ), Renderer::reveal_data( $percent ) );
 		$end = $this->with_settings( array( 'reveal_mode' => 'end', 'reveal_value' => 10 ) );
@@ -356,7 +366,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$this->assertSame( 22, $metrics['line'] );
 		$this->assertSame( 96, $metrics['thumb'] );
 		$this->assertSame( 75, $metrics['thumb_height'] );
-		$this->assertSame( 2, $metrics['lines'], 'Never a third line: the card would jump.' );
+		$this->assertSame( 2, $metrics['lines'], 'The default profile asks for two lines.' );
 		$this->assertSame( 70, $metrics['text'], 'Label row 20 + 6 + two 22px lines.' );
 		$this->assertSame( 99, $metrics['height'], '12 + max(75, 70) + 12 — inside the 96-112px target.' );
 		$this->assertSame( 36, $metrics['peek'], 'One line and its padding.' );
@@ -374,6 +384,42 @@ class Renderer_Test extends HPRNB_Test_Case {
 		}
 		// Out-of-range values are clamped to the compact design, not honoured.
 		$this->assertSame( 120, Renderer::card_metrics( $this->with_settings( array( 'mobile_layout' => 'card', 'mobile_card_thumb' => 220 ) ) )['thumb'] );
+
+		// 2.6.0: the card honours mobile_lines like every other mobile design, up to its own cap of
+		// three — a fourth line stops being a card. The reserved height follows honestly.
+		foreach ( array( 1 => 1, 2 => 2, 3 => 3, 4 => 3 ) as $asked => $effective ) {
+			$lined = $this->with_settings( array( 'mobile_layout' => 'card', 'mobile_lines' => $asked ) );
+			$this->assertSame( $effective, Renderer::card_metrics( $lined )['lines'], $asked . ' lines asked.' );
+		}
+		$three = $this->with_settings( array( 'mobile_layout' => 'card', 'mobile_lines' => 3 ) );
+		$this->assertSame( 92, Renderer::card_metrics( $three )['text'], 'Label row 20 + 6 + three 22px lines.' );
+		$this->assertSame( 116, Renderer::card_metrics( $three )['height'], '12 + max(75, 92) + 12.' );
+		$this->assertSame( 36, Renderer::card_metrics( $three )['peek'], 'The collapsed strip is one line whatever the count.' );
+		$this->assertSame( 116, Renderer::profile_height( $three, 'm' ), 'And the page reserves exactly that.' );
+		$this->assertStringContainsString( '--hprnb-m-card-lines:3', Renderer::root_style( $three ), 'The clamp travels to the stylesheet.' );
+
+		// Across the picture range at the default font, three lines stay inside the 120px band.
+		foreach ( array( 72, 88, 96, 100, 120 ) as $width ) {
+			$sized = Renderer::card_metrics( $this->with_settings( array( 'mobile_layout' => 'card', 'mobile_lines' => 3, 'mobile_card_thumb' => $width ) ) );
+			$this->assertSame( 3, $sized['lines'] );
+			$this->assertLessThanOrEqual( 120, $sized['height'], 'Three lines at a ' . $width . 'px picture.' );
+		}
+
+		// A larger font legitimately grows the card: the height hint beside the field says so, and
+		// the reserved height always matches what card_metrics() computed — never a stale constant.
+		foreach ( array( 12, 16, 20, 24 ) as $font ) {
+			foreach ( array( 1, 2, 3 ) as $lines ) {
+				$probe   = $this->with_settings( array( 'mobile_layout' => 'card', 'mobile_font_size' => $font, 'mobile_lines' => $lines ) );
+				$metrics = Renderer::card_metrics( $probe );
+				$this->assertSame( $lines, $metrics['lines'] );
+				$this->assertSame( 24 + max( $metrics['thumb_height'], $metrics['text'] ), $metrics['height'] );
+				$this->assertSame( $metrics['height'], Renderer::profile_height( $probe, 'm' ), $font . 'px / ' . $lines . ' lines.' );
+			}
+		}
+
+		// Marquee flattens every design to one line, the card included.
+		$marquee = $this->with_settings( array( 'mobile_layout' => 'card', 'mobile_lines' => 3, 'mobile_ticker_mode' => 'marquee' ) );
+		$this->assertSame( 1, Renderer::card_metrics( $marquee )['lines'] );
 
 		// The design places its own buttons: nothing is reserved and neither option applies.
 		$this->assertSame( 0, Renderer::mobile_controls( $card ) );

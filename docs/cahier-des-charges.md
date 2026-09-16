@@ -2359,6 +2359,14 @@ mode hybrid:
 - aucune dépendance externe ;
 - `show_separator`, `separator_char` et `separator_after_last` n’entrent jamais dans la clé de cache (classes et variable CSS sur le root).
 
+### 15.8.3 sexies — Contrôle par article et page de réglages (2.6.0)
+
+1. **Bloc « Barre d'actualités » sur l'écran d'édition** (articles et pages), deux cases indépendantes : *Ne jamais lister cet article dans la barre* (articles seuls) et *Ne jamais afficher la barre sur cette page* (tout type public). Métadonnées `_hprnb_exclude_item` et `_hprnb_hide_bar`, nonce dédié, `edit_post`, autosaves et révisions ignorées, sauvegarde sans le bloc sans effet, nettoyage à la désinstallation.
+2. **L'exclusion est une clause SQL** posée avant le filtre `hprnb_query_args` : la barre se remplit à nouveau au lieu de rétrécir sous `max_items`. Les deux drapeaux font tourner l'époque, aucun n'entre dans la clé de cache.
+3. **La carte « Découvrir » honore `mobile_lines`**, plafond propre de 3 lignes. 116 px sur trois lignes à 16 px, 118 px avec l'image la plus large — sous le plafond de 120 px. L'aperçu admin applique la même borne.
+4. **Page de réglages en six onglets** nommés d'après la question posée : Contenu, Où, Apparition et repli, Ordinateur et mobile, Couleurs, Avancé. Un seul endroit décide des types de pages ; l'interrupteur de repli est un interrupteur ; chaque carte qui le mérite porte un dépliant « Cas d'usage courants ». Aucun réglage supprimé, aucun schéma modifié.
+5. **Trois correctifs trouvés par inspection** : la taille de police d'ordinateur était déclarée mais sur aucun onglet (donc inaccessible, et réinitialisée à chaque enregistrement) ; l'animation d'entrée empruntait la transition du repli, désactivé par défaut sur ordinateur ; `prefers-reduced-motion` ne couvrait pas la barre d'ordinateur.
+
 ---
 
 # ANNEXE C — CONSIGNE FINALE À CLAUDE CODE

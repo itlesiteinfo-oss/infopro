@@ -2,6 +2,33 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.6.0] — 2026-09-16
+
+### Ajouté — contrôle par article
+
+- **Bloc « Barre d'actualités » sur l'écran d'édition** de chaque article et page, avec deux cases indépendantes : *Ne jamais lister cet article dans la barre* (le titre sort de la barre sur tout le site) et *Ne jamais afficher la barre sur cette page* (le lecteur de cette page ne voit aucune barre). La seconde s'applique à tout type public, la première aux articles seuls — une page n'est jamais un titre.
+- L'exclusion est une clause SQL (`meta_query` `NOT EXISTS`) posée dans `Query::args()`, pas un filtre après coup : la barre **se remplit à nouveau** au lieu de rétrécir sous `max_items`.
+- Les deux drapeaux font tourner l'époque de cache (`Invalidation::on_post_meta()` n'écoutait que `_thumbnail_id`), donc aucun transient périmé ne ressert un titre exclu. Ils n'entrent **pas** dans la clé de cache : un seul payload continue de servir tout le site.
+- Le shortcode et la réservation de hauteur respectent la même exclusion : une barre posée à la main ne contourne pas le choix de l'auteur.
+- Sécurité : nonce dédié, `current_user_can( 'edit_post' )`, sauvegardes automatiques et révisions ignorées, valeur assainie. Une sauvegarde sans le bloc (édition rapide, édition groupée, client REST) laisse les drapeaux intacts. `uninstall.php` nettoie les deux clés, derrière la même option d'effacement.
+
+### Corrigé
+
+- **La carte « Découvrir » ignorait `mobile_lines`.** Elle était figée à deux lignes par une constante PHP, alors que tous les autres designs mobiles honoraient le réglage : choisir 3 lignes ne changeait rien. La carte suit désormais le profil, avec un plafond propre à elle de **3 lignes** (une quatrième n'est plus une carte). Hauteurs réelles à 16 px : 99 px sur deux lignes, **116 px sur trois** (118 px avec l'image la plus large) — toujours sous le plafond de 120 px. L'aperçu admin, qui recopiait la constante en JavaScript, suit la même règle.
+- **Le réglage « Taille de police » de l'ordinateur était inaccessible.** Déclaré comme champ mais absent de toute carte, il tombait dans le panneau de secours « Autres » — que le script d'onglets masque en permanence. Il vivait donc hors de l'interface, et comme un champ absent du formulaire est réinitialisé à sa valeur par défaut à l'enregistrement suivant, il ne pouvait pas être modifié du tout. Il est maintenant sur l'onglet Ordinateur et mobile, et un test interdit désormais qu'un réglage quitte la page.
+- **L'animation d'entrée était empruntée à l'interrupteur de repli.** Avec `reveal_mode` différent de `immediate` et le repli désactivé — qui est le défaut sur ordinateur — la barre surgissait d'un coup au lieu de glisser. L'entrée porte sa propre classe `hprnb-root--reveal` et sa propre transition, sur les deux profils.
+- **`prefers-reduced-motion` ne couvrait pas la barre d'ordinateur** : `.hprnb-root--d-collapse .hprnb-bar` (0,2,0) l'emportait sur la remise à zéro `.hprnb-bar` (0,1,0), si bien qu'un visiteur ayant demandé moins d'animation en avait quand même. Toutes les variantes sont désormais nommées au même poids.
+
+### Modifié — page de réglages réorganisée
+
+- **Six onglets nommés d'après la question posée** au lieu de cinq nommés d'après l'implémentation : Contenu, **Où**, **Apparition et repli**, Ordinateur et mobile, Couleurs, Avancé. Les deux cartes géantes de l'onglet Affichage (25 et 33 réglages mêlant présentation, défilement, repli, types de pages et emplacement) sont découpées en cartes qui ne traitent qu'un sujet.
+- **Les types de pages ont un seul endroit.** Le même choix était exprimable à trois endroits — la portée globale dans Avancé, plus deux listes « Types de pages » enfouies aux positions 19/25 et 30/33 des cartes géantes. La portée globale est maintenant la carte d'ouverture de l'onglet Où, les deux listes par appareil sont présentées dessous comme un affinage facultatif, et les neuf cases de la portée se grisent tant que la portée ne les utilise pas (elles restaient actives et pleinement cochées alors qu'elles ne servaient à rien).
+- **L'interrupteur de repli est un interrupteur.** `desktop_hide_on_scroll` / `mobile_hide_on_scroll` s'appelaient « Replier au défilement » — un mode parmi trois, alors que c'est le maître : décoché, `collapse_mode` et `collapse_after` sont totalement inertes, « Toujours repliée » comprise. Ils s'appellent désormais **« Replier la barre »** et sont l'interrupteur d'en-tête de leur propre carte.
+- Les deux libellés **identiques** « Quand elle se replie » portent leur appareil ; « Seuil » devient « Seuil d'apparition » et ne s'active plus que pour les modes qui l'emploient (nouvelle dépendance `clé:a|b`) ; « Identifiants exclus » devient *Ne jamais lister ces articles dans la barre* et *Ne jamais afficher la barre sur ces pages*, qui faisaient l'inverse l'un de l'autre à un mot près.
+- **Cas d'usage expliqués** : chaque carte qui le mérite porte un dépliant « Cas d'usage courants » — barre dernière minute, une seule rubrique, articles seuls, partout sauf l'accueil, apparition immédiate ou intelligente, trois lignes de titre. Ce sont des explications, jamais des champs.
+- Le code mort part avec : `Settings_Page::sections()` n'était jamais appelée.
+- Aucun réglage n'est supprimé, aucun schéma n'est modifié : les 117 clés sont intactes et une installation existante retrouve exactement ses valeurs, simplement à des endroits qui portent enfin leur nom.
+
 ## [2.5.0] — 2026-09-16
 
 ### Corrigé

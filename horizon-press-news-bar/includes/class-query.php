@@ -54,6 +54,15 @@ final class Query {
 			}
 		}
 
+		// Per-post opt-out (the "News Bar" box on the edit screen). NOT EXISTS keeps every article
+		// that was never flagged, so the clause costs one LEFT JOIN and never shortens the bar.
+		$args['meta_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one indexed NOT EXISTS on a capped query.
+			array(
+				'key'     => Settings::META_EXCLUDE,
+				'compare' => 'NOT EXISTS',
+			),
+		);
+
 		/**
 		 * Filters the WP_Query arguments used to select the bar items.
 		 *

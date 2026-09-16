@@ -53,7 +53,7 @@
 	var CARD_LINE = 1.24;
 	var CARD_LABEL = 20;
 	var CARD_ROW = 6;
-	var CARD_LINES = 2;
+	var CARD_LINES_MAX = 3;
 	var CARD_FLOAT = 8;
 	var reinitTimer = null;
 
@@ -230,9 +230,10 @@
 		var line = Math.round( ( profile.fontSize + CARD_FONT_PLUS ) * CARD_LINE );
 		var thumb = Math.max( 72, Math.min( 120, parseInt( valueOf( 'mobile_card_thumb' ), 10 ) || 96 ) );
 		var thumbH = Math.round( thumb * CARD_RATIO );
-		var text = CARD_LABEL + CARD_ROW + CARD_LINES * line;
+		var lines = Math.max( 1, Math.min( CARD_LINES_MAX, profile.lines ) );
+		var text = CARD_LABEL + CARD_ROW + lines * line;
 		var height = 2 * CARD_PAD + Math.max( thumbH, text );
-		return { line: line, lines: CARD_LINES, thumb: thumb, thumbH: thumbH, height: height, pad: CARD_PAD, peek: CARD_PAD + line + PEEK_EXTRA };
+		return { line: line, lines: lines, thumb: thumb, thumbH: thumbH, height: height, pad: CARD_PAD, peek: CARD_PAD + line + PEEK_EXTRA };
 	}
 
 	function applyVisual() {
@@ -388,7 +389,7 @@
 			var spec = row.getAttribute( 'data-hprnb-depends' ).split( ':' );
 			var master = form.querySelector( '[name="hprnb_settings[' + spec[ 0 ] + ']"]' );
 			var active = spec.length > 1
-				? valueOf( spec[ 0 ] ) === spec[ 1 ]
+				? spec[ 1 ].split( '|' ).indexOf( valueOf( spec[ 0 ] ) ) !== -1
 				: ( ! master || master.type !== 'checkbox' || master.checked );
 			row.classList.toggle( 'hprnb-row--inactive', ! active );
 			Array.prototype.forEach.call( row.querySelectorAll( 'input, select' ), function ( input ) {
