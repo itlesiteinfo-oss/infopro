@@ -2,6 +2,41 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.5.0] — 2026-09-16
+
+### Corrigé
+
+- **Aucun séparateur derrière un titre unique.** `separator_after_last` existe pour que la jonction dernier → premier du défilement continu ressemble aux autres ; avec un seul article il n'y a pas de jonction, et la puce restait. Deux garde-fous indépendants, tous deux purement CSS : `:only-child` (réévalué dans chaque `<ul>`, donc valable aussi pour le clone du marquee) et `[data-hprnb-count="1"]` sur la racine. Statique, marquee, rotation, manuel, LTR et RTL. À partir de deux articles, le comportement des séparateurs est strictement inchangé.
+- **Le rafraîchissement hybride falsifiait le nombre d'articles** : la copie en `sessionStorage` enregistrait `1` au lieu du compte réel, si bien qu'une barre rejouée depuis cette copie aurait perdu tous ses séparateurs. Elle enregistre désormais le vrai nombre.
+- `mobile_layout` entre dans la clé de cache : le design « Découvrir » décide de la présence de l'image dans le markup mis en cache.
+
+### Modifié — carte mobile « Découvrir »
+
+- **Bouton Fermer à l'intérieur de la carte**, dans son coin supérieur de fin (`inset-inline-end`, donc à gauche en RTL) : l'onglet extérieur au-dessus du bandeau disparaît. Fond très légèrement éclairci, rayon de 9 px, cible tactile de 44 × 44 px obtenue par un pseudo-élément qui ne déborde que vers l'extérieur, jamais sur le titre. Le clic ne suit jamais le lien de l'article.
+- **Carte flottante** : 8 px de marge latérale et basse, coins de 12 px, ombre discrète, zone sûre iOS appliquée **une seule fois** (`inset-block-end` sur la carte, `padding-block-end: 0`). Le nouveau jeton `--hprnb-m-gap` ajoute cet écart à l'espace réservé et à `--hprnb-offset`.
+- **Nettement plus compacte** : 99 px avec les valeurs par défaut (94 à 118 px sur toute la plage), contre 152 px en 2.4.1. Image de 96 × 75 px dans un cadre 5:4 (`mobile_card_thumb` : défaut 96, plage 72–120), réduite à 72 px sous 360 px de large. Titre de 18 px en graisse 700, interligne 1,24, **deux lignes au maximum**.
+- La colonne des boutons est réservée par défaut dans la colonne de texte et rendue au titre quand il n'y a aucun bouton : perdre `:has()` coûte un peu de largeur, jamais la garantie.
+- Nouvelle valeur `appear` pour `mobile_label_pulse`, **désormais la valeur par défaut** : trois battements à l'arrivée puis plus rien, au lieu d'une pulsation permanente. `always`, `collapsed` et `never` restent. Une installation existante conserve son réglage.
+- Le liseré d'accent est composé avec l'ombre de la carte au lieu d'être écrasé par elle ; en paysage la carte passe à une ligne avec une image à la hauteur de cette ligne.
+
+### Ajouté — apparition intelligente
+
+- **Nouveau mode `smart`** dans « Moment d'apparition de la barre », à côté de `immediate`, `scroll`, `percent` et `end`, tous inchangés. C'est une **branche de `setupReveal()`**, pas un second moteur : un seul point de décision, un seul déclenchement par page.
+- Il mesure **le corps de l'article**, pas la page : chaîne de sélecteurs (`.entry-content`, `.post-content`, `.article-content`, `.wp-block-post-content`, `[itemprop="articleBody"]`…) avec un réglage `smart_selector` facultatif, et un conteneur n'est retenu que s'il contient de la prose.
+- Trois signaux, le premier venu l'emporte : **fin d'article** (sentinel de 1 px observé par `IntersectionObserver`), **remontée intentionnelle** (part lue + temps de lecture actif + pixels remontés cumulés, remis à zéro dès qu'on repart vers le bas, insensible au rebond iOS), **lecteur engagé** (part lue + temps de lecture actif, désactivé sur un article de moins d'une fois et demie la hauteur d'écran, où seule la fin compte).
+- Le temps de lecture est **actif** : suspendu quand l'onglet n'est pas visible et après une minute sans la moindre activité.
+- Dix réglages numériques (cinq par profil) avec les valeurs par défaut demandées, plus le sélecteur. **Aucune installation existante ne passe en `smart` toute seule.**
+- Performance : un seul écouteur de défilement passif fondu dans un `requestAnimationFrame`, la géométrie mesurée à l'initialisation, au redimensionnement et par un `ResizeObserver`, jamais dans le gestionnaire de défilement ; un battement d'une seconde, arrêté dès le déclenchement.
+
+### Ajouté — mesure
+
+- Trois évènements non bloquants poussés sur `window.dataLayer` **et** émis sur `document` (`hprnb:hprnb_impression`…) : `hprnb_impression`, `hprnb_click`, `hprnb_close`, avec `trigger_reason` (`article_end`, `scroll_up_intent`, `engaged_reader`, `legacy_immediate`, `legacy_scroll`, `legacy_percent`, `legacy_end`), `device`, `current_article_id`, `recommended_article_id`, `items`, et pour le mode intelligent `article_progress`, `active_reading_time` et `article_found`. Aucun appel réseau, aucune dépendance : sans `dataLayer` la barre s'affiche exactement pareil.
+- La racine porte `data-hprnb-post` et chaque article `data-hprnb-id`.
+
+### Modifié
+
+- Budgets minifiés relevés : CSS 36 Ko, script de la barre 20 Ko.
+
 ## [2.4.2] — 2026-09-15
 
 ### Modifié — design « Découvrir »

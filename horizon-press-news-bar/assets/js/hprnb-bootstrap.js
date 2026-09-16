@@ -91,6 +91,8 @@
 			if (mobileHeight) {
 				document.body.style.setProperty('--hprnb-m-height', mobileHeight);
 			}
+			var gap = root.style.getPropertyValue('--hprnb-m-gap');
+			document.body.style.setProperty('--hprnb-m-gap', gap || '0px');
 			var peek = root.style.getPropertyValue('--hprnb-peek');
 			if (peek) {
 				document.body.style.setProperty('--hprnb-peek', peek);
@@ -138,6 +140,7 @@
 				root.innerHTML = '';
 				root.hidden = true;
 				root.dataset.hprnbEmpty = '1';
+				root.dataset.hprnbCount = '0';
 				document.body.classList.remove('hprnb-reserve');
 				return;
 			}
@@ -145,6 +148,7 @@
 			root.innerHTML = p.html;
 			root.hidden = false;
 			root.dataset.hprnbEmpty = '0';
+			root.dataset.hprnbCount = String(p.count);
 			root.dataset.hprnbGenerated = String(p.generated_at);
 			ensureLayout();
 			ensureJs();
@@ -155,7 +159,7 @@
 			ensureLayout();
 			var stored = readSession();
 			if (!stored || stored.generated_at < ssrGen) {
-				saveSession({ generated_at: ssrGen, count: hasAside ? 1 : 0, html: root.innerHTML });
+				saveSession({ generated_at: ssrGen, count: hasAside ? (+root.dataset.hprnbCount || 1) : 0, html: root.innerHTML });
 			}
 			return;
 		}

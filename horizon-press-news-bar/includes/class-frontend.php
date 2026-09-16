@@ -137,7 +137,16 @@ final class Frontend {
 	 */
 	public static function enqueue_bar_assets( array $settings ): void {
 		Assets::enqueue_style();
-		wp_add_inline_style( 'hprnb-bar', sprintf( 'body.hprnb-reserve{--hprnb-height:%1$dpx;--hprnb-m-height:%2$dpx;--hprnb-peek:%3$dpx}', Renderer::profile_height( $settings, 'd' ), Renderer::profile_height( $settings, 'm' ), Renderer::peek_height( $settings ) ) );
+		wp_add_inline_style(
+			'hprnb-bar',
+			sprintf(
+				'body.hprnb-reserve{--hprnb-height:%1$dpx;--hprnb-m-height:%2$dpx;--hprnb-peek:%3$dpx;--hprnb-m-gap:%4$dpx}',
+				Renderer::profile_height( $settings, 'd' ),
+				Renderer::profile_height( $settings, 'm' ),
+				Renderer::peek_height( $settings ),
+				Renderer::mobile_gap( $settings )
+			)
+		);
 		if ( Renderer::needs_interactive_js( $settings ) ) {
 			Assets::enqueue_bar_script();
 		}

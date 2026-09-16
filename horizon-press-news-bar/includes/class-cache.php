@@ -28,7 +28,9 @@ final class Cache {
 	/**
 	 * Settings that change the selection, the order, the markup or the label.
 	 * Colours, sizes, z-index, the separator settings and every mobile setting except
-	 * mobile_ticker_mode are CSS variables / classes / data on the root and never change the payload.
+	 * mobile_ticker_mode and mobile_layout are CSS variables / classes / data on the root and never
+	 * change the payload. Those two do: the first decides which buttons the markup carries, the
+	 * second whether the "discover" design pulls the featured image in.
 	 */
 	const PAYLOAD_KEYS = array(
 		'label_text',
@@ -46,6 +48,8 @@ final class Cache {
 		'relative_time_max_hours',
 		'desktop_show_thumbnail',
 		'mobile_show_thumbnail',
+		// The "discover" design always carries a picture, so the layout decides the cached markup.
+		'mobile_layout',
 		'thumbnail_size',
 		'ticker_enabled',
 		'ticker_mode',

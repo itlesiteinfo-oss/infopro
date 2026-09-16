@@ -47,10 +47,14 @@
 	var FLOW_LINE = 1.625;
 	var FLOW_PAD = 6;
 	var PEEK_EXTRA = 2;
-	var CARD_PAD = 14;
-	var CARD_RATIO = 0.625;
+	var CARD_PAD = 12;
+	var CARD_RATIO = 0.78;
 	var CARD_FONT_PLUS = 2;
-	var CARD_LINE = 1.5;
+	var CARD_LINE = 1.24;
+	var CARD_LABEL = 20;
+	var CARD_ROW = 6;
+	var CARD_LINES = 2;
+	var CARD_FLOAT = 8;
 	var reinitTimer = null;
 
 	/** Restarts the interactive script on the preview root (rotation, progress, marquee…). */
@@ -224,12 +228,11 @@
 
 	function cardMetrics( profile ) {
 		var line = Math.round( ( profile.fontSize + CARD_FONT_PLUS ) * CARD_LINE );
-		var thumb = Math.max( 80, Math.min( 220, parseInt( valueOf( 'mobile_card_thumb' ), 10 ) || 140 ) );
+		var thumb = Math.max( 72, Math.min( 120, parseInt( valueOf( 'mobile_card_thumb' ), 10 ) || 96 ) );
 		var thumbH = Math.round( thumb * CARD_RATIO );
-		var lines = Math.max( 1, Math.floor( ( thumbH - line ) / line ) );
-		var body = Math.max( thumbH, line + lines * line );
-		var height = Math.max( parseInt( valueOf( 'mobile_bar_height' ), 10 ) || 76, 2 * CARD_PAD + body );
-		return { line: line, lines: lines, thumb: thumb, thumbH: thumbH, height: height, pad: CARD_PAD, peek: CARD_PAD + line + PEEK_EXTRA };
+		var text = CARD_LABEL + CARD_ROW + CARD_LINES * line;
+		var height = 2 * CARD_PAD + Math.max( thumbH, text );
+		return { line: line, lines: CARD_LINES, thumb: thumb, thumbH: thumbH, height: height, pad: CARD_PAD, peek: CARD_PAD + line + PEEK_EXTRA };
 	}
 
 	function applyVisual() {
@@ -271,8 +274,8 @@
 		previewRoot.classList.toggle( 'hprnb-root--m-ctrl-col', stacked && ! outside );
 		previewRoot.classList.toggle( 'hprnb-root--m-peek-thumb', mobileThumb && valueOf( 'mobile_peek_thumbnail' ) === '1' );
 		previewRoot.classList.toggle( 'hprnb-root--m-label-compact', mobileThumb && valueOf( 'mobile_label_compact' ) === '1' );
-		[ 'always', 'collapsed', 'never' ].forEach( function ( mode ) {
-			previewRoot.classList.toggle( 'hprnb-root--m-pulse-' + mode, ( valueOf( 'mobile_label_pulse' ) || 'always' ) === mode );
+		[ 'always', 'appear', 'collapsed', 'never' ].forEach( function ( mode ) {
+			previewRoot.classList.toggle( 'hprnb-root--m-pulse-' + mode, ( valueOf( 'mobile_label_pulse' ) || 'appear' ) === mode );
 		} );
 		[ 'd', 'm' ].forEach( function ( p ) {
 			var profile = computeProfile( p );
@@ -307,6 +310,7 @@
 				previewRoot.style.setProperty( '--hprnb-m-card-thumb', card.thumb + 'px' );
 				previewRoot.style.setProperty( '--hprnb-m-card-thumb-h', card.thumbH + 'px' );
 				previewRoot.style.setProperty( '--hprnb-m-card-lines', String( card.lines ) );
+				previewRoot.style.setProperty( '--hprnb-m-gap', CARD_FLOAT + 'px' );
 			} else {
 				height = profile.lines * Math.ceil( profile.fontSize * LINE_HEIGHT ) + BLOCK_PAD + ( profile.layout === 'stacked' ? STRIP + ROW_GAP : 0 );
 				if ( profile.thumb ) {

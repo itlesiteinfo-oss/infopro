@@ -60,509 +60,575 @@ final class Settings {
 		$contexts_default = array_fill_keys( self::CONTEXT_KEYS, true );
 
 		$schema = array(
-			'enabled'                  => array(
+			'enabled'                     => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'label_text'               => array(
+			'label_text'                  => array(
 				'type'        => 'text',
 				'default'     => 'EN CONTINU',
 				'max_length'  => 120,
 				'allow_empty' => true,
 			),
-			'label_position'           => array(
+			'label_position'              => array(
 				'type'    => 'enum',
 				'default' => 'start',
 				'options' => array( 'start', 'end' ),
 			),
-			'window_value'             => array(
+			'window_value'                => array(
 				'type'    => 'int',
 				'default' => 24,
 				'min'     => 1,
 				'max'     => 1440,
 			),
-			'window_unit'              => array(
+			'window_unit'                 => array(
 				'type'    => 'enum',
 				'default' => 'hours',
 				'options' => array( 'minutes', 'hours', 'days' ),
 			),
-			'categories_include'       => array(
+			'categories_include'          => array(
 				'type'    => 'id_list',
 				'default' => array(),
 			),
-			'categories_exclude'       => array(
+			'categories_exclude'          => array(
 				'type'    => 'id_list',
 				'default' => array(),
 			),
-			'tags_include'             => array(
+			'tags_include'                => array(
 				'type'    => 'id_list',
 				'default' => array(),
 			),
-			'content_exclude_post_ids' => array(
+			'content_exclude_post_ids'    => array(
 				'type'    => 'id_list',
 				'default' => array(),
 			),
-			'max_items'                => array(
+			'max_items'                   => array(
 				'type'    => 'int',
 				'default' => 10,
 				'min'     => 1,
 				'max'     => 30,
 			),
-			'orderby'                  => array(
+			'orderby'                     => array(
 				'type'    => 'enum',
 				'default' => 'date_desc',
 				'options' => array( 'date_desc', 'date_asc' ),
 			),
-			'bg_color'                 => array(
+			'bg_color'                    => array(
 				'type'    => 'color',
 				'default' => '#1B1C20',
 			),
-			'text_color'               => array(
+			'text_color'                  => array(
 				'type'    => 'color',
 				'default' => '#F5F5F5',
 			),
-			'label_bg_color'           => array(
+			'label_bg_color'              => array(
 				'type'    => 'color',
 				'default' => '#CE3029',
 			),
-			'label_text_color'         => array(
+			'label_text_color'            => array(
 				'type'    => 'color',
 				'default' => '#FFFFFF',
 			),
-			'link_hover_color'         => array(
+			'link_hover_color'            => array(
 				'type'    => 'color',
 				'default' => '#FFFFFF',
 			),
-			'accent_color'             => array(
+			'accent_color'                => array(
 				'type'    => 'color',
 				'default' => '#CE3029',
 			),
-			'font_size'                => array(
+			'font_size'                   => array(
 				'type'    => 'int',
 				'default' => 15,
 				'min'     => 10,
 				'max'     => 24,
 			),
-			'bar_height'               => array(
+			'bar_height'                  => array(
 				'type'    => 'int',
 				'default' => 40,
 				'min'     => 32,
 				'max'     => 56,
 			),
-			'align_container'          => array(
+			'align_container'             => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'max_width'                => array(
+			'max_width'                   => array(
 				'type'    => 'int',
 				'default' => 1230,
 				'min'     => 960,
 				'max'     => 1920,
 			),
-			'gutter'                   => array(
+			'gutter'                      => array(
 				'type'    => 'int',
 				'default' => 15,
 				'min'     => 0,
 				'max'     => 40,
 			),
-			'z_index'                  => array(
+			'z_index'                     => array(
 				'type'    => 'int',
 				'default' => 99990,
 				'min'     => 1,
 				'max'     => 2147483647,
 			),
-			'layout_mode'              => array(
+			'layout_mode'                 => array(
 				'type'    => 'enum',
 				'default' => 'reserve',
 				'options' => array( 'reserve', 'overlay' ),
 			),
-			'show_relative_time'       => array(
+			'show_relative_time'          => array(
 				'type'    => 'bool',
 				'default' => false,
 			),
-			'relative_time_max_hours'  => array(
+			'relative_time_max_hours'     => array(
 				'type'    => 'int',
 				'default' => 48,
 				'min'     => 1,
 				'max'     => 720,
 			),
-			'thumbnail_size'           => array(
+			'thumbnail_size'              => array(
 				'type'    => 'key',
 				'default' => 'thumbnail',
 			),
-			'show_separator'           => array(
+			'show_separator'              => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'separator_char'           => array(
+			'separator_char'              => array(
 				'type'        => 'text',
 				'default'     => '•',
 				'max_length'  => 8,
 				'allow_empty' => false,
 			),
-			'separator_after_last'     => array(
+			'separator_after_last'        => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'ticker_enabled'           => array(
+			'ticker_enabled'              => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'ticker_mode'              => array(
+			'ticker_mode'                 => array(
 				'type'    => 'enum',
 				'default' => 'marquee',
 				'options' => array( 'marquee', 'rotate', 'manual' ),
 			),
-			'ticker_speed'             => array(
+			'ticker_speed'                => array(
 				'type'    => 'int',
 				'default' => 30,
 				'min'     => 10,
 				'max'     => 80,
 			),
-			'rotate_interval'          => array(
+			'rotate_interval'             => array(
 				'type'    => 'int',
 				'default' => 5000,
 				'min'     => 3000,
 				'max'     => 12000,
 			),
-			'pause_on_hover'           => array(
+			'pause_on_hover'              => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'close_button'             => array(
+			'close_button'                => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'remember_dismiss'         => array(
+			'remember_dismiss'            => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'dismiss_duration_hours'   => array(
+			'dismiss_duration_hours'      => array(
 				'type'    => 'int',
 				'default' => 24,
 				'min'     => 1,
 				'max'     => 720,
 			),
-			'reveal_mode'              => array(
+			'reveal_mode'                 => array(
 				'type'    => 'enum',
 				'default' => 'immediate',
-				'options' => array( 'immediate', 'scroll', 'percent', 'end' ),
+				'options' => array( 'immediate', 'scroll', 'percent', 'end', 'smart' ),
 			),
-			'reveal_value'             => array(
+			'reveal_value'                => array(
 				'type'    => 'int',
 				'default' => 400,
 				'min'     => 0,
 				'max'     => 4000,
 			),
-			'accent_edge'              => array(
+			'smart_selector'              => array(
+				'type'        => 'text',
+				'default'     => '',
+				'max_length'  => 200,
+				'allow_empty' => true,
+			),
+			'smart_mobile_progress'       => array(
+				'type'    => 'int',
+				'default' => 55,
+				'min'     => 1,
+				'max'     => 100,
+			),
+			'smart_mobile_time'           => array(
+				'type'    => 'int',
+				'default' => 15,
+				'min'     => 0,
+				'max'     => 120,
+			),
+			'smart_mobile_up'             => array(
+				'type'    => 'int',
+				'default' => 300,
+				'min'     => 50,
+				'max'     => 1200,
+			),
+			'smart_mobile_fallback'       => array(
+				'type'    => 'int',
+				'default' => 75,
+				'min'     => 1,
+				'max'     => 100,
+			),
+			'smart_mobile_fallback_time'  => array(
+				'type'    => 'int',
+				'default' => 25,
+				'min'     => 0,
+				'max'     => 180,
+			),
+			'smart_desktop_progress'      => array(
+				'type'    => 'int',
+				'default' => 50,
+				'min'     => 1,
+				'max'     => 100,
+			),
+			'smart_desktop_time'          => array(
+				'type'    => 'int',
+				'default' => 12,
+				'min'     => 0,
+				'max'     => 120,
+			),
+			'smart_desktop_up'            => array(
+				'type'    => 'int',
+				'default' => 350,
+				'min'     => 50,
+				'max'     => 1200,
+			),
+			'smart_desktop_fallback'      => array(
+				'type'    => 'int',
+				'default' => 65,
+				'min'     => 1,
+				'max'     => 100,
+			),
+			'smart_desktop_fallback_time' => array(
+				'type'    => 'int',
+				'default' => 20,
+				'min'     => 0,
+				'max'     => 180,
+			),
+			'accent_edge'                 => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'theme_offset'             => array(
+			'theme_offset'                => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'show_on_desktop'          => array(
+			'show_on_desktop'             => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'show_on_mobile'           => array(
+			'show_on_mobile'              => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'desktop_layout'           => array(
+			'desktop_layout'              => array(
 				'type'    => 'enum',
 				'default' => 'inline',
 				'options' => array( 'inline', 'stacked' ),
 			),
-			'desktop_label_style'      => array(
+			'desktop_label_style'         => array(
 				'type'    => 'enum',
 				'default' => 'pill',
 				'options' => array( 'strip', 'pill', 'hidden' ),
 			),
-			'desktop_label_dot'        => array(
+			'desktop_label_dot'           => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'desktop_show_counter'     => array(
+			'desktop_show_counter'        => array(
 				'type'    => 'bool',
 				'default' => false,
 			),
-			'desktop_lines'            => array(
+			'desktop_lines'               => array(
 				'type'    => 'int',
 				'default' => 1,
 				'min'     => 1,
 				'max'     => 4,
 			),
-			'desktop_show_progress'    => array(
+			'desktop_show_progress'       => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'desktop_show_thumbnail'   => array(
+			'desktop_show_thumbnail'      => array(
 				'type'    => 'bool',
 				'default' => false,
 			),
-			'desktop_thumb_position'   => array(
+			'desktop_thumb_position'      => array(
 				'type'    => 'enum',
 				'default' => 'before',
 				'options' => array( 'before', 'after' ),
 			),
-			'desktop_thumb_size'       => array(
+			'desktop_thumb_size'          => array(
 				'type'    => 'int',
 				'default' => 32,
 				'min'     => 16,
 				'max'     => 80,
 			),
-			'desktop_contexts'         => array(
+			'desktop_contexts'            => array(
 				'type'    => 'bool_map',
 				'default' => $contexts_default,
 				'keys'    => self::CONTEXT_KEYS,
 			),
-			'desktop_placement'        => array(
+			'desktop_placement'           => array(
 				'type'    => 'enum',
 				'default' => 'fixed',
 				'options' => array( 'fixed', 'inline' ),
 			),
-			'desktop_inline_anchor'    => array(
+			'desktop_inline_anchor'       => array(
 				'type'    => 'enum',
 				'default' => 'after',
 				'options' => array( 'before', 'after', 'before_end' ),
 			),
-			'desktop_inline_paragraph' => array(
+			'desktop_inline_paragraph'    => array(
 				'type'    => 'int',
 				'default' => 3,
 				'min'     => 1,
 				'max'     => 30,
 			),
-			'desktop_hide_on_scroll'   => array(
+			'desktop_hide_on_scroll'      => array(
 				'type'    => 'bool',
 				'default' => false,
 			),
-			'desktop_collapse_mode'    => array(
+			'desktop_collapse_mode'       => array(
 				'type'    => 'enum',
 				'default' => 'scroll',
 				'options' => array( 'scroll', 'threshold', 'immediate' ),
 			),
-			'desktop_collapse_after'   => array(
+			'desktop_collapse_after'      => array(
 				'type'    => 'int',
 				'default' => 120,
 				'min'     => 0,
 				'max'     => 800,
 			),
-			'mobile_layout'            => array(
+			'mobile_layout'               => array(
 				'type'    => 'enum',
 				'default' => 'flow',
 				'options' => array( 'flow', 'stacked', 'inline', 'card' ),
 			),
-			'mobile_card_thumb'        => array(
+			'mobile_card_thumb'           => array(
 				'type'    => 'int',
-				'default' => 140,
-				'min'     => 80,
-				'max'     => 220,
+				'default' => 96,
+				'min'     => 72,
+				'max'     => 120,
 			),
-			'mobile_contexts'          => array(
+			'mobile_contexts'             => array(
 				'type'    => 'bool_map',
 				'default' => $contexts_default,
 				'keys'    => self::CONTEXT_KEYS,
 			),
-			'mobile_placement'         => array(
+			'mobile_placement'            => array(
 				'type'    => 'enum',
 				'default' => 'fixed',
 				'options' => array( 'fixed', 'inline' ),
 			),
-			'mobile_inline_anchor'     => array(
+			'mobile_inline_anchor'        => array(
 				'type'    => 'enum',
 				'default' => 'after',
 				'options' => array( 'before', 'after', 'before_end' ),
 			),
-			'mobile_inline_paragraph'  => array(
+			'mobile_inline_paragraph'     => array(
 				'type'    => 'int',
 				'default' => 3,
 				'min'     => 1,
 				'max'     => 30,
 			),
-			'mobile_label_style'       => array(
+			'mobile_label_style'          => array(
 				'type'    => 'enum',
 				'default' => 'pill',
 				'options' => array( 'pill', 'strip', 'hidden' ),
 			),
-			'mobile_label_dot'         => array(
+			'mobile_label_dot'            => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'mobile_show_counter'      => array(
+			'mobile_show_counter'         => array(
 				'type'    => 'bool',
 				'default' => false,
 			),
-			'mobile_lines'             => array(
+			'mobile_lines'                => array(
 				'type'    => 'int',
 				'default' => 2,
 				'min'     => 1,
 				'max'     => 4,
 			),
-			'mobile_bar_height'        => array(
+			'mobile_bar_height'           => array(
 				'type'    => 'int',
 				'default' => 76,
 				'min'     => 64,
 				'max'     => 96,
 			),
-			'mobile_font_size'         => array(
+			'mobile_font_size'            => array(
 				'type'    => 'int',
 				'default' => 16,
 				'min'     => 12,
 				'max'     => 24,
 			),
-			'mobile_ticker_mode'       => array(
+			'mobile_ticker_mode'          => array(
 				'type'    => 'enum',
 				'default' => 'rotate',
 				'options' => array( 'inherit', 'static', 'marquee', 'rotate', 'manual' ),
 			),
-			'mobile_show_progress'     => array(
+			'mobile_show_progress'        => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'mobile_swipe'             => array(
+			'mobile_swipe'                => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'mobile_hide_on_scroll'    => array(
+			'mobile_hide_on_scroll'       => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'mobile_peek'              => array(
+			'mobile_peek'                 => array(
 				'type'    => 'enum',
 				'default' => 'headline',
 				'options' => array( 'headline', 'label' ),
 			),
-			'mobile_deep_collapse'     => array(
+			'mobile_deep_collapse'        => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'mobile_kbd_hide'          => array(
+			'mobile_kbd_hide'             => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'mobile_show_thumbnail'    => array(
+			'mobile_show_thumbnail'       => array(
 				'type'    => 'bool',
 				'default' => false,
 			),
-			'mobile_thumb_position'    => array(
+			'mobile_thumb_position'       => array(
 				'type'    => 'enum',
 				'default' => 'after',
 				'options' => array( 'before', 'after' ),
 			),
-			'mobile_thumb_size'        => array(
+			'mobile_thumb_size'           => array(
 				'type'    => 'int',
 				'default' => 48,
 				'min'     => 16,
 				'max'     => 80,
 			),
-			'mobile_collapse_mode'     => array(
+			'mobile_collapse_mode'        => array(
 				'type'    => 'enum',
 				'default' => 'scroll',
 				'options' => array( 'scroll', 'threshold', 'immediate' ),
 			),
-			'mobile_collapse_after'    => array(
+			'mobile_collapse_after'       => array(
 				'type'    => 'int',
 				'default' => 120,
 				'min'     => 0,
 				'max'     => 800,
 			),
-			'mobile_controls_place'    => array(
+			'mobile_controls_place'       => array(
 				'type'    => 'enum',
 				'default' => 'inside',
 				'options' => array( 'inside', 'outside' ),
 			),
-			'mobile_show_pause'        => array(
+			'mobile_show_pause'           => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'mobile_show_close'        => array(
+			'mobile_show_close'           => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'mobile_controls_layout'   => array(
+			'mobile_controls_layout'      => array(
 				'type'    => 'enum',
 				'default' => 'column',
 				'options' => array( 'column', 'row' ),
 			),
-			'mobile_peek_thumbnail'    => array(
+			'mobile_peek_thumbnail'       => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'mobile_label_pulse'       => array(
+			'mobile_label_pulse'          => array(
 				'type'    => 'enum',
-				'default' => 'always',
-				'options' => array( 'always', 'collapsed', 'never' ),
+				'default' => 'appear',
+				'options' => array( 'always', 'appear', 'collapsed', 'never' ),
 			),
-			'mobile_label_compact'     => array(
+			'mobile_label_compact'        => array(
 				'type'    => 'bool',
 				'default' => false,
 			),
-			'mobile_show_separator'    => array(
+			'mobile_show_separator'       => array(
 				'type'    => 'bool',
 				'default' => false,
 			),
-			'mobile_custom_colors'     => array(
+			'mobile_custom_colors'        => array(
 				'type'    => 'bool',
 				'default' => false,
 			),
-			'mobile_bg_color'          => array(
+			'mobile_bg_color'             => array(
 				'type'    => 'color',
 				'default' => '#1B1C20',
 			),
-			'mobile_text_color'        => array(
+			'mobile_text_color'           => array(
 				'type'    => 'color',
 				'default' => '#F5F5F5',
 			),
-			'mobile_accent_color'      => array(
+			'mobile_accent_color'         => array(
 				'type'    => 'color',
 				'default' => '#CE3029',
 			),
-			'mobile_label_text_color'  => array(
+			'mobile_label_text_color'     => array(
 				'type'    => 'color',
 				'default' => '#FFFFFF',
 			),
-			'display_scope'            => array(
+			'display_scope'               => array(
 				'type'    => 'enum',
 				'default' => 'everywhere',
 				'options' => array( 'everywhere', 'custom' ),
 			),
-			'contexts'                 => array(
+			'contexts'                    => array(
 				'type'    => 'bool_map',
 				'default' => $contexts_default,
 				'keys'    => self::CONTEXT_KEYS,
 			),
-			'display_exclude_ids'      => array(
+			'display_exclude_ids'         => array(
 				'type'    => 'id_list',
 				'default' => array(),
 			),
-			'render_mode'              => array(
+			'render_mode'                 => array(
 				'type'    => 'enum',
 				'default' => 'hybrid',
 				'options' => array( 'hybrid', 'php' ),
 			),
-			'cache_ttl'                => array(
+			'cache_ttl'                   => array(
 				'type'    => 'int',
 				'default' => 120,
 				'min'     => 30,
 				'max'     => 600,
 			),
-			'stale_threshold'          => array(
+			'stale_threshold'             => array(
 				'type'    => 'int',
 				'default' => 180,
 				'min'     => 30,
 				'max'     => 3600,
 			),
-			'auto_display'             => array(
+			'auto_display'                => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'shortcode_enabled'        => array(
+			'shortcode_enabled'           => array(
 				'type'    => 'bool',
 				'default' => true,
 			),
-			'uninstall_delete_data'    => array(
+			'uninstall_delete_data'       => array(
 				'type'    => 'bool',
 				'default' => false,
 			),

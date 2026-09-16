@@ -689,17 +689,154 @@
 	}
 
 	/* ------------------------------------------------------------------ */
-	/* Reveal: the bar may wait before showing up (settings reveal_mode)   */
+	/* Analytics: three events on dataLayer and on `document`, never       */
+	/* blocking and never required — the bar shows with or without them.   */
 	/* ------------------------------------------------------------------ */
 
-	function setupReveal( state, root, contract ) {
+	function createAnalytics( root, aside, mobile ) {
+		var sent = {};
+
+		function recommended() {
+			var item = aside.querySelector( '.hprnb-bar__item:not([hidden])' );
+			return item ? ( parseInt( item.getAttribute( 'data-hprnb-id' ), 10 ) || 0 ) : 0;
+		}
+
+		function push( name, extra ) {
+			var detail = {
+				device: mobile ? 'mobile' : 'desktop',
+				current_article_id: parseInt( root.getAttribute( 'data-hprnb-post' ), 10 ) || 0,
+				recommended_article_id: recommended(),
+				items: parseInt( root.getAttribute( 'data-hprnb-count' ), 10 ) || 0
+			};
+			var key;
+			for ( key in extra ) {
+				if ( Object.prototype.hasOwnProperty.call( extra, key ) ) {
+					detail[ key ] = extra[ key ];
+				}
+			}
+			try {
+				window.dataLayer = window.dataLayer || [];
+				var row = { event: name };
+				for ( key in detail ) {
+					if ( Object.prototype.hasOwnProperty.call( detail, key ) ) {
+						row[ key ] = detail[ key ];
+					}
+				}
+				window.dataLayer.push( row );
+			} catch ( e ) {
+				// No dataLayer, or a frozen one: the document event below still fires.
+			}
+			try {
+				document.dispatchEvent( new CustomEvent( 'hprnb:' + name, { detail: detail } ) );
+			} catch ( e ) {
+				// Engines without CustomEvent lose the event, never the bar.
+			}
+		}
+
+		return {
+			/** The bar became visible. `state` carries the smart measurements when there are any. */
+			impression: function ( reason, extra ) {
+				if ( sent.impression ) {
+					return;
+				}
+				sent.impression = reason;
+				push( 'hprnb_impression', merge( { trigger_reason: reason }, extra ) );
+			},
+			click: function () {
+				push( 'hprnb_click', { trigger_reason: sent.impression || 'unknown' } );
+			},
+			close: function () {
+				push( 'hprnb_close', { trigger_reason: sent.impression || 'unknown' } );
+			}
+		};
+	}
+
+	function merge( base, extra ) {
+		var key;
+		for ( key in extra ) {
+			if ( Object.prototype.hasOwnProperty.call( extra, key ) ) {
+				base[ key ] = extra[ key ];
+			}
+		}
+		return base;
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Reveal: the bar may wait before showing up (settings reveal_mode)   */
+	/*   immediate | scroll | percent | end  — the page, unchanged;        */
+	/*   smart — the article body, its end, a real scroll back up, or a    */
+	/*   reader who got deep into it. One decision point, one trigger.     */
+	/* ------------------------------------------------------------------ */
+
+	/** Editorial body of the page: the configured selector first, then the usual suspects. */
+	var ARTICLE_SELECTORS = [
+		'.entry-content',
+		'.post-content',
+		'.article-content',
+		'.wp-block-post-content',
+		'[itemprop="articleBody"]',
+		'article .content',
+		'main article'
+	];
+
+	function findArticle( selector ) {
+		var list = selector ? [ selector ].concat( ARTICLE_SELECTORS ) : ARTICLE_SELECTORS;
+		for ( var i = 0; i < list.length; i++ ) {
+			var el;
+			try {
+				el = document.querySelector( list[ i ] );
+			} catch ( e ) {
+				continue; // A selector typed in the settings can be invalid: skip it.
+			}
+			// Prose with a height, so a two-paragraph news item still counts while an empty wrapper
+			// or a bare widget does not.
+			if ( el && el.querySelector( 'p' ) && el.getBoundingClientRect().height > 40 ) {
+				return el;
+			}
+		}
+		return null;
+	}
+
+	function setupReveal( state, root, contract, mobile, analytics ) {
 		var cfg = parseJson( root.getAttribute( 'data-hprnb-reveal' ) );
 		var mode = cfg && cfg.mode ? cfg.mode : 'immediate';
-		if ( 'immediate' === mode || ! root.classList.contains( 'hprnb-root--pending' ) ) {
+		var pending = root.classList.contains( 'hprnb-root--pending' );
+		if ( 'immediate' === mode || ! pending ) {
+			if ( analytics ) {
+				analytics.impression( 'legacy_immediate' );
+			}
 			return;
 		}
 		var body = document.body;
 		var value = typeof cfg.value === 'number' ? cfg.value : 400;
+		var done = false;
+
+		/** The one place that decides the bar is now visible. Fires at most once. */
+		function reveal( reason, extra ) {
+			if ( done ) {
+				return;
+			}
+			done = true;
+			root.classList.remove( 'hprnb-root--pending' );
+			body.classList.remove( 'hprnb-pending' );
+			if ( contract ) {
+				contract.emit();
+			}
+			if ( analytics ) {
+				analytics.impression( reason, extra );
+			}
+		}
+
+		state.add( function () {
+			// destroy() must not leave a half-revealed bar behind.
+			root.classList.remove( 'hprnb-root--pending' );
+			body.classList.remove( 'hprnb-pending' );
+		} );
+
+		if ( 'smart' === mode ) {
+			setupSmart( state, cfg, mobile, reveal );
+			return;
+		}
 
 		function reached() {
 			var y = window.scrollY;
@@ -710,22 +847,8 @@
 			return ( y / scrollable ) * 100 >= value;
 		}
 
-		function reveal() {
-			root.classList.remove( 'hprnb-root--pending' );
-			body.classList.remove( 'hprnb-pending' );
-			if ( contract ) {
-				contract.emit();
-			}
-		}
-
-		state.add( function () {
-			// destroy() must not leave a half-revealed bar behind.
-			root.classList.remove( 'hprnb-root--pending' );
-			body.classList.remove( 'hprnb-pending' );
-		} );
-
 		if ( reached() ) {
-			reveal();
+			reveal( 'legacy_' + mode );
 			return;
 		}
 		var ticking = false;
@@ -737,12 +860,200 @@
 			window.requestAnimationFrame( function () {
 				ticking = false;
 				if ( reached() ) {
-					reveal();
+					reveal( 'legacy_' + mode );
 					window.removeEventListener( 'scroll', onScroll );
 				}
 			} );
 		}
 		state.on( window, 'scroll', onScroll, { passive: true } );
+	}
+
+	/**
+	 * Smart reveal. Three signals, in order of how much they mean: the reader reached the end of
+	 * the article body, scrolled back up in earnest after reading a good share of it, or simply got
+	 * deep into it. Whichever comes first wins; `reveal()` guarantees the rest are ignored.
+	 *
+	 * @param {Object}   state  Teardown registry of the bar.
+	 * @param {Object}   cfg    Parsed data-hprnb-reveal.
+	 * @param {boolean}  mobile Whether the mobile profile is the active one.
+	 * @param {Function} reveal The single decision point.
+	 */
+	function setupSmart( state, cfg, mobile, reveal ) {
+		var smart = cfg.smart || {};
+		var tune = smart[ mobile ? 'm' : 'd' ] || {};
+		var minProgress = ( typeof tune.p === 'number' ? tune.p : 55 ) / 100;
+		var minTime = ( typeof tune.t === 'number' ? tune.t : 15 ) * 1000;
+		var minUp = typeof tune.u === 'number' ? tune.u : 300;
+		var fallbackProgress = ( typeof tune.fp === 'number' ? tune.fp : 75 ) / 100;
+		var fallbackTime = ( typeof tune.ft === 'number' ? tune.ft : 25 ) * 1000;
+
+		var article = findArticle( smart.sel || '' );
+		// Geometry is read here and on resize only: never inside the scroll handler.
+		var top = 0;
+		var height = 0;
+		var short = false;
+
+		function measure() {
+			if ( article ) {
+				var rect = article.getBoundingClientRect();
+				top = rect.top + window.scrollY;
+				height = rect.height;
+			} else {
+				top = 0;
+				height = Math.max( 1, document.documentElement.scrollHeight );
+			}
+			// A piece barely longer than the screen: its end is the only honest signal.
+			short = height < window.innerHeight * 1.5;
+		}
+		measure();
+
+		/** How much of the article body has gone past the bottom of the screen, 0 → 1. */
+		function progress() {
+			var read = window.scrollY + window.innerHeight - top;
+			return Math.max( 0, Math.min( 1, read / Math.max( 1, height ) ) );
+		}
+
+		// Active reading time: paused with the tab, and after a long spell of no activity at all.
+		var active = 0;
+		var since = Date.now();
+		var lastMove = Date.now();
+		function beat() {
+			var now = Date.now();
+			if ( 'hidden' !== document.visibilityState && now - lastMove < 60000 ) {
+				active += now - since;
+			}
+			since = now;
+		}
+
+		var lastY = window.scrollY;
+		var up = 0;
+		var reason = null;
+
+		function payload( why ) {
+			return {
+				trigger_reason: why,
+				article_progress: Math.round( progress() * 100 ),
+				active_reading_time: Math.round( active / 1000 ),
+				article_found: !! article
+			};
+		}
+
+		function fire( why ) {
+			reason = why;
+			reveal( why, payload( why ) );
+			stop();
+		}
+
+		/** Called from the scroll handler and from the slow beat; never touches the layout. */
+		function evaluate() {
+			beat();
+			if ( reason ) {
+				return;
+			}
+			var p = progress();
+			if ( p >= minProgress && active >= minTime && up >= minUp ) {
+				fire( 'scroll_up_intent' );
+				return;
+			}
+			if ( ! short && p >= fallbackProgress && active >= fallbackTime ) {
+				fire( 'engaged_reader' );
+			}
+		}
+
+		var ticking = false;
+		function onScroll() {
+			var y = window.scrollY;
+			var max = document.documentElement.scrollHeight - window.innerHeight;
+			// Rubber banding at either end is not reading.
+			if ( y >= 0 && y <= max ) {
+				var delta = lastY - y;
+				if ( delta >= 2 ) {
+					up += delta;
+				} else if ( delta <= -40 ) {
+					up = 0; // Off down the page again: the intent is gone.
+				}
+			}
+			lastY = y;
+			lastMove = Date.now();
+			if ( ticking ) {
+				return;
+			}
+			ticking = true;
+			window.requestAnimationFrame( function () {
+				ticking = false;
+				evaluate();
+			} );
+		}
+
+		// The end of the article body is the signal worth waiting for.
+		var observer = null;
+		var sentinel = null;
+		if ( article && typeof window.IntersectionObserver === 'function' ) {
+			sentinel = document.createElement( 'div' );
+			sentinel.className = 'hprnb-sentinel';
+			sentinel.setAttribute( 'aria-hidden', 'true' );
+			// One real pixel: a zero-height box never produces a non-empty intersection rectangle.
+			sentinel.style.cssText = 'display:block;block-size:1px;inline-size:100%;margin:0;padding:0;pointer-events:none';
+			article.appendChild( sentinel );
+			observer = new window.IntersectionObserver( function ( entries ) {
+				for ( var i = 0; i < entries.length; i++ ) {
+					if ( entries[ i ].isIntersecting ) {
+						beat();
+						fire( 'article_end' );
+						return;
+					}
+				}
+			} );
+			observer.observe( sentinel );
+		}
+
+		var timer = window.setInterval( function () {
+			if ( 'hidden' === document.visibilityState ) {
+				beat();
+				return;
+			}
+			evaluate();
+		}, 1000 );
+
+		function stop() {
+			if ( timer ) {
+				window.clearInterval( timer );
+				timer = null;
+			}
+			if ( observer ) {
+				observer.disconnect();
+				observer = null;
+			}
+			if ( sentinel && sentinel.parentNode ) {
+				sentinel.parentNode.removeChild( sentinel );
+				sentinel = null;
+			}
+		}
+
+		state.on( window, 'scroll', onScroll, { passive: true } );
+		state.on( window, 'resize', debounce( function () {
+			measure();
+			lastY = window.scrollY; // A resize is not a scroll: do not bank it as intent.
+			up = 0;
+		}, 200 ) );
+		state.on( document, 'visibilitychange', function () {
+			beat();
+			if ( 'hidden' !== document.visibilityState ) {
+				lastMove = Date.now();
+			}
+		} );
+		state.add( stop );
+
+		// The article may still be loading its images: one late re-measure, cheaply.
+		if ( typeof window.ResizeObserver === 'function' && article ) {
+			var ro = new window.ResizeObserver( debounce( measure, 200 ) );
+			ro.observe( article );
+			state.add( function () {
+				ro.disconnect();
+			} );
+		}
+
+		evaluate();
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -763,11 +1074,13 @@
 			var cs = getComputedStyle( body );
 			var full = parseFloat( cs.getPropertyValue( mobile ? '--hprnb-m-height' : '--hprnb-height' ) ) || aside.offsetHeight;
 			var peek = parseFloat( cs.getPropertyValue( '--hprnb-peek' ) ) || 40;
+			// A floating mobile layout also keeps its distance from the bottom edge.
+			var gap = mobile ? ( parseFloat( cs.getPropertyValue( '--hprnb-m-gap' ) ) || 0 ) : 0;
 			var hidden = aside.hidden || root.hidden || body.classList.contains( 'hprnb-kbd' ) || root.classList.contains( 'hprnb-root--pending' );
 			// In flow the bar is a block of the page: it covers nothing, so it reserves nothing.
 			// Collapsed, a phone keeps its strip while the desktop bar slides fully away.
 			var inflow = !! profile && profile.place === 'inline';
-			var offset = ( hidden || inflow ) ? 0 : ( collapsed ? ( mobile ? peek : 0 ) : full );
+			var offset = ( hidden || inflow ) ? 0 : ( collapsed ? ( mobile ? peek + gap : 0 ) : full + gap );
 			return { mobile: mobile, collapsed: collapsed, height: full, offset: offset };
 		}
 
@@ -823,12 +1136,18 @@
 		return { emit: emit, current: current };
 	}
 
-	function setupClose( state, root, aside, cfg, contract ) {
+	function setupClose( state, root, aside, cfg, contract, analytics ) {
 		var button = aside.querySelector( '.hprnb-bar__btn--close' );
 		if ( ! button ) {
 			return;
 		}
-		state.on( button, 'click', function () {
+		state.on( button, 'click', function ( event ) {
+			// The button sits inside the card, over the link on some layouts: never follow it.
+			event.preventDefault();
+			event.stopPropagation();
+			if ( analytics ) {
+				analytics.close();
+			}
 			moveFocusAway( button );
 			aside.hidden = true;
 			root.hidden = true;
@@ -1021,8 +1340,16 @@
 		state.hide( aside.querySelector( '.hprnb-bar__btn--close' ), ! wantsClose );
 
 		var contract = setupContract( state, root, aside, profile, mobile );
-		setupReveal( state, root, contract );
-		setupClose( state, root, aside, cfg, contract );
+		var analytics = root.classList.contains( 'hprnb-root--preview' ) ? null : createAnalytics( root, aside, mobile );
+		setupReveal( state, root, contract, mobile, analytics );
+		setupClose( state, root, aside, cfg, contract, analytics );
+		if ( analytics ) {
+			state.on( aside, 'click', function ( event ) {
+				if ( event.target.closest && event.target.closest( '.hprnb-bar__link' ) ) {
+					analytics.click();
+				}
+			} );
+		}
 		if ( cfg.reltime ) {
 			setupRelativeTime( state, aside, cfg );
 		}

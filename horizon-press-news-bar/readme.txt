@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.4.2
+Stable tag: 2.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,13 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.5.0 =
+* Fixed: a bar with a single headline no longer draws a separator behind it, in every ticker mode and both directions.
+* Fixed: the hybrid session copy stored a fake headline count, which would have stripped every separator on replay.
+* Mobile "Discover" card: the close button moves inside the card, the card floats clear of the edges, and it is down to 99px from 152px.
+* New "Smart" reveal mode: the bar waits for the end of the article, a real scroll back up, or a reader who got deep into it — measured on the article body, fired once.
+* New analytics events (hprnb_impression / hprnb_click / hprnb_close) with the trigger reason, on dataLayer and on document.
 
 = 2.4.2 =
 * "Discover" design: shorter card — the pill takes the first line beside the picture and the headline starts on the second; the height follows the picture (116px instead of 152px by default).

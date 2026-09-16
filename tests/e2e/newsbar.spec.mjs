@@ -52,7 +52,9 @@ test( 'fresh SSR: no REST request; stale SSR: exactly one', async ( { page } ) =
 	await page.goto( '/' );
 	await page.waitForTimeout( 800 );
 	expect( hits ).toHaveLength( 0 );
-	expect( await page.evaluate( () => { try { return JSON.parse( sessionStorage.getItem( 'hprnb_payload' ) ).count; } catch ( e ) { return null; } } ) ).toBe( 1 );
+	// The session copy stores the real number of headlines: replayed on the next page it feeds
+	// data-hprnb-count, which decides whether a separator is drawn at all.
+	expect( await page.evaluate( () => { try { return JSON.parse( sessionStorage.getItem( 'hprnb_payload' ) ).count; } catch ( e ) { return null; } } ) ).toBe( 5 );
 
 	await page.evaluate( () => sessionStorage.clear() );
 	await routeStaleDocument( page );
@@ -618,7 +620,8 @@ test( 'v2: flow card, collapsed strip, chevron, offset contract, deep collapse, 
 	await chevron.click();
 	await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
 	await expect( page.locator( 'body' ) ).not.toHaveClass( /hprnb-is-collapsed/ );
-	expect( await label.evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'hprnb-beacon', 'The pill keeps breathing on the open card (default pulse: always).' );
+	expect( await label.evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'hprnb-beacon', 'The pill beats on arrival (default pulse: appear).' );
+	expect( await label.evaluate( ( el ) => getComputedStyle( el ).animationIterationCount ) ).toBe( '3', 'And then stops.' );
 	expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '76px' );
 
 	// "Pill only" strip option.
@@ -797,7 +800,9 @@ test( 'mobile: stacked buttons, pulsing pill with its text, image kept in the co
 		await page.goto( '/' );
 		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
 		await expect( root ).toHaveClass( /hprnb-root--m-ctrl-col/ );
-		await expect( root ).toHaveClass( /hprnb-root--m-pulse-always/ );
+		// Since 2.5 the default is a few beats on arrival, not a permanent one.
+		await expect( root ).toHaveClass( /hprnb-root--m-pulse-appear/ );
+		expect( await page.locator( '.hprnb-bar__label' ).evaluate( ( el ) => getComputedStyle( el ).animationIterationCount ) ).toBe( '3' );
 		await expect( root ).toHaveClass( /hprnb-root--m-peek-thumb/ );
 		const close = await page.locator( '.hprnb-bar__btn--close' ).boundingBox();
 		const toggle = await page.locator( '.hprnb-bar__btn--toggle' ).boundingBox();
@@ -1098,11 +1103,16 @@ test( 'v2.4: page types per profile, the bar inside the article, desktop collaps
 		const thumb = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb' );
 		await expect( thumb ).toBeVisible( { timeout: 10000 } );
 		const image = await thumb.boundingBox();
-		expect( Math.round( image.width ) ).toBe( 140 );
-		expect( Math.round( image.height ) ).toBe( 88, '16:10 box.' );
+		expect( Math.round( image.width ) ).toBe( 96 );
+		expect( Math.round( image.height ) ).toBe( 75, '5:4 box.' );
 		const label = await page.locator( '.hprnb-bar__label' ).boundingBox();
 		expect( label.width ).toBeLessThan( 200, 'The heading shrink-wraps, it is not a full-width band.' );
-		expect( Math.round( image.x ) ).toBe( 15, 'The image opens the line.' );
+		// The card floats 8px clear of the edges and pads itself by 12px.
+		const card = await aside.boundingBox();
+		expect( Math.round( card.x ) ).toBe( 8 );
+		expect( Math.round( card.width ) ).toBe( 374 );
+		expect( await aside.evaluate( ( el ) => getComputedStyle( el ).borderBottomLeftRadius ) ).toBe( '12px' );
+		expect( Math.round( image.x ) ).toBe( 20, 'The image opens the line.' );
 		expect( label.x ).toBeGreaterThan( image.x + image.width, 'The pill takes the first line of the text column, beside the image.' );
 		expect( Math.abs( label.y - image.y ) ).toBeLessThanOrEqual( 2, 'Level with the top of the image, not on a row of its own.' );
 		const headline = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' );
@@ -1110,14 +1120,26 @@ test( 'v2.4: page types per profile, the bar inside the article, desktop collaps
 		expect( headlineBox.x ).toBeGreaterThan( image.x + image.width, 'The headline sits beside the image.' );
 		expect( headlineBox.y ).toBeGreaterThanOrEqual( label.y + label.height - 2, 'And starts on the second line, under the pill.' );
 		expect( await headline.evaluate( ( el ) => getComputedStyle( el ).fontSize ) ).toBe( '18px', 'Two sizes above the 16px profile.' );
-		expect( await headline.evaluate( ( el ) => getComputedStyle( el ).webkitLineClamp ) ).toBe( '2', 'The lines the 88px image leaves under the pill.' );
-		// 14 + max(88, 27 + 2 x 27) + 14 = 116: the picture drives the height, nothing above it.
-		expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 116 );
-		const barBox = await aside.boundingBox();
+		expect( await headline.evaluate( ( el ) => getComputedStyle( el ).webkitLineClamp ) ).toBe( '2', 'Never a third line.' );
+		expect( await headline.evaluate( ( el ) => getComputedStyle( el ).fontWeight ) ).toBe( '700' );
+		// 12 + max(75, 20 + 6 + 2 × 22) + 12 = 99, inside the 96-112px target.
+		expect( Math.round( card.height ) ).toBe( 99 );
+		// The close button is INSIDE the card, in its top end corner, with a 44px touch target.
+		const barBox = card;
 		const tab = page.locator( '.hprnb-bar__btn--close' );
 		const tabBox = await tab.boundingBox();
-		expect( tabBox.y + tabBox.height ).toBeLessThanOrEqual( barBox.y + 1, 'Outside the card, above its top edge.' );
-		expect( Math.round( tabBox.x + tabBox.width ) ).toBe( 390, 'Against the end corner.' );
+		expect( tabBox.y ).toBeGreaterThanOrEqual( barBox.y - 1, 'Inside the card, not a tab above it.' );
+		expect( tabBox.y + tabBox.height ).toBeLessThanOrEqual( barBox.y + barBox.height + 1 );
+		expect( Math.round( tabBox.x + tabBox.width ) ).toBe( 370, 'Against the end corner, inside the padding.' );
+		expect( await tab.evaluate( ( el ) => {
+			const after = getComputedStyle( el, '::after' );
+			return Math.round( el.getBoundingClientRect().width - parseFloat( after.insetInlineStart ) - parseFloat( after.insetInlineEnd ) );
+		} ) ).toBeGreaterThanOrEqual( 44, 'Touch target of at least 44px.' );
+		// The guarantee is that neither the label nor the headline runs under the button: their boxes
+		// must not intersect, which the reserved column in the text side is what buys.
+		const overlaps = ( a, b ) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+		expect( overlaps( tabBox, headlineBox ) ).toBe( false, 'The headline never runs under the button.' );
+		expect( overlaps( tabBox, label ) ).toBe( false, 'Nor does the label.' );
 		await expect( page.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden( 'Alone: no pause button.' );
 		expect( await page.evaluate( () => {
 			const el = document.querySelector( '.hprnb-bar__btn--close' );
@@ -1128,15 +1150,15 @@ test( 'v2.4: page types per profile, the bar inside the article, desktop collaps
 		// Collapsed it is the strip of the flowing card: the pulsing dot and the first line.
 		await page.evaluate( () => window.scrollTo( 0, 900 ) );
 		await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
-		expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '43px', 'One line and its padding.' );
+		expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '44px', 'One line, its padding and the floating gap.' );
 		const dot = await page.locator( '.hprnb-bar__label' ).boundingBox();
 		expect( Math.round( dot.width ) ).toBe( 24, 'The pill shrinks to its dot.' );
-		expect( Math.round( dot.x ) ).toBe( 15, 'Against the gutter, on the left.' );
+		expect( Math.round( dot.x ) ).toBe( 20, 'Against the card padding, on the left.' );
 		expect( await page.locator( '.hprnb-bar__label' ).evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'hprnb-beacon' );
 		expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => getComputedStyle( el ).display ) ).toBe( 'none' );
 		const strip = await headline.boundingBox();
 		expect( strip.x ).toBeGreaterThan( dot.x + dot.width, 'The first line of the headline runs beside it.' );
-		expect( Math.round( strip.height ) ).toBe( 27, 'One line.' );
+		expect( Math.round( strip.height ) ).toBe( 22, 'One line.' );
 		await expect( thumb ).toBeHidden( 'No picture in the strip.' );
 		expect( await tab.evaluate( ( el ) => getComputedStyle( el ).display ) ).toBe( 'none', 'And no close tab.' );
 		await page.evaluate( () => window.scrollTo( 0, 0 ) );
@@ -1154,24 +1176,215 @@ test( 'v2.4: page types per profile, the bar inside the article, desktop collaps
 		const rtlImage = await thumb.boundingBox();
 		const rtlHeadline = await headline.boundingBox();
 		expect( rtlImage.x ).toBeGreaterThan( rtlHeadline.x + rtlHeadline.width, 'Image at the start, which is the right.' );
-		expect( Math.round( ( await tab.boundingBox() ).x ) ).toBe( 0, 'The tab keeps the end corner: the left.' );
+		expect( Math.round( ( await tab.boundingBox() ).x ) ).toBe( 20, 'The button keeps the end corner: the left.' );
 		expect( await page.locator( '.hprnb-bar__label' ).evaluate( ( el ) => getComputedStyle( el ).backgroundColor ) ).toBe( 'rgba(0, 0, 0, 0)', 'The strip style is a plain bold heading on the card.' );
 
 		// The card without a picture keeps the whole width for its headline.
 		media.splice( 0 ).forEach( ( id ) => wp( [ 'post', 'delete', id, '--force' ] ) );
-		setSettings( { mobile_layout: 'card', rotate_interval: 60000 } );
+		setSettings( { mobile_layout: 'card', rotate_interval: 60000, mobile_show_pause: false, close_button: true } );
 		await page.goto( '/' );
 		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
 		await expect( page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb' ) ).toHaveCount( 0 );
 		const wide = await page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' ).boundingBox();
-		expect( wide.width ).toBeGreaterThan( 330, 'No picture, so its column goes back to the headline.' );
-		expect( Math.round( wide.x ) ).toBe( 15 );
+		expect( wide.width ).toBeGreaterThan( 290, 'No picture, so its column goes back to the headline.' );
+		expect( Math.round( wide.x ) ).toBe( 20 );
 		expect( await noHorizontalOverflow( page ) ).toBe( true );
 		expect( errors ).toEqual( [] );
 	} finally {
 		media.forEach( ( id ) => wp( [ 'post', 'delete', id, '--force' ] ) );
 		ids.forEach( ( id ) => wp( [ 'post', 'delete', id, '--force' ] ) );
 		wp( [ 'post', 'delete', article, '--force' ] );
+		setSettings();
+	}
+} );
+
+test( 'v2.5: a single headline carries no separator, in every ticker mode and both directions', async ( { page } ) => {
+	// Only one post inside the window: the bar renders exactly one item. Its headline is made long
+	// enough that the marquee really has to clone the list, which is the case worth covering.
+	const keep = postIds.slice( 1 );
+	keep.forEach( ( id ) => wp( [ 'post', 'update', id, '--post_status=draft' ] ) );
+	const solo = postIds[ 0 ];
+	const soloTitle = wp( [ 'post', 'get', solo, '--field=post_title' ] );
+	wp( [ 'post', 'update', solo, '--post_title=' + 'Une seule actualité au titre délibérément très long pour que le défilement continu doive cloner sa liste et montrer la jonction '.repeat( 2 ) ] );
+	try {
+		const errors = collectErrors( page );
+		const item = page.locator( '.hprnb-bar__item' ).first();
+		const after = () => item.evaluate( ( el ) => getComputedStyle( el, '::after' ).content );
+
+		for ( const mode of [ 'static', 'marquee', 'rotate', 'manual' ] ) {
+			for ( const rtl of [ false, true ] ) {
+				setSettings( {
+					show_separator: true,
+					separator_after_last: true,
+					separator_char: '|',
+					ticker_enabled: mode !== 'static',
+					ticker_mode: mode === 'static' ? 'marquee' : mode,
+					mobile_show_separator: true,
+				} );
+				await page.setViewportSize( { width: 1366, height: 800 } );
+				await page.goto( rtl ? '/?hprnb_rtl=1' : '/' );
+				await expect( page.locator( '#hprnb-root' ) ).toHaveAttribute( 'data-hprnb-count', '1' );
+				// The marquee clone adds a second list: count the original one.
+				await expect( page.locator( '.hprnb-bar__list:not(.hprnb-bar__list--clone) .hprnb-bar__item' ) ).toHaveCount( 1 );
+				expect( await after() ).toBe( 'none', `${ mode }${ rtl ? ' RTL' : '' }: no separator after the only headline.` );
+				if ( 'marquee' === mode ) {
+					// The script clones the list: each copy is still a single item, so still none.
+					await expect( page.locator( '.hprnb-bar__list' ) ).toHaveCount( 2, 'The marquee clone is there.' );
+					const clone = page.locator( '.hprnb-bar__list--clone .hprnb-bar__item' ).first();
+					expect( await clone.evaluate( ( el ) => getComputedStyle( el, '::after' ).content ) ).toBe( 'none' );
+				}
+			}
+		}
+
+		// The same settings on a phone, where the mobile separator classes apply instead.
+		await page.setViewportSize( { width: 390, height: 780 } );
+		setSettings( { show_separator: true, separator_after_last: true, mobile_show_separator: true, mobile_layout: 'inline', mobile_ticker_mode: 'static' } );
+		await page.goto( '/' );
+		await expect( page.locator( '.hprnb-bar__list:not(.hprnb-bar__list--clone) .hprnb-bar__item' ) ).toHaveCount( 1 );
+		expect( await after() ).toBe( 'none', 'Mobile too.' );
+		expect( errors ).toEqual( [] );
+	} finally {
+		wp( [ 'post', 'update', solo, '--post_title=' + soloTitle ] );
+		keep.forEach( ( id ) => wp( [ 'post', 'update', id, '--post_status=publish' ] ) );
+		setSettings();
+	}
+} );
+
+test( 'v2.5: two headlines keep their separators exactly as configured', async ( { page } ) => {
+	const keep = postIds.slice( 2 );
+	keep.forEach( ( id ) => wp( [ 'post', 'update', id, '--post_status=draft' ] ) );
+	try {
+		const items = page.locator( '.hprnb-bar__item' );
+		const contentOf = ( index ) => items.nth( index ).evaluate( ( el ) => getComputedStyle( el, '::after' ).content );
+		await page.setViewportSize( { width: 1366, height: 800 } );
+
+		setSettings( { show_separator: true, separator_after_last: true, separator_char: '|' } );
+		await page.goto( '/' );
+		await expect( page.locator( '#hprnb-root' ) ).toHaveAttribute( 'data-hprnb-count', '2' );
+		await expect( items ).toHaveCount( 2 );
+		expect( await contentOf( 0 ) ).toContain( '|' );
+		expect( await contentOf( 1 ) ).toContain( '|', 'separator_after_last still adds the loop junction.' );
+
+		setSettings( { show_separator: true, separator_after_last: false, separator_char: '|' } );
+		await page.goto( '/' );
+		expect( await contentOf( 0 ) ).toContain( '|' );
+		expect( await contentOf( 1 ) ).toBe( 'none', 'Without the option, nothing after the last one.' );
+
+		setSettings( { show_separator: false } );
+		await page.goto( '/' );
+		expect( await contentOf( 0 ) ).toBe( 'none' );
+		expect( await contentOf( 1 ) ).toBe( 'none' );
+	} finally {
+		keep.forEach( ( id ) => wp( [ 'post', 'update', id, '--post_status=publish' ] ) );
+		setSettings();
+	}
+} );
+
+test( 'v2.5: smart reveal — the end of the article, a real scroll back up, an engaged reader', async ( { page } ) => {
+	const body = Array.from( { length: 40 }, ( _, i ) =>
+		`<p>Paragraphe ${ i + 1 }. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>` ).join( '\n' );
+	const article = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Article long pour le mode intelligent', `--post_content=${ body }`, '--porcelain' ] );
+	const brief = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Brève', '--post_content=<p>Deux phrases.</p><p>Pas plus.</p>', '--porcelain' ] );
+	const url = new URL( wp( [ 'post', 'url', article ] ) ).pathname;
+	const briefUrl = new URL( wp( [ 'post', 'url', brief ] ) ).pathname;
+
+	const root = page.locator( '#hprnb-root' );
+	const pending = () => page.evaluate( () => document.querySelector( '#hprnb-root' ).classList.contains( 'hprnb-root--pending' ) );
+	const layer = () => page.evaluate( () => ( window.dataLayer || [] ).map( ( r ) => ( { event: r.event, reason: r.trigger_reason, found: r.article_found } ) ) );
+	await page.addInitScript( () => { window.dataLayer = []; } );
+
+	try {
+		const errors = collectErrors( page );
+		await page.setViewportSize( { width: 390, height: 700 } );
+
+		// Nothing at the top of the article: no bar, no reserved space.
+		setSettings( { reveal_mode: 'smart', rotate_interval: 60000 } );
+		await page.goto( url );
+		await expect( page.locator( '.hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await pending() ).toBe( true );
+		expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '0px' );
+		expect( await page.evaluate( () => window.hprnbBar.state().offset ) ).toBe( 0 );
+		expect( await layer() ).toEqual( [], 'No impression before the bar is shown.' );
+
+		// 1. The end of the editorial body — the signal worth waiting for.
+		await page.evaluate( () => document.querySelector( '.entry-content, .wp-block-post-content' ).scrollIntoView( { block: 'end' } ) );
+		await expect.poll( pending ).toBe( false );
+		await expect( root ).not.toHaveClass( /hprnb-root--pending/ );
+		expect( ( await layer() ).filter( ( e ) => e.event === 'hprnb_impression' ) ).toEqual( [ { event: 'hprnb_impression', reason: 'article_end', found: true } ] );
+		// And only once: scrolling on does not fire a second time.
+		await page.evaluate( () => window.scrollTo( 0, 0 ) );
+		await page.evaluate( () => window.scrollTo( 0, document.documentElement.scrollHeight ) );
+		expect( ( await layer() ).filter( ( e ) => e.event === 'hprnb_impression' ) ).toHaveLength( 1 );
+
+		// 2. A real scroll back up after reading a good share of it.
+		setSettings( { reveal_mode: 'smart', rotate_interval: 60000, smart_mobile_time: 2, smart_mobile_fallback_time: 120 } );
+		await page.goto( url );
+		await expect( page.locator( '.hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await page.evaluate( () => window.scrollTo( 0, document.documentElement.scrollHeight * 0.55 ) );
+		await page.waitForTimeout( 2600 );
+		expect( await pending() ).toBe( true, 'Reading deep is not enough on its own.' );
+		await page.evaluate( () => window.scrollBy( 0, -40 ) );
+		await page.waitForTimeout( 120 );
+		expect( await pending() ).toBe( true, 'Nor is a 40px nudge.' );
+		for ( let i = 0; i < 12; i++ ) {
+			await page.evaluate( () => window.scrollBy( 0, -30 ) );
+			await page.waitForTimeout( 45 );
+		}
+		await expect.poll( pending ).toBe( false );
+		expect( ( await layer() ).filter( ( e ) => e.event === 'hprnb_impression' )[ 0 ].reason ).toBe( 'scroll_up_intent' );
+
+		// 3. A reader who never scrolled back up but got deep into it (desktop tuning).
+		await page.setViewportSize( { width: 1366, height: 800 } );
+		setSettings( { reveal_mode: 'smart', rotate_interval: 60000, smart_desktop_fallback: 40, smart_desktop_fallback_time: 3, smart_desktop_up: 1200 } );
+		await page.goto( url );
+		await expect( page.locator( '.hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await page.evaluate( () => window.scrollTo( 0, document.documentElement.scrollHeight * 0.45 ) );
+		await page.waitForTimeout( 900 );
+		expect( await pending() ).toBe( true, 'Deep enough, not long enough yet.' );
+		await expect.poll( pending, { timeout: 15000 } ).toBe( false );
+		expect( ( await layer() ).filter( ( e ) => e.event === 'hprnb_impression' )[ 0 ].reason ).toBe( 'engaged_reader' );
+
+		// 4. A very short piece: only its end may fire, never the engagement fallback.
+		await page.setViewportSize( { width: 390, height: 700 } );
+		setSettings( { reveal_mode: 'smart', rotate_interval: 60000, smart_mobile_fallback: 10, smart_mobile_fallback_time: 1 } );
+		await page.goto( briefUrl );
+		await expect( page.locator( '.hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect.poll( pending ).toBe( false );
+		expect( ( await layer() ).filter( ( e ) => e.event === 'hprnb_impression' )[ 0 ].reason ).toBe( 'article_end' );
+
+		// 5. A dismissal is never undone by a smart signal, and it reports the reason it came from.
+		setSettings( { reveal_mode: 'smart', rotate_interval: 60000, close_button: true, remember_dismiss: false, mobile_hide_on_scroll: false } );
+		await page.goto( url );
+		await expect( page.locator( '.hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await page.evaluate( () => document.querySelector( '.entry-content, .wp-block-post-content' ).scrollIntoView( { block: 'end' } ) );
+		await expect.poll( pending ).toBe( false );
+		await page.locator( '.hprnb-bar__btn--close' ).click();
+		await expect( page.locator( '.hprnb-bar' ) ).toBeHidden();
+		await page.evaluate( () => window.scrollTo( 0, 0 ) );
+		await page.evaluate( () => window.scrollTo( 0, document.documentElement.scrollHeight ) );
+		await page.waitForTimeout( 600 );
+		await expect( page.locator( '.hprnb-bar' ) ).toBeHidden( 'Closed stays closed.' );
+		const closed = await layer();
+		expect( closed[ closed.length - 1 ] ).toEqual( { event: 'hprnb_close', reason: 'article_end', found: undefined } );
+
+		// 6. The four original modes are untouched and report themselves.
+		setSettings( { reveal_mode: 'scroll', reveal_value: 400, rotate_interval: 60000 } );
+		await page.goto( url );
+		await expect( page.locator( '.hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await pending() ).toBe( true );
+		await page.evaluate( () => window.scrollTo( 0, 600 ) );
+		await expect.poll( pending ).toBe( false );
+		expect( ( await layer() ).filter( ( e ) => e.event === 'hprnb_impression' )[ 0 ].reason ).toBe( 'legacy_scroll' );
+
+		setSettings( { reveal_mode: 'immediate', rotate_interval: 60000 } );
+		await page.goto( url );
+		await expect( page.locator( '.hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await pending() ).toBe( false );
+		expect( ( await layer() ).filter( ( e ) => e.event === 'hprnb_impression' )[ 0 ].reason ).toBe( 'legacy_immediate' );
+		expect( errors ).toEqual( [] );
+	} finally {
+		wp( [ 'post', 'delete', article, '--force' ] );
+		wp( [ 'post', 'delete', brief, '--force' ] );
 		setSettings();
 	}
 } );

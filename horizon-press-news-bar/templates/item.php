@@ -23,7 +23,7 @@ if ( empty( $hprnb_item['title'] ) || empty( $hprnb_item['url'] ) ) {
 
 $hprnb_thumb = ( Settings::wants_thumbnails( $hprnb_settings ) && ! empty( $hprnb_item['thumb']['url'] ) ) ? $hprnb_item['thumb'] : null;
 ?>
-<li class="hprnb-bar__item">
+<li class="hprnb-bar__item" data-hprnb-id="<?php echo (int) $hprnb_item['id']; ?>">
 	<a class="hprnb-bar__link" href="<?php echo esc_url( $hprnb_item['url'] ); ?>">
 		<?php if ( null !== $hprnb_thumb ) : ?>
 		<img class="hprnb-bar__thumb" src="<?php echo esc_url( $hprnb_thumb['url'] ); ?>" width="<?php echo (int) $hprnb_thumb['width']; ?>" height="<?php echo (int) $hprnb_thumb['height']; ?>" loading="lazy" decoding="async" alt="">

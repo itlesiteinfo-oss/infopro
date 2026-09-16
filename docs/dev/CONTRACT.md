@@ -152,7 +152,13 @@ show_on_desktop: bool true
 show_on_mobile: bool true
 accent_color: color #CE3029                                 (progress line, hover underline)
 accent_edge: bool true                                      (2.3: 2px accent line on the top edge, filled by the rotation progress)
-reveal_mode: enum immediate [immediate,scroll,percent,end]  (2.3: when the bar appears; both profiles)
+reveal_mode: enum immediate [immediate,scroll,percent,end,smart] (2.3; 2.5 adds smart — the article body, not the page)
+smart_selector: text '' (max 200)                           (2.5: editorial body selector; empty = the usual chain)
+smart_{mobile|desktop}_progress: int 55 / 50 [1,100]        (2.5: article read before a scroll up counts)
+smart_{mobile|desktop}_time: int 15 / 12 [0,120]            (2.5: active reading seconds before it counts)
+smart_{mobile|desktop}_up: int 300 / 350 [50,1200]          (2.5: cumulative upward pixels that mark intent)
+smart_{mobile|desktop}_fallback: int 75 / 65 [1,100]        (2.5: engaged-reader fallback, article read)
+smart_{mobile|desktop}_fallback_time: int 25 / 20 [0,180]   (2.5: engaged-reader fallback, active seconds)
 reveal_value: int 400 [0,4000]                              (2.3: px of scrolling, or % of the page for `percent`; `end` is fixed at 90)
 align_container: bool true                                  (content aligned on the site container)
 max_width: int 1230 [960,1920]
@@ -186,7 +192,7 @@ mobile_thumb_position: enum after [before,after]
 mobile_thumb_size: int 48 [16,80]                           (clamped to the headline block on the flow card)
 mobile_controls_layout: enum column [column,row]             (column = close above pause, one button-wide column)
 mobile_peek_thumbnail: bool true                            (image kept in the collapsed strip, one line tall)
-mobile_label_pulse: enum always [always,collapsed,never]     (hprnb-beacon on the pill)
+mobile_label_pulse: enum appear [always,appear,collapsed,never] (hprnb-beacon on the pill; 2.5 defaults to three beats on arrival)
 mobile_label_compact: bool false                            (pill shrinks to its dot when an image is shown)
 mobile_collapse_mode: enum scroll [scroll,threshold,immediate] (2.3: on the way down / past the threshold for good / always collapsed)
 mobile_collapse_after: int 120 [0,800]                      (2.3: collapse threshold in px; ignored when always collapsed)
@@ -194,7 +200,7 @@ mobile_controls_place: enum inside [inside,outside]         (2.3: outside = floa
 mobile_show_pause: bool true                                (2.3: Pause / Play button on mobile)
 mobile_show_close: bool true                                (2.3: close button on mobile; close_button must be on too)
 mobile_layout += 'card'                                     (2.4: the "discover" design — heading row, headline beside a landscape image)
-mobile_card_thumb: int 140 [80,220]                         (2.4: width of the card image, in a 16:10 box)
+mobile_card_thumb: int 96 [72,120]                          (2.4; 2.5: width of the card image in a 5:4 box, and it sets the card height)
                                                             (2.4.2: the picture opens the line and sets the card height; the pill takes the first line beside it, the headline runs from the second at +2px on the lines the picture leaves; close alone in a tab above the end corner, hidden while collapsed; collapsed it is the flowing card's strip — pulsing dot plus one line; controls_place / controls_layout do not apply)
 mobile_contexts: bool_map (same keys as `contexts`; all true) (2.4: narrows the global scope for this profile)
 mobile_placement: enum fixed [fixed,inline]                 (2.4: pinned to the screen, or a block of the article)
@@ -227,6 +233,16 @@ uninstall_delete_data: bool false
 
 Technical options: `hprnb_cache_epoch` (string UUID v4, autoload true), `hprnb_schema_version`
 (string "1", autoload true). Cache payload transients are never autoloaded (transients API).
+
+
+### Root attributes and events added in 2.5
+
+- `data-hprnb-count` — the number of headlines rendered. The stylesheet reads it (a single headline never carries a separator, alongside `:only-child`) and so do the analytics. The hybrid bootstrap keeps it in sync on a REST refresh and in its sessionStorage copy.
+- `data-hprnb-post` — the singular object being viewed, or 0.
+- `data-hprnb-id` on each `.hprnb-bar__item` — the recommended article.
+- `--hprnb-m-gap` — the distance a floating mobile layout keeps from the bottom edge (8px for the "discover" card, 0 elsewhere). Written on the root, on the body by PHP, and copied by the bootstrap. The body reserve and `--hprnb-offset` add it; the card carries the safe area itself so it is never counted twice.
+- Analytics, opt-in by nature and never required: `hprnb_impression`, `hprnb_click`, `hprnb_close` pushed on `window.dataLayer` when one exists AND dispatched on `document` as `hprnb:hprnb_impression` and so on. No network call is ever made — the plugin's "no telemetry" rule stands: nothing leaves the page unless the site's own tag manager chooses to send it.
+
 
 ## 3. Time window (`class-time-window.php`, class `Time_Window`)
 

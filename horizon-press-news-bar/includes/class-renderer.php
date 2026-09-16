@@ -93,6 +93,10 @@ final class Renderer {
 			'data-hprnb-stale'     => (string) self::stale_threshold( $settings ),
 			'data-hprnb-layout'    => 'overlay' === $settings['layout_mode'] ? 'overlay' : 'reserve',
 			'data-hprnb-empty'     => $empty ? '1' : '0',
+			// Read by the stylesheet (a single headline carries no separator) and by the analytics.
+			'data-hprnb-count'     => (string) $count,
+			// The article being read, so an impression can be tied to its page. 0 off a singular.
+			'data-hprnb-post'      => (string) self::current_post_id(),
 			'data-hprnb-desktop'   => (string) wp_json_encode( self::profile_data( $settings, 'd' ) ),
 			'data-hprnb-mobile'    => (string) wp_json_encode( self::profile_data( $settings, 'm' ) ),
 			'data-hprnb-reveal'    => (string) wp_json_encode( self::reveal_data( $settings ) ),
@@ -142,13 +146,17 @@ final class Renderer {
 
 	/**
 	 * Mobile "card" layout: heading row, gap under it, block padding and the aspect ratio of the
-	 * landscape image (16:10). Mirrored by the stylesheet and the admin script.
+	 * landscape image (5:4). Mirrored by the stylesheet and the admin script.
 	 */
-	const CARD_PAD       = 14;
-	const CARD_GAP       = 12;
-	const CARD_RATIO     = 0.625;
+	const CARD_PAD       = 12;
+	const CARD_GAP       = 10;
+	const CARD_RATIO     = 0.78;
 	const CARD_FONT_PLUS = 2;
-	const CARD_LINE      = 1.5;
+	const CARD_LINE      = 1.24;
+	const CARD_LABEL     = 20;
+	const CARD_ROW       = 6;
+	const CARD_LINES     = 2;
+	const CARD_FLOAT     = 8;
 
 	/**
 	 * Inline CSS variables carried by the root (and by the admin preview root).
@@ -158,7 +166,7 @@ final class Renderer {
 	 */
 	public static function root_style( array $settings ): string {
 		return sprintf(
-			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-accent:%6$s;--hprnb-font-size:%7$dpx;--hprnb-height:%8$dpx;--hprnb-d-lines:%9$d;--hprnb-max:%10$dpx;--hprnb-gutter:%11$dpx;--hprnb-z:%12$d;--hprnb-sep:%13$s;--hprnb-m-bg:%14$s;--hprnb-m-fg:%15$s;--hprnb-m-accent:%16$s;--hprnb-m-label-fg:%17$s;--hprnb-m-font-size:%18$dpx;--hprnb-m-height:%19$dpx;--hprnb-m-lines:%20$d;--hprnb-m-line:%21$dpx;--hprnb-m-pad:%22$dpx;--hprnb-peek:%23$dpx;--hprnb-m-ctrls:%24$d;--hprnb-d-thumb:%25$dpx;--hprnb-m-thumb:%26$dpx;--hprnb-m-card-thumb:%27$dpx;--hprnb-m-card-thumb-h:%28$dpx;--hprnb-m-card-lines:%29$d',
+			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-accent:%6$s;--hprnb-font-size:%7$dpx;--hprnb-height:%8$dpx;--hprnb-d-lines:%9$d;--hprnb-max:%10$dpx;--hprnb-gutter:%11$dpx;--hprnb-z:%12$d;--hprnb-sep:%13$s;--hprnb-m-bg:%14$s;--hprnb-m-fg:%15$s;--hprnb-m-accent:%16$s;--hprnb-m-label-fg:%17$s;--hprnb-m-font-size:%18$dpx;--hprnb-m-height:%19$dpx;--hprnb-m-lines:%20$d;--hprnb-m-line:%21$dpx;--hprnb-m-pad:%22$dpx;--hprnb-peek:%23$dpx;--hprnb-m-ctrls:%24$d;--hprnb-d-thumb:%25$dpx;--hprnb-m-thumb:%26$dpx;--hprnb-m-card-thumb:%27$dpx;--hprnb-m-card-thumb-h:%28$dpx;--hprnb-m-card-lines:%29$d;--hprnb-m-gap:%30$dpx',
 			self::color( $settings['bg_color'], '#1B1C20' ),
 			self::color( $settings['text_color'], '#F5F5F5' ),
 			self::color( $settings['label_bg_color'], '#CE3029' ),
@@ -187,7 +195,8 @@ final class Renderer {
 			(int) ( $settings['mobile_thumb_size'] ?? 48 ),
 			self::card_metrics( $settings )['thumb'],
 			self::card_metrics( $settings )['thumb_height'],
-			self::card_metrics( $settings )['lines']
+			self::card_metrics( $settings )['lines'],
+			self::mobile_gap( $settings )
 		);
 	}
 
@@ -284,8 +293,8 @@ final class Renderer {
 				$classes[] = 'hprnb-root--m-label-compact';
 			}
 		}
-		$pulse     = (string) ( $settings['mobile_label_pulse'] ?? 'always' );
-		$classes[] = 'hprnb-root--m-pulse-' . ( in_array( $pulse, array( 'always', 'collapsed', 'never' ), true ) ? $pulse : 'always' );
+		$pulse     = (string) ( $settings['mobile_label_pulse'] ?? 'appear' );
+		$classes[] = 'hprnb-root--m-pulse-' . ( in_array( $pulse, array( 'always', 'appear', 'collapsed', 'never' ), true ) ? $pulse : 'appear' );
 
 		return $classes;
 	}
@@ -453,15 +462,15 @@ final class Renderer {
 	 */
 	public static function card_metrics( array $settings ): array {
 		$profile = self::profile( $settings, 'm' );
-		// The headline is the point of this design: two sizes above the profile, on a looser line.
+		// The headline is the point of this design: two sizes above the profile, tight line.
 		$font    = $profile['font_size'] + self::CARD_FONT_PLUS;
 		$line    = (int) round( $font * self::CARD_LINE );
-		$thumb   = max( 80, min( 220, (int) ( $settings['mobile_card_thumb'] ?? 140 ) ) );
+		$thumb   = max( 72, min( 120, (int) ( $settings['mobile_card_thumb'] ?? 96 ) ) );
 		$thumb_h = (int) round( $thumb * self::CARD_RATIO );
-		// The label takes the first line beside the image and the headline fills what it leaves
-		// under it, so the text ends level with the picture and the card stays as short as it can.
-		$lines  = max( 1, (int) floor( ( $thumb_h - $line ) / $line ) );
-		$body   = max( $thumb_h, $line + $lines * $line );
+		// Label row, then the headline on two lines at most: a third line would make the card jump.
+		$lines  = self::CARD_LINES;
+		$text   = self::CARD_LABEL + self::CARD_ROW + $lines * $line;
+		$body   = max( $thumb_h, $text );
 		$height = 2 * self::CARD_PAD + $body;
 
 		return array(
@@ -470,11 +479,38 @@ final class Renderer {
 			'lines'        => $lines,
 			'thumb'        => $thumb,
 			'thumb_height' => $thumb_h,
-			'height'       => max( (int) ( $settings['mobile_bar_height'] ?? 76 ), $height ),
+			'text'         => $text,
+			'height'       => $height,
 			'pad'          => self::CARD_PAD,
 			// Collapsed it is the same strip as the flowing card: the pulsing pill and one line.
 			'peek'         => self::CARD_PAD + $line + self::PEEK_EXTRA,
 		);
+	}
+
+	/**
+	 * The singular object being viewed, for the analytics payload. Conditional tags are only
+	 * meaningful once the main query has run, and the REST and shortcode paths have no page of
+	 * their own: 0 then, which the script reads as "not an article".
+	 *
+	 * @return int
+	 */
+	public static function current_post_id(): int {
+		if ( ! did_action( 'wp' ) || ! function_exists( 'is_singular' ) || ! is_singular() ) {
+			return 0;
+		}
+		return (int) get_queried_object_id();
+	}
+
+	/**
+	 * Gap the mobile bar leaves between itself and the edges of the screen: the "discover" card
+	 * floats, every other layout is flush. The body reserves that gap on top of the bar height, and
+	 * the card carries the safe area itself so it is never counted twice.
+	 *
+	 * @param array $settings Settings.
+	 * @return int
+	 */
+	public static function mobile_gap( array $settings ): int {
+		return 'card' === self::profile( $settings, 'm' )['layout'] ? self::CARD_FLOAT : 0;
 	}
 
 	/**
@@ -486,16 +522,50 @@ final class Renderer {
 	 */
 	public static function reveal_data( array $settings ): array {
 		$mode  = (string) ( $settings['reveal_mode'] ?? 'immediate' );
-		$mode  = in_array( $mode, array( 'immediate', 'scroll', 'percent', 'end' ), true ) ? $mode : 'immediate';
+		$mode  = in_array( $mode, array( 'immediate', 'scroll', 'percent', 'end', 'smart' ), true ) ? $mode : 'immediate';
 		$value = (int) ( $settings['reveal_value'] ?? 400 );
 		if ( 'percent' === $mode ) {
 			$value = max( 1, min( 100, $value ) );
 		} elseif ( 'end' === $mode ) {
 			$value = 90;
 		}
-		return array(
+		$data = array(
 			'mode'  => $mode,
 			'value' => $value,
+		);
+		if ( 'smart' === $mode ) {
+			$data['smart'] = self::smart_data( $settings );
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Tuning of the "smart" reveal, per profile, plus the optional editorial-body selector. Short
+	 * key names: this travels in an attribute on every page.
+	 *
+	 * @param array $settings Settings.
+	 * @return array{sel:string,d:array<string,int>,m:array<string,int>}
+	 */
+	public static function smart_data( array $settings ): array {
+		$profile = static function ( string $prefix ) use ( $settings ): array {
+			return array(
+				// Reading of the article body, in percent, before a scroll up counts as intent.
+				'p'  => max( 1, min( 100, (int) ( $settings[ $prefix . '_progress' ] ?? 55 ) ) ),
+				// Active reading seconds before that same intent counts.
+				't'  => max( 0, min( 120, (int) ( $settings[ $prefix . '_time' ] ?? 15 ) ) ),
+				// Pixels of deliberate upward scrolling.
+				'u'  => max( 50, min( 1200, (int) ( $settings[ $prefix . '_up' ] ?? 300 ) ) ),
+				// Fallback: a reader deep in the article who never scrolled back up.
+				'fp' => max( 1, min( 100, (int) ( $settings[ $prefix . '_fallback' ] ?? 75 ) ) ),
+				'ft' => max( 0, min( 180, (int) ( $settings[ $prefix . '_fallback_time' ] ?? 25 ) ) ),
+			);
+		};
+
+		return array(
+			'sel' => (string) ( $settings['smart_selector'] ?? '' ),
+			'd'   => $profile( 'smart_desktop' ),
+			'm'   => $profile( 'smart_mobile' ),
 		);
 	}
 

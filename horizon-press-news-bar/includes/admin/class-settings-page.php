@@ -229,7 +229,7 @@ final class Settings_Page {
 					array(
 						'title'       => __( 'Appearance of the bar', 'horizon-press-news-bar' ),
 						'description' => __( 'Both profiles: the bar can wait for the reader instead of showing up with the page.', 'horizon-press-news-bar' ),
-						'keys'        => array( 'reveal_mode', 'reveal_value' ),
+						'keys'        => array( 'reveal_mode', 'reveal_value', 'smart_selector', 'smart_mobile_progress', 'smart_mobile_time', 'smart_mobile_up', 'smart_mobile_fallback', 'smart_mobile_fallback_time', 'smart_desktop_progress', 'smart_desktop_time', 'smart_desktop_up', 'smart_desktop_fallback', 'smart_desktop_fallback_time' ),
 					),
 					array(
 						'title'       => __( 'Desktop', 'horizon-press-news-bar' ),
@@ -355,20 +355,20 @@ final class Settings_Page {
 		}
 
 		return array(
-			'enabled'                  => array(
+			'enabled'                     => array(
 				'section' => 'general',
 				'type'    => 'checkbox',
 				'label'   => __( 'Enable the news bar', 'horizon-press-news-bar' ),
 				'text'    => __( 'Display the bar on the public site.', 'horizon-press-news-bar' ),
 			),
-			'label_text'               => array(
+			'label_text'                  => array(
 				'section' => 'general',
 				'type'    => 'text',
 				'label'   => __( 'Label', 'horizon-press-news-bar' ),
 				'desc'    => __( 'Short text shown next to the headlines. Leave empty to hide the label.', 'horizon-press-news-bar' ),
 				'attrs'   => array( 'maxlength' => 120 ),
 			),
-			'label_position'           => array(
+			'label_position'              => array(
 				'section' => 'general',
 				'type'    => 'radio',
 				'label'   => __( 'Label position', 'horizon-press-news-bar' ),
@@ -378,25 +378,25 @@ final class Settings_Page {
 				),
 				'desc'    => __( '"End" is the right side in left-to-right languages and the left side in right-to-left languages.', 'horizon-press-news-bar' ),
 			),
-			'window'                   => array(
+			'window'                      => array(
 				'section' => 'general',
 				'type'    => 'window',
 				'label'   => __( 'Time window', 'horizon-press-news-bar' ),
 				'desc'    => __( 'Sliding window ending now: at 16:20 with 24 hours, posts published since yesterday 16:20 are eligible. Minutes: 1–1440, hours: 1–720, days: 1–30.', 'horizon-press-news-bar' ),
 			),
-			'categories_include'       => array(
+			'categories_include'          => array(
 				'section'  => 'general',
 				'type'     => 'terms',
 				'taxonomy' => 'category',
 				'label'    => __( 'Categories', 'horizon-press-news-bar' ),
 				'desc'     => __( 'No selection means every category.', 'horizon-press-news-bar' ),
 			),
-			'max_items'                => array(
+			'max_items'                   => array(
 				'section' => 'general',
 				'type'    => 'number',
 				'label'   => __( 'Maximum number of posts', 'horizon-press-news-bar' ),
 			),
-			'orderby'                  => array(
+			'orderby'                     => array(
 				'section' => 'general',
 				'type'    => 'select',
 				'label'   => __( 'Order', 'horizon-press-news-bar' ),
@@ -405,93 +405,93 @@ final class Settings_Page {
 					'date_asc'  => __( 'Oldest first', 'horizon-press-news-bar' ),
 				),
 			),
-			'categories_exclude'       => array(
+			'categories_exclude'          => array(
 				'section'  => 'content',
 				'type'     => 'terms',
 				'taxonomy' => 'category',
 				'label'    => __( 'Excluded categories', 'horizon-press-news-bar' ),
 			),
-			'tags_include'             => array(
+			'tags_include'                => array(
 				'section'  => 'content',
 				'type'     => 'terms',
 				'taxonomy' => 'post_tag',
 				'label'    => __( 'Tags', 'horizon-press-news-bar' ),
 				'desc'     => __( 'When at least one tag is selected, only posts having one of these tags are eligible.', 'horizon-press-news-bar' ),
 			),
-			'content_exclude_post_ids' => array(
+			'content_exclude_post_ids'    => array(
 				'section' => 'content',
 				'type'    => 'ids',
 				'label'   => __( 'Excluded post IDs', 'horizon-press-news-bar' ),
 				'desc'    => __( 'Comma-separated post IDs that must never appear in the bar.', 'horizon-press-news-bar' ),
 			),
-			'bg_color'                 => array(
+			'bg_color'                    => array(
 				'section' => 'appearance',
 				'type'    => 'color',
 				'label'   => __( 'Background colour', 'horizon-press-news-bar' ),
 			),
-			'text_color'               => array(
+			'text_color'                  => array(
 				'section'  => 'appearance',
 				'type'     => 'color',
 				'label'    => __( 'Text colour', 'horizon-press-news-bar' ),
 				'contrast' => 'text',
 			),
-			'label_bg_color'           => array(
+			'label_bg_color'              => array(
 				'section' => 'appearance',
 				'type'    => 'color',
 				'label'   => __( 'Label background colour', 'horizon-press-news-bar' ),
 			),
-			'label_text_color'         => array(
+			'label_text_color'            => array(
 				'section'  => 'appearance',
 				'type'     => 'color',
 				'label'    => __( 'Label text colour', 'horizon-press-news-bar' ),
 				'contrast' => 'label',
 			),
-			'link_hover_color'         => array(
+			'link_hover_color'            => array(
 				'section' => 'appearance',
 				'type'    => 'color',
 				'label'   => __( 'Link hover colour', 'horizon-press-news-bar' ),
 			),
-			'accent_color'             => array(
+			'accent_color'                => array(
 				'section' => 'appearance',
 				'type'    => 'color',
 				'label'   => __( 'Accent colour', 'horizon-press-news-bar' ),
 				'desc'    => __( 'Progress line and link hover underline (the theme red by default).', 'horizon-press-news-bar' ),
 			),
-			'font_size'                => array(
+			'font_size'                   => array(
 				'section' => 'appearance',
 				'type'    => 'number',
 				'label'   => __( 'Font size (px)', 'horizon-press-news-bar' ),
 			),
-			'bar_height'               => array(
+			'bar_height'                  => array(
 				'section' => 'appearance',
 				'type'    => 'number',
 				'label'   => __( 'Height (px)', 'horizon-press-news-bar' ),
 				'desc'    => __( '32 to 56 px; 40 px recommended. With the label on its own row or several headline lines the bar grows as needed.', 'horizon-press-news-bar' ),
 			),
-			'align_container'          => array(
+			'align_container'             => array(
 				'section' => 'appearance',
 				'type'    => 'checkbox',
 				'label'   => __( 'Align on the site container', 'horizon-press-news-bar' ),
 				'text'    => __( 'Same maximum width and gutter as the article (Jannah container: 1230 px, 15 px).', 'horizon-press-news-bar' ),
 			),
-			'max_width'                => array(
+			'max_width'                   => array(
 				'section' => 'appearance',
 				'type'    => 'number',
 				'label'   => __( 'Container width (px)', 'horizon-press-news-bar' ),
 				'depends' => 'align_container',
 			),
-			'gutter'                   => array(
+			'gutter'                      => array(
 				'section' => 'appearance',
 				'type'    => 'number',
 				'label'   => __( 'Gutter (px)', 'horizon-press-news-bar' ),
 				'depends' => 'align_container',
 			),
-			'z_index'                  => array(
+			'z_index'                     => array(
 				'section' => 'appearance',
 				'type'    => 'number',
 				'label'   => __( 'z-index', 'horizon-press-news-bar' ),
 			),
-			'layout_mode'              => array(
+			'layout_mode'                 => array(
 				'section' => 'appearance',
 				'type'    => 'radio',
 				'label'   => __( 'Layout', 'horizon-press-news-bar' ),
@@ -500,20 +500,20 @@ final class Settings_Page {
 					'overlay' => __( 'Overlay — floats over the page; may cover a fixed element of the theme or of another plugin', 'horizon-press-news-bar' ),
 				),
 			),
-			'thumbnail_size'           => array(
+			'thumbnail_size'              => array(
 				'section' => 'advanced',
 				'type'    => 'select',
 				'label'   => __( 'Source size of the images', 'horizon-press-news-bar' ),
 				'options' => $sizes,
 				'desc'    => __( 'An existing WordPress image size, loaded for both profiles; no new size is generated. The displayed size is set per profile in the Display tab.', 'horizon-press-news-bar' ),
 			),
-			'show_separator'           => array(
+			'show_separator'              => array(
 				'section' => 'appearance',
 				'type'    => 'checkbox',
 				'label'   => __( 'Separator', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show a separator between headlines.', 'horizon-press-news-bar' ),
 			),
-			'separator_char'           => array(
+			'separator_char'              => array(
 				'section' => 'appearance',
 				'type'    => 'text',
 				'label'   => __( 'Separator character', 'horizon-press-news-bar' ),
@@ -522,7 +522,7 @@ final class Settings_Page {
 					'size'      => 4,
 				),
 			),
-			'separator_after_last'     => array(
+			'separator_after_last'        => array(
 				'section' => 'appearance',
 				'type'    => 'checkbox',
 				'label'   => __( 'Separator after the last post', 'horizon-press-news-bar' ),
@@ -530,19 +530,19 @@ final class Settings_Page {
 				'desc'    => __( 'Makes the last → first junction identical to every other junction, for example when the marquee wraps. Only applies when the separator is enabled.', 'horizon-press-news-bar' ),
 				'depends' => 'show_separator',
 			),
-			'show_relative_time'       => array(
+			'show_relative_time'          => array(
 				'section' => 'appearance',
 				'type'    => 'checkbox',
 				'label'   => __( 'Relative time', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show "2 hours ago" after each headline (refreshed every minute in the browser).', 'horizon-press-news-bar' ),
 			),
-			'relative_time_max_hours'  => array(
+			'relative_time_max_hours'     => array(
 				'section' => 'appearance',
 				'type'    => 'number',
 				'label'   => __( 'Relative time limit (hours)', 'horizon-press-news-bar' ),
 				'desc'    => __( 'Beyond this age the absolute date is shown instead.', 'horizon-press-news-bar' ),
 			),
-			'desktop_layout'           => array(
+			'desktop_layout'              => array(
 				'section' => 'desktop',
 				'type'    => 'radio',
 				'label'   => __( 'Label placement', 'horizon-press-news-bar' ),
@@ -551,7 +551,7 @@ final class Settings_Page {
 					'stacked' => __( 'On its own row above the headline', 'horizon-press-news-bar' ),
 				),
 			),
-			'desktop_label_style'      => array(
+			'desktop_label_style'         => array(
 				'section' => 'desktop',
 				'type'    => 'select',
 				'label'   => __( 'Label style', 'horizon-press-news-bar' ),
@@ -561,19 +561,19 @@ final class Settings_Page {
 					'hidden' => __( 'Hidden', 'horizon-press-news-bar' ),
 				),
 			),
-			'desktop_label_dot'        => array(
+			'desktop_label_dot'           => array(
 				'section' => 'desktop',
 				'type'    => 'checkbox',
 				'label'   => __( 'Live dot', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show a small pulsing dot in front of the label text.', 'horizon-press-news-bar' ),
 			),
-			'desktop_show_counter'     => array(
+			'desktop_show_counter'        => array(
 				'section' => 'desktop',
 				'type'    => 'checkbox',
 				'label'   => __( 'Counter', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show "2/8" next to the label (rotate mode).', 'horizon-press-news-bar' ),
 			),
-			'desktop_lines'            => array(
+			'desktop_lines'               => array(
 				'section' => 'desktop',
 				'type'    => 'select',
 				'label'   => __( 'Headline lines', 'horizon-press-news-bar' ),
@@ -581,13 +581,13 @@ final class Settings_Page {
 				'desc'    => __( 'Number of lines a headline may take; the bar height follows (marquee always uses one line).', 'horizon-press-news-bar' ),
 				'hint'    => 'd',
 			),
-			'desktop_show_thumbnail'   => array(
+			'desktop_show_thumbnail'      => array(
 				'section' => 'desktop',
 				'type'    => 'checkbox',
 				'label'   => __( 'Image', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show the featured image next to each headline.', 'horizon-press-news-bar' ),
 			),
-			'desktop_thumb_position'   => array(
+			'desktop_thumb_position'      => array(
 				'section' => 'desktop',
 				'type'    => 'select',
 				'label'   => __( 'Image position', 'horizon-press-news-bar' ),
@@ -597,20 +597,20 @@ final class Settings_Page {
 				),
 				'depends' => 'desktop_show_thumbnail',
 			),
-			'desktop_thumb_size'       => array(
+			'desktop_thumb_size'          => array(
 				'section' => 'desktop',
 				'type'    => 'number',
 				'label'   => __( 'Image size (px)', 'horizon-press-news-bar' ),
 				'desc'    => __( '16 to 80 px, square. The bar grows if the image is taller than the headline lines.', 'horizon-press-news-bar' ),
 				'depends' => 'desktop_show_thumbnail',
 			),
-			'desktop_show_progress'    => array(
+			'desktop_show_progress'       => array(
 				'section' => 'desktop',
 				'type'    => 'checkbox',
 				'label'   => __( 'Progress line', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show a thin progress line along the top edge until the next headline (rotate mode).', 'horizon-press-news-bar' ),
 			),
-			'mobile_layout'            => array(
+			'mobile_layout'               => array(
 				'section' => 'mobile',
 				'type'    => 'radio',
 				'label'   => __( 'Design', 'horizon-press-news-bar' ),
@@ -621,7 +621,7 @@ final class Settings_Page {
 					'inline'  => __( 'In front of the headline, on the same line', 'horizon-press-news-bar' ),
 				),
 			),
-			'mobile_label_style'       => array(
+			'mobile_label_style'          => array(
 				'section' => 'mobile',
 				'type'    => 'select',
 				'label'   => __( 'Label style', 'horizon-press-news-bar' ),
@@ -631,19 +631,19 @@ final class Settings_Page {
 					'hidden' => __( 'Hidden', 'horizon-press-news-bar' ),
 				),
 			),
-			'mobile_label_dot'         => array(
+			'mobile_label_dot'            => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Live dot', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show a small pulsing dot in front of the label text.', 'horizon-press-news-bar' ),
 			),
-			'mobile_show_counter'      => array(
+			'mobile_show_counter'         => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Counter', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show "2/8" next to the label (rotate mode).', 'horizon-press-news-bar' ),
 			),
-			'mobile_lines'             => array(
+			'mobile_lines'                => array(
 				'section' => 'mobile',
 				'type'    => 'select',
 				'label'   => __( 'Headline lines', 'horizon-press-news-bar' ),
@@ -651,18 +651,18 @@ final class Settings_Page {
 				'desc'    => __( 'Number of lines a headline may take; the bar height follows (marquee always uses one line).', 'horizon-press-news-bar' ),
 				'hint'    => 'm',
 			),
-			'mobile_bar_height'        => array(
+			'mobile_bar_height'           => array(
 				'section' => 'mobile',
 				'type'    => 'number',
 				'label'   => __( 'Card height (px)', 'horizon-press-news-bar' ),
 				'desc'    => __( '64 to 96 px; 76 px = 12 + two lines of 26 + 12. Floating label only; grows with the number of lines.', 'horizon-press-news-bar' ),
 			),
-			'mobile_font_size'         => array(
+			'mobile_font_size'            => array(
 				'section' => 'mobile',
 				'type'    => 'number',
 				'label'   => __( 'Mobile font size (px)', 'horizon-press-news-bar' ),
 			),
-			'mobile_ticker_mode'       => array(
+			'mobile_ticker_mode'          => array(
 				'section' => 'mobile',
 				'type'    => 'select',
 				'label'   => __( 'Mobile ticker mode', 'horizon-press-news-bar' ),
@@ -675,25 +675,25 @@ final class Settings_Page {
 				),
 				'desc'    => __( 'Rotate and marquee always come with the Pause / Play button and respect reduced-motion preferences.', 'horizon-press-news-bar' ),
 			),
-			'mobile_show_progress'     => array(
+			'mobile_show_progress'        => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Progress line', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show a thin progress line along the top edge until the next headline (rotate mode).', 'horizon-press-news-bar' ),
 			),
-			'mobile_swipe'             => array(
+			'mobile_swipe'                => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Swipe', 'horizon-press-news-bar' ),
 				'text'    => __( 'Swipe left or right to move between headlines (rotate mode).', 'horizon-press-news-bar' ),
 			),
-			'mobile_hide_on_scroll'    => array(
+			'mobile_hide_on_scroll'       => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Collapse on scroll', 'horizon-press-news-bar' ),
 				'text'    => __( 'Collapse the bar to its label row while scrolling down; expand when scrolling up or tapping the label (label on its own row).', 'horizon-press-news-bar' ),
 			),
-			'mobile_peek'              => array(
+			'mobile_peek'                 => array(
 				'section' => 'mobile',
 				'type'    => 'radio',
 				'label'   => __( 'Collapsed strip', 'horizon-press-news-bar' ),
@@ -703,26 +703,26 @@ final class Settings_Page {
 				),
 				'depends' => 'mobile_hide_on_scroll',
 			),
-			'mobile_deep_collapse'     => array(
+			'mobile_deep_collapse'        => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Landing mid-page', 'horizon-press-news-bar' ),
 				'text'    => __( 'Start collapsed when the page opens further than 120 px down (anchor, back navigation).', 'horizon-press-news-bar' ),
 				'depends' => 'mobile_hide_on_scroll',
 			),
-			'mobile_kbd_hide'          => array(
+			'mobile_kbd_hide'             => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Keyboard open', 'horizon-press-news-bar' ),
 				'text'    => __( 'Slide the bar away while a form field is active; bring it back on blur.', 'horizon-press-news-bar' ),
 			),
-			'mobile_show_thumbnail'    => array(
+			'mobile_show_thumbnail'       => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Image', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show the featured image next to each headline.', 'horizon-press-news-bar' ),
 			),
-			'mobile_thumb_position'    => array(
+			'mobile_thumb_position'       => array(
 				'section' => 'mobile',
 				'type'    => 'select',
 				'label'   => __( 'Image position', 'horizon-press-news-bar' ),
@@ -732,14 +732,14 @@ final class Settings_Page {
 				),
 				'depends' => 'mobile_show_thumbnail',
 			),
-			'mobile_thumb_size'        => array(
+			'mobile_thumb_size'           => array(
 				'section' => 'mobile',
 				'type'    => 'number',
 				'label'   => __( 'Image size (px)', 'horizon-press-news-bar' ),
 				'desc'    => __( '16 to 80 px, square. Never taller than the headline block, so the card keeps its height.', 'horizon-press-news-bar' ),
 				'depends' => 'mobile_show_thumbnail',
 			),
-			'mobile_collapse_mode'     => array(
+			'mobile_collapse_mode'        => array(
 				'section' => 'mobile',
 				'type'    => 'radio',
 				'label'   => __( 'When it collapses', 'horizon-press-news-bar' ),
@@ -750,14 +750,14 @@ final class Settings_Page {
 				),
 				'depends' => 'mobile_hide_on_scroll',
 			),
-			'mobile_collapse_after'    => array(
+			'mobile_collapse_after'       => array(
 				'section' => 'mobile',
 				'type'    => 'number',
 				'label'   => __( 'Collapse threshold (px)', 'horizon-press-news-bar' ),
 				'desc'    => __( '0 to 800 px of scrolling; 120 px by default. Ignored when the bar is always collapsed.', 'horizon-press-news-bar' ),
 				'depends' => 'mobile_hide_on_scroll',
 			),
-			'mobile_controls_place'    => array(
+			'mobile_controls_place'       => array(
 				'section' => 'mobile',
 				'type'    => 'radio',
 				'label'   => __( 'Buttons placement', 'horizon-press-news-bar' ),
@@ -766,19 +766,19 @@ final class Settings_Page {
 					'outside' => __( 'Floating just above the bar — the headline then takes the whole width', 'horizon-press-news-bar' ),
 				),
 			),
-			'mobile_show_pause'        => array(
+			'mobile_show_pause'           => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Pause button', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show the Pause / Play button on mobile.', 'horizon-press-news-bar' ),
 			),
-			'mobile_show_close'        => array(
+			'mobile_show_close'           => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Close button', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show the close button on mobile (it must also be enabled in the Closing tab).', 'horizon-press-news-bar' ),
 			),
-			'mobile_controls_layout'   => array(
+			'mobile_controls_layout'      => array(
 				'section' => 'mobile',
 				'type'    => 'radio',
 				'label'   => __( 'Buttons', 'horizon-press-news-bar' ),
@@ -787,76 +787,77 @@ final class Settings_Page {
 					'row'    => __( 'Side by side', 'horizon-press-news-bar' ),
 				),
 			),
-			'mobile_label_pulse'       => array(
+			'mobile_label_pulse'          => array(
 				'section' => 'mobile',
 				'type'    => 'select',
 				'label'   => __( 'Pulsing label', 'horizon-press-news-bar' ),
 				'options' => array(
+					'appear'    => __( 'A few beats when the bar arrives (recommended)', 'horizon-press-news-bar' ),
 					'always'    => __( 'Always — the pill breathes like a button', 'horizon-press-news-bar' ),
 					'collapsed' => __( 'Only in the collapsed strip', 'horizon-press-news-bar' ),
 					'never'     => __( 'Never', 'horizon-press-news-bar' ),
 				),
 				'desc'    => __( 'Ignored when the visitor asks for reduced motion.', 'horizon-press-news-bar' ),
 			),
-			'mobile_peek_thumbnail'    => array(
+			'mobile_peek_thumbnail'       => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Image in the collapsed strip', 'horizon-press-news-bar' ),
 				'text'    => __( 'Keep the image at the end of the strip, resized so it never exceeds one line.', 'horizon-press-news-bar' ),
 				'depends' => 'mobile_show_thumbnail',
 			),
-			'mobile_label_compact'     => array(
+			'mobile_label_compact'        => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Compact label with an image', 'horizon-press-news-bar' ),
 				'text'    => __( 'Shrink the pill to its red dot when an image is shown, so the headline keeps the width.', 'horizon-press-news-bar' ),
 				'depends' => 'mobile_show_thumbnail',
 			),
-			'mobile_show_separator'    => array(
+			'mobile_show_separator'       => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Mobile separator', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show the separator between headlines on mobile too (static, marquee and manual modes).', 'horizon-press-news-bar' ),
 			),
-			'mobile_custom_colors'     => array(
+			'mobile_custom_colors'        => array(
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Mobile colours', 'horizon-press-news-bar' ),
 				'text'    => __( 'Use a dedicated mobile palette (below) instead of the desktop colours.', 'horizon-press-news-bar' ),
 			),
-			'mobile_bg_color'          => array(
+			'mobile_bg_color'             => array(
 				'section' => 'mobile',
 				'type'    => 'color',
 				'label'   => __( 'Mobile background colour', 'horizon-press-news-bar' ),
 				'depends' => 'mobile_custom_colors',
 			),
-			'mobile_text_color'        => array(
+			'mobile_text_color'           => array(
 				'section'  => 'mobile',
 				'type'     => 'color',
 				'label'    => __( 'Mobile text colour', 'horizon-press-news-bar' ),
 				'contrast' => 'mobile',
 				'depends'  => 'mobile_custom_colors',
 			),
-			'mobile_accent_color'      => array(
+			'mobile_accent_color'         => array(
 				'section' => 'mobile',
 				'type'    => 'color',
 				'label'   => __( 'Mobile accent colour', 'horizon-press-news-bar' ),
 				'desc'    => __( 'Label pill, live dot and progress line.', 'horizon-press-news-bar' ),
 				'depends' => 'mobile_custom_colors',
 			),
-			'mobile_label_text_color'  => array(
+			'mobile_label_text_color'     => array(
 				'section' => 'mobile',
 				'type'    => 'color',
 				'label'   => __( 'Mobile label text colour', 'horizon-press-news-bar' ),
 				'depends' => 'mobile_custom_colors',
 			),
-			'ticker_enabled'           => array(
+			'ticker_enabled'              => array(
 				'section' => 'behavior',
 				'type'    => 'checkbox',
 				'label'   => __( 'Ticker', 'horizon-press-news-bar' ),
 				'text'    => __( 'Animate the headlines. Marquee and rotate always come with a keyboard-accessible Pause / Play button and stop when the visitor prefers reduced motion.', 'horizon-press-news-bar' ),
 			),
-			'ticker_mode'              => array(
+			'ticker_mode'                 => array(
 				'section' => 'behavior',
 				'type'    => 'select',
 				'label'   => __( 'Ticker mode', 'horizon-press-news-bar' ),
@@ -866,42 +867,42 @@ final class Settings_Page {
 					'manual'  => __( 'Manual — previous / next buttons, no automatic motion', 'horizon-press-news-bar' ),
 				),
 			),
-			'ticker_speed'             => array(
+			'ticker_speed'                => array(
 				'section' => 'behavior',
 				'type'    => 'number',
 				'label'   => __( 'Marquee speed (px/s)', 'horizon-press-news-bar' ),
 				'desc'    => __( '10 to 80 px per second; 30 recommended (20 px/s made a 20-headline loop last four minutes).', 'horizon-press-news-bar' ),
 			),
-			'rotate_interval'          => array(
+			'rotate_interval'             => array(
 				'section' => 'behavior',
 				'type'    => 'number',
 				'label'   => __( 'Rotate interval (ms)', 'horizon-press-news-bar' ),
 				'desc'    => __( '3000 to 12000 ms (3 to 12 seconds) between two headlines.', 'horizon-press-news-bar' ),
 			),
-			'pause_on_hover'           => array(
+			'pause_on_hover'              => array(
 				'section' => 'behavior',
 				'type'    => 'checkbox',
 				'label'   => __( 'Pause on hover', 'horizon-press-news-bar' ),
 				'text'    => __( 'Extra comfort option; the Pause / Play button remains the accessible control.', 'horizon-press-news-bar' ),
 			),
-			'close_button'             => array(
+			'close_button'                => array(
 				'section' => 'behavior',
 				'type'    => 'checkbox',
 				'label'   => __( 'Close button', 'horizon-press-news-bar' ),
 				'text'    => __( 'Let visitors close the bar.', 'horizon-press-news-bar' ),
 			),
-			'remember_dismiss'         => array(
+			'remember_dismiss'            => array(
 				'section' => 'behavior',
 				'type'    => 'checkbox',
 				'label'   => __( 'Remember closing', 'horizon-press-news-bar' ),
 				'text'    => __( 'Keep the bar closed for the duration below (stored in the browser localStorage, no cookie).', 'horizon-press-news-bar' ),
 			),
-			'dismiss_duration_hours'   => array(
+			'dismiss_duration_hours'      => array(
 				'section' => 'behavior',
 				'type'    => 'number',
 				'label'   => __( 'Closing duration (hours)', 'horizon-press-news-bar' ),
 			),
-			'reveal_mode'              => array(
+			'reveal_mode'                 => array(
 				'section' => 'appearance',
 				'type'    => 'radio',
 				'label'   => __( 'When the bar appears', 'horizon-press-news-bar' ),
@@ -910,40 +911,108 @@ final class Settings_Page {
 					'scroll'    => __( 'After a scroll distance — recommended on articles: the opening of the page stays clear', 'horizon-press-news-bar' ),
 					'percent'   => __( 'After a share of the page has been read', 'horizon-press-news-bar' ),
 					'end'       => __( 'Near the end of the page (90 %)', 'horizon-press-news-bar' ),
+					'smart'     => __( 'Smart — recommended on articles: the end of the article, a real scroll back up, or a reader who got deep into it', 'horizon-press-news-bar' ),
 				),
-				'desc'    => __( 'Until then no space is reserved and the bar stays out of view; once it appears it stays.', 'horizon-press-news-bar' ),
+				'desc'    => __( 'Until then no space is reserved and the bar stays out of view; once it appears it stays. Smart measures the article body, not the page, and fires once on whichever signal comes first.', 'horizon-press-news-bar' ),
 			),
-			'reveal_value'             => array(
+			'reveal_value'                => array(
 				'section' => 'appearance',
 				'type'    => 'number',
 				'label'   => __( 'Threshold', 'horizon-press-news-bar' ),
 				'desc'    => __( 'Pixels of scrolling, or percentage of the page for the share option. 400 px is a good start on an article.', 'horizon-press-news-bar' ),
 			),
-			'accent_edge'              => array(
+			'smart_selector'              => array(
+				'section' => 'appearance',
+				'type'    => 'text',
+				'label'   => __( 'Article body selector', 'horizon-press-news-bar' ),
+				'desc'    => __( 'Optional. A CSS selector for the editorial body of an article, when the theme needs one. Left empty, the usual containers are tried in turn (.entry-content, .post-content, .article-content, .wp-block-post-content…). Never the footer, the comments or what follows the article.', 'horizon-press-news-bar' ),
+				'depends' => 'reveal_mode:smart',
+			),
+			'smart_mobile_progress'       => array(
+				'section' => 'appearance',
+				'type'    => 'number',
+				'label'   => __( 'Mobile — article read before a scroll up counts (%)', 'horizon-press-news-bar' ),
+				'depends' => 'reveal_mode:smart',
+			),
+			'smart_mobile_time'           => array(
+				'section' => 'appearance',
+				'type'    => 'number',
+				'label'   => __( 'Mobile — active reading time before it counts (s)', 'horizon-press-news-bar' ),
+				'depends' => 'reveal_mode:smart',
+			),
+			'smart_mobile_up'             => array(
+				'section' => 'appearance',
+				'type'    => 'number',
+				'label'   => __( 'Mobile — upward scrolling that shows intent (px)', 'horizon-press-news-bar' ),
+				'depends' => 'reveal_mode:smart',
+			),
+			'smart_mobile_fallback'       => array(
+				'section' => 'appearance',
+				'type'    => 'number',
+				'label'   => __( 'Mobile — fallback: article read (%)', 'horizon-press-news-bar' ),
+				'depends' => 'reveal_mode:smart',
+			),
+			'smart_mobile_fallback_time'  => array(
+				'section' => 'appearance',
+				'type'    => 'number',
+				'label'   => __( 'Mobile — fallback: active reading time (s)', 'horizon-press-news-bar' ),
+				'depends' => 'reveal_mode:smart',
+			),
+			'smart_desktop_progress'      => array(
+				'section' => 'appearance',
+				'type'    => 'number',
+				'label'   => __( 'Desktop — article read before a scroll up counts (%)', 'horizon-press-news-bar' ),
+				'depends' => 'reveal_mode:smart',
+			),
+			'smart_desktop_time'          => array(
+				'section' => 'appearance',
+				'type'    => 'number',
+				'label'   => __( 'Desktop — active reading time before it counts (s)', 'horizon-press-news-bar' ),
+				'depends' => 'reveal_mode:smart',
+			),
+			'smart_desktop_up'            => array(
+				'section' => 'appearance',
+				'type'    => 'number',
+				'label'   => __( 'Desktop — upward scrolling that shows intent (px)', 'horizon-press-news-bar' ),
+				'depends' => 'reveal_mode:smart',
+			),
+			'smart_desktop_fallback'      => array(
+				'section' => 'appearance',
+				'type'    => 'number',
+				'label'   => __( 'Desktop — fallback: article read (%)', 'horizon-press-news-bar' ),
+				'depends' => 'reveal_mode:smart',
+			),
+			'smart_desktop_fallback_time' => array(
+				'section' => 'appearance',
+				'type'    => 'number',
+				'label'   => __( 'Desktop — fallback: active reading time (s)', 'horizon-press-news-bar' ),
+				'depends' => 'reveal_mode:smart',
+			),
+			'accent_edge'                 => array(
 				'section' => 'appearance',
 				'type'    => 'checkbox',
 				'label'   => __( 'Accent edge', 'horizon-press-news-bar' ),
 				'text'    => __( 'Draw a 2 px line of the accent colour along the top edge; the rotation progress fills that same edge.', 'horizon-press-news-bar' ),
 			),
-			'theme_offset'             => array(
+			'theme_offset'                => array(
 				'section' => 'behavior',
 				'type'    => 'checkbox',
 				'label'   => __( 'Theme fixed elements', 'horizon-press-news-bar' ),
 				'text'    => __( 'Move the Jannah "go to top" button, the "Check also" box and the reading position indicator above the bar (they follow the collapse).', 'horizon-press-news-bar' ),
 			),
-			'show_on_desktop'          => array(
+			'show_on_desktop'             => array(
 				'section' => 'behavior',
 				'type'    => 'checkbox',
 				'label'   => __( 'Desktop', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show the bar on screens of 768 px and wider.', 'horizon-press-news-bar' ),
 			),
-			'show_on_mobile'           => array(
+			'show_on_mobile'              => array(
 				'section' => 'behavior',
 				'type'    => 'checkbox',
 				'label'   => __( 'Mobile', 'horizon-press-news-bar' ),
 				'text'    => __( 'Show the bar on screens narrower than 768 px (CSS only, no device detection).', 'horizon-press-news-bar' ),
 			),
-			'desktop_contexts'         => array(
+			'desktop_contexts'            => array(
 				'section' => 'desktop',
 				'type'    => 'contexts',
 				'label'   => __( 'Page types', 'horizon-press-news-bar' ),
@@ -960,7 +1029,7 @@ final class Settings_Page {
 				),
 				'desc'    => __( 'Narrows the scope of the Advanced tab for this profile only. Untick everything here and the bar never shows on this device.', 'horizon-press-news-bar' ),
 			),
-			'desktop_placement'        => array(
+			'desktop_placement'           => array(
 				'section' => 'desktop',
 				'type'    => 'radio',
 				'label'   => __( 'Placement', 'horizon-press-news-bar' ),
@@ -970,7 +1039,7 @@ final class Settings_Page {
 				),
 				'desc'    => __( 'Inside the article the bar becomes a block of the page: full width, no reserved space, no collapsing. On any page without paragraphs it falls back to the bottom of the screen.', 'horizon-press-news-bar' ),
 			),
-			'desktop_inline_anchor'    => array(
+			'desktop_inline_anchor'       => array(
 				'section' => 'desktop',
 				'type'    => 'radio',
 				'label'   => __( 'Where in the article', 'horizon-press-news-bar' ),
@@ -981,14 +1050,14 @@ final class Settings_Page {
 				),
 				'depends' => 'desktop_placement:inline',
 			),
-			'desktop_inline_paragraph' => array(
+			'desktop_inline_paragraph'    => array(
 				'section' => 'desktop',
 				'type'    => 'number',
 				'label'   => __( 'Paragraph number', 'horizon-press-news-bar' ),
 				'desc'    => __( '1 to 30. Counted from the start of the article, or from its end for the last option. A shorter article places the bar at its end.', 'horizon-press-news-bar' ),
 				'depends' => 'desktop_placement:inline',
 			),
-			'mobile_contexts'          => array(
+			'mobile_contexts'             => array(
 				'section' => 'mobile',
 				'type'    => 'contexts',
 				'label'   => __( 'Page types', 'horizon-press-news-bar' ),
@@ -1005,7 +1074,7 @@ final class Settings_Page {
 				),
 				'desc'    => __( 'Narrows the scope of the Advanced tab for this profile only. Untick everything here and the bar never shows on this device.', 'horizon-press-news-bar' ),
 			),
-			'mobile_placement'         => array(
+			'mobile_placement'            => array(
 				'section' => 'mobile',
 				'type'    => 'radio',
 				'label'   => __( 'Placement', 'horizon-press-news-bar' ),
@@ -1015,7 +1084,7 @@ final class Settings_Page {
 				),
 				'desc'    => __( 'Inside the article the bar becomes a block of the page: full width, no reserved space, no collapsing. On any page without paragraphs it falls back to the bottom of the screen.', 'horizon-press-news-bar' ),
 			),
-			'mobile_inline_anchor'     => array(
+			'mobile_inline_anchor'        => array(
 				'section' => 'mobile',
 				'type'    => 'radio',
 				'label'   => __( 'Where in the article', 'horizon-press-news-bar' ),
@@ -1026,20 +1095,20 @@ final class Settings_Page {
 				),
 				'depends' => 'mobile_placement:inline',
 			),
-			'mobile_inline_paragraph'  => array(
+			'mobile_inline_paragraph'     => array(
 				'section' => 'mobile',
 				'type'    => 'number',
 				'label'   => __( 'Paragraph number', 'horizon-press-news-bar' ),
 				'desc'    => __( '1 to 30. Counted from the start of the article, or from its end for the last option. A shorter article places the bar at its end.', 'horizon-press-news-bar' ),
 				'depends' => 'mobile_placement:inline',
 			),
-			'desktop_hide_on_scroll'   => array(
+			'desktop_hide_on_scroll'      => array(
 				'section' => 'desktop',
 				'type'    => 'checkbox',
 				'label'   => __( 'Collapse while scrolling', 'horizon-press-news-bar' ),
 				'text'    => __( 'From 768 px the bar slides out of view and leaves a small tab to bring it back.', 'horizon-press-news-bar' ),
 			),
-			'desktop_collapse_mode'    => array(
+			'desktop_collapse_mode'       => array(
 				'section' => 'desktop',
 				'type'    => 'radio',
 				'label'   => __( 'When it collapses', 'horizon-press-news-bar' ),
@@ -1050,20 +1119,20 @@ final class Settings_Page {
 				),
 				'depends' => 'desktop_hide_on_scroll',
 			),
-			'desktop_collapse_after'   => array(
+			'desktop_collapse_after'      => array(
 				'section' => 'desktop',
 				'type'    => 'number',
 				'label'   => __( 'Collapse threshold (px)', 'horizon-press-news-bar' ),
 				'desc'    => __( '0 to 800 px of scrolling; 120 px by default. Ignored when the bar is always collapsed.', 'horizon-press-news-bar' ),
 				'depends' => 'desktop_hide_on_scroll',
 			),
-			'mobile_card_thumb'        => array(
+			'mobile_card_thumb'           => array(
 				'section' => 'mobile',
 				'type'    => 'number',
 				'label'   => __( 'Card image width (px)', 'horizon-press-news-bar' ),
-				'desc'    => __( '80 to 220 px, in a 16:10 box. The "Discover" design is built around its image and always shows one.', 'horizon-press-news-bar' ),
+				'desc'    => __( '72 to 120 px, in a 5:4 box. The "Discover" design is built around its image, and that width sets the height of the card.', 'horizon-press-news-bar' ),
 			),
-			'display_scope'            => array(
+			'display_scope'               => array(
 				'section' => 'visibility',
 				'type'    => 'radio',
 				'label'   => __( 'Scope', 'horizon-press-news-bar' ),
@@ -1072,7 +1141,7 @@ final class Settings_Page {
 					'custom'     => __( 'Only the contexts ticked below', 'horizon-press-news-bar' ),
 				),
 			),
-			'contexts'                 => array(
+			'contexts'                    => array(
 				'section' => 'visibility',
 				'type'    => 'contexts',
 				'label'   => __( 'Contexts', 'horizon-press-news-bar' ),
@@ -1089,13 +1158,13 @@ final class Settings_Page {
 				),
 				'desc'    => __( 'The bar is never shown in wp-admin, feeds, embeds, previews, the login page, sitemaps, AMP pages, REST, AJAX or cron requests.', 'horizon-press-news-bar' ),
 			),
-			'display_exclude_ids'      => array(
+			'display_exclude_ids'         => array(
 				'section' => 'visibility',
 				'type'    => 'ids',
 				'label'   => __( 'Excluded page / post IDs', 'horizon-press-news-bar' ),
 				'desc'    => __( 'Comma-separated IDs of pages or posts on which the bar must not appear.', 'horizon-press-news-bar' ),
 			),
-			'render_mode'              => array(
+			'render_mode'                 => array(
 				'section' => 'advanced',
 				'type'    => 'radio',
 				'label'   => __( 'Render mode', 'horizon-press-news-bar' ),
@@ -1104,31 +1173,31 @@ final class Settings_Page {
 					'php'    => __( 'PHP — server rendering only, no freshness check (diagnostics or sites without a long page cache)', 'horizon-press-news-bar' ),
 				),
 			),
-			'cache_ttl'                => array(
+			'cache_ttl'                   => array(
 				'section' => 'advanced',
 				'type'    => 'number',
 				'label'   => __( 'Server cache TTL (seconds)', 'horizon-press-news-bar' ),
 				'desc'    => __( '30 to 600 seconds. Kept short because a post can leave the window without any WordPress event.', 'horizon-press-news-bar' ),
 			),
-			'stale_threshold'          => array(
+			'stale_threshold'             => array(
 				'section' => 'advanced',
 				'type'    => 'number',
 				'label'   => __( 'Stale threshold (seconds)', 'horizon-press-news-bar' ),
 				'desc'    => __( 'Hybrid mode: a server-rendered bar older than this triggers at most one REST request per page load.', 'horizon-press-news-bar' ),
 			),
-			'auto_display'             => array(
+			'auto_display'                => array(
 				'section' => 'advanced',
 				'type'    => 'checkbox',
 				'label'   => __( 'Automatic display', 'horizon-press-news-bar' ),
 				'text'    => __( 'Insert the bar automatically in the footer of eligible pages.', 'horizon-press-news-bar' ),
 			),
-			'shortcode_enabled'        => array(
+			'shortcode_enabled'           => array(
 				'section' => 'advanced',
 				'type'    => 'checkbox',
 				'label'   => __( 'Shortcode', 'horizon-press-news-bar' ),
 				'text'    => __( 'Allow [hprnb_news_bar]. Only one bar is ever rendered per page.', 'horizon-press-news-bar' ),
 			),
-			'uninstall_delete_data'    => array(
+			'uninstall_delete_data'       => array(
 				'section' => 'advanced',
 				'type'    => 'checkbox',
 				'label'   => __( 'Uninstall', 'horizon-press-news-bar' ),

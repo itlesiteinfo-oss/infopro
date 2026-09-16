@@ -73,11 +73,19 @@ class Cache_Test extends HPRNB_Test_Case {
 		$ticker = Settings::sanitize( array_merge( $settings, array( 'ticker_enabled' => false ) ) );
 		$this->assertNotSame( $key, Cache::key( $ticker ) );
 
-		// Mobile: only the ticker mode (it changes the markup) is part of the key.
+		// Mobile: only the two settings that reach the markup are part of the key — the ticker mode
+		// (it decides the buttons) and the layout (the "discover" design always pulls the picture in).
 		$mobile_mode = Settings::sanitize( array_merge( $settings, array( 'mobile_ticker_mode' => 'manual' ) ) );
 		$this->assertNotSame( $key, Cache::key( $mobile_mode ) );
-		$mobile_rest = Settings::sanitize( array_merge( $settings, array( 'mobile_layout' => 'inline', 'mobile_font_size' => 20, 'mobile_lines' => 4, 'mobile_label_style' => 'hidden', 'mobile_label_dot' => true, 'mobile_show_counter' => false, 'mobile_show_progress' => false, 'mobile_swipe' => false, 'mobile_hide_on_scroll' => false, 'mobile_show_separator' => true, 'mobile_custom_colors' => false, 'mobile_bg_color' => '#000000', 'desktop_layout' => 'stacked', 'desktop_label_style' => 'pill', 'desktop_label_dot' => true, 'desktop_show_counter' => true, 'desktop_lines' => 3, 'desktop_show_progress' => false ) ) );
+		$mobile_card = Settings::sanitize( array_merge( $settings, array( 'mobile_layout' => 'card' ) ) );
+		$this->assertNotSame( $key, Cache::key( $mobile_card ), 'The card carries a picture the other layouts do not.' );
+		$this->assertTrue( Settings::wants_thumbnails( $mobile_card ) );
+		$mobile_rest = Settings::sanitize( array_merge( $settings, array( 'mobile_font_size' => 20, 'mobile_lines' => 4, 'mobile_label_style' => 'hidden', 'mobile_label_dot' => true, 'mobile_show_counter' => false, 'mobile_show_progress' => false, 'mobile_swipe' => false, 'mobile_hide_on_scroll' => false, 'mobile_show_separator' => true, 'mobile_custom_colors' => false, 'mobile_bg_color' => '#000000', 'desktop_layout' => 'stacked', 'desktop_label_style' => 'pill', 'desktop_label_dot' => true, 'desktop_show_counter' => true, 'desktop_lines' => 3, 'desktop_show_progress' => false ) ) );
 		$this->assertSame( $key, Cache::key( $mobile_rest ), 'Every other presentation setting lives on the root, outside the cache.' );
+
+		// A single headline drops its separator in CSS, so the count never fragments the cache.
+		$this->assertNotContains( 'mobile_card_thumb', Cache::PAYLOAD_KEYS );
+		$this->assertNotContains( 'reveal_mode', Cache::PAYLOAD_KEYS, 'When the bar appears is a script concern.' );
 
 		// The separator is a CSS concern on the root: none of its settings may fragment the cache.
 		$separator = Settings::sanitize( array_merge( $settings, array( 'show_separator' => true, 'separator_char' => '|', 'separator_after_last' => false ) ) );
