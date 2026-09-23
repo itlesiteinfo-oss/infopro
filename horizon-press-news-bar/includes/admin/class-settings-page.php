@@ -280,6 +280,25 @@ final class Settings_Page {
 				'title' => __( 'Mobile', 'horizon-press-news-bar' ),
 				'cards' => array(
 					array(
+						'title'       => __( 'Behaviour on mobile', 'horizon-press-news-bar' ),
+						'description' => __( 'One choice decides when the bar appears, when it folds and when it goes away. Pick one and save: there is nothing else to set.', 'horizon-press-news-bar' ),
+						'compact'     => true,
+						'keys'        => array( 'mobile_behavior', 'mobile_reveal_paragraph' ),
+					),
+					array(
+						'title'       => __( 'Custom: when the bar appears and goes away (mobile)', 'horizon-press-news-bar' ),
+						'description' => __( 'Only with the "Custom" behaviour. Until the bar appears no space is reserved for it and it stays out of view; once it appears it stays, unless the reader moves on to the next article and that option is ticked.', 'horizon-press-news-bar' ),
+						'depends'     => 'mobile_behavior:custom',
+						'keys'        => array( 'mobile_reveal_mode', 'mobile_reveal_value', 'smart_mobile_progress', 'smart_mobile_time', 'smart_mobile_up', 'smart_mobile_fallback', 'smart_mobile_fallback_time', 'mobile_next_hide' ),
+					),
+					array(
+						'title'       => __( 'Custom: folding (mobile)', 'horizon-press-news-bar' ),
+						'description' => __( 'Only with the "Custom" behaviour. Off, the bar keeps its full height while the reader scrolls. On, it shrinks to its label row and the first line of the headline, and a tap opens it again.', 'horizon-press-news-bar' ),
+						'depends'     => 'mobile_behavior:custom',
+						'switch'      => 'mobile_hide_on_scroll',
+						'keys'        => array( 'mobile_collapse_mode', 'mobile_collapse_after', 'mobile_peek', 'mobile_peek_thumbnail', 'mobile_deep_collapse' ),
+					),
+					array(
 						'title'       => __( 'Design', 'horizon-press-news-bar' ),
 						'description' => __( 'Under 768 px. The "Explore More" card is the default: a label row, the picture at the left, the headline on up to three lines and the close button in a tab above the corner. The height shown beside the line count is the height the page reserves.', 'horizon-press-news-bar' ),
 						'switch'      => 'show_on_mobile',
@@ -305,31 +324,6 @@ final class Settings_Page {
 						'keys'        => array( 'mobile_ticker_mode', 'rotate_interval' ),
 					),
 					array(
-						'title'       => __( 'When the bar appears (mobile)', 'horizon-press-news-bar' ),
-						'description' => __( 'Mobile decides for itself; desktop has the same choice on its own tab. Until the bar appears no space is reserved for it and it stays out of view; once it appears it stays.', 'horizon-press-news-bar' ),
-						'keys'        => array( 'mobile_reveal_mode', 'mobile_reveal_value', 'mobile_reveal_paragraph', 'smart_selector', 'smart_mobile_progress', 'smart_mobile_time', 'smart_mobile_up', 'smart_mobile_fallback', 'smart_mobile_fallback_time' ),
-						'scenarios'   => array(
-							array(
-								'title' => __( 'Never over the text', 'horizon-press-news-bar' ),
-								'body'  => __( '"Before the end of the article" with 2 paragraphs, and the folding below set to "Follows the reading": the bar arrives in full at the second-to-last paragraph, folds away the moment the reader scrolls back up into the article, stays folded until that paragraph is reached again, and stays open once the article is over.', 'horizon-press-news-bar' ),
-							),
-							array(
-								'title' => __( 'Once the reader is engaged', 'horizon-press-news-bar' ),
-								'body'  => __( 'Smart: it watches the article body and shows the bar at the end of the article, on a real scroll back up, or once the reader has genuinely read a while — whichever comes first.', 'horizon-press-news-bar' ),
-							),
-							array(
-								'title' => __( 'Seen immediately', 'horizon-press-news-bar' ),
-								'body'  => __( 'Right away, with the page. The most visible, and the most likely to be ignored as an advert.', 'horizon-press-news-bar' ),
-							),
-						),
-					),
-					array(
-						'title'       => __( 'Folding (mobile)', 'horizon-press-news-bar' ),
-						'description' => __( 'Off, the bar keeps its full height while the reader scrolls. On, it shrinks to its label row and the first line of the headline, and a tap opens it again.', 'horizon-press-news-bar' ),
-						'switch'      => 'mobile_hide_on_scroll',
-						'keys'        => array( 'mobile_collapse_mode', 'mobile_collapse_after', 'mobile_peek', 'mobile_peek_thumbnail', 'mobile_deep_collapse' ),
-					),
-					array(
 						'title'       => __( 'Buttons (mobile)', 'horizon-press-news-bar' ),
 						'description' => __( 'The pause and close buttons can sit inside the flowing bar or outside it. The card always carries them in its tab above the corner.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'mobile_controls_place', 'mobile_controls_layout', 'mobile_show_pause', 'mobile_show_close' ),
@@ -346,6 +340,25 @@ final class Settings_Page {
 				'title' => __( 'Desktop', 'horizon-press-news-bar' ),
 				'cards' => array(
 					array(
+						'title'       => __( 'Behaviour on desktop', 'horizon-press-news-bar' ),
+						'description' => __( 'The same one choice as on mobile, made separately for screens from 768 px. Pick one and save: there is nothing else to set.', 'horizon-press-news-bar' ),
+						'compact'     => true,
+						'keys'        => array( 'desktop_behavior', 'desktop_reveal_paragraph' ),
+					),
+					array(
+						'title'       => __( 'Custom: when the bar appears and goes away (desktop)', 'horizon-press-news-bar' ),
+						'description' => __( 'Only with the "Custom" behaviour. Until the bar appears no space is reserved for it and it stays out of view; once it appears it stays, unless the reader moves on to the next article and that option is ticked.', 'horizon-press-news-bar' ),
+						'depends'     => 'desktop_behavior:custom',
+						'keys'        => array( 'desktop_reveal_mode', 'desktop_reveal_value', 'smart_desktop_progress', 'smart_desktop_time', 'smart_desktop_up', 'smart_desktop_fallback', 'smart_desktop_fallback_time', 'desktop_next_hide' ),
+					),
+					array(
+						'title'       => __( 'Custom: folding (desktop)', 'horizon-press-news-bar' ),
+						'description' => __( 'Only with the "Custom" behaviour. Off, the bar simply stays put. On, it slides out of view and leaves a small tab to bring it back; the two settings below then decide when.', 'horizon-press-news-bar' ),
+						'depends'     => 'desktop_behavior:custom',
+						'switch'      => 'desktop_hide_on_scroll',
+						'keys'        => array( 'desktop_collapse_mode', 'desktop_collapse_after' ),
+					),
+					array(
 						'title'       => __( 'Design', 'horizon-press-news-bar' ),
 						'description' => __( 'From 768 px: a fixed bar aligned on the site container. The height follows the number of headline lines. The close button and its memory are set on the Mobile tab, under Closing: they apply to both devices.', 'horizon-press-news-bar' ),
 						'switch'      => 'show_on_desktop',
@@ -355,17 +368,6 @@ final class Settings_Page {
 						'title'       => __( 'Headlines, one after another (desktop)', 'horizon-press-news-bar' ),
 						'description' => __( 'How several headlines take their turn. Marquee always uses a single line; rotate and manual honour the line count. The rotate interval is on the Mobile tab and serves both.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'ticker_enabled', 'ticker_mode', 'ticker_speed', 'pause_on_hover' ),
-					),
-					array(
-						'title'       => __( 'When the bar appears (desktop)', 'horizon-press-news-bar' ),
-						'description' => __( 'Desktop decides for itself; mobile has the same choice on its own tab. The article body selector, shared by both, is on the Mobile tab.', 'horizon-press-news-bar' ),
-						'keys'        => array( 'desktop_reveal_mode', 'desktop_reveal_value', 'desktop_reveal_paragraph', 'smart_desktop_progress', 'smart_desktop_time', 'smart_desktop_up', 'smart_desktop_fallback', 'smart_desktop_fallback_time' ),
-					),
-					array(
-						'title'       => __( 'Folding (desktop)', 'horizon-press-news-bar' ),
-						'description' => __( 'Off, the bar simply stays put. On, it slides out of view and leaves a small tab to bring it back; the two settings below then decide when.', 'horizon-press-news-bar' ),
-						'switch'      => 'desktop_hide_on_scroll',
-						'keys'        => array( 'desktop_collapse_mode', 'desktop_collapse_after' ),
 					),
 				),
 			),
@@ -396,6 +398,11 @@ final class Settings_Page {
 						'keys'        => array(),
 					),
 					array(
+						'title'       => __( 'Article body', 'horizon-press-news-bar' ),
+						'description' => __( 'Continuous reading, "Before the end of the article", Smart and the next-article detection all measure the text of the article. Most themes need nothing here.', 'horizon-press-news-bar' ),
+						'keys'        => array( 'smart_selector' ),
+					),
+					array(
 						'title' => __( 'Technical', 'horizon-press-news-bar' ),
 						'keys'  => array( 'thumbnail_size', 'render_mode', 'cache_ttl', 'stale_threshold', 'auto_display', 'shortcode_enabled', 'uninstall_delete_data' ),
 					),
@@ -405,9 +412,35 @@ final class Settings_Page {
 	}
 
 	/**
+	 * The behaviour choices of the Mobile and Desktop tabs, in plain words: what the reader sees.
+	 *
+	 * @return array<string, array{title: string, text: string}>
+	 */
+	private static function behavior_choices(): array {
+		return array(
+			'reading' => array(
+				'title' => __( 'Continuous reading — recommended on articles', 'horizon-press-news-bar' ),
+				'text'  => __( 'Hidden at first. Appears in full once the reader reaches the paragraph chosen below, counted from the end of the article. Folds as soon as the reader scrolls back up and opens again when reading on; stays open once the article is over; goes away completely when the reader moves on to the next article.', 'horizon-press-news-bar' ),
+			),
+			'fold'    => array(
+				'title' => __( 'Visible, folds while scrolling', 'horizon-press-news-bar' ),
+				'text'  => __( 'Appears with the page. Gets out of the way while the reader scrolls down and comes back on a scroll up.', 'horizon-press-news-bar' ),
+			),
+			'always'  => array(
+				'title' => __( 'Always visible', 'horizon-press-news-bar' ),
+				'text'  => __( 'Appears with the page and keeps its full size, whatever the scrolling.', 'horizon-press-news-bar' ),
+			),
+			'custom'  => array(
+				'title' => __( 'Custom', 'horizon-press-news-bar' ),
+				'text'  => __( 'Every detail is yours: two more blocks open just below, one for when the bar appears and goes away, one for folding.', 'horizon-press-news-bar' ),
+			),
+		);
+	}
+
+	/**
 	 * Field definitions.
 	 *
-	 * Types: checkbox, text, number, select, radio, color, terms, ids, window, contexts.
+	 * Types: checkbox, text, number, select, radio, choice, color, terms, ids, window, contexts.
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
@@ -966,7 +999,7 @@ final class Settings_Page {
 				'type'    => 'number',
 				'label'   => __( 'Closing duration (hours)', 'horizon-press-news-bar' ),
 			),
-			'mobile_reveal_mode'             => array(
+			'mobile_reveal_mode'          => array(
 				'section' => 'appearance',
 				'type'    => 'radio',
 				'label'   => __( 'When the bar appears', 'horizon-press-news-bar' ),
@@ -980,21 +1013,21 @@ final class Settings_Page {
 				),
 				'desc'    => __( 'Until then no space is reserved and the bar stays out of view; once it appears it stays. "Before the end" and Smart measure the article body, not the page; Smart fires once on whichever signal comes first.', 'horizon-press-news-bar' ),
 			),
-			'mobile_reveal_value'            => array(
+			'mobile_reveal_value'         => array(
 				'section' => 'appearance',
 				'type'    => 'number',
 				'label'   => __( 'Appearance threshold', 'horizon-press-news-bar' ),
 				'depends' => 'mobile_reveal_mode:scroll|percent',
 				'desc'    => __( 'Pixels of scrolling, or percentage of the page for the share option. 400 px is a good start on an article.', 'horizon-press-news-bar' ),
 			),
-			'mobile_reveal_paragraph'        => array(
+			'mobile_reveal_paragraph'     => array(
 				'section' => 'appearance',
 				'type'    => 'number',
 				'label'   => __( 'Paragraphs before the end', 'horizon-press-news-bar' ),
 				'depends' => 'mobile_reveal_mode:paragraph',
-				'desc'    => __( '2 = the second-to-last paragraph of the article. Counted from the end of the article body, so a larger number shows the bar earlier. 1 to 30.', 'horizon-press-news-bar' ),
+				'desc'    => __( 'Where "Continuous reading" (and "Before the end of the article") shows the bar: 2 = the second-to-last paragraph of the article. Counted from the end of the article, so a larger number shows the bar earlier. 1 to 30.', 'horizon-press-news-bar' ),
 			),
-			'desktop_reveal_mode'            => array(
+			'desktop_reveal_mode'         => array(
 				'section' => 'appearance',
 				'type'    => 'radio',
 				'label'   => __( 'When the bar appears', 'horizon-press-news-bar' ),
@@ -1008,19 +1041,19 @@ final class Settings_Page {
 				),
 				'desc'    => __( 'Until then no space is reserved and the bar stays out of view; once it appears it stays. "Before the end" and Smart measure the article body, not the page; Smart fires once on whichever signal comes first.', 'horizon-press-news-bar' ),
 			),
-			'desktop_reveal_value'           => array(
+			'desktop_reveal_value'        => array(
 				'section' => 'appearance',
 				'type'    => 'number',
 				'label'   => __( 'Appearance threshold', 'horizon-press-news-bar' ),
 				'depends' => 'desktop_reveal_mode:scroll|percent',
 				'desc'    => __( 'Pixels of scrolling, or percentage of the page for the share option. 400 px is a good start on an article.', 'horizon-press-news-bar' ),
 			),
-			'desktop_reveal_paragraph'       => array(
+			'desktop_reveal_paragraph'    => array(
 				'section' => 'appearance',
 				'type'    => 'number',
 				'label'   => __( 'Paragraphs before the end', 'horizon-press-news-bar' ),
 				'depends' => 'desktop_reveal_mode:paragraph',
-				'desc'    => __( '2 = the second-to-last paragraph of the article. Counted from the end of the article body, so a larger number shows the bar earlier. 1 to 30.', 'horizon-press-news-bar' ),
+				'desc'    => __( 'Where "Continuous reading" (and "Before the end of the article") shows the bar: 2 = the second-to-last paragraph of the article. Counted from the end of the article, so a larger number shows the bar earlier. 1 to 30.', 'horizon-press-news-bar' ),
 			),
 			'smart_selector'              => array(
 				'section' => 'appearance',
@@ -1227,6 +1260,30 @@ final class Settings_Page {
 				'desc'    => __( '0 to 800 px of scrolling; 120 px by default. Ignored when the bar is always folded or follows the reading.', 'horizon-press-news-bar' ),
 				'depends' => 'desktop_hide_on_scroll',
 			),
+			'mobile_behavior'             => array(
+				'section' => 'mobile',
+				'type'    => 'choice',
+				'label'   => __( 'Behaviour', 'horizon-press-news-bar' ),
+				'options' => self::behavior_choices(),
+			),
+			'desktop_behavior'            => array(
+				'section' => 'desktop',
+				'type'    => 'choice',
+				'label'   => __( 'Behaviour', 'horizon-press-news-bar' ),
+				'options' => self::behavior_choices(),
+			),
+			'mobile_next_hide'            => array(
+				'section' => 'mobile',
+				'type'    => 'checkbox',
+				'label'   => __( 'Next article', 'horizon-press-news-bar' ),
+				'text'    => __( 'Hide the bar completely once the reader moves on to the next article loaded below this one (themes that load articles one after another). It comes back when the reader scrolls back up into this article.', 'horizon-press-news-bar' ),
+			),
+			'desktop_next_hide'           => array(
+				'section' => 'desktop',
+				'type'    => 'checkbox',
+				'label'   => __( 'Next article', 'horizon-press-news-bar' ),
+				'text'    => __( 'Hide the bar completely once the reader moves on to the next article loaded below this one (themes that load articles one after another). It comes back when the reader scrolls back up into this article.', 'horizon-press-news-bar' ),
+			),
 			'mobile_card_thumb'           => array(
 				'section' => 'mobile',
 				'type'    => 'number',
@@ -1387,8 +1444,12 @@ final class Settings_Page {
 	 * @return void
 	 */
 	private static function render_card( array $card, array $fields, array $settings, array $advanced, string $id ): void {
-		$switch = ! empty( $card['switch'] ) && isset( $fields[ $card['switch'] ] ) ? $card['switch'] : '';
-		echo '<section class="hprnb-card" id="hprnb-card-' . esc_attr( $id ) . '"' . ( $switch ? ' data-hprnb-switch="' . esc_attr( $switch ) . '"' : '' ) . '>';
+		$switch  = ! empty( $card['switch'] ) && isset( $fields[ $card['switch'] ] ) ? $card['switch'] : '';
+		$classes = 'hprnb-card' . ( empty( $card['compact'] ) ? '' : ' hprnb-card--compact' );
+		// A card that only makes sense for one choice (the "Custom" behaviour) follows it as a whole:
+		// the script hides it otherwise. Without the script every card stays in view.
+		$depends = empty( $card['depends'] ) ? '' : ' data-hprnb-card-depends="' . esc_attr( $card['depends'] ) . '"';
+		echo '<section class="' . esc_attr( $classes ) . '" id="hprnb-card-' . esc_attr( $id ) . '"' . ( $switch ? ' data-hprnb-switch="' . esc_attr( $switch ) . '"' : '' ) . $depends . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $depends is escaped above.
 		echo '<header class="hprnb-card__header"><h3 class="hprnb-card__title">' . esc_html( $card['title'] ) . '</h3>';
 		if ( $switch ) {
 			$switch_id = 'hprnb-field-' . str_replace( '_', '-', $switch );
@@ -1453,6 +1514,13 @@ final class Settings_Page {
 		foreach ( $fields as $key => $field ) {
 			$id = 'hprnb-field-' . str_replace( '_', '-', $key );
 			echo '<tr class="hprnb-row hprnb-row--' . esc_attr( $field['type'] ) . '"' . ( ! empty( $field['depends'] ) ? ' data-hprnb-depends="' . esc_attr( $field['depends'] ) . '"' : '' ) . '>';
+			if ( 'choice' === $field['type'] ) {
+				// The boxes carry their own titles: the whole width goes to them, the legend names the group.
+				echo '<td colspan="2">';
+				self::render_field( $key, $field, $settings, $id );
+				echo '</td></tr>';
+				continue;
+			}
 			echo '<th scope="row">';
 			if ( in_array( $field['type'], array( 'text', 'number', 'select', 'color', 'ids' ), true ) ) {
 				echo '<label for="' . esc_attr( $id ) . '">' . esc_html( $field['label'] ) . '</label>';
@@ -1548,6 +1616,24 @@ final class Settings_Page {
 						esc_attr( (string) $option_value ),
 						checked( (string) $value, (string) $option_value, false ),
 						esc_html( (string) $option_label )
+					);
+				}
+				echo '</fieldset>';
+				break;
+
+			case 'choice':
+				// Radio buttons drawn as large boxes: a title and one plain sentence each.
+				echo '<fieldset class="hprnb-choices"><legend class="screen-reader-text">' . esc_html( $field['label'] ) . '</legend>';
+				foreach ( (array) $field['options'] as $option_value => $option ) {
+					$option_id = $id . '-' . sanitize_key( (string) $option_value );
+					printf(
+						'<label for="%1$s" class="hprnb-choice"><input type="radio" id="%1$s" name="%2$s" value="%3$s"%4$s> <span class="hprnb-choice__body"><strong class="hprnb-choice__title">%5$s</strong> <span class="hprnb-choice__text">%6$s</span></span></label>',
+						esc_attr( $option_id ),
+						esc_attr( $name ),
+						esc_attr( (string) $option_value ),
+						checked( (string) $value, (string) $option_value, false ),
+						esc_html( (string) ( $option['title'] ?? '' ) ),
+						esc_html( (string) ( $option['text'] ?? '' ) )
 					);
 				}
 				echo '</fieldset>';

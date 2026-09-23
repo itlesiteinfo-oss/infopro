@@ -386,14 +386,23 @@
 	/* Dependent fields (greyed out, never disabled: their value is kept)  */
 	/* ------------------------------------------------------------------ */
 
+	/** "key" follows a checkbox; "key:value" (or "key:a|b") follows the chosen option of a radio or a select. */
+	function isActive( dependency ) {
+		var spec = dependency.split( ':' );
+		var master = form.querySelector( '[name="hprnb_settings[' + spec[ 0 ] + ']"]' );
+		return spec.length > 1
+			? spec[ 1 ].split( '|' ).indexOf( valueOf( spec[ 0 ] ) ) !== -1
+			: ( ! master || master.type !== 'checkbox' || master.checked );
+	}
+
 	function updateDependencies() {
+		// A whole card can belong to one choice (the "Custom" behaviour): out of that choice it is
+		// hidden, not greyed out, so the tab only shows what the admin has to decide.
+		Array.prototype.forEach.call( form.querySelectorAll( '[data-hprnb-card-depends]' ), function ( card ) {
+			card.hidden = ! isActive( card.getAttribute( 'data-hprnb-card-depends' ) );
+		} );
 		Array.prototype.forEach.call( form.querySelectorAll( 'tr[data-hprnb-depends]' ), function ( row ) {
-			// "key" follows a checkbox; "key:value" follows the chosen option of a radio or a select.
-			var spec = row.getAttribute( 'data-hprnb-depends' ).split( ':' );
-			var master = form.querySelector( '[name="hprnb_settings[' + spec[ 0 ] + ']"]' );
-			var active = spec.length > 1
-				? spec[ 1 ].split( '|' ).indexOf( valueOf( spec[ 0 ] ) ) !== -1
-				: ( ! master || master.type !== 'checkbox' || master.checked );
+			var active = isActive( row.getAttribute( 'data-hprnb-depends' ) );
 			row.classList.toggle( 'hprnb-row--inactive', ! active );
 			Array.prototype.forEach.call( row.querySelectorAll( 'input, select' ), function ( input ) {
 				input.setAttribute( 'aria-disabled', active ? 'false' : 'true' );
@@ -508,6 +517,10 @@
 		var key = fieldKey( el );
 		if ( ! key ) {
 			return;
+		}
+		// Only the radio that ends up ticked: "Reset this tab" sends a change event to every one of them.
+		if ( ( key === 'mobile_behavior' || key === 'desktop_behavior' ) && event.type === 'change' && el.checked ) {
+			applyBehavior( key.replace( 'behavior', '' ), el.value );
 		}
 		applyVisual();
 		updateContrast();
@@ -776,6 +789,28 @@
 			setFieldValue( el, value );
 		} );
 		// The virtual "window" field maps to window_value / window_unit (already covered by their names).
+	}
+
+	/**
+	 * Writes the detailed values a behaviour stands for into the (hidden) detailed fields, exactly as
+	 * saving would: switching to "Custom" afterwards starts from what the last choice was doing.
+	 *
+	 * @param {string} prefix 'mobile_' or 'desktop_'.
+	 * @param {string} name   Behaviour name.
+	 */
+	function applyBehavior( prefix, name ) {
+		var preset = ( cfg.behaviors || {} )[ name ];
+		if ( ! preset ) {
+			return; // "Custom" changes nothing.
+		}
+		Object.keys( preset ).forEach( function ( key ) {
+			Array.prototype.forEach.call( form.querySelectorAll( '[name="hprnb_settings[' + prefix + key + ']"]' ), function ( el ) {
+				if ( el.type === 'hidden' ) {
+					return;
+				}
+				setFieldValue( el, preset[ key ] );
+			} );
+		} );
 	}
 
 	if ( resetTabButton ) {

@@ -2380,6 +2380,14 @@ mode hybrid:
 3. **Six onglets, un par appareil pour Mobile et Ordinateur** : design, titres, moment d'apparition, repli, boutons. Le choix du design mobile est le premier champ de l'onglet Mobile. Aucun champ n'est rendu deux fois (test).
 4. **La carte mobile suit la maquette du client et devient le défaut** : ligne d'étiquette, image 16:9 de 132 × 74 au début de la ligne, titre 18 px gras sur 3 lignes, d'un bord à l'autre, croix en onglet 44 × 44 au-dessus du coin de fin ; 126 px. Flottante en option. Une installation existante garde son design ; « Réinitialiser l'onglet » applique la maquette.
 
+### 15.8.3 nonies — Un seul choix par appareil et l'article suivant (2.9.0)
+
+1. **Un seul réglage à choisir par appareil** : « Comportement de la barre », premier bloc des onglets Mobile et Ordinateur, en grandes cases expliquées — Lecture continue, Visible et se replie pendant le défilement, Toujours visible, Personnalisé. Les réglages détaillés d'apparition et de repli ne s'affichent qu'en « Personnalisé ».
+2. **Lecture continue** reprend toute la condition du client : masquée au départ ; entière dès que le point choisi est franchi (le Nᵉ paragraphe avant la fin, 2 par défaut) ; repliée dès que le lecteur remonte ; de nouveau entière dès qu'il redescend ; ouverte une fois l'article terminé ; **complètement masquée dans l'article suivant** chargé par le défilement continu du thème, et de retour si le lecteur remonte dans le premier article.
+3. **Article suivant** : réglage propre à chaque appareil ; la barre sort de l'écran et libère son espace quand le haut de l'article suivant atteint le milieu de l'écran. Détection sans modification du thème ; uniquement sur un article seul et une barre fixe.
+4. **Aucune installation existante ne change de comportement** (schéma 6) : le choix est nommé d'après les réglages déjà en place, sinon « Personnalisé ».
+5. **Correctif** : pendant l'attente, l'onglet du bouton fermer de la carte ne dépasse plus en bas de l'écran.
+
 ---
 
 # ANNEXE C — CONSIGNE FINALE À CLAUDE CODE

@@ -122,6 +122,7 @@ final class Admin {
 				'nonce'        => wp_create_nonce( 'wp_rest' ),
 				'defaults'     => Settings::defaults(),
 				'presets'      => Settings::color_presets(),
+				'behaviors'    => Settings::behavior_presets(),
 				'emptyMessage' => Settings_Page::empty_message(),
 				'i18n'         => array(
 					'resetTab'       => __( 'Reset every setting of this tab to its default value? Nothing is saved until you click Save.', 'horizon-press-news-bar' ),

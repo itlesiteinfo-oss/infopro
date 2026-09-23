@@ -1940,10 +1940,14 @@ test( 'v2.6: the settings page names what it does — page types, appearing, fol
 	await expect( page.locator( 'input[name="hprnb_settings[contexts][single_post]"]' ) ).toBeVisible();
 
 	// Folding: a plain on/off per device, with its timing underneath — on that device's own tab.
+	// Since 2.9 those details sit behind the "Custom" behaviour: pick it first.
 	await page.click( '[data-hprnb-tab="mobile"]' );
+	await expect( page.locator( '#hprnb-field-mobile-reveal-mode-smart' ) ).toBeHidden();
+	await page.check( '#hprnb-field-mobile-behavior-custom' );
 	await expect( page.locator( '#hprnb-field-mobile-reveal-mode-smart' ) ).toBeVisible();
-	await expect( page.locator( '#hprnb-field-mobile-layout-card' ) ).toBeChecked( { checked: true }, 'v2.8: the reference card is the default design, first field of the first card.' );
+	await expect( page.locator( '#hprnb-field-mobile-layout-card' ) ).toBeChecked( { checked: true }, 'v2.8: the reference card is the default design, first field of the design card.' );
 	await page.click( '[data-hprnb-tab="desktop"]' );
+	await page.check( '#hprnb-field-desktop-behavior-custom' );
 	await expect( page.locator( '#hprnb-field-desktop-reveal-mode-smart' ) ).toBeVisible();
 	const desktopFold = page.locator( '#hprnb-field-desktop-hide-on-scroll' );
 	await expect( desktopFold ).not.toBeChecked();
@@ -2125,6 +2129,148 @@ test( 'v2.7: before the end of the article, and a bar that follows the reading',
 	} finally {
 		wp( [ 'post', 'delete', article, '--force' ] );
 		wp( [ 'post', 'delete', brief, '--force' ] );
+		setSettings( { mobile_layout: 'flow', mobile_lines: 2 } );
+	}
+} );
+
+test( 'v2.9: continuous reading in one choice, and a bar that goes away in the next article', async ( { page } ) => {
+	const errors = collectErrors( page );
+	const body = Array.from( { length: 40 }, ( _, i ) =>
+		`<p>Paragraphe ${ i + 1 }. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>` ).join( '\n' );
+	const article = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Article suivi d’un autre', `--post_content=${ body }`, '--porcelain' ] );
+	const url = new URL( wp( [ 'post', 'url', article ] ) ).pathname;
+
+	const root = page.locator( '#hprnb-root' );
+	const aside = page.locator( '.hprnb-bar' );
+	const device = () => page.evaluate( () => ( window.innerWidth < 768 ? 'm' : 'd' ) );
+	const has = ( suffix ) => page.evaluate( ( s ) => document.querySelector( '#hprnb-root' ).classList.contains( 'hprnb-root--' + ( window.innerWidth < 768 ? 'm' : 'd' ) + '-' + s ), suffix );
+	const folded = () => page.evaluate( () => document.querySelector( '.hprnb-bar' ).classList.contains( 'hprnb-bar--collapsed' ) );
+	// Everything of the bar, its button tab included, below the bottom edge of the screen.
+	const outOfView = () => page.evaluate( () => {
+		const tops = [ '.hprnb-bar', '.hprnb-bar__controls' ].map( ( sel ) => document.querySelector( sel ).getBoundingClientRect().top );
+		return Math.min.apply( null, tops ) >= window.innerHeight && getComputedStyle( document.querySelector( '.hprnb-bar' ) ).visibility === 'hidden';
+	} );
+	const padding = () => page.evaluate( () => parseFloat( getComputedStyle( document.body ).paddingBottom ) );
+	const paragraphTop = ( i ) => page.evaluate( ( k ) => {
+		const p = document.querySelectorAll( '.entry-content p, .wp-block-post-content p' )[ k ];
+		return Math.round( p.getBoundingClientRect().top + window.scrollY );
+	}, i );
+	const scrollTo = async ( y ) => {
+		await page.evaluate( ( v ) => window.scrollTo( 0, v ), y );
+		await page.waitForTimeout( 160 );
+	};
+	// What a continuous-loading theme does: the next article, title first, appended below.
+	const appendNext = () => page.evaluate( () => {
+		const current = document.querySelector( '.entry-content, .wp-block-post-content' );
+		const next = document.createElement( 'article' );
+		next.className = 'hprnb-e2e-next';
+		next.innerHTML = '<h2>Article suivant</h2><div style="height:320px">Image</div><div class="entry-content">' +
+			Array.from( { length: 30 }, ( _, i ) => '<p>Suite ' + ( i + 1 ) + '. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.</p>' ).join( '' ) + '</div>';
+		( current.closest( 'main' ) || current.parentNode ).appendChild( next );
+		return Math.round( next.getBoundingClientRect().top + window.scrollY );
+	} );
+
+	try {
+		// --- The admin: one choice, the details follow it and stay out of sight. -----------------
+		setSettings( {} );
+		await page.goto( '/wp-login.php' );
+		await page.fill( '#user_login', 'admin' );
+		await page.fill( '#user_pass', 'admin' );
+		await page.click( '#wp-submit' );
+		await page.waitForURL( /wp-admin/ );
+		await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar' );
+		await page.click( '[data-hprnb-tab="mobile"]' );
+		await expect( page.locator( '#hprnb-field-mobile-behavior-fold' ) ).toBeChecked();
+		const customCards = page.locator( '[data-hprnb-card-depends="mobile_behavior:custom"]' );
+		await expect( customCards ).toHaveCount( 2 );
+		await expect( customCards.first() ).toBeHidden();
+		await expect( page.locator( '#hprnb-field-mobile-reveal-paragraph' ) ).toBeHidden( { timeout: 2000 } );
+		await page.check( '#hprnb-field-mobile-behavior-reading' );
+		await expect( page.locator( '#hprnb-field-mobile-reveal-paragraph' ) ).toBeVisible();
+		await expect( page.locator( '#hprnb-field-mobile-reveal-mode-paragraph' ) ).toBeChecked();
+		await expect( page.locator( '#hprnb-field-mobile-collapse-mode-article' ) ).toBeChecked();
+		await expect( page.locator( '#hprnb-field-mobile-next-hide' ) ).toBeChecked();
+		await page.fill( '#hprnb-field-mobile-reveal-paragraph', '2' );
+		await page.click( '#hprnb-save' );
+		await page.waitForURL( /settings-updated=true/ );
+		const saved = JSON.parse( wp( [ 'option', 'get', 'hprnb_settings', '--format=json' ] ) );
+		expect( [ saved.mobile_behavior, saved.mobile_reveal_mode, saved.mobile_collapse_mode, saved.mobile_hide_on_scroll, saved.mobile_next_hide, saved.mobile_reveal_paragraph ] )
+			.toEqual( [ 'reading', 'paragraph', 'article', true, true, 2 ] );
+		expect( saved.desktop_behavior ).toBe( 'always', 'The other device keeps its own choice.' );
+		await page.click( '[data-hprnb-tab="mobile"]' );
+		await page.check( '#hprnb-field-mobile-behavior-custom' );
+		await expect( customCards.first() ).toBeVisible();
+		await expect( page.locator( '#hprnb-field-mobile-collapse-mode-article' ) ).toBeChecked( { checked: true }, 'Custom starts from what the last choice was doing.' );
+		await page.context().clearCookies();
+
+		// --- Mobile: hidden, then in full at the second-to-last paragraph. ----------------------
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( url );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await device() ).toBe( 'm' );
+		expect( await has( 'pending' ) ).toBe( true );
+		expect( await outOfView() ).toBe( true, 'Waiting: the card and its button tab are both out of view.' );
+		expect( await padding() ).toBe( 0 );
+		const B = ( await paragraphTop( 38 ) ) - 844 + 30;
+		await scrollTo( B );
+		await expect.poll( () => has( 'pending' ) ).toBe( false );
+		expect( await folded() ).toBe( false, 'The first appearance is the full bar.' );
+		expect( await padding() ).toBeGreaterThan( 100 );
+
+		// Back up: folded. Down again: open.
+		await scrollTo( B - 150 );
+		await expect.poll( folded ).toBe( true );
+		await scrollTo( B + 60 );
+		await expect.poll( folded ).toBe( false );
+
+		// --- The next article arrives below and the reader moves on to it: gone, space released. --
+		const nextTop = await appendNext();
+		await scrollTo( nextTop - 844 / 2 + 40 );
+		await expect.poll( () => has( 'away' ) ).toBe( true );
+		await expect( page.locator( 'body' ) ).toHaveClass( /hprnb-m-away/ );
+		await expect.poll( outOfView ).toBe( true );
+		expect( await padding() ).toBe( 0 );
+		expect( await page.evaluate( () => window.hprnbBar.state().offset ) ).toBe( 0 );
+		await scrollTo( nextTop + 1500 );
+		expect( await has( 'away' ) ).toBe( true, 'Still gone deeper in the next article.' );
+
+		// Back into the first article: it returns, open past the end, folded inside the text.
+		await scrollTo( nextTop - 844 );
+		await expect.poll( () => has( 'away' ) ).toBe( false );
+		await expect( page.locator( 'body' ) ).not.toHaveClass( /hprnb-m-away/ );
+		expect( await folded() ).toBe( false );
+		expect( await padding() ).toBeGreaterThan( 100 );
+		await scrollTo( B - 150 );
+		await expect.poll( folded ).toBe( true );
+
+		// --- Desktop: the same choice, and the folded tab goes away with the bar. ----------------
+		setSettings( { mobile_behavior: 'reading', desktop_behavior: 'reading', ticker_mode: 'none' } );
+		await page.setViewportSize( { width: 1366, height: 800 } );
+		await page.goto( url );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await device() ).toBe( 'd' );
+		expect( await has( 'pending' ) ).toBe( true );
+		const dB = ( await paragraphTop( 38 ) ) - 800 + 30;
+		await scrollTo( dB );
+		await expect.poll( () => has( 'pending' ) ).toBe( false );
+		await scrollTo( dB - 150 );
+		await expect.poll( folded ).toBe( true );
+		const dNext = await appendNext();
+		await scrollTo( dNext - 400 + 40 );
+		await expect.poll( () => has( 'away' ) ).toBe( true );
+		await expect.poll( outOfView ).toBe( true );
+		await expect( page.locator( 'body' ) ).toHaveClass( /hprnb-d-away/ );
+		await scrollTo( dNext - 800 );
+		await expect.poll( () => has( 'away' ) ).toBe( false );
+
+		// --- A listing is not an article: nothing to go away from. -------------------------------
+		await page.goto( '/' );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await root.getAttribute( 'data-hprnb-desktop' ) ).not.toContain( '"next"' );
+		expect( await root.getAttribute( 'data-hprnb-mobile' ) ).not.toContain( '"next"' );
+		expect( errors ).toEqual( [] );
+	} finally {
+		wp( [ 'post', 'delete', article, '--force' ] );
 		setSettings( { mobile_layout: 'flow', mobile_lines: 2 } );
 	}
 } );

@@ -79,13 +79,36 @@ abstract class HPRNB_Test_Case extends WP_UnitTestCase {
 	 * @return array Effective settings.
 	 */
 	protected function with_settings( array $overrides ): array {
-		$settings = Settings::sanitize( array_merge( Settings::defaults(), $overrides ) );
+		$settings = Settings::sanitize( array_merge( Settings::defaults(), self::custom_behavior( $overrides ) ) );
 		update_option( Settings::OPTION, $settings, true );
 		Settings::flush();
 		Payload::flush();
 		Invalidation::reset_guard();
 		Frontend::reset();
 		return Settings::get();
+	}
+
+	/**
+	 * A test that sets one of the detailed reveal or folding settings of a device means the
+	 * "Custom" behaviour of that device, exactly as an admin has to pick it before those details
+	 * take effect. An explicit behaviour in the overrides always wins.
+	 *
+	 * @param array $overrides Settings under test.
+	 * @return array
+	 */
+	protected static function custom_behavior( array $overrides ): array {
+		foreach ( array( 'desktop_', 'mobile_' ) as $prefix ) {
+			if ( array_key_exists( $prefix . 'behavior', $overrides ) ) {
+				continue;
+			}
+			foreach ( array( 'reveal_mode', 'hide_on_scroll', 'collapse_mode', 'next_hide' ) as $key ) {
+				if ( array_key_exists( $prefix . $key, $overrides ) ) {
+					$overrides[ $prefix . 'behavior' ] = 'custom';
+					break;
+				}
+			}
+		}
+		return $overrides;
 	}
 
 	/**

@@ -75,7 +75,8 @@ class Settings_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_2_7_reveal_paragraph_and_article_collapse_are_sanitised() {
-		$clean = Settings::sanitize( array_merge( Settings::defaults(), array( 'mobile_reveal_mode' => 'paragraph', 'mobile_reveal_paragraph' => 4, 'desktop_reveal_mode' => 'scroll', 'desktop_collapse_mode' => 'article', 'mobile_collapse_mode' => 'article' ) ) );
+		// The detailed values only count with the "Custom" behaviour (2.9.0).
+		$clean = Settings::sanitize( array_merge( Settings::defaults(), array( 'mobile_behavior' => 'custom', 'desktop_behavior' => 'custom', 'mobile_reveal_mode' => 'paragraph', 'mobile_reveal_paragraph' => 4, 'desktop_reveal_mode' => 'scroll', 'desktop_collapse_mode' => 'article', 'mobile_collapse_mode' => 'article' ) ) );
 		$this->assertSame( 'paragraph', $clean['mobile_reveal_mode'] );
 		$this->assertSame( 'scroll', $clean['desktop_reveal_mode'], 'Each device keeps its own.' );
 		$this->assertSame( 4, $clean['mobile_reveal_paragraph'] );
@@ -102,6 +103,8 @@ class Settings_Test extends HPRNB_Test_Case {
 			unset( $old[ $prefix . 'reveal_mode' ], $old[ $prefix . 'reveal_value' ], $old[ $prefix . 'reveal_paragraph' ] );
 		}
 		unset( $old['mobile_card_float'] );
+		// Keys born after schema 4 are not in a schema-4 option.
+		unset( $old['desktop_behavior'], $old['mobile_behavior'], $old['desktop_next_hide'], $old['mobile_next_hide'] );
 		update_option( Settings::OPTION, $old );
 		update_option( Settings::SCHEMA_OPTION, '4' );
 		Settings::flush();
@@ -129,7 +132,7 @@ class Settings_Test extends HPRNB_Test_Case {
 		$this->assertSame( 'scroll', $mixed['mobile_reveal_mode'] );
 		$this->assertSame( 'smart', $mixed['desktop_reveal_mode'] );
 		// Nothing to migrate leaves the array untouched.
-		$this->assertSame( array( 'label_text' => 'x' ), Settings::migrate( array( 'label_text' => 'x' ), 5 ) );
+		$this->assertSame( array( 'label_text' => 'x' ), Settings::migrate( array( 'label_text' => 'x' ), HPRNB_SCHEMA_VERSION ) );
 	}
 
 	/**
@@ -143,6 +146,7 @@ class Settings_Test extends HPRNB_Test_Case {
 		);
 		foreach ( array( 'desktop_', 'mobile_' ) as $prefix ) {
 			unset( $export['settings'][ $prefix . 'reveal_mode' ], $export['settings'][ $prefix . 'reveal_value' ], $export['settings'][ $prefix . 'reveal_paragraph' ] );
+			unset( $export['settings'][ $prefix . 'behavior' ], $export['settings'][ $prefix . 'next_hide' ] );
 		}
 		$json = wp_json_encode( $export );
 		$this->assertIsString( $json );

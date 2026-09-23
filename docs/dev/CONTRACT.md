@@ -780,3 +780,40 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
 - Defaults changed: `mobile_layout` card, `mobile_lines` 3, `mobile_card_thumb` 132. Existing installs
   keep their stored values.
 
+## 23. One behaviour per device, and the next article (2.9.0)
+
+- Schema 6. New keys: `desktop_behavior` / `mobile_behavior` (enum `Settings::BEHAVIORS` =
+  `reading | fold | always | custom`, defaults `always` / `fold`) and `desktop_next_hide` /
+  `mobile_next_hide` (bool, default false). 126 keys.
+- `Settings::behavior_presets()` maps each name but `custom` to unprefixed detailed values
+  (`reveal_mode`, `hide_on_scroll`, `collapse_mode`, `next_hide`). `Settings::sanitize()` ends with
+  `apply_behaviors()`, which writes them for each device whose behaviour is not `custom`; every
+  consumer keeps reading the detailed keys. `*_reveal_paragraph`, `*_collapse_after`, `mobile_peek*`
+  and `mobile_deep_collapse` are never touched by a behaviour. `sanitize( defaults() ) === defaults()`.
+- `Settings::detect_behavior( $settings, $prefix )` returns the first preset whose values all match,
+  else `custom`. Migration step 6 (non-empty raw only, and only when the behaviour key is absent)
+  probes a sanitised copy with both behaviours forced to `custom` and names each device with it. The
+  missing `next_hide` is false, so `reading` is never picked by a migration.
+- Any caller that sets a detailed reveal/fold key must also set that device's behaviour to `custom`
+  (the `hprnb_settings` filter included); the PHPUnit `with_settings()` and e2e `setSettings()`
+  helpers do it for tests that name a detailed key without a behaviour.
+- `Renderer::profile()` gains `next` (next_hide on and placement fixed). `profile_data()` emits
+  `"next": true` only when `current_post_id() > 0` (a singular page). `needs_interactive_js()` counts it.
+- Script: `setupNextArticle( state, root, mobile, contract )` runs after the collapse set-up when
+  `profile.next`. It keeps the selectors the located article matches (`smart_selector` first), looks
+  for another matching body with a paragraph and a height below the current body's bottom, and takes
+  its `closest( 'article' )` when that does not contain the current body. With the document Y of its
+  top as `nextY`, the bar is away while `scrollY + innerHeight / 2 >= nextY`: root
+  `hprnb-root--{d|m}-away`, body `hprnb-{d|m}-away`, `contract.emit()` (offset 0, the contract counts
+  the away class as hidden). The measure is taken again on the next scroll frame after any DOM
+  mutation (`MutationObserver`, childList + subtree, callback only flags it), body resize or window
+  resize. It adds `hprnb-root--reveal` when absent, for the slide.
+- Stylesheet section 16: pending and away share one exit, `translateY(calc(100% + 60px))`,
+  `visibility: hidden` switched after the 0.28 s slide, `pointer-events: none`; the away selectors
+  carry `:not(.hprnb-root--{d|m}-inflow)` to beat the folded desktop bar (0,3,0). Body away rules drop
+  the padding and the offset per media query. Reduced motion removes the transition.
+- Admin: field type `choice` (radio boxes with title and text, `<td colspan="2">`), card keys
+  `depends` (`data-hprnb-card-depends`, hidden by the admin script when inactive) and `compact`
+  (inactive rows hidden, not greyed). `hprnbAdmin.behaviors` = `behavior_presets()`; changing a
+  behaviour writes its values into the hidden detailed fields, exactly as saving would.
+

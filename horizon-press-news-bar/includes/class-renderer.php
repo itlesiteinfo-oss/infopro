@@ -321,7 +321,7 @@ final class Renderer {
 	 *
 	 * @param array  $settings Settings.
 	 * @param string $p        'd' (desktop, from 768px) or 'm' (mobile, under 768px).
-	 * @return array{layout:string,label:string,dot:bool,counter:bool,lines:int,progress:bool,mode:string,font_size:int,thumb:bool,thumb_position:string,thumb_size:int,collapse:bool,swipe:bool}
+	 * @return array{layout:string,label:string,dot:bool,counter:bool,lines:int,progress:bool,mode:string,font_size:int,thumb:bool,thumb_position:string,thumb_size:int,collapse:bool,swipe:bool,next:bool}
 	 */
 	public static function profile( array $settings, string $p ): array {
 		$mobile = ( 'm' === $p );
@@ -358,6 +358,9 @@ final class Renderer {
 			'thumb_size'     => (int) ( $settings[ $prefix . 'thumb_size' ] ?? ( $mobile ? 48 : 32 ) ),
 			'peek'           => 'label' === ( $settings['mobile_peek'] ?? 'headline' ) ? 'label' : 'headline',
 			'deep'           => $mobile && $stacked && ! empty( $settings['mobile_deep_collapse'] ),
+			// Continuous loading: gone for good once the reader is in the next article. A bar placed
+			// inside the article scrolls away with it and needs nothing of the kind.
+			'next'           => ! empty( $settings[ $prefix . 'next_hide' ] ) && 'inline' !== ( $settings[ $prefix . 'placement' ] ?? 'fixed' ),
 			'kbd'            => $mobile && ! empty( $settings['mobile_kbd_hide'] ),
 		);
 	}
@@ -378,6 +381,10 @@ final class Renderer {
 			'progress' => $profile['progress'],
 			'place'    => $profile['placement'],
 		);
+		// Only a single article has a "next article" below it; a listing of full posts does not.
+		if ( $profile['next'] && self::current_post_id() > 0 ) {
+			$data['next'] = true;
+		}
 		if ( 'd' === $p ) {
 			$data['collapse'] = $profile['collapse'];
 			$data['trigger']  = (string) ( $settings['desktop_collapse_mode'] ?? 'scroll' );
@@ -776,6 +783,8 @@ final class Renderer {
 			|| self::profile( $settings, 'm' )['collapse']
 			|| self::profile( $settings, 'd' )['collapse']
 			|| self::profile( $settings, 'm' )['kbd']
+			|| self::profile( $settings, 'm' )['next']
+			|| self::profile( $settings, 'd' )['next']
 			|| 'inline' === self::profile( $settings, 'm' )['placement']
 			|| 'inline' === self::profile( $settings, 'd' )['placement']
 			|| 'immediate' !== self::reveal_mode( $settings, 'd' )

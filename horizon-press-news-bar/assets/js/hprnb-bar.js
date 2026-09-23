@@ -1181,6 +1181,139 @@
 	}
 
 	/* ------------------------------------------------------------------ */
+	/* Continuous loading: gone in the next article (settings next_hide)   */
+	/* ------------------------------------------------------------------ */
+
+	/**
+	 * Themes that load the next article below the current one (continuous loading, infinite
+	 * scroll) append a second article body built from the same template. The bar belongs to the
+	 * article the page was opened on: once the start of the next article reaches the middle of the
+	 * screen, the bar slides out of view and releases its space; scrolling back up above that line
+	 * brings it back, and the folding rules of the first article apply again.
+	 *
+	 * @param {Object}  state    Teardown registry of the bar, with the located article.
+	 * @param {Element} root     The #hprnb-root element.
+	 * @param {boolean} mobile   Whether the mobile profile is the active one.
+	 * @param {Object=} contract Theme contract (offset variable, state event).
+	 */
+	function setupNextArticle( state, root, mobile, contract ) {
+		var article = articleOf( state );
+		if ( ! article ) {
+			return;
+		}
+		// Every selector the current body answers to: the next article is built the same way.
+		var selectors = ( state.articleSel ? [ state.articleSel ] : [] ).concat( ARTICLE_SELECTORS ).filter( function ( sel ) {
+			try {
+				return article.matches( sel );
+			} catch ( e ) {
+				return false;
+			}
+		} );
+		if ( ! selectors.length ) {
+			return;
+		}
+		var body = document.body;
+		var rootClass = 'hprnb-root--' + ( mobile ? 'm' : 'd' ) + '-away';
+		var bodyClass = 'hprnb-' + ( mobile ? 'm' : 'd' ) + '-away';
+		var nextY = Infinity;
+		var dirty = true;
+		var away = false;
+		var ticking = false;
+
+		/** Document Y of the top of the next article (its whole block, title included), or Infinity. */
+		function measure() {
+			dirty = false;
+			nextY = Infinity;
+			var end = article.getBoundingClientRect().bottom;
+			for ( var s = 0; s < selectors.length; s++ ) {
+				var list;
+				try {
+					list = document.querySelectorAll( selectors[ s ] );
+				} catch ( e ) {
+					continue;
+				}
+				for ( var i = 0; i < list.length; i++ ) {
+					var el = list[ i ];
+					if ( el === article || article.contains( el ) || el.contains( article ) || root.contains( el ) ) {
+						continue;
+					}
+					if ( ! el.querySelector( 'p' ) || el.getBoundingClientRect().height <= 40 ) {
+						continue;
+					}
+					// The article block around that body starts with its title: that is where the
+					// reader "arrives" in the next article.
+					var box = el.closest ? el.closest( 'article' ) : null;
+					if ( ! box || box.contains( article ) ) {
+						box = el;
+					}
+					var top = box.getBoundingClientRect().top;
+					if ( top >= end - 1 ) {
+						nextY = Math.min( nextY, top + window.scrollY );
+						break;
+					}
+				}
+			}
+		}
+
+		function set( on ) {
+			if ( on === away ) {
+				return;
+			}
+			away = on;
+			root.classList.toggle( rootClass, on );
+			body.classList.toggle( bodyClass, on );
+			if ( contract ) {
+				contract.emit();
+			}
+		}
+
+		function update() {
+			if ( dirty ) {
+				measure();
+			}
+			set( window.scrollY + window.innerHeight / 2 >= nextY );
+		}
+
+		// The slide in and out is the entrance transition: a bar visible from the start has none yet.
+		if ( ! root.classList.contains( 'hprnb-root--reveal' ) ) {
+			state.addClass( root, 'hprnb-root--reveal' );
+		}
+		state.add( function () {
+			root.classList.remove( rootClass );
+			body.classList.remove( bodyClass );
+		} );
+
+		// The next article arrives later, appended by the theme: any change of the page marks the
+		// measure stale, and the next scroll frame takes it again.
+		function stale() {
+			dirty = true;
+		}
+		if ( typeof window.MutationObserver === 'function' ) {
+			var observer = new window.MutationObserver( stale );
+			observer.observe( body, { childList: true, subtree: true } );
+			state.add( function () {
+				observer.disconnect();
+			} );
+		}
+		observeSize( state, body, function () {
+			stale();
+			update();
+		} );
+		state.on( window, 'resize', stale );
+		state.on( window, 'scroll', function () {
+			if ( ticking ) {
+				return;
+			}
+			ticking = true;
+			window.requestAnimationFrame( function () {
+				ticking = false;
+				update();
+			} );
+		}, { passive: true } );
+		update();
+	}
+
+	/* ------------------------------------------------------------------ */
 	/* Contract with the theme and other plugins (v2)                      */
 	/*   --hprnb-offset on <body>: visible height of the bar (0 when hidden)*/
 	/*   body.hprnb-is-collapsed / body.hprnb-kbd, document "hprnb:state"  */
@@ -1200,7 +1333,8 @@
 			var peek = parseFloat( cs.getPropertyValue( '--hprnb-peek' ) ) || 40;
 			// A floating mobile layout also keeps its distance from the bottom edge.
 			var gap = mobile ? ( parseFloat( cs.getPropertyValue( '--hprnb-m-gap' ) ) || 0 ) : 0;
-			var hidden = aside.hidden || root.hidden || body.classList.contains( 'hprnb-kbd' ) || root.classList.contains( 'hprnb-root--' + ( mobile ? 'm' : 'd' ) + '-pending' );
+			var hidden = aside.hidden || root.hidden || body.classList.contains( 'hprnb-kbd' ) || root.classList.contains( 'hprnb-root--' + ( mobile ? 'm' : 'd' ) + '-pending' )
+				|| root.classList.contains( 'hprnb-root--' + ( mobile ? 'm' : 'd' ) + '-away' );
 			// In flow the bar is a block of the page: it covers nothing, so it reserves nothing.
 			// Collapsed, a phone keeps its strip while the desktop bar slides fully away.
 			var inflow = !! profile && profile.place === 'inline';
@@ -1542,6 +1676,9 @@
 
 		if ( profile.collapse && profile.place !== 'inline' && ! root.classList.contains( 'hprnb-root--preview' ) ) {
 			setupCollapse( state, aside, profile, contract );
+		}
+		if ( profile.next && profile.place !== 'inline' && ! root.classList.contains( 'hprnb-root--preview' ) ) {
+			setupNextArticle( state, root, mobile, contract );
 		}
 		if ( contract ) {
 			contract.emit();

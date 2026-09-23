@@ -300,6 +300,23 @@ La première apparition est toujours la barre entière. `collapse_after` n'y jou
 | Croix | onglet 44 × 44 de la couleur de la carte, au-dessus du coin de fin, hors de la carte |
 | Hauteur | 12 + 20 + 8 + max(74, 3 × 22) + 12 = **126 px** ; repliée : 36 px |
 
+## 9 terdecies. Un seul choix par appareil et l'article suivant (2.9)
+
+**Comportement de la barre** (`mobile_behavior`, `desktop_behavior`) : premier bloc des onglets Mobile et Ordinateur. Chaque choix écrit ses réglages détaillés à l'enregistrement (`Settings::behavior_presets()`), le site ne lit que ces derniers.
+
+| Choix | Apparition | Repli | Article suivant |
+|---|---|---|---|
+| **Lecture continue** (`reading`) | au Nᵉ paragraphe avant la fin (`*_reveal_paragraph`, défaut 2) | suit la lecture (`article`) | masquée |
+| **Visible, se replie** (`fold`, défaut mobile) | avec la page | en descendant, retour en remontant (`scroll`) | — |
+| **Toujours visible** (`always`, défaut ordinateur) | avec la page | aucun | — |
+| **Personnalisé** (`custom`) | réglage détaillé | réglage détaillé | case à cocher |
+
+Le nombre de paragraphes, le seuil de repli et l'aspect du bandeau replié restent réglables quel que soit le choix. Les deux blocs détaillés ne s'affichent qu'en « Personnalisé ». Le sélecteur du corps de l'article est dans **Avancé → Corps de l'article**.
+
+**Article suivant** (`mobile_next_hide`, `desktop_next_hide`) : avec un thème qui charge l'article suivant sous l'article en cours, la barre sort de l'écran dès que le haut de l'article suivant atteint le milieu de l'écran, et libère son espace (`hprnb-root--m-away` / `--d-away`, body `hprnb-m-away` / `hprnb-d-away`, `--hprnb-offset: 0px`). Elle revient si le lecteur remonte dans le premier article. L'article suivant est un autre corps d'article bâti comme le premier et situé sous lui ; seulement sur un article seul et une barre fixe.
+
+**Schéma 6** : une installation existante garde son comportement, nommé d'après le choix qu'il reproduit, sinon « Personnalisé ». La migration ne choisit jamais « Lecture continue ».
+
 ## 10. Ticker (optionnel)
 
 Désactivé par défaut. Trois modes :
@@ -339,6 +356,13 @@ Filtres :
 ```php
 // Réglages effectifs (déjà validés ; le résultat est revalidé).
 add_filter( 'hprnb_settings', function ( array $settings ) { $settings['max_items'] = 5; return $settings; } );
+
+// Un réglage détaillé d'apparition ou de repli ne compte qu'avec le comportement « custom » (2.9).
+add_filter( 'hprnb_settings', function ( array $settings ) {
+	$settings['mobile_behavior']    = 'custom';
+	$settings['mobile_reveal_mode'] = 'smart';
+	return $settings;
+} );
 
 // Arguments WP_Query.
 add_filter( 'hprnb_query_args', function ( array $args, array $settings ) { $args['author__not_in'] = array( 2 ); return $args; }, 10, 2 );

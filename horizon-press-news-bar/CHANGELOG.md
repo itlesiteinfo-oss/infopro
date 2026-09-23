@@ -2,6 +2,33 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.9.0] — 2026-09-23
+
+### Ajouté — un seul choix par appareil : « Comportement de la barre »
+
+- **Nouveau réglage `mobile_behavior` / `desktop_behavior`**, premier bloc des onglets Mobile et Ordinateur, présenté en grandes cases avec une phrase simple chacune :
+  - **Lecture continue — recommandé sur les articles** : masquée au départ, la barre apparaît en entier au paragraphe choisi avant la fin de l'article, se replie dès que le lecteur remonte, se rouvre quand il redescend, reste ouverte une fois l'article terminé et **disparaît complètement dans l'article suivant**. C'est la condition du client, en un clic : apparition `paragraph`, repli `article`, masquage dans l'article suivant. Seul le nombre de paragraphes reste à régler (défaut 2 = l'avant-dernier).
+  - **Visible, se replie pendant le défilement** : le comportement mobile de la 2.8 (défaut mobile).
+  - **Toujours visible** : le comportement ordinateur de la 2.8 (défaut ordinateur).
+  - **Personnalisé** : les deux blocs détaillés (« quand la barre apparaît et disparaît », « repli ») n'apparaissent qu'avec ce choix.
+- Enregistrer un comportement **écrit ses valeurs détaillées** (`Settings::behavior_presets()`, appliqué dans `Settings::sanitize()`) : le site ne lit jamais que les réglages détaillés, et « Personnalisé » part de ce que faisait le dernier choix. Le nombre de paragraphes, le seuil de repli et l'aspect du bandeau replié ne sont jamais écrasés.
+- Le sélecteur du corps de l'article (`smart_selector`) passe dans l'onglet **Avancé**, bloc « Corps de l'article » : il sert à tous les comportements et aux deux appareils.
+
+### Ajouté — la barre disparaît dans l'article suivant
+
+- **Nouveau réglage `mobile_next_hide` / `desktop_next_hide`** (inclus dans « Lecture continue », case à cocher en « Personnalisé »). Pour les thèmes qui chargent l'article suivant sous l'article en cours (défilement continu) : dès que le haut de l'article suivant atteint le milieu de l'écran, la barre sort de l'écran et **libère son espace** (`hprnb-root--m-away` / `--d-away` sur la racine, `hprnb-m-away` / `hprnb-d-away` sur le body, `--hprnb-offset` à 0). Elle revient si le lecteur remonte dans le premier article, avec les règles de repli de celui-ci.
+- L'article suivant est reconnu sans rien toucher au thème : un autre corps d'article bâti comme le premier (mêmes sélecteurs), situé sous lui, avec son bloc `<article>` quand il existe pour que son titre compte. Les articles ajoutés après le chargement sont vus grâce à un `MutationObserver` qui ne fait que marquer la mesure périmée.
+- Uniquement sur un article seul (`is_singular()`) et une barre fixe : une liste d'articles complets n'a pas d'« article suivant », et une barre placée dans l'article défile déjà avec lui.
+
+### Corrigé
+
+- **L'onglet du bouton fermer de la carte dépassait de 31 px en bas de l'écran pendant l'attente** (2.8.0) : la barre en attente n'était décalée que de 110 % de sa hauteur, et l'onglet de 44 px posé au-dessus de la carte restait visible. La barre en attente (et désormais masquée) sort de `100 % + 60 px` et passe en `visibility: hidden` une fois le glissement fini, ce qui la retire aussi de l'ordre de tabulation.
+
+### Migration
+
+- **Schéma 6** : une installation existante garde exactement son comportement. Ses réglages détaillés sont nommés d'après le comportement qu'ils reproduisent déjà (« Visible, se replie… » ou « Toujours visible »), sinon **« Personnalisé »**. « Lecture continue » n'est jamais choisi par la migration, car il ajouterait le masquage dans l'article suivant. L'import d'un export antérieur passe par la même migration.
+- Pour un développeur : le filtre `hprnb_settings` qui modifie un réglage détaillé d'apparition ou de repli doit aussi mettre le comportement de l'appareil sur `custom`, sinon le comportement choisi l'emporte.
+
 ## [2.8.0] — 2026-09-23
 
 ### Corrigé

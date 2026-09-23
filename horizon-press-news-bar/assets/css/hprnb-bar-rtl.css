@@ -1788,22 +1788,58 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 
 /* A fixed news bar has no place on paper. */
 /* ---------------------------------------------------------------------------
- * 16. Waiting for the reader — kept last: neither profile section owns it.
+ * 16. Waiting for the reader, or gone to the next article — kept last: no profile section owns it.
  * ------------------------------------------------------------------------- */
 /* The bar waits for the reader (that device's reveal mode): rendered, but out of view and out of
    the way. Each device carries its own class, so a desktop that appears at once and a mobile that
-   waits share one root; the admin preview root is flat and matches neither. */
+   waits share one root; the admin preview root is flat and matches neither.
+   Continuous loading (that device's next_hide) uses the same exit once the reader has moved on to
+   the next article, and the bar returns when the reader scrolls back up into the first one.
+   Out of view means all of it: the card and the folded desktop bar carry their buttons in a tab
+   above their top edge, hence the extra 60px, and `visibility` (switched once the slide is over)
+   keeps the hidden links out of the keyboard order. The away state is as strong as the folded
+   desktop bar, which it must beat. */
 @container hprnb (min-width: 768px) {
-	.hprnb-root--d-pending .hprnb-bar {
-		transform: translateY(110%);
+	.hprnb-root--d-pending .hprnb-bar,
+	.hprnb-root--d-away:not(.hprnb-root--d-inflow) .hprnb-bar {
+		transform: translateY(calc(100% + 60px));
+		visibility: hidden;
 		pointer-events: none;
+		transition: transform .28s cubic-bezier(.2, .7, .2, 1), visibility 0s linear .28s;
 	}
 }
 
 @container hprnb (max-width: 767.98px) {
-	.hprnb-root--m-pending .hprnb-bar {
-		transform: translateY(110%);
+	.hprnb-root--m-pending .hprnb-bar,
+	.hprnb-root--m-away:not(.hprnb-root--m-inflow) .hprnb-bar {
+		transform: translateY(calc(100% + 60px));
+		visibility: hidden;
 		pointer-events: none;
+		transition: transform .28s cubic-bezier(.2, .7, .2, 1), visibility 0s linear .28s;
+	}
+}
+
+/* No space kept for a bar that has gone away. */
+@media (min-width: 768px) {
+	body.hprnb-reserve.hprnb-d-away {
+		--hprnb-offset: 0px;
+		padding-block-end: 0;
+	}
+}
+
+@media (max-width: 767.98px) {
+	body.hprnb-reserve.hprnb-m-away {
+		--hprnb-offset: 0px;
+		padding-block-end: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hprnb-root--d-pending .hprnb-bar,
+	.hprnb-root--d-away:not(.hprnb-root--d-inflow) .hprnb-bar,
+	.hprnb-root--m-pending .hprnb-bar,
+	.hprnb-root--m-away:not(.hprnb-root--m-inflow) .hprnb-bar {
+		transition: none;
 	}
 }
 

@@ -49,6 +49,12 @@ final class Settings {
 	 */
 	const REVEAL_MODES = array( 'immediate', 'scroll', 'percent', 'end', 'paragraph', 'smart' );
 
+	/**
+	 * The one choice per device of the Mobile and Desktop tabs. Each name but `custom` stands for a
+	 * fixed set of detailed values (behavior_presets()); `custom` leaves every detail to the admin.
+	 */
+	const BEHAVIORS = array( 'reading', 'fold', 'always', 'custom' );
+
 	const CONTEXT_KEYS = array( 'front_page', 'blog_home', 'single_post', 'page', 'category', 'tag', 'archive', 'search', 'not_found' );
 
 	/**
@@ -255,6 +261,16 @@ final class Settings {
 				'min'     => 1,
 				'max'     => 720,
 			),
+			'desktop_behavior'            => array(
+				'type'    => 'enum',
+				'default' => 'always',
+				'options' => self::BEHAVIORS,
+			),
+			'mobile_behavior'             => array(
+				'type'    => 'enum',
+				'default' => 'fold',
+				'options' => self::BEHAVIORS,
+			),
 			'desktop_reveal_mode'         => array(
 				'type'    => 'enum',
 				'default' => 'immediate',
@@ -450,6 +466,10 @@ final class Settings {
 				'min'     => 0,
 				'max'     => 800,
 			),
+			'desktop_next_hide'           => array(
+				'type'    => 'bool',
+				'default' => false,
+			),
 			'mobile_layout'               => array(
 				'type'    => 'enum',
 				'default' => 'card',
@@ -572,6 +592,10 @@ final class Settings {
 				'default' => 120,
 				'min'     => 0,
 				'max'     => 800,
+			),
+			'mobile_next_hide'            => array(
+				'type'    => 'bool',
+				'default' => false,
 			),
 			'mobile_controls_place'       => array(
 				'type'    => 'enum',
@@ -772,6 +796,87 @@ final class Settings {
 	}
 
 	/**
+	 * What each behaviour of the Mobile and Desktop tabs stands for, as detailed settings without
+	 * their device prefix. Saving a behaviour writes these values, so the front end only ever reads
+	 * the detailed settings and "Custom" starts from whatever the last behaviour had set.
+	 *
+	 * - reading: the bar arrives in full at the chosen paragraph before the end of the article,
+	 *   folds on any scroll back up, opens again when reading on and goes away completely in the
+	 *   next article of a continuous-loading theme;
+	 * - fold: visible with the page, out of the way while scrolling down, back on a scroll up;
+	 * - always: visible with the page and never folded.
+	 *
+	 * The number of paragraphs, the collapse threshold and the look of the folded strip stay the
+	 * admin's own settings: a behaviour never overwrites them.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public static function behavior_presets(): array {
+		return array(
+			'reading' => array(
+				'reveal_mode'    => 'paragraph',
+				'hide_on_scroll' => true,
+				'collapse_mode'  => 'article',
+				'next_hide'      => true,
+			),
+			'fold'    => array(
+				'reveal_mode'    => 'immediate',
+				'hide_on_scroll' => true,
+				'collapse_mode'  => 'scroll',
+				'next_hide'      => false,
+			),
+			'always'  => array(
+				'reveal_mode'    => 'immediate',
+				'hide_on_scroll' => false,
+				'next_hide'      => false,
+			),
+		);
+	}
+
+	/**
+	 * Writes the detailed values of each device's behaviour (nothing for "custom").
+	 *
+	 * @param array $clean Sanitised settings.
+	 * @return array
+	 */
+	private static function apply_behaviors( array $clean ): array {
+		$presets = self::behavior_presets();
+		foreach ( array( 'desktop_', 'mobile_' ) as $prefix ) {
+			$name = (string) ( $clean[ $prefix . 'behavior' ] ?? 'custom' );
+			if ( ! isset( $presets[ $name ] ) ) {
+				continue;
+			}
+			foreach ( $presets[ $name ] as $key => $value ) {
+				$clean[ $prefix . $key ] = $value;
+			}
+		}
+		return $clean;
+	}
+
+	/**
+	 * The behaviour whose values a device's detailed settings already hold, or "custom".
+	 *
+	 * @param array  $settings Sanitised settings.
+	 * @param string $prefix   'desktop_' or 'mobile_'.
+	 * @return string
+	 */
+	public static function detect_behavior( array $settings, string $prefix ): string {
+		foreach ( self::behavior_presets() as $name => $preset ) {
+			$match = true;
+			foreach ( $preset as $key => $value ) {
+				if ( ! array_key_exists( $prefix . $key, $settings ) || $settings[ $prefix . $key ] !== $value ) {
+					$match = false;
+					break;
+				}
+			}
+			if ( $match ) {
+				return $name;
+			}
+		}
+		return 'custom';
+	}
+
+	/**
 	 * Brings stored settings to the current schema. Runs on `init`; a no-op once up to date.
 	 * Schema 2 (plugin 2.0) applies the v2 presentation preset to an existing 1.x install.
 	 *
@@ -837,6 +942,25 @@ final class Settings {
 					}
 				}
 				unset( $upgraded[ $key ] );
+			}
+		}
+		// Schema 6: one behaviour per device. A site keeps exactly what it had: its detailed values
+		// are named after the behaviour they already match, otherwise "custom". The next-article
+		// setting is new and off, so "reading" is never picked here — it would change the site.
+		if ( $stored < 6 && ! empty( $raw ) ) {
+			$probe = self::sanitize(
+				array_merge(
+					$upgraded,
+					array(
+						'desktop_behavior' => 'custom',
+						'mobile_behavior'  => 'custom',
+					)
+				)
+			);
+			foreach ( array( 'desktop_', 'mobile_' ) as $prefix ) {
+				if ( ! array_key_exists( $prefix . 'behavior', $raw ) ) {
+					$upgraded[ $prefix . 'behavior' ] = self::detect_behavior( $probe, $prefix );
+				}
 			}
 		}
 
@@ -967,7 +1091,8 @@ final class Settings {
 		$limits                = $bounds[ $clean['window_unit'] ];
 		$clean['window_value'] = max( $limits[0], min( $limits[1], (int) $clean['window_value'] ) );
 
-		return $clean;
+		// Cross-field dependency: a behaviour other than "custom" decides its detailed values.
+		return self::apply_behaviors( $clean );
 	}
 
 	/**
