@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.10.0
+Stable tag: 2.11.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,13 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.11.0 =
+* Two mobile designs left: the bar with the article picture (default) and the "Explore More" card. Sites on a removed design move to the bar with the picture.
+* New mobile defaults: two lines, pause hidden, Continuous reading, picture kept in the folded strip. Existing sites keep their settings.
+* Premium folding: the picture shrinks into the strip, the pill closes onto its dot, the tab button turns into the other one; reduced motion honoured.
+* Folded, the unfold button sits in the tab above the corner; Jannah's corner elements clear the tab.
+* Simple settings page by default, with an "Advanced settings" switch for everything else.
 
 = 2.10.0 =
 * New mobile design "Flowing bar with the article picture": the label opens the headline on two lines, the article picture sits at the end of the line where the buttons were, and the close button moves to a tab above the corner, as on the card.

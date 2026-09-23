@@ -13,8 +13,26 @@ export function wp( args ) {
 // behaviour of that device, as an admin has to pick it before those details take effect.
 const BEHAVIOR_DETAILS = [ 'reveal_mode', 'hide_on_scroll', 'collapse_mode', 'next_hide' ];
 
-export function setSettings( overrides = {} ) {
-	const settings = { ...defaults, ...overrides };
+// The scenarios written before 2.11 describe the mobile set-up of their time: the card, three
+// lines, pause shown, the bar with the page folding while scrolling down. They pin it here, by
+// name, instead of relying on defaults that have moved; setDefaultSettings() gives the real ones.
+export const BEFORE_2_11 = {
+	mobile_behavior: 'fold',
+	mobile_reveal_mode: 'immediate',
+	mobile_hide_on_scroll: true,
+	mobile_collapse_mode: 'scroll',
+	mobile_next_hide: false,
+	mobile_layout: 'card',
+	mobile_lines: 3,
+	mobile_show_pause: true,
+};
+
+export function setDefaultSettings( overrides = {} ) {
+	return setSettings( overrides, { current: true } );
+}
+
+export function setSettings( overrides = {}, { current = false } = {} ) {
+	const settings = { ...defaults, ...( current ? {} : BEFORE_2_11 ), ...overrides };
 	for ( const prefix of [ 'desktop_', 'mobile_' ] ) {
 		if ( ! ( prefix + 'behavior' in overrides ) && BEHAVIOR_DETAILS.some( ( key ) => prefix + key in overrides ) ) {
 			settings[ prefix + 'behavior' ] = 'custom';

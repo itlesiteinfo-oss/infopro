@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { setSettings, wp, collectErrors, countRequests, noHorizontalOverflow, routeStaleDocument, defaults, OLD } from './helpers.mjs';
+import { setSettings, setDefaultSettings, wp, collectErrors, countRequests, noHorizontalOverflow, routeStaleDocument, defaults, OLD } from './helpers.mjs';
 
 
 const postIds = [];
@@ -140,24 +140,9 @@ test( 'hybrid: stale SSR and empty REST result removes the bar', async ( { page 
 	await expect( page.locator( 'body' ) ).not.toHaveClass( /hprnb-reserve/ );
 } );
 
-test( 'mobile inline layout: single line, label capped, one-line bar, no overflow; hide on mobile', async ( { page } ) => {
-	setSettings( { mobile_layout: 'inline', mobile_lines: 2, mobile_ticker_mode: 'inherit' } );
+test( 'each device can switch the bar off (the one-line mobile layout left the designs in 2.11)', async ( { page } ) => {
 	await page.setViewportSize( { width: 375, height: 667 } );
-	await page.goto( '/' );
 	const bar = page.locator( '#hprnb-root .hprnb-bar' );
-	await expect( bar ).toBeVisible();
-	const label = page.locator( '.hprnb-bar__label' );
-	await expect( label ).toBeVisible();
-	const labelBox = await label.boundingBox();
-	expect( labelBox.width ).toBeLessThanOrEqual( 0.5 * 375 + 1 );
-	// On a phone the inline label always precedes the headline, whatever label_position says (default "end").
-	expect( labelBox.x ).toBeLessThan( ( await page.locator( '.hprnb-bar__viewport' ).boundingBox() ).x );
-	expect( Math.round( ( await bar.boundingBox() ).height ) ).toBe( 40, 'Inherited marquee: one line, the 40px minimum.' );
-	expect( await noHorizontalOverflow( page ) ).toBe( true );
-
-	setSettings( { mobile_layout: 'inline', mobile_lines: 2, mobile_ticker_mode: 'static' } );
-	await page.goto( '/' );
-	expect( Math.round( ( await bar.boundingBox() ).height ) ).toBe( 54, 'Inline, two 16px lines: 2 × 21 + 12' );
 
 	setSettings( { show_on_mobile: false } );
 	await page.goto( '/' );
@@ -558,7 +543,7 @@ test( 'presentation profiles: the stacked design on desktop, headline lines, liv
 } );
 
 test( 'v2: flow card, collapsed strip, chevron, offset contract, deep collapse, keyboard, landscape, desktop container, Jannah offset', async ( { page } ) => {
-	setSettings( { mobile_layout: 'flow', mobile_lines: 2, rotate_interval: 1500 } );
+	setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, rotate_interval: 1500 } );
 	const errors = collectErrors( page );
 	await page.setViewportSize( { width: 375, height: 667 } );
 	await page.goto( '/' );
@@ -593,21 +578,26 @@ test( 'v2: flow card, collapsed strip, chevron, offset contract, deep collapse, 
 	expect( await aside.evaluate( ( el ) => getComputedStyle( el ).backgroundColor ) ).toMatch( /27, 28, 32|0\.105882/ );
 	expect( await page.locator( '.hprnb-bar__progress' ).evaluate( ( el ) => Math.round( el.getBoundingClientRect().height ) ) ).toBe( 3 );
 	await expect( page.locator( '.hprnb-bar__counter' ) ).toHaveCount( 0 );
-	expect( await page.evaluate( () => window.hprnbBar.state() ) ).toEqual( { mobile: true, collapsed: false, height: 76, offset: 76 } );
+	// 2.11: the buttons sit in a 44px tab above the bar, and the contract says so for the corner elements.
+	expect( await page.evaluate( () => window.hprnbBar.state() ) ).toEqual( { mobile: true, collapsed: false, height: 76, offset: 76, tab: 44 } );
+	expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-tab' ).trim() ) ).toBe( '44px' );
+	await page.evaluate( () => { const g = document.createElement( 'div' ); g.id = 'go-to-top'; g.style.cssText = 'position:fixed;right:15px;bottom:15px;width:35px;height:35px'; document.body.appendChild( g ); } );
+	expect( await page.evaluate( () => getComputedStyle( document.getElementById( 'go-to-top' ) ).bottom ) ).toBe( '132px', 'Jannah\'s "go to top" clears the bar and its tab: 76 + 44 + 12.' );
+	await page.evaluate( () => document.getElementById( 'go-to-top' ).remove() );
 
 	// Scrolling down: 40px strip (pill + first line + chevron), links disabled, body class and offset updated, event emitted.
 	await page.evaluate( () => window.scrollTo( 0, 0 ) );
 	await page.evaluate( () => window.scrollTo( 0, 700 ) );
 	await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
 	await expect( page.locator( 'body' ) ).toHaveClass( /hprnb-is-collapsed/ );
-	await page.waitForTimeout( 400 );
+	await page.waitForTimeout( 650 ); // The fold takes 0.5 s since 2.11.
 	expect( Math.round( 667 - ( await aside.boundingBox() ).y ) ).toBe( 40 );
 	expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '40px' );
 	expect( await page.evaluate( () => window.__states.map( ( s ) => `${ s.collapsed }:${ s.offset }` ) ) ).toContain( 'true:40' );
 	// The collapsed pill shrinks to a round beacon, hard against the gutter, and pulses like a button.
 	expect( await label.evaluate( ( el ) => getComputedStyle( el ).inlineSize ) ).toBe( '24px' );
 	expect( Math.round( ( await label.boundingBox() ).x ) ).toBeLessThanOrEqual( 15 );
-	expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => getComputedStyle( el ).display ) ).toBe( 'none' );
+	expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => getComputedStyle( el ).opacity + ' ' + Math.round( el.getBoundingClientRect().width ) ) ).toBe( '0 0', 'The text closed up rather than vanished.' );
 	expect( await label.evaluate( ( el ) => getComputedStyle( el, '::before' ).display ) ).toBe( 'block' );
 	// The collapsed pill pulses like a button and the single visible line ends with an ellipsis.
 	expect( await label.evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'hprnb-beacon' );
@@ -615,6 +605,10 @@ test( 'v2: flow card, collapsed strip, chevron, offset contract, deep collapse, 
 	const chevron = page.locator( '.hprnb-bar__btn--expand' );
 	await expect( chevron ).toBeVisible();
 	await expect( chevron ).toHaveAttribute( 'aria-label', 'Show the latest news' );
+	// 2.11: the unfold button left the strip for the tab above the corner, where the cross was.
+	const tab = await page.locator( '.hprnb-bar__controls' ).boundingBox();
+	expect( Math.round( tab.y + tab.height ) ).toBe( Math.round( ( await aside.boundingBox() ).y ) );
+	expect( Math.round( tab.x + tab.width ) ).toBe( 375 );
 	await expect( page.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden();
 	expect( await page.locator( '.hprnb-bar__link' ).first().evaluate( ( el ) => getComputedStyle( el ).pointerEvents ) ).toBe( 'none' );
 	await chevron.click();
@@ -625,7 +619,7 @@ test( 'v2: flow card, collapsed strip, chevron, offset contract, deep collapse, 
 	expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '76px' );
 
 	// "Pill only" strip option.
-	setSettings( { mobile_layout: 'flow', mobile_lines: 2, rotate_interval: 1500, mobile_peek: 'label' } );
+	setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, rotate_interval: 1500, mobile_peek: 'label' } );
 	await page.goto( '/' );
 	await expect( root ).toHaveClass( /hprnb-root--peek-label/ );
 	await page.evaluate( () => window.scrollTo( 0, 700 ) );
@@ -633,7 +627,7 @@ test( 'v2: flow card, collapsed strip, chevron, offset contract, deep collapse, 
 	await expect.poll( () => page.locator( '.hprnb-bar__viewport' ).evaluate( ( el ) => getComputedStyle( el ).opacity ) ).toBe( '0' );
 
 	// Keyboard: a field outside the bar slides it away (offset 0), blur brings it back.
-	setSettings( { mobile_layout: 'flow', mobile_lines: 2, rotate_interval: 1500 } );
+	setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, rotate_interval: 1500 } );
 	await page.goto( '/' );
 	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
 	await page.evaluate( () => { const i = document.createElement( 'input' ); i.type = 'email'; i.id = 'e2e-kbd'; i.style.cssText = 'position:fixed;top:10px;left:10px'; document.body.appendChild( i ); } );
@@ -652,14 +646,14 @@ test( 'v2: flow card, collapsed strip, chevron, offset contract, deep collapse, 
 	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
 	expect( await page.evaluate( () => window.scrollY ) ).toBeGreaterThan( 120 );
 	await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
-	setSettings( { mobile_layout: 'flow', mobile_lines: 2, rotate_interval: 1500, mobile_deep_collapse: false } );
+	setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, rotate_interval: 1500, mobile_deep_collapse: false } );
 	await page.reload();
 	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
 	await page.waitForTimeout( 300 );
 	await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
 
 	// Landscape phone: one line of 44px, never collapsed, buttons back.
-	setSettings( { mobile_layout: 'flow', mobile_lines: 2, rotate_interval: 1500 } );
+	setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, rotate_interval: 1500 } );
 	await page.setViewportSize( { width: 700, height: 400 } );
 	await page.goto( '/' );
 	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
@@ -692,7 +686,7 @@ test( 'v2: flow card, collapsed strip, chevron, offset contract, deep collapse, 
 	expect( await page.evaluate( () => getComputedStyle( document.getElementById( 'go-to-top' ) ).bottom ) ).toBe( '52px' );
 	expect( await page.evaluate( () => getComputedStyle( document.getElementById( 'reading-position-indicator' ) ).bottom ) ).toBe( '40px' );
 	expect( await page.evaluate( () => getComputedStyle( document.getElementById( 'reading-position-indicator' ) ).zIndex ) ).toBe( '99991' );
-	setSettings( { mobile_layout: 'flow', mobile_lines: 2, theme_offset: false, align_container: false } );
+	setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, theme_offset: false, align_container: false } );
 	await page.goto( '/' );
 	await expect( page.locator( 'body' ) ).not.toHaveClass( /hprnb-theme-offset/ );
 	expect( Math.round( ( await page.locator( '.hprnb-bar__inner' ).boundingBox() ).width ) ).toBe( 1366 );
@@ -713,19 +707,19 @@ test( 'featured image: one switch, position and size per profile, own column on 
 		const thumb = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb' ).first();
 		const title = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' ).first();
 
-		// Off on both profiles: no image in the markup at all.
-		setSettings( { mobile_layout: 'flow', mobile_lines: 2 } );
+		// Since 2.11 both phone designs carry the article picture, so the markup always has it; the
+		// desktop profile shows it only when asked.
+		setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, ticker_enabled: false } );
 		await page.setViewportSize( { width: 1366, height: 800 } );
 		await page.goto( '/' );
-		await expect( page.locator( '.hprnb-bar__thumb' ) ).toHaveCount( 0 );
-		await expect( aside ).not.toHaveClass( /hprnb-bar--has-thumbs/ );
-
-		// Desktop only: the markup carries the image, the mobile profile hides it.
-		setSettings( { mobile_layout: 'flow', mobile_lines: 2, desktop_show_thumbnail: true, ticker_enabled: false } );
-		await page.goto( '/' );
 		await expect( aside ).toHaveClass( /hprnb-bar--has-thumbs/ );
+		await expect( root ).not.toHaveClass( /hprnb-root--d-thumb/ );
+		await expect( thumb ).toBeHidden();
+
+		// Desktop on: the picture before the headline.
+		setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, desktop_show_thumbnail: true, ticker_enabled: false } );
+		await page.goto( '/' );
 		await expect( root ).toHaveClass( /hprnb-root--d-thumb(\s|$)/ );
-		await expect( root ).not.toHaveClass( /hprnb-root--m-thumb/ );
 		await expect( thumb ).toBeVisible();
 		const size = await thumb.boundingBox();
 		expect( Math.round( size.width ) ).toBe( 32 );
@@ -734,7 +728,7 @@ test( 'featured image: one switch, position and size per profile, own column on 
 		expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 40 );
 
 		// Desktop, after the headline and bigger: the bar grows with it.
-		setSettings( { mobile_layout: 'flow', mobile_lines: 2, desktop_show_thumbnail: true, desktop_thumb_position: 'after', desktop_thumb_size: 56, ticker_enabled: false } );
+		setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, desktop_show_thumbnail: true, desktop_thumb_position: 'after', desktop_thumb_size: 56, ticker_enabled: false } );
 		await page.goto( '/' );
 		await expect( root ).toHaveClass( /hprnb-root--d-thumb-after/ );
 		expect( ( await thumb.boundingBox() ).x ).toBeGreaterThan( ( await title.boundingBox() ).x );
@@ -743,34 +737,22 @@ test( 'featured image: one switch, position and size per profile, own column on 
 		expect( await page.evaluate( () => parseFloat( getComputedStyle( document.body ).paddingBottom ) ) ).toBe( 64 );
 		expect( await noHorizontalOverflow( page ) ).toBe( true );
 
-		// Mobile card: its own column before the headline; the pill becomes the red dot to keep the width.
+		// Mobile: the bar with the article picture, whatever the image switch says.
 		await page.setViewportSize( { width: 375, height: 667 } );
-		setSettings( { mobile_layout: 'flow', mobile_lines: 2, mobile_show_thumbnail: true, mobile_thumb_position: 'before', rotate_interval: 60000 } );
-		await page.goto( '/' );
-		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
-		await expect( root ).toHaveClass( /hprnb-root--m-thumb(\s|$)/ );
-		await expect( root ).not.toHaveClass( /hprnb-root--d-thumb/ );
-		const image = await thumb.boundingBox();
-		expect( Math.round( image.width ) ).toBe( 48 );
-		expect( Math.round( image.x ) ).toBe( 15, 'Flush with the gutter, out of the text flow.' );
-		expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 76, 'The card keeps its height.' );
-		const viewport = await page.locator( '.hprnb-bar__viewport' ).boundingBox();
-		expect( Math.round( viewport.x ) ).toBe( 73, 'The headline column starts after the image column.' );
-		expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => getComputedStyle( el ).display ) ).toBe( 'block', 'The red pill keeps its text next to an image (compact option off by default).' );
-
 		// Oversized image: clamped to the headline block, the card never grows.
-		setSettings( { mobile_layout: 'flow', mobile_lines: 2, mobile_show_thumbnail: true, mobile_thumb_size: 80, rotate_interval: 60000 } );
+		setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, mobile_thumb_size: 80, rotate_interval: 60000 } );
 		await page.goto( '/' );
 		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
 		expect( Math.round( ( await thumb.boundingBox() ).height ) ).toBe( 50, '2 × 26 − 2' );
 		expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 76 );
-		expect( ( await thumb.boundingBox() ).x ).toBeGreaterThan( 200, 'Default position: after the headline, before the buttons.' );
+		expect( ( await thumb.boundingBox() ).x ).toBeGreaterThan( 200, 'At the end of the line, where the buttons were.' );
+		await expect( root ).not.toHaveClass( /hprnb-root--d-thumb/ );
 
 		// Collapsed strip: the image is resized to a single line (kept by default).
 		await page.evaluate( () => window.scrollTo( 0, 700 ) );
 		await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
 		await expect( thumb ).toBeVisible();
-		expect( Math.round( ( await thumb.boundingBox() ).height ) ).toBe( 22, 'One line (26) minus 4.' );
+		await expect.poll( async () => Math.round( ( await thumb.boundingBox() ).height ) ).toBe( 22 ); // One line (26) minus 4, once the fold has run.
 		expect( await noHorizontalOverflow( page ) ).toBe( true );
 		expect( errors ).toEqual( [] );
 	} finally {
@@ -780,7 +762,9 @@ test( 'featured image: one switch, position and size per profile, own column on 
 	}
 } );
 
-test( 'mobile: stacked buttons, pulsing pill with its text, image kept in the collapsed strip — each one configurable', async ( { page } ) => {
+test( 'mobile: pulsing pill with its text, compact pill, picture kept in the folded strip — each one configurable', async ( { page } ) => {
+	// The buttons now live in the tab of both designs (2.11): their placements inside the bar left
+	// with the flowing bar without picture.
 	const ids = [];
 	for ( let i = 1; i <= 3; i++ ) {
 		ids.push( wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', `--post_title=Strip ${ i } — lorem ipsum dolor sit amet consectetur adipiscing elit sed do`, '--porcelain' ] ) );
@@ -795,46 +779,31 @@ test( 'mobile: stacked buttons, pulsing pill with its text, image kept in the co
 		const viewport = page.locator( '.hprnb-bar__viewport' );
 		await page.setViewportSize( { width: 375, height: 667 } );
 
-		// Defaults: close above pause in a single column, full pill pulsing with its text, image in the strip.
-		setSettings( { mobile_layout: 'flow', mobile_lines: 2, mobile_show_thumbnail: true, rotate_interval: 60000 } );
+		// Defaults: full pill pulsing with its text on arrival, picture kept in the strip.
+		setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, rotate_interval: 60000 } );
 		await page.goto( '/' );
 		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
-		await expect( root ).toHaveClass( /hprnb-root--m-ctrl-col/ );
-		// Since 2.5 the default is a few beats on arrival, not a permanent one.
 		await expect( root ).toHaveClass( /hprnb-root--m-pulse-appear/ );
-		expect( await page.locator( '.hprnb-bar__label' ).evaluate( ( el ) => getComputedStyle( el ).animationIterationCount ) ).toBe( '3' );
+		expect( await label.evaluate( ( el ) => getComputedStyle( el ).animationIterationCount ) ).toBe( '3' );
 		await expect( root ).toHaveClass( /hprnb-root--m-peek-thumb/ );
-		const close = await page.locator( '.hprnb-bar__btn--close' ).boundingBox();
-		const toggle = await page.locator( '.hprnb-bar__btn--toggle' ).boundingBox();
-		expect( Math.round( close.x ) ).toBe( Math.round( toggle.x ), 'Same column.' );
-		expect( close.y ).toBeLessThan( toggle.y, 'Close on top, pause below.' );
-		expect( Math.round( close.width ) ).toBe( 40 );
-		const stackedWidth = ( await viewport.boundingBox() ).width;
 		expect( await label.evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'hprnb-beacon' );
-		expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => getComputedStyle( el ).display ) ).toBe( 'block', 'The open card keeps the red pill and its text.' );
+		expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => getComputedStyle( el ).opacity ) ).toBe( '1', 'The open bar keeps the red pill and its text.' );
 		expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 76 );
 
-		// Collapsed: the image stays at the end of the line, never taller than one line (26 − 4).
+		// Folded: the picture stays at the end of the line, one line high (26 − 4), against the gutter.
 		await page.evaluate( () => window.scrollTo( 0, 700 ) );
 		await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
 		await expect( thumb ).toBeVisible();
+		await expect.poll( async () => Math.round( ( await thumb.boundingBox() ).height ) ).toBe( 22 );
 		const strip = await thumb.boundingBox();
-		expect( Math.round( strip.height ) ).toBe( 22 );
 		expect( Math.round( strip.width ) ).toBe( 22 );
-		const chevron = await page.locator( '.hprnb-bar__btn--expand' ).boundingBox();
-		expect( strip.x ).toBeLessThan( chevron.x, 'Between the headline and the chevron.' );
-		expect( ( await viewport.boundingBox() ).width ).toBeLessThan( strip.x );
+		expect( Math.round( strip.x + strip.width ) ).toBe( 360 );
+		expect( ( await viewport.boundingBox() ).x + ( await viewport.boundingBox() ).width ).toBeLessThan( strip.x );
 
-		// Side by side, no image in the strip, pulse only when collapsed.
-		setSettings( { mobile_layout: 'flow', mobile_lines: 2, mobile_show_thumbnail: true, rotate_interval: 60000, mobile_controls_layout: 'row', mobile_peek_thumbnail: false, mobile_label_pulse: 'collapsed' } );
+		// No picture in the strip, pulse only when folded.
+		setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, rotate_interval: 60000, mobile_peek_thumbnail: false, mobile_label_pulse: 'collapsed' } );
 		await page.goto( '/' );
 		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
-		await expect( root ).not.toHaveClass( /hprnb-root--m-ctrl-col/ );
-		const rowClose = await page.locator( '.hprnb-bar__btn--close' ).boundingBox();
-		const rowToggle = await page.locator( '.hprnb-bar__btn--toggle' ).boundingBox();
-		expect( Math.round( rowClose.y ) ).toBe( Math.round( rowToggle.y ), 'Same row.' );
-		expect( Math.round( rowClose.height ) ).toBe( 40 );
-		expect( ( await viewport.boundingBox() ).width ).toBeLessThan( stackedWidth, 'Two columns leave less room for the headline.' );
 		expect( await label.evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'none' );
 		await page.evaluate( () => window.scrollTo( 0, 700 ) );
 		await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
@@ -842,11 +811,11 @@ test( 'mobile: stacked buttons, pulsing pill with its text, image kept in the co
 		await expect( thumb ).toBeHidden();
 
 		// Never: no pulse at all. And the compact pill option, off by default.
-		setSettings( { mobile_layout: 'flow', mobile_lines: 2, mobile_show_thumbnail: true, rotate_interval: 60000, mobile_label_pulse: 'never', mobile_label_compact: true } );
+		setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, mobile_show_thumbnail: true, rotate_interval: 60000, mobile_label_pulse: 'never', mobile_label_compact: true } );
 		await page.goto( '/' );
 		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
 		await expect( root ).toHaveClass( /hprnb-root--m-label-compact/ );
-		expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => getComputedStyle( el ).display ) ).toBe( 'none' );
+		expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => getComputedStyle( el ).opacity + ' ' + Math.round( el.getBoundingClientRect().width ) ) ).toBe( '0 0' );
 		expect( await label.evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'none' );
 		await page.evaluate( () => window.scrollTo( 0, 700 ) );
 		await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
@@ -925,22 +894,18 @@ test( 'v2.3: reveal threshold, collapse triggers, buttons outside or hidden, acc
 	await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
 	await expect( page.locator( '.hprnb-bar__btn--expand' ) ).toHaveCount( 0 );
 
-	// Buttons inside (default) versus floating above the bar: the headline gains the width.
-	setSettings( { mobile_layout: 'flow', mobile_lines: 2, rotate_interval: 60000 } );
+	// The buttons sit in the tab above the corner (2.11, both designs): painted, clickable, and the
+	// headline keeps the width up to the picture.
+	setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, rotate_interval: 60000 } );
 	await page.goto( '/' );
 	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
-	const insideWidth = ( await viewport.boundingBox() ).width;
-	setSettings( { mobile_layout: 'flow', mobile_lines: 2, mobile_controls_place: 'outside', rotate_interval: 60000 } );
-	await page.goto( '/' );
-	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
-	await expect( root ).toHaveClass( /hprnb-root--m-ctrl-out/ );
+	await expect( root ).toHaveClass( /hprnb-root--m-ctrl-tab/ );
 	const barBox = await aside.boundingBox();
-	const outClose = await page.locator( '.hprnb-bar__btn--close' ).boundingBox();
-	const outToggle = await page.locator( '.hprnb-bar__btn--toggle' ).boundingBox();
-	expect( outClose.y + outClose.height ).toBeLessThanOrEqual( barBox.y + 1, 'Above the bar.' );
-	expect( Math.round( outToggle.y ) ).toBe( Math.round( outClose.y ), 'Side by side.' );
-	expect( ( await viewport.boundingBox() ).width ).toBeGreaterThan( insideWidth );
-	// Placed outside the bar, which clips its own overflow: they must really be painted, not just
+	const tabClose = await page.locator( '.hprnb-bar__btn--close' ).boundingBox();
+	const tabToggle = await page.locator( '.hprnb-bar__btn--toggle' ).boundingBox();
+	expect( Math.round( tabClose.y + tabClose.height ) ).toBe( Math.round( barBox.y ), 'Resting on the top edge.' );
+	expect( Math.round( tabToggle.y ) ).toBe( Math.round( tabClose.y ), 'Side by side.' );
+	// Outside the bar, which clips its own overflow: they must really be painted, not just
 	// positioned — a hit test at their centre catches the clipping the bounding box cannot see.
 	const painted = ( selector ) => page.evaluate( ( sel ) => {
 		const el = document.querySelector( sel );
@@ -950,18 +915,18 @@ test( 'v2.3: reveal threshold, collapse triggers, buttons outside or hidden, acc
 	}, selector );
 	expect( await painted( '.hprnb-bar__btn--close' ) ).toBe( true );
 	expect( await painted( '.hprnb-bar__btn--toggle' ) ).toBe( true );
-	await expect( root ).not.toHaveClass( /hprnb-root--m-ctrl-col/, 'The floating group is a row of its own.' );
 	await page.locator( '.hprnb-bar__btn--toggle' ).click();
 	await expect( aside ).toHaveClass( /hprnb-bar--paused/, 'And really clickable.' );
 	await page.locator( '.hprnb-bar__btn--toggle' ).click();
 
-	// Each button can be hidden on mobile on its own.
-	setSettings( { mobile_layout: 'flow', mobile_lines: 2, mobile_show_pause: false, mobile_show_close: false, rotate_interval: 60000 } );
+	// Each button can be hidden on mobile on its own; with none left the tab is empty and the theme's
+	// corner elements have nothing to clear.
+	setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, mobile_show_pause: false, mobile_show_close: false, rotate_interval: 60000 } );
 	await page.goto( '/' );
 	await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
 	await expect( page.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden();
 	await expect( page.locator( '.hprnb-bar__btn--close' ) ).toBeHidden();
-	expect( ( await viewport.boundingBox() ).width ).toBeGreaterThan( insideWidth );
+	expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-tab' ).trim() ) ).toBe( '0px' );
 
 	// The accent edge, on by default and switchable.
 	const edge = () => aside.evaluate( ( el ) => getComputedStyle( el ).boxShadow );
@@ -1147,21 +1112,30 @@ test( 'v2.4: page types per profile, the bar inside the article, desktop collaps
 			const top = document.elementFromPoint( rect.x + rect.width / 2, rect.y + rect.height / 2 );
 			return el === top || el.contains( top );
 		} ) ).toBe( true, 'Painted, not merely positioned.' );
-		// Collapsed it is the strip of the flowing card: the pulsing dot and the first line.
+		// Folded: the pulsing dot, the first line and (2.11) the small 16:9 picture at the end, with the
+		// unfold button in the tab above the corner, where the cross was.
 		await page.evaluate( () => window.scrollTo( 0, 900 ) );
 		await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
 		expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '36px', 'One line and its padding.' );
+		await expect.poll( async () => Math.round( ( await page.locator( '.hprnb-bar__label' ).boundingBox() ).width ) ).toBe( 24 ); // The pill closes onto its dot.
+		await page.waitForTimeout( 600 );
 		const dot = await page.locator( '.hprnb-bar__label' ).boundingBox();
-		expect( Math.round( dot.width ) ).toBe( 24, 'The pill shrinks to its dot.' );
 		expect( Math.round( dot.x ) ).toBe( 12, 'Against the card padding, on the left.' );
 		expect( await page.locator( '.hprnb-bar__label' ).evaluate( ( el ) => getComputedStyle( el ).animationName ) ).toBe( 'hprnb-beacon' );
-		expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => getComputedStyle( el ).display ) ).toBe( 'none' );
+		expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => getComputedStyle( el ).opacity ) ).toBe( '0' );
 		const strip = await headline.boundingBox();
 		expect( strip.x ).toBeGreaterThan( dot.x + dot.width, 'The first line of the headline runs beside it.' );
 		expect( Math.round( strip.height ) ).toBe( 22, 'One line.' );
-		await expect( thumb ).toBeHidden( 'No picture in the strip.' );
-		expect( await tab.evaluate( ( el ) => getComputedStyle( el ).display ) ).toBe( 'none', 'And no close tab.' );
-		await expect( page.locator( '.hprnb-bar__btn--expand' ) ).toBeVisible( 'The chevron takes the end of the strip.' );
+		await expect( thumb ).toBeVisible();
+		const small = await thumb.boundingBox();
+		expect( [ Math.round( small.width ), Math.round( small.height ) ] ).toEqual( [ 32, 18 ], 'One line high, still 16:9.' );
+		expect( Math.round( small.x + small.width ) ).toBe( 378, 'At the end of the strip.' );
+		expect( strip.x + strip.width ).toBeLessThanOrEqual( small.x );
+		expect( await tab.evaluate( ( el ) => getComputedStyle( el ).display ) ).toBe( 'none', 'No close button in the folded state.' );
+		const unfold = await page.locator( '.hprnb-bar__btn--expand' ).boundingBox();
+		const folded = await aside.boundingBox();
+		expect( Math.round( unfold.y + unfold.height ) ).toBe( Math.round( folded.y ), 'The unfold button sits in the tab above the strip.' );
+		expect( Math.round( unfold.x + unfold.width ) ).toBe( 390 );
 		await page.evaluate( () => window.scrollTo( 0, 0 ) );
 		await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
 		await tab.click();
@@ -1459,6 +1433,9 @@ test( 'admin: settings page, live preview, contrast warning, save, export, impor
 	expect( await page.locator( 'script#hprnb-admin-js' ).count() ).toBe( 0 );
 
 	await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar' );
+	// This scenario walks through every setting: "Advanced settings" on (2.11), remembered by the browser.
+	await page.click( 'label[for="hprnb-advanced-toggle"]' );
+	await expect( page.locator( '#hprnb-advanced-toggle' ) ).toBeChecked();
 	await expect( page.locator( 'h1' ) ).toHaveText( 'Horizon Press News Bar' );
 	expect( await page.locator( 'link#hprnb-admin-css' ).count() ).toBe( 1 );
 	await expect( page.locator( '#hprnb-preview-root .hprnb-bar' ) ).toBeVisible();
@@ -1515,14 +1492,16 @@ test( 'admin: settings page, live preview, contrast warning, save, export, impor
 	await expect( previewRoot ).toHaveClass( /hprnb-root--m-colors/ );
 	await page.locator( '#hprnb-field-mobile-custom-colors' ).setChecked( false, { force: true } );
 	await page.click( '[data-hprnb-tab="mobile"]' );
-	await page.check( '#hprnb-field-mobile-layout-inline' );
-	await expect( previewRoot ).toHaveClass( /hprnb-root--m-inline/ );
-	await page.check( '#hprnb-field-mobile-layout-stacked' );
-	await expect( previewRoot ).toHaveClass( /hprnb-root--m-stacked/ );
-	await expect( page.locator( '#hprnb-preview-root .hprnb-bar__counter' ) ).toHaveCount( 0 );
-	await page.check( '#hprnb-field-mobile-show-counter' );
-	await expect( page.locator( '#hprnb-preview-root .hprnb-bar__counter' ) ).toHaveCount( 1 );
-	await page.check( '#hprnb-field-mobile-layout-flow' );
+	// The two designs of 2.11, switched live in the preview.
+	await expect( page.locator( '#hprnb-field-mobile-layout-inline' ) ).toHaveCount( 0 );
+	await expect( page.locator( '#hprnb-field-mobile-layout-stacked' ) ).toHaveCount( 0 );
+	await page.check( '#hprnb-field-mobile-layout-flow_image' );
+	await expect( previewRoot ).toHaveClass( /hprnb-root--m-flow/ );
+	await expect( previewRoot ).toHaveClass( /hprnb-root--m-ctrl-tab/ );
+	await page.check( '#hprnb-field-mobile-layout-card' );
+	await expect( previewRoot ).toHaveClass( /hprnb-root--m-card/ );
+	await expect( previewRoot ).not.toHaveClass( /hprnb-root--m-ctrl-tab/ );
+	await page.check( '#hprnb-field-mobile-layout-flow_image' );
 	await page.click( '#hprnb-preview-tab-desktop' );
 	await expect( previewRoot ).toHaveClass( /hprnb-root--flat/ );
 	await expect( page.locator( '#hprnb-preview-root .hprnb-bar' ) ).toHaveClass( /hprnb-bar--mode-marquee/ );
@@ -1539,9 +1518,13 @@ test( 'admin: settings page, live preview, contrast warning, save, export, impor
 	await expect( page.locator( '.hprnb-height-hint[data-hprnb-height="m"]' ) ).toHaveText( 'Bar height: 118 px', 'A 96px picture is 54px tall: three 22px lines drive the card.' );
 	page.once( 'dialog', ( d ) => d.accept() );
 	await page.click( '#hprnb-reset-tab' );
-	await expect( page.locator( '#hprnb-field-mobile-lines' ) ).toHaveValue( '3' );
+	// 2.11 defaults: the bar with the article picture on two lines, pause off, Continuous reading.
+	await expect( page.locator( '#hprnb-field-mobile-layout-flow_image' ) ).toBeChecked();
+	await expect( page.locator( '#hprnb-field-mobile-lines' ) ).toHaveValue( '2' );
 	await expect( page.locator( '#hprnb-field-mobile-card-thumb' ) ).toHaveValue( '132' );
-	await expect( page.locator( '.hprnb-height-hint[data-hprnb-height="m"]' ) ).toHaveText( 'Bar height: 126 px', 'The reference: 12 + 20 + 8 + max(74, 66) + 12.' );
+	await expect( page.locator( '#hprnb-field-mobile-show-pause' ) ).not.toBeChecked();
+	await expect( page.locator( '#hprnb-field-mobile-behavior-reading' ) ).toBeChecked();
+	await expect( page.locator( '.hprnb-height-hint[data-hprnb-height="m"]' ) ).toHaveText( 'Bar height: 76 px', '12 + 2 × 26 + 12.' );
 	expect( previews ).toHaveLength( 0 );
 
 	// Contrast warning (never blocks saving).
@@ -1702,64 +1685,59 @@ test( 'accessibility: axe-core audit of the bar and visible keyboard focus', asy
 	}
 } );
 
-const STACKED = { mobile_layout: 'stacked', mobile_lines: 2, mobile_show_counter: true, mobile_label_dot: false, mobile_custom_colors: true, mobile_bg_color: '#141414', mobile_accent_color: '#E11D2A', mobile_text_color: '#F5F5F5', ticker_enabled: false };
+// The label row above the headline left the designs in 2.11: the rotation features it exercised
+// are checked on the default design, the bar with the article picture.
+const IMAGE_BAR = { mobile_layout: 'flow_image', mobile_lines: 2, mobile_label_dot: false, mobile_custom_colors: true, mobile_bg_color: '#141414', mobile_accent_color: '#E11D2A', mobile_text_color: '#F5F5F5', ticker_enabled: false };
 
-test( 'mobile stacked presentation: pill, counter, progress, rotation, swipe, collapse, colours, options, breakpoint', async ( { page } ) => {
-	setSettings( { ...STACKED, rotate_interval: 1500 } );
+test( 'mobile rotation: progress, rotation, swipe, pause, folding, palette, options, breakpoint, reduced motion', async ( { page } ) => {
+	setSettings( { ...IMAGE_BAR, rotate_interval: 1500 } );
 	const errors = collectErrors( page );
 	await page.setViewportSize( { width: 375, height: 667 } );
 	await page.goto( '/' );
 	const root = page.locator( '#hprnb-root' );
 	const aside = page.locator( '#hprnb-root .hprnb-bar' );
+	const current = () => page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' ).first().innerText();
 	await expect( aside ).toBeVisible();
-	await expect( root ).toHaveClass( /hprnb-root--m-stacked/ );
+	await expect( root ).toHaveClass( /hprnb-root--m-flow/ );
 	await expect( aside ).toHaveClass( /hprnb-bar--mode-rotate/ );
 	await expect( aside ).toHaveClass( /hprnb-bar--mobile/ );
-	expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 80, 'Label row 22 + gap 4 + two 16px lines (2 × 21) + padding 12' );
-	expect( await page.evaluate( () => parseFloat( getComputedStyle( document.body ).paddingBottom ) ) ).toBeGreaterThanOrEqual( 80 );
+	expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 76 );
+	expect( await page.evaluate( () => parseFloat( getComputedStyle( document.body ).paddingBottom ) ) ).toBeGreaterThanOrEqual( 76 );
 
-	// Row 1: pill label (live dot off by default) and the counter; row 2: full-width 16px headline, two lines max.
+	// The pill without its live dot (option off), the 16px headline on two lines.
 	const label = page.locator( '.hprnb-bar__label' );
 	await expect( label ).toBeVisible();
-	expect( await label.evaluate( ( el ) => getComputedStyle( el, '::before' ).display ) ).toBe( 'none', 'The live dot is off by default.' );
+	expect( await label.evaluate( ( el ) => getComputedStyle( el, '::before' ).display ) ).toBe( 'none', 'The live dot is off here.' );
 	expect( await label.evaluate( ( el ) => getComputedStyle( el ).borderTopLeftRadius ) ).toBe( '999px' );
-	// The default label ("TOUTE L’ACTUALITÉ") fits in the pill without an ellipsis, and the pill stays under 60% of the bar.
-	expect( await page.locator( '.hprnb-bar__label-text' ).evaluate( ( el ) => el.scrollWidth <= el.clientWidth + 1 ) ).toBe( true );
-	expect( ( await label.boundingBox() ).width ).toBeLessThanOrEqual( 375 * 0.6 );
-	const counter = page.locator( '.hprnb-bar__counter' );
-	await expect( counter ).toHaveText( /^1\/\d+$/ );
+	await expect( page.locator( '.hprnb-bar__counter' ) ).toBeHidden();
 	const title = page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' );
 	expect( await title.evaluate( ( el ) => getComputedStyle( el ).fontSize ) ).toBe( '16px' );
-	expect( await title.evaluate( ( el ) => getComputedStyle( el ).webkitLineClamp ) ).toBe( '2' );
-	expect( ( await page.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__link' ).boundingBox() ).width ).toBeGreaterThan( 250 );
-	const labelBox = await label.boundingBox();
-	const titleBox = await title.boundingBox();
-	expect( titleBox.y ).toBeGreaterThan( labelBox.y + labelBox.height - 1 );
 
 	// Dedicated mobile palette.
 	expect( await aside.evaluate( ( el ) => getComputedStyle( el ).color ) ).toBe( 'rgb(245, 245, 245)' );
 	// color-mix() resolves to rgb(20 20 20 / .94) or color(srgb 0.078 …), depending on the engine.
 	expect( await aside.evaluate( ( el ) => getComputedStyle( el ).backgroundColor ) ).toMatch( /20, 20, 20|0\.078/ );
 	expect( await label.evaluate( ( el ) => getComputedStyle( el ).backgroundColor ) ).toBe( 'rgb(225, 29, 42)' );
+	expect( await page.locator( '.hprnb-bar__controls' ).evaluate( ( el ) => getComputedStyle( el ).backgroundColor ) ).toMatch( /20, 20, 20|0\.078/, 'The tab wears the same colour.' );
 
 	// Progress line runs and the rotation advances.
 	const progress = page.locator( '.hprnb-bar__progress' );
 	await expect( progress ).toHaveClass( /is-run/ );
 	expect( await progress.evaluate( ( el ) => getComputedStyle( el, '::after' ).animationName ) ).toBe( 'hprnb-progress' );
 	expect( ( await progress.boundingBox() ).y ).toBeLessThan( ( await aside.boundingBox() ).y + 1, 'The progress track runs along the top edge of the bar.' );
-	await expect( counter ).toHaveText( /^2\/\d+$/, { timeout: 4000 } );
+	const first = await current();
+	await expect.poll( current, { timeout: 4000 } ).not.toBe( first );
 
 	// Swipe left → next headline.
-	const before = await counter.textContent();
+	const before = await current();
 	const box = await page.locator( '.hprnb-bar__viewport' ).boundingBox();
 	await page.mouse.move( box.x + box.width - 20, box.y + box.height / 2 );
 	await page.mouse.down();
 	await page.mouse.move( box.x + 40, box.y + box.height / 2, { steps: 8 } );
 	await page.mouse.up();
-	await expect( counter ).not.toHaveText( before );
+	await expect.poll( current ).not.toBe( before );
 
-	// Collapse while scrolling down, expand when scrolling up or tapping the label row.
-	// (Before the buttons get focus: an interaction inside the bar holds it open for 4 s.)
+	// Folds while scrolling down, back on a scroll up or a tap on the strip.
 	await page.evaluate( () => window.scrollTo( 0, 0 ) );
 	await page.evaluate( () => window.scrollTo( 0, 600 ) );
 	await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
@@ -1767,10 +1745,11 @@ test( 'mobile stacked presentation: pill, counter, progress, rotation, swipe, co
 	await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
 	await page.evaluate( () => window.scrollTo( 0, 900 ) );
 	await expect( aside ).toHaveClass( /hprnb-bar--collapsed/ );
+	await page.waitForTimeout( 650 );
 	await label.click( { force: true } );
 	await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
 
-	// Pause / Play pauses the rotation and the progress line; no prev/next buttons in rotate mode.
+	// Pause / Play (in the tab) pauses the rotation and the progress line; no prev/next in rotate mode.
 	const toggle = page.locator( '.hprnb-bar__btn--toggle' );
 	await expect( toggle ).toBeVisible();
 	await toggle.click();
@@ -1785,33 +1764,33 @@ test( 'mobile stacked presentation: pill, counter, progress, rotation, swipe, co
 	// Crossing the threshold re-initialises the bar for the desktop presentation, and back.
 	await page.setViewportSize( { width: 1366, height: 800 } );
 	await expect( aside ).toHaveClass( /hprnb-bar--mode-none/ );
-	await expect( page.locator( '.hprnb-bar__counter' ) ).toHaveCount( 0 );
 	await expect( page.locator( '.hprnb-bar__progress' ) ).toHaveCount( 0 );
 	await expect( toggle ).toBeHidden();
 	expect( Math.round( ( await aside.boundingBox() ).height ) ).toBe( 40 );
 	await page.setViewportSize( { width: 375, height: 667 } );
 	await expect( aside ).toHaveClass( /hprnb-bar--mode-rotate/ );
-	await expect( page.locator( '.hprnb-bar__counter' ) ).toHaveCount( 1 );
+	await expect( page.locator( '.hprnb-bar__progress' ) ).toHaveCount( 1 );
 
-	// Options: hidden label, desktop colours, no counter/progress/collapse.
-	setSettings( { ...STACKED, mobile_label_style: 'hidden', mobile_custom_colors: false, mobile_show_counter: false, mobile_show_progress: false, mobile_hide_on_scroll: false } );
+	// Options: hidden label, desktop colours, no progress, no folding.
+	setSettings( { ...IMAGE_BAR, mobile_label_style: 'hidden', mobile_custom_colors: false, mobile_show_progress: false, mobile_hide_on_scroll: false } );
 	await page.goto( '/' );
 	await expect( label ).toBeHidden();
 	expect( await aside.evaluate( ( el ) => getComputedStyle( el ).backgroundColor ) ).toBe( 'rgb(27, 28, 32)' );
-	await expect( page.locator( '.hprnb-bar__counter' ) ).toHaveCount( 0 );
 	await expect( page.locator( '.hprnb-bar__progress' ) ).toHaveCount( 0 );
 	await expect( root ).not.toHaveClass( /hprnb-root--m-collapse/ );
 	await page.evaluate( () => window.scrollTo( 0, 900 ) );
 	await page.waitForTimeout( 300 );
 	await expect( aside ).not.toHaveClass( /hprnb-bar--collapsed/ );
 
-	// Reduced motion: no automatic rotation, no progress line, toggle hidden.
-	setSettings( STACKED );
+	// Reduced motion: no automatic rotation, no progress line, toggle hidden, no folding animation.
+	setSettings( IMAGE_BAR );
 	await page.emulateMedia( { reducedMotion: 'reduce' } );
 	await page.goto( '/' );
 	await expect( aside ).toHaveClass( /hprnb-bar--reduced/ );
 	await expect( page.locator( '.hprnb-bar__progress' ) ).toHaveCount( 0 );
 	await expect( toggle ).toBeHidden();
+	expect( await aside.evaluate( ( el ) => getComputedStyle( el ).transitionDuration ) ).toBe( '0s' );
+	expect( await label.evaluate( ( el ) => getComputedStyle( el ).transitionDuration ) ).toBe( '0s', 'The pill no longer closes in motion either.' );
 	expect( await noHorizontalOverflow( page ) ).toBe( true );
 } );
 
@@ -2347,7 +2326,8 @@ test( 'v2.10: the flowing bar with the article picture, its buttons in a tab abo
 			const thumb = document.querySelector( '.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb' );
 			return { tabInside: tab.top >= bar.top - 1, chevron: !! chevron && chevron.getBoundingClientRect().width > 0, thumb: getComputedStyle( thumb ).display !== 'none' && thumb.getBoundingClientRect().height <= 26, closeShown: getComputedStyle( document.querySelector( '.hprnb-bar__btn--close' ) ).display !== 'none' };
 		} );
-		expect( folded ).toEqual( { tabInside: true, chevron: true, thumb: true, closeShown: false } );
+		// 2.11: the tab stays above the strip and now holds the unfold button.
+		expect( folded ).toEqual( { tabInside: false, chevron: true, thumb: true, closeShown: false } );
 
 		// The cross closes the bar.
 		await page.evaluate( () => window.scrollTo( 0, 0 ) );
@@ -2391,6 +2371,107 @@ test( 'v2.10: the flowing bar with the article picture, its buttons in a tab abo
 		await page.click( '#hprnb-save' );
 		await page.waitForURL( /settings-updated=true/ );
 		expect( JSON.parse( wp( [ 'option', 'get', 'hprnb_settings', '--format=json' ] ) ).mobile_layout ).toBe( 'flow_image' );
+		expect( errors ).toEqual( [] );
+	} finally {
+		media.forEach( ( id ) => wp( [ 'post', 'delete', id, '--force' ] ) );
+		ids.forEach( ( id ) => wp( [ 'post', 'delete', id, '--force' ] ) );
+		setSettings( { mobile_layout: 'flow', mobile_lines: 2 } );
+	}
+} );
+
+test( 'v2.11: the new defaults, a premium fold with the unfold button in the tab, and a simple settings page', async ( { page } ) => {
+	const errors = collectErrors( page );
+	const body = Array.from( { length: 40 }, ( _, i ) =>
+		`<p>Paragraphe ${ i + 1 }. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>` ).join( '\n' );
+	const ids = [ 1, 2 ].map( ( i ) => wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', `--post_title=Exemple : trafic perturbé sur la ligne B ce soir ${ i }`, `--post_content=${ body }`, '--porcelain' ] ) );
+	const media = ids.map( ( id ) => wp( [ 'media', 'import', 'tests/e2e/fixtures/thumb.png', '--post_id=' + id, '--featured_image', '--porcelain' ] ) );
+	const url = new URL( wp( [ 'post', 'url', ids[ 0 ] ] ) ).pathname;
+	const aside = page.locator( '.hprnb-bar' );
+	const folded = () => page.evaluate( () => document.querySelector( '.hprnb-bar' ).classList.contains( 'hprnb-bar--collapsed' ) );
+	const geo = () => page.evaluate( () => {
+		const t = document.querySelector( '.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb' ).getBoundingClientRect();
+		const l = document.querySelector( '.hprnb-bar__label' ).getBoundingClientRect();
+		return { size: Math.round( t.width ), right: Math.round( t.right ), pill: Math.round( l.width ) };
+	} );
+	try {
+		// Out of the box: the bar with the article picture, the cross alone in its tab, Continuous reading.
+		setDefaultSettings( { rotate_interval: 60000 } );
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( url );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( page.locator( '#hprnb-root' ) ).toHaveClass( /hprnb-root--m-flow/ );
+		await expect( page.locator( '#hprnb-root' ) ).toHaveClass( /hprnb-root--m-ctrl-tab/ );
+		await expect( page.locator( '#hprnb-root' ) ).toHaveClass( /hprnb-root--m-pending/ );
+		const B = await page.evaluate( () => Math.round( document.querySelectorAll( '.entry-content p, .wp-block-post-content p' )[ 38 ].getBoundingClientRect().top + window.scrollY ) - 844 + 30 );
+		await page.evaluate( ( y ) => window.scrollTo( 0, y ), B );
+		await expect.poll( folded ).toBe( false );
+		await expect( page.locator( '#hprnb-root' ) ).not.toHaveClass( /hprnb-root--m-pending/ );
+		await page.waitForTimeout( 600 );
+		await expect( page.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden( 'Pause hidden by default.' );
+		await expect( page.locator( '.hprnb-bar__btn--close' ) ).toBeVisible();
+		expect( ( await page.locator( '.hprnb-bar__controls' ).boundingBox() ).width ).toBe( 44, 'The cross alone in the tab.' );
+		const open = await geo();
+		expect( open.size ).toBe( 48 );
+
+		// The reader scrolls back up: the bar folds, and nothing jumps on the way — the picture shrinks
+		// step by step against the same edge, the pill closes onto its dot.
+		await page.evaluate( ( y ) => window.scrollTo( 0, y ), B - 150 );
+		const frames = [];
+		for ( let i = 0; i < 6; i++ ) {
+			frames.push( await geo() );
+			await page.waitForTimeout( 70 );
+		}
+		await page.waitForTimeout( 400 );
+		frames.push( await geo() );
+		expect( await folded() ).toBe( true );
+		const sizes = frames.map( ( f ) => f.size );
+		expect( sizes[ sizes.length - 1 ] ).toBe( 22 );
+		expect( sizes.some( ( v ) => v > 22 && v < 48 ), 'Intermediate sizes: it moves, it does not snap. ' + sizes ).toBe( true );
+		expect( sizes.every( ( v, i ) => i === 0 || v <= sizes[ i - 1 ] ), 'Only ever shrinking. ' + sizes ).toBe( true );
+		expect( frames.every( ( f ) => f.right === open.right ), 'The outer edge never moves. ' + frames.map( ( f ) => f.right ) ).toBe( true );
+		expect( frames[ frames.length - 1 ].pill ).toBe( 24 );
+		expect( frames.some( ( f ) => f.pill > 24 && f.pill < open.pill ), 'The pill closes progressively.' ).toBe( true );
+		expect( await aside.evaluate( ( el ) => getComputedStyle( el ).transitionTimingFunction ) ).toBe( 'cubic-bezier(0.22, 1, 0.36, 1)' );
+
+		// Folded: the unfold button sits in the tab above the corner, like the cross of the open bar.
+		const chevron = page.locator( '.hprnb-bar__btn--expand' );
+		await expect( chevron ).toBeVisible();
+		const tab = await chevron.boundingBox();
+		const strip = await aside.boundingBox();
+		expect( [ Math.round( tab.width ), Math.round( tab.height ) ] ).toEqual( [ 44, 44 ] );
+		expect( Math.round( tab.y + tab.height ) ).toBe( Math.round( strip.y ) );
+		expect( Math.round( tab.x + tab.width ) ).toBe( 390 );
+		expect( await chevron.evaluate( ( el ) => getComputedStyle( el.querySelector( 'svg' ) ).animationName ) ).toBe( 'hprnb-tab-icon' );
+		expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-tab' ).trim() ) ).toBe( '44px' );
+		await chevron.click();
+		await expect.poll( folded ).toBe( false );
+		await expect( page.locator( '.hprnb-bar__btn--close' ) ).toBeVisible();
+
+		// The settings page opens in simple mode: the essentials only, every value kept on save.
+		await page.goto( '/wp-login.php' );
+		await page.fill( '#user_login', 'admin' );
+		await page.fill( '#user_pass', 'admin' );
+		await page.click( '#wp-submit' );
+		await page.waitForURL( /wp-admin/ );
+		setDefaultSettings( { mobile_font_size: 18 } );
+		await page.setViewportSize( { width: 1400, height: 1000 } );
+		await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar' );
+		await expect( page.locator( '#hprnb-advanced-toggle' ) ).not.toBeChecked();
+		await expect( page.locator( '[data-hprnb-tab="advanced"]' ) ).toBeHidden( 'The Advanced tab waits for the switch.' );
+		await page.click( '[data-hprnb-tab="mobile"]' );
+		await expect( page.locator( '#hprnb-field-mobile-layout-flow_image' ) ).toBeVisible();
+		await expect( page.locator( '#hprnb-field-mobile-show-pause' ) ).toBeVisible();
+		await expect( page.locator( '#hprnb-field-mobile-font-size' ) ).toBeHidden();
+		await page.click( 'label[for="hprnb-advanced-toggle"]' );
+		await expect( page.locator( '#hprnb-field-mobile-font-size' ) ).toBeVisible();
+		await expect( page.locator( '#hprnb-field-mobile-font-size' ) ).toHaveValue( '18' );
+		await expect( page.locator( '[data-hprnb-tab="advanced"]' ) ).toBeVisible();
+		await page.click( '[data-hprnb-tab="advanced"]' );
+		await page.click( 'label[for="hprnb-advanced-toggle"]' );
+		await expect( page.locator( '[data-hprnb-panel="content"]' ) ).toBeVisible( 'Leaving advanced mode on the Advanced tab falls back to the first tab.' );
+		await page.click( '#hprnb-save' );
+		await page.waitForURL( /settings-updated=true/ );
+		expect( JSON.parse( wp( [ 'option', 'get', 'hprnb_settings', '--format=json' ] ) ).mobile_font_size ).toBe( 18, 'A hidden setting is saved untouched.' );
 		expect( errors ).toEqual( [] );
 	} finally {
 		media.forEach( ( id ) => wp( [ 'post', 'delete', id, '--force' ] ) );

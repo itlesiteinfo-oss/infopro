@@ -12,9 +12,14 @@ use HorizonPress\NewsBar\Settings;
 class Flow_Image_Test extends HPRNB_Test_Case {
 
 	public function test_it_is_a_mobile_design_of_its_own() {
-		$this->assertContains( 'flow_image', Settings::schema()['mobile_layout']['options'] );
-		$this->assertSame( 'flow_image', Settings::sanitize( array( 'mobile_layout' => 'flow_image' ) )['mobile_layout'] );
-		$this->assertSame( 'card', Settings::defaults()['mobile_layout'], 'The card stays the default.' );
+		// 2.11: the two designs left, this one first and by default, the card right after.
+		$this->assertSame( array( 'flow_image', 'card' ), Settings::schema()['mobile_layout']['options'] );
+		$this->assertSame( 'flow_image', Settings::defaults()['mobile_layout'] );
+		$this->assertSame( 2, Settings::defaults()['mobile_lines'], 'Two lines, as on the reference screenshot.' );
+		$this->assertFalse( Settings::defaults()['mobile_show_pause'], 'The cross alone in the tab.' );
+		foreach ( array( 'flow', 'stacked', 'inline' ) as $removed ) {
+			$this->assertSame( 'flow_image', Settings::sanitize( array( 'mobile_layout' => $removed ) )['mobile_layout'], "$removed is gone." );
+		}
 	}
 
 	public function test_the_flowing_bar_with_its_picture_at_the_end_and_no_button_column() {
@@ -51,15 +56,13 @@ class Flow_Image_Test extends HPRNB_Test_Case {
 		$bare = $this->with_settings( array( 'mobile_layout' => 'flow_image', 'mobile_peek_thumbnail' => false ) );
 		$this->assertNotContains( 'hprnb-root--m-peek-thumb', Renderer::root_classes( $bare ) );
 		// The other designs never get the tab.
-		foreach ( array( 'card', 'flow', 'stacked', 'inline' ) as $layout ) {
-			$this->assertNotContains( 'hprnb-root--m-ctrl-tab', Renderer::root_classes( $this->with_settings( array( 'mobile_layout' => $layout ) ) ), $layout );
-		}
+		$this->assertNotContains( 'hprnb-root--m-ctrl-tab', Renderer::root_classes( $this->with_settings( array( 'mobile_layout' => 'card' ) ) ), 'The card has its own tab rule.' );
 	}
 
 	public function test_the_picture_changes_the_cached_markup() {
-		$flow  = Settings::sanitize( array( 'mobile_layout' => 'flow' ) );
+		$card  = Settings::sanitize( array( 'mobile_layout' => 'card' ) );
 		$image = Settings::sanitize( array( 'mobile_layout' => 'flow_image' ) );
-		$this->assertNotSame( Cache::hash( $flow ), Cache::hash( $image ), 'A cached bar without pictures is never served to this design.' );
+		$this->assertNotSame( Cache::hash( $card ), Cache::hash( $image ), 'Each design has its own cached markup.' );
 	}
 
 	public function test_the_design_is_offered_with_its_image_settings() {
@@ -71,6 +74,6 @@ class Flow_Image_Test extends HPRNB_Test_Case {
 		$html = (string) ob_get_clean();
 		$this->assertStringContainsString( 'name="hprnb_settings[mobile_layout]" value="flow_image"', $html );
 		// Its picture size and its picture in the folded strip stay reachable without the image switch.
-		$this->assertSame( 2, substr_count( $html, 'data-hprnb-depends="mobile_show_thumbnail,mobile_layout:flow_image"' ) );
+		$this->assertSame( 1, substr_count( $html, 'data-hprnb-depends="mobile_show_thumbnail,mobile_layout:flow_image"' ), 'Its picture size.' );
 	}
 }

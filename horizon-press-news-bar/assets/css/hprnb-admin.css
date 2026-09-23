@@ -75,6 +75,22 @@
 	margin-block-end: 6px;
 }
 
+/* Simple mode (the default, "Advanced settings" off): only the settings a site works with. The
+   script sets the class, so without it every setting stays in view. */
+.hprnb-wrap--simple .hprnb-row--advanced,
+.hprnb-wrap--simple .hprnb-card--advanced,
+.hprnb-wrap--simple [data-hprnb-advanced="1"] {
+	display: none;
+}
+
+.hprnb-advanced-toggle {
+	margin-inline-end: 8px;
+}
+
+.hprnb-advanced-toggle[hidden] {
+	display: none;
+}
+
 /* A card that belongs to one choice (the "Custom" behaviour) is hidden outside it. */
 .hprnb-card[hidden] {
 	display: none;

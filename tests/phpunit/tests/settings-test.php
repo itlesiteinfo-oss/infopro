@@ -88,7 +88,7 @@ class Settings_Test extends HPRNB_Test_Case {
 			$this->assertSame( 1, Settings::sanitize( array( $prefix . 'reveal_paragraph' => -3 ) )[ $prefix . 'reveal_paragraph' ] );
 			$this->assertSame( 30, Settings::sanitize( array( $prefix . 'reveal_paragraph' => 500 ) )[ $prefix . 'reveal_paragraph' ] );
 			$this->assertSame( 2, Settings::sanitize( array( $prefix . 'reveal_paragraph' => 'many' ) )[ $prefix . 'reveal_paragraph' ], 'Garbage falls back to the default.' );
-			$this->assertSame( 'immediate', Settings::defaults()[ $prefix . 'reveal_mode' ], 'Nothing waits by default.' );
+			$this->assertSame( 'desktop_' === $prefix ? 'immediate' : 'paragraph', Settings::defaults()[ $prefix . 'reveal_mode' ], 'Desktop shows at once; mobile waits for the paragraph (2.11).' );
 		}
 		$this->assertArrayNotHasKey( 'reveal_mode', Settings::defaults(), 'The single setting is gone: each device decides.' );
 	}
@@ -118,7 +118,8 @@ class Settings_Test extends HPRNB_Test_Case {
 			$this->assertSame( 4, $now[ $prefix . 'reveal_paragraph' ] );
 		}
 		$this->assertArrayNotHasKey( 'reveal_mode', $now );
-		$this->assertSame( 'flow', $now['mobile_layout'], 'The design a site chose is never switched under it.' );
+		// The flowing bar without picture left the list in 2.11 (schema 7): its closest design takes over.
+		$this->assertSame( 'flow_image', $now['mobile_layout'] );
 		$this->assertSame( 2, $now['mobile_lines'] );
 		$this->assertFalse( $now['mobile_card_float'], 'The new key takes its default.' );
 		$this->assertSame( (string) HPRNB_SCHEMA_VERSION, get_option( Settings::SCHEMA_OPTION ) );

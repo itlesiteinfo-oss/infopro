@@ -16,15 +16,16 @@ class Behavior_Test extends HPRNB_Test_Case {
 
 	public function test_the_defaults_already_hold_their_behaviour() {
 		$defaults = Settings::defaults();
-		$this->assertSame( 'fold', $defaults['mobile_behavior'], 'A new site keeps the 2.8 mobile behaviour.' );
-		$this->assertSame( 'always', $defaults['desktop_behavior'], 'And the 2.8 desktop behaviour.' );
+		$this->assertSame( 'reading', $defaults['mobile_behavior'], '2.11: Continuous reading is the mobile default.' );
+		$this->assertSame( 'always', $defaults['desktop_behavior'], 'Desktop keeps the bar with the page.' );
 		$this->assertSame( $defaults, Settings::sanitize( $defaults ), 'Saving the defaults changes nothing.' );
 		foreach ( self::PREFIXES as $prefix ) {
 			$this->assertSame( $defaults[ $prefix . 'behavior' ], Settings::detect_behavior( $defaults, $prefix ) );
-			$this->assertFalse( $defaults[ $prefix . 'next_hide' ], 'The next-article option is off by default.' );
 		}
+		$this->assertTrue( $defaults['mobile_next_hide'], 'Part of Continuous reading.' );
+		$this->assertFalse( $defaults['desktop_next_hide'] );
 		$this->assertSame( array( 'reading', 'fold', 'always', 'custom' ), Settings::BEHAVIORS );
-		$this->assertSame( 'fold', Settings::sanitize( array( 'mobile_behavior' => 'nonsense' ) )['mobile_behavior'], 'Garbage falls back to the default.' );
+		$this->assertSame( 'reading', Settings::sanitize( array( 'mobile_behavior' => 'nonsense' ) )['mobile_behavior'], 'Garbage falls back to the default.' );
 	}
 
 	public function test_each_behaviour_writes_its_detailed_values() {
@@ -120,6 +121,8 @@ class Behavior_Test extends HPRNB_Test_Case {
 				'mobile_ticker_mode'    => 'none',
 				'mobile_hide_on_scroll' => false,
 				'mobile_kbd_hide'       => false,
+				'mobile_reveal_mode'    => 'immediate',
+				'mobile_next_hide'      => false,
 			)
 		);
 		$this->assertFalse( Renderer::needs_interactive_js( $quiet ) );
@@ -132,7 +135,8 @@ class Behavior_Test extends HPRNB_Test_Case {
 	 * they already match, or "custom" — never "reading", whose next-article part is new.
 	 */
 	public function test_schema_6_names_what_a_site_already_has() {
-		$old = Settings::defaults();
+		// A 2.8 option: the mobile bar with the page, folding while scrolling down.
+		$old = array_merge( Settings::defaults(), array( 'mobile_reveal_mode' => 'immediate', 'mobile_hide_on_scroll' => true, 'mobile_collapse_mode' => 'scroll' ) );
 		unset( $old['desktop_behavior'], $old['mobile_behavior'], $old['desktop_next_hide'], $old['mobile_next_hide'] );
 
 		$upgraded = Settings::migrate( $old, 5 );
@@ -146,6 +150,9 @@ class Behavior_Test extends HPRNB_Test_Case {
 		// Even the full 2.7 recipe stays "custom": naming it "reading" would switch the next-article part on.
 		$recipe = array_merge( $old, array( 'mobile_reveal_mode' => 'paragraph', 'mobile_hide_on_scroll' => true, 'mobile_collapse_mode' => 'article' ) );
 		$this->assertSame( 'custom', Settings::migrate( $recipe, 5 )['mobile_behavior'] );
+		// Even though the next-article option now defaults to on: a migrated site gets it off.
+		$this->assertFalse( Settings::migrate( $recipe, 5 )['mobile_next_hide'] );
+		$this->assertFalse( Settings::sanitize( Settings::migrate( $recipe, 5 ) )['mobile_next_hide'] );
 
 		// Through the real upgrade path: stored, and the details untouched.
 		update_option( Settings::OPTION, $tuned );
@@ -158,10 +165,10 @@ class Behavior_Test extends HPRNB_Test_Case {
 		$this->assertSame( 'scroll', $now['mobile_collapse_mode'] );
 		$this->assertFalse( $now['mobile_next_hide'] );
 		$this->assertSame( 'always', $now['desktop_behavior'] );
-		$this->assertSame( '6', get_option( Settings::SCHEMA_OPTION ) );
+		$this->assertSame( (string) HPRNB_SCHEMA_VERSION, get_option( Settings::SCHEMA_OPTION ) );
 
 		// An explicit choice is never second-guessed, and an empty option is left alone.
-		$this->assertSame( 'reading', Settings::migrate( array( 'mobile_behavior' => 'reading' ), 5 )['mobile_behavior'] );
+		$this->assertSame( 'reading', Settings::migrate( array( 'mobile_behavior' => 'reading', 'mobile_next_hide' => true ), 5 )['mobile_behavior'] );
 		$this->assertSame( array(), Settings::migrate( array(), 5 ) );
 	}
 
@@ -224,7 +231,7 @@ class Behavior_Test extends HPRNB_Test_Case {
 			$this->assertStringContainsString( 'hprnb-card--compact', substr( $panel, $first, 80 ) );
 			$this->assertLessThan( strpos( $panel, $device . '_layout]' ), strpos( $panel, $device . '_behavior]' ) );
 		}
-		$this->assertStringContainsString( 'checked=\'checked\'', substr( $html, (int) strpos( $html, 'value="fold"' ) - 200, 260 ), 'The stored behaviour is ticked.' );
+		$this->assertStringContainsString( 'checked=\'checked\'', substr( $html, (int) strpos( $html, 'value="reading"' ), 60 ), 'The stored behaviour is ticked.' );
 		$this->assertStringContainsString( 'hprnb-choice__title', $html );
 		$this->assertStringContainsString( 'name="hprnb_settings[mobile_next_hide]"', $html );
 		// The article body selector serves every device and behaviour: it lives on the Advanced tab.

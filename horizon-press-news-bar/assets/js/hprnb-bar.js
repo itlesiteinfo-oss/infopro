@@ -1339,13 +1339,19 @@
 			// Collapsed, a phone keeps its strip while the desktop bar slides fully away.
 			var inflow = !! profile && profile.place === 'inline';
 			var offset = ( hidden || inflow ) ? 0 : ( collapsed ? ( mobile ? peek + gap : 0 ) : full + gap );
-			return { mobile: mobile, collapsed: collapsed, height: full, offset: offset };
+			// The two phone designs carry their buttons in a tab above the bar: what sits in the
+			// corner (Jannah's "go to top") must clear it too.
+			var controls = aside.querySelector( '.hprnb-bar__controls' );
+			var tabbed = mobile && ( root.classList.contains( 'hprnb-root--m-ctrl-tab' ) || root.classList.contains( 'hprnb-root--m-card' ) );
+			var tab = ( hidden || inflow || ! tabbed || ! controls ) ? 0 : controls.offsetHeight;
+			return { mobile: mobile, collapsed: collapsed, height: full, offset: offset, tab: tab };
 		}
 
 		function emit() {
 			var detail = current();
 			body.classList.toggle( 'hprnb-is-collapsed', detail.collapsed );
 			body.style.setProperty( '--hprnb-offset', detail.offset + 'px' );
+			body.style.setProperty( '--hprnb-tab', detail.tab + 'px' );
 			try {
 				document.dispatchEvent( new CustomEvent( 'hprnb:state', { detail: detail } ) );
 			} catch ( e ) {
@@ -1358,6 +1364,7 @@
 			body.classList.remove( 'hprnb-is-collapsed' );
 			body.classList.remove( 'hprnb-kbd' );
 			body.style.removeProperty( '--hprnb-offset' );
+			body.style.removeProperty( '--hprnb-tab' );
 			if ( api.state === current ) {
 				api.state = null;
 			}

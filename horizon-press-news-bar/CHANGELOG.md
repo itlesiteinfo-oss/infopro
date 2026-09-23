@@ -2,6 +2,26 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.11.0] — 2026-09-23
+
+### Modifié — deux designs mobiles, et les réglages du client par défaut
+
+- **Deux designs mobiles seulement**, dans cet ordre : **le bandeau avec l'image de l'article** (par défaut) puis **la carte « Explore More »**. La barre fluide sans image, l'étiquette sur sa propre ligne et la ligne unique quittent la liste. **Schéma 7** : un site sur l'un de ces trois designs passe au bandeau avec l'image, le plus proche ; la carte reste la carte. Le rendu garde la ligne d'étiquette en interne : elle remplace le design quand les titres ne tournent pas.
+- **Nouveaux défauts mobiles** (nouvelle installation, ou « Réinitialiser l'onglet ») : bandeau avec l'image, **2 lignes**, **bouton pause masqué** (la croix seule dans l'onglet), **Lecture continue** (apparition à l'avant-dernier paragraphe, repli à toute remontée, masquage dans l'article suivant), image gardée dans la bande repliée. Une installation existante garde ses réglages ; la migration ne rallume jamais le masquage dans l'article suivant sur un site qui ne l'avait pas.
+
+### Ajouté — repli « premium »
+
+- Un seul mouvement, sur une courbe longue et décélérée (0,5 s, `cubic-bezier(.22, 1, .36, 1)`) : la barre glisse, **l'image se réduit et glisse jusqu'à sa place dans la bande** au lieu de disparaître (son bord extérieur ne bouge pas : la marge du titre suit la même courbe), **la pastille se referme sur son point**, le titre se pose avec un court fondu, et **le bouton de l'onglet se change en l'autre** (croix ↔ chevron) avec une rotation. Les éléments de Jannah suivent sur la même courbe. `prefers-reduced-motion` coupe tout — y compris le glissement de la barre elle-même, que la règle du repli ré-activait depuis la 2.3 (défaut trouvé en recette).
+
+### Ajouté — le bouton pour déplier sort du bandeau
+
+- Replié, **les deux designs gardent l'onglet au-dessus du coin**, et il porte le bouton pour déplier, exactement là où était la croix. La bande garde toute sa largeur pour la première ligne et la petite image ; la carte repliée garde désormais aussi sa petite image 16:9.
+- Le contrat avec le thème expose la hauteur de l'onglet (`--hprnb-tab` sur le body, `tab` dans `hprnb:state` et `hprnbBar.state()`) : le bouton « haut de page » et l'encadré « Check also » de Jannah passent au-dessus de l'onglet.
+
+### Ajouté — page de réglages simple, « Réglages avancés » pour tout le reste
+
+- Par défaut, la page ne montre que les réglages de travail : Contenu (étiquette, fenêtre, nombre d'articles, catégories), Où (types de pages), Mobile et Ordinateur (comportement, design, lignes, image, rotation, boutons, fermeture), Couleurs (les quatre couleurs principales). L'interrupteur **Réglages avancés**, dans l'en-tête, montre tout le reste — y compris l'onglet Avancé — et s'en souvient dans ce navigateur. Les champs masqués restent dans le formulaire : enregistrer ne perd jamais une valeur. Sans JavaScript, tout est visible.
+
 ## [2.10.0] — 2026-09-23
 
 ### Ajouté — le bandeau fluide avec l'image de l'article

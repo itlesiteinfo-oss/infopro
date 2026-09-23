@@ -268,7 +268,7 @@ final class Settings {
 			),
 			'mobile_behavior'             => array(
 				'type'    => 'enum',
-				'default' => 'fold',
+				'default' => 'reading',
 				'options' => self::BEHAVIORS,
 			),
 			'desktop_reveal_mode'         => array(
@@ -290,7 +290,7 @@ final class Settings {
 			),
 			'mobile_reveal_mode'          => array(
 				'type'    => 'enum',
-				'default' => 'immediate',
+				'default' => 'paragraph',
 				'options' => self::REVEAL_MODES,
 			),
 			'mobile_reveal_value'         => array(
@@ -472,8 +472,8 @@ final class Settings {
 			),
 			'mobile_layout'               => array(
 				'type'    => 'enum',
-				'default' => 'card',
-				'options' => array( 'card', 'flow_image', 'flow', 'stacked', 'inline' ),
+				'default' => 'flow_image',
+				'options' => array( 'flow_image', 'card' ),
 			),
 			'mobile_card_thumb'           => array(
 				'type'    => 'int',
@@ -521,7 +521,7 @@ final class Settings {
 			),
 			'mobile_lines'                => array(
 				'type'    => 'int',
-				'default' => 3,
+				'default' => 2,
 				'min'     => 1,
 				'max'     => 4,
 			),
@@ -584,7 +584,7 @@ final class Settings {
 			),
 			'mobile_collapse_mode'        => array(
 				'type'    => 'enum',
-				'default' => 'scroll',
+				'default' => 'article',
 				'options' => array( 'scroll', 'threshold', 'immediate', 'article' ),
 			),
 			'mobile_collapse_after'       => array(
@@ -595,7 +595,7 @@ final class Settings {
 			),
 			'mobile_next_hide'            => array(
 				'type'    => 'bool',
-				'default' => false,
+				'default' => true,
 			),
 			'mobile_controls_place'       => array(
 				'type'    => 'enum',
@@ -604,7 +604,7 @@ final class Settings {
 			),
 			'mobile_show_pause'           => array(
 				'type'    => 'bool',
-				'default' => true,
+				'default' => false,
 			),
 			'mobile_show_close'           => array(
 				'type'    => 'bool',
@@ -948,6 +948,12 @@ final class Settings {
 		// are named after the behaviour they already match, otherwise "custom". The next-article
 		// setting is new and off, so "reading" is never picked here — it would change the site.
 		if ( $stored < 6 && ! empty( $raw ) ) {
+			// The next-article setting did not exist: off, whatever today's default says.
+			foreach ( array( 'desktop_', 'mobile_' ) as $prefix ) {
+				if ( ! array_key_exists( $prefix . 'next_hide', $raw ) ) {
+					$upgraded[ $prefix . 'next_hide' ] = false;
+				}
+			}
 			$probe = self::sanitize(
 				array_merge(
 					$upgraded,
@@ -962,6 +968,12 @@ final class Settings {
 					$upgraded[ $prefix . 'behavior' ] = self::detect_behavior( $probe, $prefix );
 				}
 			}
+		}
+
+		// Schema 7: two mobile designs are left, the bar with the article picture and the card. A site
+		// on one of the three designs taken away moves to the bar with the picture, the closest one.
+		if ( $stored < 7 && in_array( $upgraded['mobile_layout'] ?? '', array( 'flow', 'stacked', 'inline' ), true ) ) {
+			$upgraded['mobile_layout'] = 'flow_image';
 		}
 
 		return $upgraded;

@@ -823,15 +823,16 @@ html.hprnb-dismissed body.hprnb-reserve {
 body.hprnb-reserve.hprnb-theme-offset #go-to-top,
 body.hprnb-reserve.hprnb-theme-offset #check-also-box,
 body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
-	transition: bottom .28s cubic-bezier(.2, .7, .2, 1), transform .3s, opacity .3s;
+	transition: bottom .5s cubic-bezier(.22, 1, .36, 1), transform .3s, opacity .3s;
 }
 
+/* The two corner elements also clear the button tab above the bar (--hprnb-tab, set by the script). */
 body.hprnb-reserve.hprnb-theme-offset #go-to-top {
-	bottom: calc(var(--hprnb-offset, 40px) + env(safe-area-inset-bottom, 0px) + 12px) !important;
+	bottom: calc(var(--hprnb-offset, 40px) + var(--hprnb-tab, 0px) + env(safe-area-inset-bottom, 0px) + 12px) !important;
 }
 
 body.hprnb-reserve.hprnb-theme-offset #check-also-box {
-	bottom: calc(var(--hprnb-offset, 40px) + 15px) !important;
+	bottom: calc(var(--hprnb-offset, 40px) + var(--hprnb-tab, 0px) + 15px) !important;
 }
 
 body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
@@ -1351,24 +1352,14 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		block-size: 22px;
 	}
 
-	/* Collapsed: the tab goes with the rest and the chevron takes the end of the strip, as on the
-	   flowing bar; the picture stays at the end of the line when the strip keeps it. */
-	.hprnb-root--m-ctrl-tab .hprnb-bar--collapsed .hprnb-bar__controls {
-		inset-block: 0 auto;
-		inset-inline-end: calc(var(--hprnb-gutter) - 8px);
-		block-size: var(--hprnb-peek);
-		align-items: flex-start;
-		padding-block-start: var(--hprnb-m-pad);
-		background: transparent;
-		box-shadow: none;
+	/* Folded: the tab stays above the corner and holds the unfold button, where the close button was;
+	   the strip keeps its first line and the small picture, up to the edge. */
+	.hprnb-root--m-ctrl-tab .hprnb-bar--collapsed .hprnb-bar__inner {
+		padding-inline-end: var(--hprnb-gutter);
 	}
 
-	.hprnb-root--m-ctrl-tab .hprnb-bar--collapsed .hprnb-bar__btn--expand {
-		display: inline-flex;
-		inline-size: var(--hprnb-btn);
-		min-inline-size: var(--hprnb-btn);
-		block-size: var(--hprnb-m-line);
-		min-block-size: 0;
+	.hprnb-root--m-ctrl-tab:where(.hprnb-root--m-peek-thumb) .hprnb-bar--collapsed .hprnb-bar__inner {
+		padding-inline-end: calc(var(--hprnb-gutter) + var(--hprnb-e-peek-thumb-col));
 	}
 
 	.hprnb-root--m-flow .hprnb-bar__progress {
@@ -1581,11 +1572,20 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		animation-name: hprnb-appear;
 	}
 
-	/* Collapsed: the picture steps aside, the pill floats back into the line and the first line of
-	   the headline runs beside it — the strip of the flowing card. The tab goes with the rest, and
-	   the chevron takes the end of the strip. */
+	/* Folded: the pill floats back into the line and the first line of the headline runs beside it;
+	   the picture comes back small at the end of the strip (16:9, one line high) when the strip keeps
+	   it. The tab stays above the corner and holds the unfold button. */
 	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__thumb {
 		display: none;
+	}
+
+	.hprnb-root--m-card:where(.hprnb-root--m-peek-thumb) .hprnb-bar--collapsed .hprnb-bar__thumb {
+		display: block;
+		inset-block-start: calc(var(--hprnb-e-card-pad) + 2px);
+		inset-inline: auto var(--hprnb-e-card-pad);
+		inline-size: calc((var(--hprnb-m-line) - 4px) * 16 / 9);
+		block-size: calc(var(--hprnb-m-line) - 4px);
+		animation: hprnb-settle var(--hprnb-fold, .5s);
 	}
 
 	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__label {
@@ -1594,29 +1594,16 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	}
 
 	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__viewport {
-		margin-inline: 0 var(--hprnb-btn);
+		margin-inline: 0;
 		max-block-size: var(--hprnb-m-line);
+	}
+
+	.hprnb-root--m-card:where(.hprnb-root--m-peek-thumb) .hprnb-bar--collapsed .hprnb-bar__viewport {
+		margin-inline-end: calc((var(--hprnb-m-line) - 4px) * 16 / 9 + 10px);
 	}
 
 	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__title {
 		-webkit-line-clamp: 1;
-	}
-
-	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__controls {
-		inset-block: 0 auto;
-		inset-inline-end: calc(var(--hprnb-e-card-pad) - 8px);
-		block-size: var(--hprnb-peek);
-		align-items: center;
-		background: transparent;
-		box-shadow: none;
-	}
-
-	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__btn--expand {
-		display: inline-flex;
-		inline-size: var(--hprnb-btn);
-		min-inline-size: var(--hprnb-btn);
-		block-size: auto;
-		min-block-size: 30px;
 	}
 
 	.hprnb-root--m-label-hidden .hprnb-bar {
@@ -1668,8 +1655,45 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	/* Collapse on scroll: only the first line (flow) or the label row (stacked) peeks above the edge;
 	   a tap anywhere on the strip (links disabled) or on the chevron expands the bar again. */
 	.hprnb-root--m-collapse .hprnb-bar {
-		transition: transform .28s cubic-bezier(.2, .7, .2, 1);
+		--hprnb-fold: .5s cubic-bezier(.22, 1, .36, 1);
+		transition: transform var(--hprnb-fold);
 		will-change: transform;
+	}
+
+	/* Folding, the premium way: one long decelerating curve for everything that moves. The picture
+	   glides and shrinks into the strip instead of vanishing, the pill closes onto its dot, the
+	   headline settles with a short fade, and the button of the tab turns into the other one.
+	   Reduced motion turns all of it off (section 16). */
+	/* The picture hangs off the headline's box: that box widens on the same curve, so the picture's
+	   outer edge never leaves the gutter while it shrinks. */
+	.hprnb-root--m-collapse.hprnb-root--m-flow .hprnb-bar__inner {
+		transition: padding var(--hprnb-fold);
+	}
+
+	.hprnb-root--m-collapse.hprnb-root--m-flow .hprnb-bar__thumb {
+		transition: inline-size var(--hprnb-fold), block-size var(--hprnb-fold), inset-block-start var(--hprnb-fold), inset-inline-end var(--hprnb-fold), border-radius var(--hprnb-fold);
+	}
+
+	.hprnb-root--m-collapse .hprnb-bar__label {
+		transition: padding var(--hprnb-fold), gap var(--hprnb-fold), margin var(--hprnb-fold);
+	}
+
+	.hprnb-root--m-collapse .hprnb-bar__label-text {
+		max-inline-size: 16em;
+		transition: max-inline-size var(--hprnb-fold), opacity .2s;
+	}
+
+	.hprnb-root--m-collapse .hprnb-bar--collapsed .hprnb-bar__viewport {
+		animation: hprnb-settle var(--hprnb-fold);
+	}
+
+	.hprnb-root--m-collapse .hprnb-bar:not(.hprnb-bar--collapsed) .hprnb-bar__viewport {
+		animation: hprnb-settle-open var(--hprnb-fold);
+	}
+
+	.hprnb-root--m-ctrl-tab .hprnb-bar__btn svg,
+	.hprnb-root--m-card .hprnb-bar__btn svg {
+		animation: hprnb-tab-icon .42s cubic-bezier(.22, 1, .36, 1);
 	}
 
 	.hprnb-bar--collapsed {
@@ -1694,6 +1718,13 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		display: inline-flex;
 		min-inline-size: 36px;
 		min-block-size: 30px;
+	}
+
+	/* In the tab it is a 44px square like the close button it replaces. */
+	.hprnb-root--m-ctrl-tab .hprnb-bar--collapsed .hprnb-bar__btn--expand,
+	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__btn--expand {
+		min-inline-size: 44px;
+		min-block-size: 44px;
 	}
 
 	/* The pill pulses like a button: always (open card included), only in the collapsed strip, or —
@@ -1721,17 +1752,19 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	.hprnb-root--m-flow:where(.hprnb-root--m-label-compact) .hprnb-bar__label,
 	.hprnb-root--m-flow:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label,
 	.hprnb-root--m-card:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label {
-		inline-size: var(--hprnb-pill);
 		min-inline-size: var(--hprnb-pill);
+		gap: 0;
 		padding-inline: 0;
 		margin-inline-end: 9px;
 		justify-content: center;
 	}
 
+	/* The text closes up rather than vanishing, so the pill shrinks onto its dot. */
 	.hprnb-root--m-flow:where(.hprnb-root--m-label-compact) .hprnb-bar__label-text,
 	.hprnb-root--m-flow:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label-text,
 	.hprnb-root--m-card:not(.hprnb-root--peek-label) .hprnb-bar--collapsed .hprnb-bar__label-text {
-		display: none;
+		max-inline-size: 0;
+		opacity: 0;
 	}
 
 	/* The beacon always shows its dot, even when the live dot option is off. */
@@ -1840,6 +1873,21 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 /* Same entrance without a transform: an animated transform turns the item into the containing
    block of its absolutely positioned descendants, which would shift the card's picture on every
    rotation. */
+@keyframes hprnb-settle {
+	from { opacity: .3; }
+	to { opacity: 1; }
+}
+
+@keyframes hprnb-settle-open {
+	from { opacity: .3; }
+	to { opacity: 1; }
+}
+
+@keyframes hprnb-tab-icon {
+	from { opacity: 0; transform: rotate(-90deg) scale(.6); }
+	to { opacity: 1; transform: none; }
+}
+
 @keyframes hprnb-appear {
 	from { opacity: 0; }
 	to { opacity: 1; }
@@ -1899,6 +1947,20 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 }
 
 @media (prefers-reduced-motion: reduce) {
+	.hprnb-root--m-collapse .hprnb-bar,
+	.hprnb-root--m-collapse .hprnb-bar__inner,
+	.hprnb-root--m-collapse .hprnb-bar__thumb,
+	.hprnb-root--m-collapse .hprnb-bar__label,
+	.hprnb-root--m-collapse .hprnb-bar__label-text {
+		transition: none;
+	}
+
+	.hprnb-root--m-collapse .hprnb-bar .hprnb-bar__viewport,
+	.hprnb-root--m-collapse .hprnb-bar .hprnb-bar__thumb,
+	.hprnb-root .hprnb-bar__btn svg {
+		animation: none;
+	}
+
 	.hprnb-root--d-pending .hprnb-bar,
 	.hprnb-root--d-away:not(.hprnb-root--d-inflow) .hprnb-bar,
 	.hprnb-root--m-pending .hprnb-bar,

@@ -2394,6 +2394,14 @@ mode hybrid:
 2. **Le bouton fermer sort du bandeau** dans un onglet au-dessus du coin de fin, identique à celui de la carte (44 × 44 px, couleur du bandeau, accolé). La pause, si elle est active, se place à côté ; elle se désactive dans *Boutons (mobile)*.
 3. Replié : pastille, première ligne, petite image, chevron. Miroir complet en RTL. La carte reste le design par défaut ; aucune installation existante ne change.
 
+### 15.8.3 undecies — Deux designs, les défauts du client, le repli premium, une page simple (2.11.0)
+
+1. **Deux designs mobiles** : le bandeau avec l'image de l'article, par défaut et en premier, puis la carte « Explore More » juste après. Les autres designs sont retirés ; un site qui en utilisait un passe au bandeau avec l'image.
+2. **Par défaut sur mobile** : bouton pause masqué, 2 lignes, Lecture continue, bande repliée avec l'image.
+3. **Repli premium** quand le lecteur remonte : un seul mouvement doux, l'image qui se réduit jusqu'à la bande, la pastille qui se referme sur son point, le bouton de l'onglet qui se change en l'autre ; aucun saut ; mouvement réduit respecté.
+4. **Replié, le bouton pour déplier sort du bandeau**, dans l'onglet au-dessus du coin, comme la croix du bandeau déplié. Le bouton « haut de page » de Jannah passe au-dessus.
+5. **Page de réglages simple** : seuls les réglages de travail sont visibles ; l'interrupteur « Réglages avancés » montre tout le reste et s'en souvient.
+
 ---
 
 # ANNEXE C — CONSIGNE FINALE À CLAUDE CODE

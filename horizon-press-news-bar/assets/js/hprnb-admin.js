@@ -183,7 +183,7 @@
 		var mobile = ( p === 'm' );
 		var prefix = mobile ? 'mobile_' : 'desktop_';
 		var mode = effectiveMode( p );
-		var layout = valueOf( prefix + 'layout' ) || ( mobile ? 'card' : 'inline' );
+		var layout = valueOf( prefix + 'layout' ) || ( mobile ? 'flow_image' : 'inline' );
 		// The flowing bar with the article picture: the flowing layout, its picture at the end and its
 		// buttons in a tab above the corner (mirrors Renderer::profile()).
 		var imageBar = mobile && layout === 'flow_image';
@@ -282,7 +282,7 @@
 		previewRoot.classList.toggle( 'hprnb-root--m-ctrl-tab', tabDesign );
 		var shownThumb = valueOf( 'mobile_show_thumbnail' ) === '1';
 		previewRoot.classList.toggle( 'hprnb-root--m-ctrl-col', stacked && ! outside );
-		previewRoot.classList.toggle( 'hprnb-root--m-peek-thumb', ( shownThumb || tabDesign ) && valueOf( 'mobile_peek_thumbnail' ) === '1' );
+		previewRoot.classList.toggle( 'hprnb-root--m-peek-thumb', ( shownThumb || tabDesign || cardDesign ) && valueOf( 'mobile_peek_thumbnail' ) === '1' );
 		previewRoot.classList.toggle( 'hprnb-root--m-label-compact', shownThumb && valueOf( 'mobile_label_compact' ) === '1' );
 		[ 'always', 'appear', 'collapsed', 'never' ].forEach( function ( mode ) {
 			previewRoot.classList.toggle( 'hprnb-root--m-pulse-' + mode, ( valueOf( 'mobile_label_pulse' ) || 'appear' ) === mode );
@@ -699,6 +699,35 @@
 	/* ------------------------------------------------------------------ */
 
 	var tabBar = document.querySelector( '.hprnb-tabs' );
+	/* ------------------------------------------------------------------ */
+	/* Simple / advanced: the essential settings by default, every one of  */
+	/* them with the switch on (remembered in this browser). Hidden inputs */
+	/* stay in the form, so saving never loses a value.                    */
+	/* ------------------------------------------------------------------ */
+
+	var wrap = document.querySelector( '.hprnb-wrap' );
+	var advancedToggle = document.getElementById( 'hprnb-advanced-toggle' );
+	var advancedOn = false;
+	try {
+		advancedOn = window.localStorage.getItem( 'hprnb_admin_advanced' ) === '1';
+	} catch ( e ) {
+		advancedOn = false;
+	}
+
+	function applyAdvanced() {
+		if ( wrap ) {
+			wrap.classList.toggle( 'hprnb-wrap--simple', ! advancedOn );
+		}
+		if ( advancedToggle ) {
+			advancedToggle.checked = advancedOn;
+		}
+	}
+
+	/** A tab button the current mode shows. */
+	function usable( button ) {
+		return advancedOn || button.getAttribute( 'data-hprnb-advanced' ) !== '1';
+	}
+
 	var tabButtons = tabBar ? Array.prototype.slice.call( tabBar.querySelectorAll( '[data-hprnb-tab]' ) ) : [];
 	var panels = Array.prototype.slice.call( document.querySelectorAll( '[data-hprnb-panel]' ) );
 	var resetTabButton = document.getElementById( 'hprnb-reset-tab' );
@@ -708,11 +737,12 @@
 		if ( ! tabButtons.length ) {
 			return;
 		}
-		var found = tabButtons.some( function ( b ) {
+		var visible = tabButtons.filter( usable );
+		var found = visible.some( function ( b ) {
 			return b.getAttribute( 'data-hprnb-tab' ) === key;
 		} );
 		if ( ! found ) {
-			key = tabButtons[ 0 ].getAttribute( 'data-hprnb-tab' );
+			key = ( visible[ 0 ] || tabButtons[ 0 ] ).getAttribute( 'data-hprnb-tab' );
 		}
 		currentTab = key;
 		tabButtons.forEach( function ( b ) {
@@ -742,7 +772,7 @@
 		if ( resetTabButton ) {
 			resetTabButton.hidden = false;
 		}
-		tabButtons.forEach( function ( b, index ) {
+		tabButtons.forEach( function ( b ) {
 			b.addEventListener( 'click', function () {
 				selectTab( b.getAttribute( 'data-hprnb-tab' ), false );
 			} );
@@ -752,7 +782,9 @@
 					return;
 				}
 				event.preventDefault();
-				var next = tabButtons[ ( index + delta + tabButtons.length ) % tabButtons.length ];
+				var visible = tabButtons.filter( usable );
+				var index = visible.indexOf( b );
+				var next = visible[ ( index + delta + visible.length ) % visible.length ];
 				selectTab( next.getAttribute( 'data-hprnb-tab' ), true );
 			} );
 		} );
@@ -765,8 +797,26 @@
 			}
 		}
 		// A settings error mentioning a field opens its tab.
+		applyAdvanced();
 		selectTab( initial, false );
 	}
+
+	if ( advancedToggle ) {
+		advancedToggle.parentNode.hidden = false;
+		advancedToggle.addEventListener( 'change', function () {
+			advancedOn = advancedToggle.checked;
+			try {
+				window.localStorage.setItem( 'hprnb_admin_advanced', advancedOn ? '1' : '0' );
+			} catch ( e ) {
+				// Storage unavailable: the choice holds until the page is left.
+			}
+			applyAdvanced();
+			if ( currentTab ) {
+				selectTab( currentTab, false ); // An advanced tab gives way to the first one.
+			}
+		} );
+	}
+	applyAdvanced();
 
 	/* ------------------------------------------------------------------ */
 	/* "Reset this tab" and colour presets (nothing is saved)              */

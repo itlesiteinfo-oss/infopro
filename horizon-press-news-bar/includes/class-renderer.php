@@ -306,8 +306,11 @@ final class Renderer {
 			// The floating group is a row of its own: the stacked column never applies to it.
 			$classes[] = 'hprnb-root--m-ctrl-col';
 		}
-		$image_bar = self::profile( $settings, 'm' )['tab'];
-		if ( ( $image_bar || ! empty( $settings['mobile_show_thumbnail'] ) ) && ! empty( $settings['mobile_peek_thumbnail'] ) ) {
+		// Both designs carry their picture into the folded strip (the image switch still serves the
+		// fallback label row of the other ticker modes).
+		$mobile      = self::profile( $settings, 'm' );
+		$has_picture = $mobile['tab'] || 'card' === $mobile['layout'] || ! empty( $settings['mobile_show_thumbnail'] );
+		if ( $has_picture && ! empty( $settings['mobile_peek_thumbnail'] ) ) {
 			$classes[] = 'hprnb-root--m-peek-thumb';
 		}
 		if ( ! empty( $settings['mobile_show_thumbnail'] ) ) {
@@ -332,7 +335,7 @@ final class Renderer {
 		$mobile = ( 'm' === $p );
 		$prefix = $mobile ? 'mobile_' : 'desktop_';
 		$mode   = $mobile ? self::mobile_ticker( $settings ) : self::desktop_ticker( $settings );
-		$layout = (string) ( $settings[ $prefix . 'layout' ] ?? ( $mobile ? 'flow' : 'inline' ) );
+		$layout = (string) ( $settings[ $prefix . 'layout' ] ?? ( $mobile ? 'flow_image' : 'inline' ) );
 		// The flowing bar with the article picture: the flowing layout itself, with its picture always
 		// at the end, where the buttons were, and the buttons in a tab above the corner, as on the card.
 		$image_bar = $mobile && 'flow_image' === $layout;

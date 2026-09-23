@@ -171,6 +171,10 @@ final class Settings_Page {
 					<span class="hprnb-header__version"><?php echo esc_html( sprintf( /* translators: %s: plugin version. */ __( 'version %s', 'horizon-press-news-bar' ), HPRNB_VERSION ) ); ?></span>
 				</div>
 				<div class="hprnb-header__actions">
+					<label class="hprnb-switch hprnb-advanced-toggle" for="hprnb-advanced-toggle" hidden>
+						<input type="checkbox" id="hprnb-advanced-toggle" />
+						<span class="hprnb-switch__track" aria-hidden="true"></span><span class="hprnb-switch__text"><?php esc_html_e( 'Advanced settings', 'horizon-press-news-bar' ); ?></span>
+					</label>
 					<button type="button" class="button" id="hprnb-reset-tab" hidden><?php esc_html_e( 'Reset this tab', 'horizon-press-news-bar' ); ?></button>
 					<button type="submit" form="hprnb-form" class="button button-primary" id="hprnb-save"><?php esc_html_e( 'Save', 'horizon-press-news-bar' ); ?></button>
 				</div>
@@ -180,7 +184,7 @@ final class Settings_Page {
 				<div class="hprnb-main">
 					<nav class="hprnb-tabs" role="tablist" aria-label="<?php esc_attr_e( 'Settings sections', 'horizon-press-news-bar' ); ?>" hidden>
 						<?php foreach ( $layout as $tab_key => $tab ) : ?>
-						<button type="button" role="tab" class="hprnb-tabs__tab" id="hprnb-tab-btn-<?php echo esc_attr( $tab_key ); ?>" aria-controls="hprnb-tab-<?php echo esc_attr( $tab_key ); ?>" aria-selected="false" data-hprnb-tab="<?php echo esc_attr( $tab_key ); ?>"><?php echo esc_html( $tab['title'] ); ?></button>
+						<button type="button" role="tab" class="hprnb-tabs__tab" id="hprnb-tab-btn-<?php echo esc_attr( $tab_key ); ?>" aria-controls="hprnb-tab-<?php echo esc_attr( $tab_key ); ?>" aria-selected="false" data-hprnb-tab="<?php echo esc_attr( $tab_key ); ?>"<?php echo self::tab_is_advanced( $tab ) ? ' data-hprnb-advanced="1"' : ''; ?>><?php echo esc_html( $tab['title'] ); ?></button>
 						<?php endforeach; ?>
 					</nav>
 					<form method="post" action="options.php" id="hprnb-form" class="hprnb-form">
@@ -232,8 +236,9 @@ final class Settings_Page {
 						),
 					),
 					array(
-						'title' => __( 'Headline details', 'horizon-press-news-bar' ),
-						'keys'  => array( 'show_relative_time', 'relative_time_max_hours', 'show_separator', 'separator_char', 'separator_after_last' ),
+						'title'    => __( 'Headline details', 'horizon-press-news-bar' ),
+						'advanced' => true,
+						'keys'     => array( 'show_relative_time', 'relative_time_max_hours', 'show_separator', 'separator_char', 'separator_after_last' ),
 					),
 				),
 			),
@@ -261,16 +266,19 @@ final class Settings_Page {
 					),
 					array(
 						'title'       => __( 'Refine per device (optional)', 'horizon-press-news-bar' ),
+						'advanced'    => true,
 						'description' => __( 'Only useful when the two devices must differ. Each list narrows the page types above for that device alone; untick everything in one list and that device never shows the bar. A device is switched off altogether at the top of its own tab.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'desktop_contexts', 'mobile_contexts' ),
 					),
 					array(
 						'title'       => __( 'Exceptions', 'horizon-press-news-bar' ),
+						'advanced'    => true,
 						'description' => __( 'For one-off pages. Each article and page also carries a "News Bar" box on its edit screen with the same two switches, which is usually quicker than listing IDs here.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'display_exclude_ids' ),
 					),
 					array(
 						'title'       => __( 'Position in the page', 'horizon-press-news-bar' ),
+						'advanced'    => true,
 						'description' => __( 'Fixed keeps the bar against the edge of the screen; inside the article it is placed between two paragraphs and scrolls away with the text.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'layout_mode', 'desktop_placement', 'desktop_inline_anchor', 'desktop_inline_paragraph', 'mobile_placement', 'mobile_inline_anchor', 'mobile_inline_paragraph', 'z_index' ),
 					),
@@ -296,25 +304,21 @@ final class Settings_Page {
 						'description' => __( 'Only with the "Custom" behaviour. Off, the bar keeps its full height while the reader scrolls. On, it shrinks to its label row and the first line of the headline, and a tap opens it again.', 'horizon-press-news-bar' ),
 						'depends'     => 'mobile_behavior:custom',
 						'switch'      => 'mobile_hide_on_scroll',
-						'keys'        => array( 'mobile_collapse_mode', 'mobile_collapse_after', 'mobile_peek', 'mobile_peek_thumbnail', 'mobile_deep_collapse' ),
+						'keys'        => array( 'mobile_collapse_mode', 'mobile_collapse_after', 'mobile_deep_collapse' ),
 					),
 					array(
 						'title'       => __( 'Design', 'horizon-press-news-bar' ),
-						'description' => __( 'Under 768 px. The "Explore More" card is the default: a label row, the picture at the left, the headline on up to three lines and the close button in a tab above the corner. The flowing bar with the article picture keeps the label in front of the headline, puts the picture where the buttons were and the close button in the same tab. The height shown beside the line count is the height the page reserves.', 'horizon-press-news-bar' ),
+						'description' => __( 'Under 768 px, two designs. The bar with the article picture, the default: the label in front of the headline, the picture where the buttons were and the close button in a tab above the corner. The "Explore More" card: a label row, then the picture and the headline beside it. Folded, both keep a strip with the first line and the small picture, and the unfold button in the same tab. The height shown beside the line count is the height the page reserves.', 'horizon-press-news-bar' ),
 						'switch'      => 'show_on_mobile',
-						'keys'        => array( 'mobile_layout', 'mobile_card_thumb', 'mobile_card_float', 'mobile_lines', 'mobile_font_size', 'mobile_bar_height', 'mobile_label_style', 'mobile_label_dot', 'mobile_label_pulse', 'mobile_label_compact', 'mobile_show_counter', 'mobile_show_progress', 'mobile_show_separator', 'mobile_show_thumbnail', 'mobile_thumb_position', 'mobile_thumb_size', 'mobile_swipe', 'mobile_kbd_hide' ),
+						'keys'        => array( 'mobile_layout', 'mobile_lines', 'mobile_thumb_size', 'mobile_card_thumb', 'mobile_card_float', 'mobile_font_size', 'mobile_bar_height', 'mobile_peek', 'mobile_peek_thumbnail', 'mobile_label_style', 'mobile_label_dot', 'mobile_label_pulse', 'mobile_label_compact', 'mobile_show_counter', 'mobile_show_progress', 'mobile_show_separator', 'mobile_show_thumbnail', 'mobile_thumb_position', 'mobile_swipe', 'mobile_kbd_hide' ),
 						'scenarios'   => array(
 							array(
-								'title' => __( 'The reference, as delivered', 'horizon-press-news-bar' ),
-								'body'  => __( '"Explore More" card, 3 lines, 16 px font (the headline is two sizes up, 18 px), a 132 px picture, floating off: exactly the design of the mock-up, 126 px tall. "Reset this tab" brings every mobile setting back to it.', 'horizon-press-news-bar' ),
+								'title' => __( 'The bar with the article picture, as delivered', 'horizon-press-news-bar' ),
+								'body'  => __( 'Bar with the article picture, 2 lines, 16 px font, a 48 px picture, pause button off: the close button alone in its tab above the corner, the picture kept in the folded strip. "Reset this tab" brings every mobile setting back to it, together with Continuous reading.', 'horizon-press-news-bar' ),
 							),
 							array(
-								'title' => __( 'A plain bold heading instead of the pill', 'horizon-press-news-bar' ),
-								'body'  => __( 'Label style "Strip": the label row becomes bold white text, like "Explore More" on the mock-up.', 'horizon-press-news-bar' ),
-							),
-							array(
-								'title' => __( 'A discreet strip', 'horizon-press-news-bar' ),
-								'body'  => __( 'Flowing bar, one line, compact label, no picture: the smallest the bar gets while staying readable.', 'horizon-press-news-bar' ),
+								'title' => __( 'The "Explore More" card', 'horizon-press-news-bar' ),
+								'body'  => __( 'Pick the card, 3 lines and a 132 px picture: the design of the first mock-up, 126 px tall.', 'horizon-press-news-bar' ),
 							),
 						),
 					),
@@ -325,8 +329,8 @@ final class Settings_Page {
 					),
 					array(
 						'title'       => __( 'Buttons (mobile)', 'horizon-press-news-bar' ),
-						'description' => __( 'The pause and close buttons can sit inside the flowing bar or outside it. The card and the flowing bar with the article picture always carry them in their tab above the corner; switch the pause button off to keep the cross alone.', 'horizon-press-news-bar' ),
-						'keys'        => array( 'mobile_controls_place', 'mobile_controls_layout', 'mobile_show_pause', 'mobile_show_close' ),
+						'description' => __( 'Both designs carry their buttons in a tab above the corner: the close button, the pause button when it is on, and the unfold button once the bar is folded. The placement settings only serve the label row that replaces the design when the headlines do not rotate.', 'horizon-press-news-bar' ),
+						'keys'        => array( 'mobile_show_pause', 'mobile_show_close', 'mobile_controls_place', 'mobile_controls_layout' ),
 					),
 					array(
 						'title'       => __( 'Closing (both devices)', 'horizon-press-news-bar' ),
@@ -382,6 +386,7 @@ final class Settings_Page {
 					),
 					array(
 						'title'       => __( 'Dedicated mobile palette', 'horizon-press-news-bar' ),
+						'advanced'    => true,
 						'description' => __( 'Optional: other colours under 768 px.', 'horizon-press-news-bar' ),
 						'switch'      => 'mobile_custom_colors',
 						'keys'        => array( 'mobile_bg_color', 'mobile_text_color', 'mobile_accent_color', 'mobile_label_text_color' ),
@@ -393,18 +398,21 @@ final class Settings_Page {
 				'cards' => array(
 					array(
 						'title'       => __( 'Jannah fixed elements', 'horizon-press-news-bar' ),
+						'advanced'    => true,
 						'description' => __( 'The bar exposes its visible height as --hprnb-offset on <body> (with body.hprnb-is-collapsed, body.hprnb-kbd and the hprnb:state event). With this option the theme\'s "go to top" button, "Check also" box and reading position indicator sit above the bar and follow its collapse. Nothing in the theme is modified.', 'horizon-press-news-bar' ),
 						'switch'      => 'theme_offset',
 						'keys'        => array(),
 					),
 					array(
 						'title'       => __( 'Article body', 'horizon-press-news-bar' ),
+						'advanced'    => true,
 						'description' => __( 'Continuous reading, "Before the end of the article", Smart and the next-article detection all measure the text of the article. Most themes need nothing here.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'smart_selector' ),
 					),
 					array(
-						'title' => __( 'Technical', 'horizon-press-news-bar' ),
-						'keys'  => array( 'thumbnail_size', 'render_mode', 'cache_ttl', 'stale_threshold', 'auto_display', 'shortcode_enabled', 'uninstall_delete_data' ),
+						'title'    => __( 'Technical', 'horizon-press-news-bar' ),
+						'advanced' => true,
+						'keys'     => array( 'thumbnail_size', 'render_mode', 'cache_ttl', 'stale_threshold', 'auto_display', 'shortcode_enabled', 'uninstall_delete_data' ),
 					),
 				),
 			),
@@ -711,11 +719,8 @@ final class Settings_Page {
 				'type'    => 'radio',
 				'label'   => __( 'Design', 'horizon-press-news-bar' ),
 				'options' => array(
-					'card'       => __( '"Explore More" card (default) — a label row, then the picture at the left and the headline on up to three lines, the close button in a tab above the corner', 'horizon-press-news-bar' ),
-					'flow_image' => __( 'Flowing bar with the article picture — the label opens the headline on two lines, the picture of the article at the end of the line, the close button in a tab above the corner', 'horizon-press-news-bar' ),
-					'flow'       => __( 'Flowing bar — the label opens the headline, which runs across the width of the screen', 'horizon-press-news-bar' ),
-					'stacked'    => __( 'Label row above the headline', 'horizon-press-news-bar' ),
-					'inline'     => __( 'Label in front of the headline, on one line', 'horizon-press-news-bar' ),
+					'flow_image' => __( 'Bar with the article picture (default) — the label opens the headline on two lines, the picture of the article at the end of the line, the close button in a tab above the corner', 'horizon-press-news-bar' ),
+					'card'       => __( '"Explore More" card — a label row, then the picture at the left and the headline beside it, the close button in a tab above the corner', 'horizon-press-news-bar' ),
 				),
 			),
 			'mobile_label_style'          => array(
@@ -745,7 +750,7 @@ final class Settings_Page {
 				'type'    => 'select',
 				'label'   => __( 'Headline lines', 'horizon-press-news-bar' ),
 				'options' => self::line_options(),
-				'desc'    => __( 'Number of lines a headline may take; the height shown beside this field follows it. Marquee always uses one line, and the discover card stops at three.', 'horizon-press-news-bar' ),
+				'desc'    => __( 'Number of lines a headline may take; the height shown beside this field follows it. Marquee always uses one line, and the "Explore More" card stops at three.', 'horizon-press-news-bar' ),
 				'hint'    => 'm',
 			),
 			'mobile_bar_height'           => array(
@@ -874,7 +879,7 @@ final class Settings_Page {
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Close button', 'horizon-press-news-bar' ),
-				'text'    => __( 'Show the close button on mobile (it must also be enabled under Appearing & folding → Closing).', 'horizon-press-news-bar' ),
+				'text'    => __( 'Show the close button on mobile (the "Closing" block below must be enabled too).', 'horizon-press-news-bar' ),
 			),
 			'mobile_controls_layout'      => array(
 				'section' => 'mobile',
@@ -901,8 +906,8 @@ final class Settings_Page {
 				'section' => 'mobile',
 				'type'    => 'checkbox',
 				'label'   => __( 'Image in the collapsed strip', 'horizon-press-news-bar' ),
-				'text'    => __( 'Keep the image at the end of the strip, resized so it never exceeds one line.', 'horizon-press-news-bar' ),
-				'depends' => 'mobile_show_thumbnail,mobile_layout:flow_image',
+				'text'    => __( 'Keep the picture at the end of the folded strip, resized so it never exceeds one line.', 'horizon-press-news-bar' ),
+				'depends' => 'mobile_hide_on_scroll',
 			),
 			'mobile_label_compact'        => array(
 				'section' => 'mobile',
@@ -1390,12 +1395,76 @@ final class Settings_Page {
 	}
 
 	/**
-	 * Keys shown inside the collapsed "advanced filters" block of the Content section.
+	 * Settings shown only with "Advanced settings" on. Every other one is what a site works with
+	 * day to day; cards flagged `advanced` in layout() are advanced as a whole. Hidden or not, every
+	 * input stays in the form, so saving never loses a value.
 	 *
 	 * @return string[]
 	 */
-	private static function advanced_content_keys(): array {
-		return array( 'categories_exclude', 'tags_include', 'content_exclude_post_ids' );
+	public static function advanced_fields(): array {
+		return array(
+			// Content.
+			'label_position',
+			'orderby',
+			'categories_exclude',
+			'tags_include',
+			'content_exclude_post_ids',
+			// Mobile.
+			'mobile_card_float',
+			'mobile_font_size',
+			'mobile_bar_height',
+			'mobile_peek',
+			'mobile_peek_thumbnail',
+			'mobile_label_style',
+			'mobile_label_dot',
+			'mobile_label_pulse',
+			'mobile_label_compact',
+			'mobile_show_counter',
+			'mobile_show_progress',
+			'mobile_show_separator',
+			'mobile_show_thumbnail',
+			'mobile_thumb_position',
+			'mobile_swipe',
+			'mobile_kbd_hide',
+			'mobile_ticker_mode',
+			'mobile_controls_place',
+			'mobile_controls_layout',
+			// Desktop.
+			'desktop_layout',
+			'desktop_lines',
+			'bar_height',
+			'desktop_label_style',
+			'desktop_label_dot',
+			'desktop_show_counter',
+			'desktop_show_progress',
+			'desktop_show_thumbnail',
+			'desktop_thumb_position',
+			'desktop_thumb_size',
+			'align_container',
+			'max_width',
+			'gutter',
+			'ticker_enabled',
+			'pause_on_hover',
+			// Colours.
+			'accent_color',
+			'link_hover_color',
+			'accent_edge',
+		);
+	}
+
+	/**
+	 * Whether a whole tab is advanced: every one of its cards is.
+	 *
+	 * @param array $tab Tab from layout().
+	 * @return bool
+	 */
+	private static function tab_is_advanced( array $tab ): bool {
+		foreach ( $tab['cards'] as $card ) {
+			if ( empty( $card['advanced'] ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -1407,11 +1476,11 @@ final class Settings_Page {
 	 */
 	private static function render_tabs( array $settings, array $layout ): void {
 		$fields   = self::fields();
-		$advanced = self::advanced_content_keys();
+		$advanced = self::advanced_fields();
 		$placed   = array();
 
 		foreach ( $layout as $tab_key => $tab ) {
-			echo '<div class="hprnb-panel" id="hprnb-tab-' . esc_attr( $tab_key ) . '" role="tabpanel" aria-labelledby="hprnb-tab-btn-' . esc_attr( $tab_key ) . '" data-hprnb-panel="' . esc_attr( $tab_key ) . '">';
+			echo '<div class="hprnb-panel" id="hprnb-tab-' . esc_attr( $tab_key ) . '" role="tabpanel" aria-labelledby="hprnb-tab-btn-' . esc_attr( $tab_key ) . '" data-hprnb-panel="' . esc_attr( $tab_key ) . '"' . ( self::tab_is_advanced( $tab ) ? ' data-hprnb-advanced="1"' : '' ) . '>';
 			echo '<h2 class="hprnb-panel__title">' . esc_html( $tab['title'] ) . '</h2>';
 			foreach ( $tab['cards'] as $index => $card ) {
 				self::render_card( $card, $fields, $settings, $advanced, $tab_key . '-' . $index );
@@ -1440,13 +1509,13 @@ final class Settings_Page {
 	 * @param array  $card     Card definition.
 	 * @param array  $fields   Every field definition.
 	 * @param array  $settings Current settings.
-	 * @param array  $advanced Keys folded under "Advanced filters".
+	 * @param array  $advanced Keys shown only with "Advanced settings" on.
 	 * @param string $id       Card id suffix.
 	 * @return void
 	 */
 	private static function render_card( array $card, array $fields, array $settings, array $advanced, string $id ): void {
 		$switch  = ! empty( $card['switch'] ) && isset( $fields[ $card['switch'] ] ) ? $card['switch'] : '';
-		$classes = 'hprnb-card' . ( empty( $card['compact'] ) ? '' : ' hprnb-card--compact' );
+		$classes = 'hprnb-card' . ( empty( $card['compact'] ) ? '' : ' hprnb-card--compact' ) . ( empty( $card['advanced'] ) ? '' : ' hprnb-card--advanced' );
 		// A card that only makes sense for one choice (the "Custom" behaviour) follows it as a whole:
 		// the script hides it otherwise. Without the script every card stays in view.
 		$depends = empty( $card['depends'] ) ? '' : ' data-hprnb-card-depends="' . esc_attr( $card['depends'] ) . '"';
@@ -1468,8 +1537,7 @@ final class Settings_Page {
 			echo '<button type="button" class="button hprnb-preset" data-hprnb-preset="red">' . esc_html__( 'Solid red', 'horizon-press-news-bar' ) . '</button></p>';
 		}
 
-		$regular = array();
-		$folded  = array();
+		$rows = array();
 		foreach ( $card['keys'] as $key ) {
 			if ( ! isset( $fields[ $key ] ) || $key === $switch ) {
 				continue;
@@ -1478,19 +1546,11 @@ final class Settings_Page {
 			if ( $switch && empty( $field['depends'] ) ) {
 				$field['depends'] = $switch;
 			}
-			if ( in_array( $key, $advanced, true ) ) {
-				$folded[ $key ] = $field;
-			} else {
-				$regular[ $key ] = $field;
-			}
+			$field['advanced'] = in_array( $key, $advanced, true );
+			$rows[ $key ]      = $field;
 		}
-		if ( ! empty( $regular ) ) {
-			self::render_table( $regular, $settings );
-		}
-		if ( ! empty( $folded ) ) {
-			echo '<details class="hprnb-details"><summary>' . esc_html__( 'Advanced filters', 'horizon-press-news-bar' ) . '</summary>';
-			self::render_table( $folded, $settings );
-			echo '</details>';
+		if ( ! empty( $rows ) ) {
+			self::render_table( $rows, $settings );
 		}
 		if ( ! empty( $card['scenarios'] ) ) {
 			echo '<details class="hprnb-details hprnb-scenarios"><summary>' . esc_html__( 'Typical set-ups', 'horizon-press-news-bar' ) . '</summary><dl class="hprnb-scenarios__list">';
@@ -1514,7 +1574,7 @@ final class Settings_Page {
 		echo '<table class="form-table" role="presentation"><tbody>';
 		foreach ( $fields as $key => $field ) {
 			$id = 'hprnb-field-' . str_replace( '_', '-', $key );
-			echo '<tr class="hprnb-row hprnb-row--' . esc_attr( $field['type'] ) . '"' . ( ! empty( $field['depends'] ) ? ' data-hprnb-depends="' . esc_attr( $field['depends'] ) . '"' : '' ) . '>';
+			echo '<tr class="hprnb-row hprnb-row--' . esc_attr( $field['type'] ) . ( empty( $field['advanced'] ) ? '' : ' hprnb-row--advanced' ) . '"' . ( ! empty( $field['depends'] ) ? ' data-hprnb-depends="' . esc_attr( $field['depends'] ) . '"' : '' ) . '>';
 			if ( 'choice' === $field['type'] ) {
 				// The boxes carry their own titles: the whole width goes to them, the legend names the group.
 				echo '<td colspan="2">';

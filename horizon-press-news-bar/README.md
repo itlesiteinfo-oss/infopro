@@ -321,6 +321,18 @@ Le nombre de paragraphes, le seuil de repli et l'aspect du bandeau replié reste
 
 *Mobile → Design → « Bandeau fluide avec l'image de l'article »* (`mobile_layout = flow_image`) : le bandeau fluide — pastille devant le titre, deux lignes, 76 px — avec l'image de l'article (48 px par défaut, carrée) en fin de ligne à la place des boutons, et la croix dans un onglet de 44 × 44 px au-dessus du coin de fin, comme sur la carte. La pause, si elle est active, se place à côté de la croix. Racine : `hprnb-root--m-flow`, `--m-thumb`, `--m-thumb-after`, `--m-ctrl-tab` ; `--hprnb-m-ctrls: 0`.
 
+## 9 quindecies. Deux designs, les défauts du client, un repli soigné, une page simple (2.11)
+
+**Designs mobiles** : `mobile_layout` = `flow_image` (défaut) ou `card`. Schéma 7 : `flow`, `stacked`, `inline` deviennent `flow_image`.
+
+**Défauts mobiles** : 2 lignes, `mobile_show_pause` désactivé, `mobile_behavior = reading` (donc `mobile_reveal_mode = paragraph`, `mobile_collapse_mode = article`, `mobile_next_hide` activé), `mobile_peek_thumbnail` activé.
+
+**Replié** : les deux designs gardent leur onglet au-dessus du coin, avec le bouton pour déplier ; la bande garde la première ligne et la petite image (carrée pour le bandeau, 16:9 pour la carte). Le body reçoit `--hprnb-tab` (hauteur de l'onglet, 0 sans onglet) ; `#go-to-top` et `#check-also-box` de Jannah en tiennent compte.
+
+**Mouvement** : `--hprnb-fold: .5s cubic-bezier(.22, 1, .36, 1)` sur la barre repliable ; transitions sur la taille et la position de l'image, la marge du titre, la pastille et son texte ; animation `hprnb-tab-icon` sur l'icône de l'onglet. Tout est coupé sous `prefers-reduced-motion`.
+
+**Réglages** : interrupteur « Réglages avancés » dans l'en-tête (mémorisé par le navigateur, `localStorage` `hprnb_admin_advanced`). `Settings_Page::advanced_fields()` liste les réglages avancés ; les cartes `advanced` et les onglets entièrement avancés sont masqués en mode simple.
+
 ## 10. Ticker (optionnel)
 
 Désactivé par défaut. Trois modes :

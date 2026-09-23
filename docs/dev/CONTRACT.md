@@ -835,3 +835,33 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   evaluated by `isActive()`; `computeProfile()` mirrors `tab`, and `applyVisual()` toggles
   `hprnb-root--m-ctrl-tab` and zeroes `--hprnb-m-ctrls` for it.
 
+## 25. Two designs, new defaults, the tab when folded, premium motion, simple settings (2.11.0)
+
+- Schema 7. `mobile_layout` options are `flow_image, card` (default `flow_image`). `Settings::migrate()`
+  step 7 maps a stored `flow`, `stacked` or `inline` to `flow_image`. `Renderer::profile()` keeps the
+  internal `flow` / `stacked` / `inline` layouts (the label-row fallback of non-rotating modes, raw arrays).
+- New defaults: `mobile_lines` 2, `mobile_show_pause` false, `mobile_behavior` reading with its detailed
+  values (`mobile_reveal_mode` paragraph, `mobile_collapse_mode` article, `mobile_next_hide` true).
+  Step 6 now writes `*_next_hide = false` when the key is absent, so a migrated site never inherits the
+  new default. `sanitize( defaults() ) === defaults()` still holds.
+- `root_classes()`: `hprnb-root--m-peek-thumb` for both designs (and the image switch) when
+  `mobile_peek_thumbnail` is on.
+- Folded state (section 14): the tab of `hprnb-root--m-ctrl-tab` and of `hprnb-root--m-card` stays above
+  the corner; `.hprnb-bar--collapsed .hprnb-bar__btn--expand` is a 44px square there. The card's strip
+  shows a `(line − 4) × 16/9` picture at its end. The strip reserves no chevron column.
+- Motion: `.hprnb-root--m-collapse .hprnb-bar { --hprnb-fold: .5s cubic-bezier(.22, 1, .36, 1) }`. The
+  flow picture transitions `inline-size`, `block-size`, `inset-block-start`, `inset-inline-end`,
+  `border-radius`; the flow inner transitions `padding` on the same curve so the picture's outer edge
+  stays put; the label transitions `padding`, `gap`, `margin`; its text `max-inline-size` (16em → 0) and
+  `opacity`. Viewports play `hprnb-settle` / `hprnb-settle-open` (opacity only: a transform would
+  re-parent the card's absolutely placed picture). Tab icons play `hprnb-tab-icon` whenever they appear.
+  Section 16's reduced-motion block disables all of it, the bar's own transition included.
+- Contract: `current()` adds `tab` (the controls' height when the root has a tab design and the bar is
+  shown, else 0); `emit()` sets `--hprnb-tab` on the body. Jannah rules add it to `#go-to-top` and
+  `#check-also-box`, and transition `bottom` on the fold curve.
+- Admin: `Settings_Page::advanced_fields()`, card key `advanced`, rows `hprnb-row--advanced`, cards
+  `hprnb-card--advanced`, tab buttons and panels `data-hprnb-advanced="1"` when every card is advanced.
+  The header switch `#hprnb-advanced-toggle` has no name. The admin script sets `hprnb-wrap--simple`
+  unless `localStorage.hprnb_admin_advanced === '1'`, skips hidden tabs in `selectTab()` and arrow keys,
+  and falls back to the first visible tab. CSS budget of the bar: 40 KB (test).
+
