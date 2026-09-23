@@ -64,7 +64,8 @@ final class Rest_Controller {
 	public static function get_items( WP_REST_Request $request ): WP_REST_Response {
 		$settings = Settings::get();
 
-		if ( empty( $settings['enabled'] ) ) {
+		// The news bar switched off leaves the URGENT bar (2.16): the payload carries no headline then.
+		if ( empty( $settings['enabled'] ) && ! Urgent::enabled( $settings ) ) {
 			$payload = Renderer::payload( array(), $settings );
 		} else {
 			$payload = Payload::get( $settings );

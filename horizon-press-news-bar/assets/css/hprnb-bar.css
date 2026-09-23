@@ -1998,8 +1998,28 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
  *     corner. Its colours come from the root (--hprnb-u-bg / --hprnb-u-fg), its heights too.
  *     Kept after section 16: it must beat every design rule, and the root says which bar is in front.
  * ------------------------------------------------------------------------- */
-.hprnb-root--urgent .hprnb-bar:not(.hprnb-bar--urgent) {
-	display: none;
+/* In front on the devices it is switched on for (2.16: one switch per device, the root says which
+   one is off with hprnb-root--u-no-d / -m); on the other one the news bar keeps its place. */
+@container hprnb (min-width: 768px) {
+	.hprnb-root--urgent:not(.hprnb-root--u-no-d) .hprnb-bar:not(.hprnb-bar--urgent),
+	.hprnb-root--u-no-d .hprnb-bar--urgent {
+		display: none;
+	}
+
+	html.hprnb-dismissed .hprnb-root--u-no-d .hprnb-bar {
+		display: none;
+	}
+}
+
+@container hprnb (max-width: 767.98px) {
+	.hprnb-root--urgent:not(.hprnb-root--u-no-m) .hprnb-bar:not(.hprnb-bar--urgent),
+	.hprnb-root--u-no-m .hprnb-bar--urgent {
+		display: none;
+	}
+
+	html.hprnb-dismissed .hprnb-root--u-no-m .hprnb-bar {
+		display: none;
+	}
 }
 
 /* A remembered dismissal of the news bar never silences an urgent article. */
@@ -2007,12 +2027,14 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 	display: block;
 }
 
-html.hprnb-dismissed body.hprnb-reserve:has(.hprnb-root--urgent) {
-	padding-block-end: calc(var(--hprnb-height, 40px) + env(safe-area-inset-bottom, 0px));
+@media (min-width: 768px) {
+	html.hprnb-dismissed body.hprnb-reserve:has(.hprnb-root--urgent:not(.hprnb-root--u-no-d)) {
+		padding-block-end: calc(var(--hprnb-height, 40px) + env(safe-area-inset-bottom, 0px));
+	}
 }
 
 @media (max-width: 767.98px) {
-	html.hprnb-dismissed body.hprnb-reserve:has(.hprnb-root--urgent) {
+	html.hprnb-dismissed body.hprnb-reserve:has(.hprnb-root--urgent:not(.hprnb-root--u-no-m)) {
 		padding-block-end: calc(var(--hprnb-m-height, var(--hprnb-height, 40px)) + env(safe-area-inset-bottom, 0px));
 	}
 }

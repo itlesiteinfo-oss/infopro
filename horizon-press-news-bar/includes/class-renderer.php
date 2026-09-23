@@ -283,11 +283,18 @@ final class Renderer {
 	 * @return string[]
 	 */
 	public static function root_classes( array $settings, bool $preview = false, bool $urgent = false ): array {
+		// 2.16: the URGENT bar has a switch per device. It is in front only where it shows; elsewhere the
+		// news bar keeps the page as if nothing were urgent (its wait, its restriction, its height).
+		$front  = self::urgent_front( $settings, $urgent );
 		$device = self::device_class( $settings );
-		if ( $urgent ) {
-			// 2.15: the URGENT bar shows on both devices. The news bar's own restriction is parked on the
-			// root under another name, and the script puts it back when it hands over.
-			$device = str_replace( 'hprnb-hide-', 'hprnb-news-hide-', $device );
+		$names  = array(
+			'd' => 'desktop',
+			'm' => 'mobile',
+		);
+		foreach ( $names as $p => $name ) {
+			if ( $front[ $p ] ) {
+				$device = str_replace( 'hprnb-hide-' . $name, 'hprnb-news-hide-' . $name, $device );
+			}
 		}
 		$classes = array(
 			'hprnb-root',
@@ -358,12 +365,12 @@ final class Renderer {
 		foreach ( array( 'd', 'm' ) as $p ) {
 			if ( 'immediate' !== self::reveal_mode( $settings, $p ) ) {
 				$waits = true;
-				if ( ! $preview && ! $urgent ) {
+				if ( ! $preview && ! $front[ $p ] ) {
 					$classes[] = 'hprnb-root--' . $p . '-pending';
 				}
 			}
 		}
-		if ( $waits && ! $preview && ! $urgent ) {
+		if ( $waits && ! $preview && ! ( $front['d'] && $front['m'] ) ) {
 			// The entrance carries its own transition: the script removes the pending class, not
 			// this one, so the bar slides in whether or not the profile folds away afterwards.
 			$classes[] = 'hprnb-root--reveal';
@@ -401,6 +408,11 @@ final class Renderer {
 		if ( $urgent ) {
 			// Urgent articles in front: the news bar is out of sight until the script hands over.
 			$classes[] = 'hprnb-root--urgent';
+		}
+		// 2.16: a device the URGENT bar is switched off on (the feature itself being on).
+		$devices = Urgent::devices( $settings );
+		if ( $devices['d'] !== $devices['m'] ) {
+			$classes[] = $devices['d'] ? 'hprnb-root--u-no-m' : 'hprnb-root--u-no-d';
 		}
 		if ( 'mobile' === ( $settings['urgent_desktop_layout'] ?? 'line' ) ) {
 			// 2.15: the URGENT bar keeps its phone design from 768px too (two lines, the tab above the corner).
@@ -613,6 +625,22 @@ final class Renderer {
 			'pad'          => self::CARD_PAD,
 			// Collapsed it is the same strip as the flowing card: the pulsing pill and one line.
 			'peek'         => self::CARD_PAD + $line + self::PEEK_EXTRA,
+		);
+	}
+
+	/**
+	 * On which device the URGENT bar is in front (2.16): urgent articles there, and the bar switched on
+	 * for that device.
+	 *
+	 * @param array $settings Settings.
+	 * @param bool  $urgent   Whether urgent articles are there at all.
+	 * @return array{d:bool,m:bool}
+	 */
+	public static function urgent_front( array $settings, bool $urgent ): array {
+		$devices = Urgent::devices( $settings );
+		return array(
+			'd' => $urgent && $devices['d'],
+			'm' => $urgent && $devices['m'],
 		);
 	}
 

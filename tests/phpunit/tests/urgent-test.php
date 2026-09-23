@@ -307,7 +307,7 @@ class Urgent_Test extends HPRNB_Test_Case {
 		$this->assertStringNotContainsString( 'REST urgent', $data['html'], 'Invented, never the site\'s.' );
 
 		$request = new WP_REST_Request( 'POST', '/hprnb/v1/preview' );
-		$request->set_body_params( array( 'settings' => array() ) );
+		$request->set_body_params( array( 'settings' => array( 'enabled' => '1' ) ) );
 		$data = $server->dispatch( $request )->get_data();
 		$this->assertFalse( $data['urgent'] );
 		$this->assertStringContainsString( 'REST urgent', $data['html'], 'The news bar preview lists the site\'s headlines.' );

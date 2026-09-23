@@ -106,18 +106,21 @@
 			if (root.dataset.hprnbLayout !== 'reserve' || !root.querySelector('.hprnb-bar')) {
 				return;
 			}
-			// Urgent articles in front (2.14): their bar has one height of its own on each device.
+			// Urgent articles in front (2.14): their bar has one height of its own on each device it is
+			// switched on for (2.16).
 			var urgent = root.classList.contains('hprnb-root--urgent');
-			var height = root.style.getPropertyValue(urgent ? '--hprnb-u-height' : '--hprnb-height') || root.style.getPropertyValue('--hprnb-height');
+			var ud = urgent && urgentOn('d');
+			var um = urgent && urgentOn('m');
+			var height = root.style.getPropertyValue(ud ? '--hprnb-u-height' : '--hprnb-height') || root.style.getPropertyValue('--hprnb-height');
 			if (height) {
 				document.body.style.setProperty('--hprnb-height', height);
 			}
-			var mobileHeight = root.style.getPropertyValue(urgent ? '--hprnb-u-m-height' : '--hprnb-m-height') || root.style.getPropertyValue('--hprnb-m-height');
+			var mobileHeight = root.style.getPropertyValue(um ? '--hprnb-u-m-height' : '--hprnb-m-height') || root.style.getPropertyValue('--hprnb-m-height');
 			if (mobileHeight) {
 				document.body.style.setProperty('--hprnb-m-height', mobileHeight);
 			}
 			var gap = root.style.getPropertyValue('--hprnb-m-gap');
-			document.body.style.setProperty('--hprnb-m-gap', (urgent ? '' : gap) || '0px');
+			document.body.style.setProperty('--hprnb-m-gap', (um ? '' : gap) || '0px');
 			var peek = root.style.getPropertyValue('--hprnb-peek');
 			if (peek) {
 				document.body.style.setProperty('--hprnb-peek', peek);
@@ -166,11 +169,19 @@
 		 *
 		 * @param {boolean} urgent Whether the URGENT bar is in front.
 		 */
+		/**
+		 * @param {string} p 'd' or 'm'.
+		 * @return {boolean} Whether the URGENT bar is switched on for that device (2.16).
+		 */
+		function urgentOn(p) {
+			return !root.classList.contains('hprnb-root--u-no-' + p);
+		}
+
 		function parkDevices(urgent) {
 			['mobile', 'desktop'].forEach(function (d) {
 				var hide = 'hprnb-hide-' + d;
 				var park = 'hprnb-news-hide-' + d;
-				if (urgent && root.classList.contains(hide)) {
+				if (urgent && urgentOn(d.charAt(0)) && root.classList.contains(hide)) {
 					root.classList.replace(hide, park);
 				} else if (!urgent && root.classList.contains(park)) {
 					root.classList.replace(park, hide);
@@ -203,8 +214,12 @@
 			root.classList.toggle('hprnb-root--urgent', urgent > 0);
 			parkDevices(urgent > 0);
 			if (urgent > 0) {
-				root.classList.remove('hprnb-root--d-pending', 'hprnb-root--m-pending');
-				document.body.classList.remove('hprnb-d-pending', 'hprnb-m-pending');
+				['d', 'm'].forEach(function (p) {
+					if (urgentOn(p)) {
+						root.classList.remove('hprnb-root--' + p + '-pending');
+						document.body.classList.remove('hprnb-' + p + '-pending');
+					}
+				});
 			}
 			ensureLayout();
 			ensureJs();

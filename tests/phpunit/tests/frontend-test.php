@@ -101,7 +101,8 @@ class Frontend_Test extends HPRNB_Test_Case {
 
 	public function test_not_eligible_renders_nothing_and_runs_no_query() {
 		$this->create_post_ago( 60 );
-		$this->with_settings( array( 'enabled' => false ) );
+		// 2.16: each bar has its own switch — both off means nothing at all.
+		$this->with_settings( array( 'enabled' => false, 'urgent_enabled' => false ) );
 		$this->post_queries = 0;
 		$this->go_to_front( home_url( '/' ) );
 		$this->enqueue();

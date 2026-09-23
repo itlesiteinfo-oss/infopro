@@ -71,10 +71,11 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	public function test_asset_budgets() {
 		// 2.11: two phone designs with their tab and the folding motion; 2.14: the urgent bar, its own
 		// shape on both devices (CSS), its timers and hand-over (script), its payload (bootstrap); 2.15: the
-		// phone design of the URGENT bar on desktop too (CSS).
+		// phone design of the URGENT bar on desktop too (CSS); 2.16: one switch per device for the URGENT bar
+		// (which bar is in front, per device, in the script and the bootstrap).
 		$this->assertLessThanOrEqual( 48 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
 		$this->assertLessThanOrEqual( 4 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bootstrap.min.js' ) );
-		$this->assertLessThanOrEqual( 26 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
+		$this->assertLessThanOrEqual( 28 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
 	}
 
 	/**

@@ -38,6 +38,8 @@
     "remember_dismiss": true,
     "dismiss_duration_hours": 24,
     "urgent_enabled": true,
+    "urgent_desktop": true,
+    "urgent_mobile": true,
     "urgent_minutes": 10,
     "urgent_label": "URGENT",
     "urgent_bg_color": "#E11D2B",

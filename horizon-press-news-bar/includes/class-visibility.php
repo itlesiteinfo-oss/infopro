@@ -194,15 +194,15 @@ final class Visibility {
 	/**
 	 * Whether the URGENT bar (2.14) may show on the current page (2.15): its own page types, the front
 	 * page included by default, whatever the news bar's page types, per-device lists and device
-	 * switches say. The plugin switch, the absolute exclusions and a page switched off in its News
-	 * Bar box (or listed in the exceptions) still mean no bar at all.
+	 * switches say — and since 2.16 whatever the news bar's own switch says: each bar has its own. The
+	 * absolute exclusions and a page switched off in its News Bar box (or listed in the exceptions)
+	 * still mean no bar at all.
 	 *
 	 * @param array $settings Settings.
 	 * @return bool
 	 */
 	public static function urgent_allowed( array $settings ): bool {
-		$allowed = ! empty( $settings['enabled'] )
-			&& Urgent::enabled( $settings )
+		$allowed = Urgent::enabled( $settings )
 			&& ! self::is_absolute_exclusion()
 			&& ! self::is_excluded_id( $settings )
 			&& self::urgent_context_allowed( $settings );

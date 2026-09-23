@@ -547,4 +547,17 @@ return array(
 	'The label, the headlines in a row as the news bar scrolls them, the buttons at the end of the bar.' => 'L’étiquette, les titres à la suite qui défilent comme dans la barre d’actualités, les boutons au bout du bandeau.',
 	'Same design as on phones' => 'Même design que sur téléphone',
 	'The label before one headline at a time on up to two lines, fading at the end, and the close button in the tab above the corner of the screen.' => 'L’étiquette devant un titre à la fois sur deux lignes au plus, qui s’efface en fondu, et le bouton fermer dans l’onglet au-dessus du coin de l’écran.',
+	// 2.16: one switch per bar, one per device.
+	'Bars shown' => 'Barres affichées',
+	'Switch each bar on or off, then choose its devices. A bar switched off plays no part at all: nothing on the site, and for the URGENT bar no box on the edit screen.' => 'Activez ou désactivez chaque barre, puis choisissez ses appareils. Une barre désactivée ne joue aucun rôle : rien sur le site, et pour le bandeau URGENT aucun bloc dans l’écran d’édition.',
+	'Switched on, with its devices, in Content → Bars shown. Tick "Urgent article" in the URGENT box at the top of an article\'s edit screen and publish or update it: for the minutes below, a red bar with that headline takes the place of the news bar. Several urgent articles take turns, the newest first; each one leaves the bar when its own time is up, and the news bar comes back by itself once the last one has gone — the page does not need to be reloaded.' => 'S’active, avec ses appareils, dans Contenu → Barres affichées. Cochez « Article urgent » dans le bloc URGENT en haut de l’écran d’édition d’un article, puis publiez ou mettez à jour : pendant le nombre de minutes ci-dessous, un bandeau rouge avec ce titre prend la place de la barre d’actualités. Plusieurs articles urgents défilent tour à tour, le plus récent d’abord ; chacun quitte le bandeau quand son propre temps est écoulé, et la barre d’actualités revient d’elle-même une fois le dernier parti — sans recharger la page.',
+	'Initial bar' => 'Barre initiale',
+	'Enable the initial bar (the news bar)' => 'Activer la barre initiale (barre d’actualités)',
+	'Initial bar on desktop' => 'Barre initiale sur ordinateur',
+	'Initial bar on mobile' => 'Barre initiale sur mobile',
+	'URGENT bar on desktop' => 'Bandeau URGENT sur ordinateur',
+	'URGENT bar on mobile' => 'Bandeau URGENT sur mobile',
+	'From 768 px wide.' => 'À partir de 768 px de large.',
+	'Under 768 px wide.' => 'Sous 768 px de large.',
+	'Only useful when the two devices must differ. Each list narrows the page types above for that device alone; untick everything in one list and that device never shows the bar. A device is switched off altogether in Content → Bars shown.' => 'Utile seulement quand les deux appareils doivent différer. Chaque liste restreint les types de pages ci-dessus pour cet appareil seul ; tout décocher dans une liste et cet appareil n’affiche jamais la barre. Un appareil se désactive complètement dans Contenu → Barres affichées.',
 );

@@ -1693,6 +1693,17 @@
 	}
 
 	/**
+	 * Whether the URGENT bar is switched on for a device (2.16: one switch per device).
+	 *
+	 * @param {Element} root The root.
+	 * @param {string}  p    'd' or 'm'.
+	 * @return {boolean}
+	 */
+	function urgentOn( root, p ) {
+		return ! root.classList.contains( 'hprnb-root--u-no-' + p );
+	}
+
+	/**
 	 * The URGENT bar shows on both devices: the news bar's own restriction (hprnb-hide-*) is parked
 	 * under another name while it is in front, and put back when it hands over (2.15).
 	 *
@@ -1703,7 +1714,7 @@
 		forEach( [ 'mobile', 'desktop' ], function ( d ) {
 			var hide = 'hprnb-hide-' + d;
 			var park = 'hprnb-news-hide-' + d;
-			if ( urgent && root.classList.contains( hide ) ) {
+			if ( urgent && urgentOn( root, d.charAt( 0 ) ) && root.classList.contains( hide ) ) {
 				root.classList.replace( hide, park );
 			} else if ( ! urgent && root.classList.contains( park ) ) {
 				root.classList.replace( park, hide );
@@ -1739,15 +1750,18 @@
 		var read = function ( name ) {
 			return root.style.getPropertyValue( name );
 		};
-		var d = ( urgent && read( '--hprnb-u-height' ) ) || read( '--hprnb-height' );
-		var m = ( urgent && read( '--hprnb-u-m-height' ) ) || read( '--hprnb-m-height' );
+		// Each device keeps the height of the bar in front there (2.16).
+		var ud = urgent && urgentOn( root, 'd' );
+		var um = urgent && urgentOn( root, 'm' );
+		var d = ( ud && read( '--hprnb-u-height' ) ) || read( '--hprnb-height' );
+		var m = ( um && read( '--hprnb-u-m-height' ) ) || read( '--hprnb-m-height' );
 		if ( d ) {
 			body.style.setProperty( '--hprnb-height', d );
 		}
 		if ( m ) {
 			body.style.setProperty( '--hprnb-m-height', m );
 		}
-		body.style.setProperty( '--hprnb-m-gap', ( urgent ? '' : read( '--hprnb-m-gap' ) ) || '0px' );
+		body.style.setProperty( '--hprnb-m-gap', ( um ? '' : read( '--hprnb-m-gap' ) ) || '0px' );
 	}
 
 	/**
@@ -2035,25 +2049,77 @@
 		if ( ! root ) {
 			return;
 		}
+		unwatch( root );
 		var urgent = root.querySelector( '.hprnb-bar--urgent' );
 		if ( urgent && urgent.hprnbState ) {
 			return; // In front and running.
 		}
 		if ( urgent ) {
 			if ( urgentLive( root, urgent ) ) {
+				var preview = root.classList.contains( 'hprnb-root--preview' );
 				root.classList.add( 'hprnb-root--urgent' );
 				parkDevices( root, true );
-				root.classList.remove( 'hprnb-root--d-pending', 'hprnb-root--m-pending', 'hprnb-root--reveal' );
-				if ( ! root.classList.contains( 'hprnb-root--preview' ) ) {
-					document.body.classList.remove( 'hprnb-d-pending', 'hprnb-m-pending' );
+				// In front, and waiting for nobody, on the devices it is switched on for (2.16).
+				forEach( [ 'd', 'm' ], function ( p ) {
+					if ( urgentOn( root, p ) ) {
+						root.classList.remove( 'hprnb-root--' + p + '-pending' );
+						if ( ! preview ) {
+							document.body.classList.remove( 'hprnb-' + p + '-pending' );
+						}
+					}
+				} );
+				if ( urgentOn( root, 'd' ) && urgentOn( root, 'm' ) ) {
+					root.classList.remove( 'hprnb-root--reveal' );
+				}
+				if ( ! preview ) {
 					reserveFor( root, true );
 				}
-				initAside( root, urgent, true );
-				return;
+				if ( urgentOn( root, isNarrow( root ) ? 'm' : 'd' ) ) {
+					initAside( root, urgent, true );
+					return;
+				}
+				// Switched off on this device: the news bar runs here, the red bar waits (hidden) for the
+				// other device, where crossing 768px re-initialises everything.
+			} else {
+				retireUrgent( root, urgent );
 			}
-			retireUrgent( root, urgent );
 		}
-		initAside( root, root.querySelector( '.hprnb-bar:not(.hprnb-bar--urgent)' ), false );
+		var news = root.querySelector( '.hprnb-bar:not(.hprnb-bar--urgent)' );
+		if ( news ) {
+			initAside( root, news, false );
+		} else if ( urgent && urgent.parentNode ) {
+			// Nothing runs on this device (the URGENT bar is switched off here and the page has no news
+			// bar): still re-evaluate when the screen crosses 768px, where the red bar may be on (2.16).
+			watch( root );
+		}
+	}
+
+	/**
+	 * Re-initialises the root when the screen crosses 768px while no bar runs on it.
+	 *
+	 * @param {Element} root The root.
+	 */
+	function watch( root ) {
+		var state = createState();
+		var mobile = isNarrow( root );
+		root.hprnbWatch = state;
+		observeSize( state, root, function () {
+			if ( root.hprnbWatch === state && isNarrow( root ) !== mobile ) {
+				init( root );
+			}
+		} );
+	}
+
+	/** Stops the watch of watch(), if any. */
+	function unwatch( root ) {
+		var state = root.hprnbWatch;
+		if ( ! state ) {
+			return;
+		}
+		delete root.hprnbWatch;
+		for ( var i = state.cleanups.length - 1; i >= 0; i-- ) {
+			state.cleanups[ i ]();
+		}
 	}
 
 	/**
@@ -2085,6 +2151,7 @@
 		if ( ! root ) {
 			return;
 		}
+		unwatch( root );
 		forEach( root.querySelectorAll( '.hprnb-bar' ), destroyAside );
 	}
 

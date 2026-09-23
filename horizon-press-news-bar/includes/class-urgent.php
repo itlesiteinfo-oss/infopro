@@ -48,13 +48,29 @@ final class Urgent {
 	}
 
 	/**
-	 * Whether the feature is switched on.
+	 * Whether the feature is switched on, on at least one device.
 	 *
 	 * @param array $settings Settings.
 	 * @return bool
 	 */
 	public static function enabled( array $settings ): bool {
-		return ! empty( $settings['urgent_enabled'] );
+		$devices = self::devices( $settings );
+		return $devices['d'] || $devices['m'];
+	}
+
+	/**
+	 * The devices the URGENT bar shows on (2.16): its switch, then one switch per device. Both off is
+	 * the same as the bar switched off — no box on the edit screen, no query, nothing on the site.
+	 *
+	 * @param array $settings Settings.
+	 * @return array{d:bool,m:bool}
+	 */
+	public static function devices( array $settings ): array {
+		$on = ! empty( $settings['urgent_enabled'] );
+		return array(
+			'd' => $on && ! empty( $settings['urgent_desktop'] ?? true ),
+			'm' => $on && ! empty( $settings['urgent_mobile'] ?? true ),
+		);
 	}
 
 	/**

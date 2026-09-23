@@ -24,7 +24,7 @@ define( 'HPRNB_URL', plugin_dir_url( __FILE__ ) );
 define( 'HPRNB_BASENAME', plugin_basename( __FILE__ ) );
 define( 'HPRNB_MIN_WP', '6.6' );
 define( 'HPRNB_MIN_PHP', '8.0' );
-define( 'HPRNB_SCHEMA_VERSION', 8 );
+define( 'HPRNB_SCHEMA_VERSION', 9 );
 
 /**
  * Whether the current PHP and WordPress versions satisfy the plugin requirements.

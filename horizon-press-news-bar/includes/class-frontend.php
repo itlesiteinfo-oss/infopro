@@ -194,14 +194,16 @@ final class Frontend {
 	 */
 	public static function enqueue_bar_assets( array $settings, bool $urgent = false ): void {
 		Assets::enqueue_style();
+		// Each device keeps the height of the bar in front there (2.16: the URGENT bar may be on one only).
+		$front = Renderer::urgent_front( $settings, $urgent );
 		wp_add_inline_style(
 			'hprnb-bar',
 			sprintf(
 				'body.hprnb-reserve{--hprnb-height:%1$dpx;--hprnb-m-height:%2$dpx;--hprnb-peek:%3$dpx;--hprnb-m-gap:%4$dpx}',
-				$urgent ? Renderer::urgent_height( $settings, 'd' ) : Renderer::profile_height( $settings, 'd' ),
-				$urgent ? Renderer::urgent_height( $settings, 'm' ) : Renderer::profile_height( $settings, 'm' ),
+				$front['d'] ? Renderer::urgent_height( $settings, 'd' ) : Renderer::profile_height( $settings, 'd' ),
+				$front['m'] ? Renderer::urgent_height( $settings, 'm' ) : Renderer::profile_height( $settings, 'm' ),
 				Renderer::peek_height( $settings ),
-				$urgent ? 0 : Renderer::mobile_gap( $settings )
+				$front['m'] ? 0 : Renderer::mobile_gap( $settings )
 			)
 		);
 		if ( $urgent || Renderer::needs_interactive_js( $settings ) ) {
@@ -267,10 +269,11 @@ final class Frontend {
 			$classes[] = 'hprnb-reserve';
 			// No reserved space until the bar is revealed on that device (the script drops the class).
 			// Urgent articles in front wait for nobody: the script restores the wait when it hands over.
-			if ( ! $urgent && 'immediate' !== ( self::$settings['desktop_reveal_mode'] ?? 'immediate' ) ) {
+			$front = Renderer::urgent_front( self::$settings, $urgent );
+			if ( ! $front['d'] && 'immediate' !== ( self::$settings['desktop_reveal_mode'] ?? 'immediate' ) ) {
 				$classes[] = 'hprnb-d-pending';
 			}
-			if ( ! $urgent && 'immediate' !== ( self::$settings['mobile_reveal_mode'] ?? 'immediate' ) ) {
+			if ( ! $front['m'] && 'immediate' !== ( self::$settings['mobile_reveal_mode'] ?? 'immediate' ) ) {
 				$classes[] = 'hprnb-m-pending';
 			}
 			if ( ! empty( self::$settings['theme_offset'] ) ) {
@@ -299,12 +302,13 @@ final class Frontend {
 
 		self::$root_claimed = true;
 		// The per-profile page types decide, here and nowhere else, which profiles may show. A root
-		// that only carries the URGENT bar shows it on both devices.
+		// that only carries the URGENT bar shows on the devices that bar is switched on for (2.16).
+		$devices  = Urgent::devices( $settings );
 		$rendered = self::$eligible ? Visibility::with_context_devices( $settings ) : array_merge(
 			$settings,
 			array(
-				'show_on_desktop' => true,
-				'show_on_mobile'  => true,
+				'show_on_desktop' => $devices['d'],
+				'show_on_mobile'  => $devices['m'],
 			)
 		);
 		echo Renderer::root( $payload, $rendered ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup built and escaped by the Renderer.

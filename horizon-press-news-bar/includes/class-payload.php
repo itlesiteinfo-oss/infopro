@@ -52,7 +52,9 @@ final class Payload {
 	 * @return array
 	 */
 	public static function build( array $settings ): array {
-		return Renderer::payload( Query::items( $settings ), $settings, null, Urgent::items( $settings ) );
+		// Each bar has its own switch (2.16): the news bar's query only runs while it is on.
+		$items = empty( $settings['enabled'] ) ? array() : Query::items( $settings );
+		return Renderer::payload( $items, $settings, null, Urgent::items( $settings ) );
 	}
 
 	/**

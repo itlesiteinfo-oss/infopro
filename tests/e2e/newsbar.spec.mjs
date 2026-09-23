@@ -2800,3 +2800,95 @@ test( 'v2.15: the URGENT bar on the front page where the news bar stays away, th
 		setSettings( {} );
 	}
 } );
+
+test( 'v2.16: one switch per bar and per device — sub-choices hidden while their bar is off, the URGENT box and bar following them', async ( { page } ) => {
+	const errors = collectErrors( page );
+	const root = page.locator( '#hprnb-root' );
+	const urgent = page.locator( '.hprnb-bar--urgent' );
+	const news = page.locator( '.hprnb-bar:not(.hprnb-bar--urgent)' );
+	const now = () => Math.floor( Date.now() / 1000 );
+	const a = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Urgent — un seul appareil', '--porcelain' ] );
+	const flag = ( since, until ) => {
+		wp( [ 'post', 'meta', 'update', a, '_hprnb_urgent_since', String( since ) ] );
+		wp( [ 'post', 'meta', 'update', a, '_hprnb_urgent_until', String( until ) ] );
+		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+	};
+	try {
+		// The card, first of the first tab: each bar's devices show only while the bar is on.
+		setDefaultSettings();
+		await page.goto( '/wp-login.php' );
+		await page.fill( '#user_login', 'admin' );
+		await page.fill( '#user_pass', 'admin' );
+		await page.click( '#wp-submit' );
+		await page.waitForURL( /wp-admin/ );
+		await page.setViewportSize( { width: 1400, height: 1000 } );
+		await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar' );
+		await page.evaluate( () => localStorage.setItem( 'hprnb_admin_advanced', '0' ) );
+		await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar#content' );
+		await expect( page.locator( '[data-hprnb-panel="content"] .hprnb-card' ).first() ).toHaveClass( /hprnb-card--bars/ );
+		const sub = ( id ) => page.locator( 'tr:has(#hprnb-field-' + id + ')' );
+		for ( const id of [ 'urgent-desktop', 'urgent-mobile', 'show-on-desktop', 'show-on-mobile' ] ) {
+			await expect( sub( id ) ).toBeVisible();
+		}
+		await page.click( 'label[for="hprnb-field-urgent-enabled"]' );
+		await expect( sub( 'urgent-desktop' ) ).toBeHidden();
+		await expect( sub( 'urgent-mobile' ) ).toBeHidden();
+		await expect( sub( 'show-on-desktop' ) ).toBeVisible();
+		await page.click( 'label[for="hprnb-field-enabled"]' );
+		await expect( sub( 'show-on-desktop' ) ).toBeHidden();
+		await expect( sub( 'show-on-mobile' ) ).toBeHidden();
+		await page.click( 'label[for="hprnb-field-enabled"]' );
+		await page.click( 'label[for="hprnb-field-urgent-enabled"]' );
+		await expect( sub( 'urgent-mobile' ) ).toBeVisible();
+		await page.click( 'label[for="hprnb-field-urgent-mobile"]' );
+		await page.click( '#submit' );
+		await expect( page.locator( '#hprnb-field-urgent-mobile' ) ).not.toBeChecked();
+		let stored = JSON.parse( wp( [ 'option', 'get', 'hprnb_settings', '--format=json' ] ) );
+		expect( [ stored.urgent_enabled, stored.urgent_desktop, stored.urgent_mobile, stored.enabled, stored.show_on_desktop, stored.show_on_mobile ] ).toEqual( [ true, true, false, true, true, true ] );
+
+		// The URGENT box on the edit screen: there while a device is on, gone with the last one.
+		const draft = wp( [ 'post', 'create', '--post_type=post', '--post_status=draft', '--post_title=Brouillon', '--porcelain' ] );
+		await page.goto( '/wp-admin/post.php?post=' + draft + '&action=edit&hprnb_classic=1' );
+		await expect( page.locator( '#hprnb-urgent-postbox' ) ).toHaveCount( 1 );
+		setDefaultSettings( { urgent_desktop: false, urgent_mobile: false } );
+		await page.reload();
+		await expect( page.locator( '#hprnb-urgent-postbox' ) ).toHaveCount( 0 );
+		setDefaultSettings( { urgent_enabled: false } );
+		await page.reload();
+		await expect( page.locator( '#hprnb-urgent-postbox' ) ).toHaveCount( 0 );
+		wp( [ 'post', 'delete', draft, '--force' ] );
+
+		// On the site: the URGENT bar on desktop only — the phone keeps the news bar.
+		setDefaultSettings( { urgent_mobile: false } );
+		const t = now();
+		flag( t - 30, t + 600 );
+		await page.setViewportSize( { width: 1366, height: 900 } );
+		await page.goto( '/' );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( news ).toBeHidden();
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( '/' );
+		await expect( root ).toHaveClass( /hprnb-root--u-no-m/ );
+		await expect( urgent ).toBeHidden();
+		await expect( news ).toHaveAttribute( 'data-hprnb-init', '1' );
+		// Turned into a landscape tablet past 768px: the red bar takes over.
+		await page.setViewportSize( { width: 1024, height: 768 } );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( urgent ).toBeVisible();
+
+		// The initial bar off, the URGENT bar on: the red bar alone; both off: nothing.
+		setDefaultSettings( { enabled: false } );
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( '/' );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( news ).toHaveCount( 0 );
+		setDefaultSettings( { enabled: false, urgent_enabled: false } );
+		await page.goto( '/' );
+		await expect( root ).toHaveCount( 0 );
+		stored = null;
+		expect( errors ).toEqual( [] );
+	} finally {
+		wp( [ 'post', 'delete', a, '--force' ] );
+		setSettings( {} );
+	}
+} );

@@ -219,9 +219,14 @@ final class Settings_Page {
 				'title' => __( 'Content', 'horizon-press-news-bar' ),
 				'cards' => array(
 					array(
-						'title'  => __( 'General', 'horizon-press-news-bar' ),
-						'switch' => 'enabled',
-						'keys'   => array( 'label_text', 'label_position' ),
+						'title'       => __( 'Bars shown', 'horizon-press-news-bar' ),
+						'description' => __( 'Switch each bar on or off, then choose its devices. A bar switched off plays no part at all: nothing on the site, and for the URGENT bar no box on the edit screen.', 'horizon-press-news-bar' ),
+						'class'       => 'hprnb-card--bars',
+						'keys'        => array( 'urgent_enabled', 'urgent_desktop', 'urgent_mobile', 'enabled', 'show_on_desktop', 'show_on_mobile' ),
+					),
+					array(
+						'title' => __( 'General', 'horizon-press-news-bar' ),
+						'keys'  => array( 'label_text', 'label_position' ),
 					),
 					array(
 						'title'       => __( 'Which articles', 'horizon-press-news-bar' ),
@@ -254,8 +259,7 @@ final class Settings_Page {
 				'cards' => array(
 					array(
 						'title'       => __( 'The URGENT bar', 'horizon-press-news-bar' ),
-						'switch'      => 'urgent_enabled',
-						'description' => __( 'Tick "Urgent article" in the News Bar box of an article and publish or update it: for the minutes below, a red bar with that headline takes the place of the news bar, on every page where it shows, on phones and desktops alike. Several urgent articles take turns, the newest first; each one leaves the bar when its own time is up, and the news bar comes back by itself once the last one has gone — the page does not need to be reloaded.', 'horizon-press-news-bar' ),
+						'description' => __( 'Switched on, with its devices, in Content → Bars shown. Tick "Urgent article" in the URGENT box at the top of an article\'s edit screen and publish or update it: for the minutes below, a red bar with that headline takes the place of the news bar. Several urgent articles take turns, the newest first; each one leaves the bar when its own time is up, and the news bar comes back by itself once the last one has gone — the page does not need to be reloaded.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'urgent_minutes', 'urgent_label' ),
 						'scenarios'   => array(
 							array(
@@ -314,7 +318,7 @@ final class Settings_Page {
 					array(
 						'title'       => __( 'Refine per device (optional)', 'horizon-press-news-bar' ),
 						'advanced'    => true,
-						'description' => __( 'Only useful when the two devices must differ. Each list narrows the page types above for that device alone; untick everything in one list and that device never shows the bar. A device is switched off altogether at the top of its own tab.', 'horizon-press-news-bar' ),
+						'description' => __( 'Only useful when the two devices must differ. Each list narrows the page types above for that device alone; untick everything in one list and that device never shows the bar. A device is switched off altogether in Content → Bars shown.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'desktop_contexts', 'mobile_contexts' ),
 					),
 					array(
@@ -356,7 +360,6 @@ final class Settings_Page {
 					array(
 						'title'       => __( 'Design', 'horizon-press-news-bar' ),
 						'description' => __( 'Under 768 px. Click the design you want: the live preview on the right shows it with your own headlines. The height shown beside the line count is the height the page reserves.', 'horizon-press-news-bar' ),
-						'switch'      => 'show_on_mobile',
 						'keys'        => array( 'mobile_layout', 'mobile_lines', 'mobile_thumb_size', 'mobile_card_thumb', 'mobile_card_float', 'mobile_font_size', 'mobile_bar_height', 'mobile_peek', 'mobile_peek_thumbnail', 'mobile_label_style', 'mobile_label_dot', 'mobile_label_pulse', 'mobile_label_compact', 'mobile_show_counter', 'mobile_show_progress', 'mobile_show_separator', 'mobile_show_thumbnail', 'mobile_thumb_position', 'mobile_swipe', 'mobile_kbd_hide' ),
 						'scenarios'   => array(
 							array(
@@ -412,7 +415,6 @@ final class Settings_Page {
 					array(
 						'title'       => __( 'Design', 'horizon-press-news-bar' ),
 						'description' => __( 'From 768 px: a fixed bar aligned on the site container. The height follows the number of headline lines. The close button and its memory are set on the Mobile tab, under Closing: they apply to both devices.', 'horizon-press-news-bar' ),
-						'switch'      => 'show_on_desktop',
 						'keys'        => array( 'desktop_layout', 'desktop_lines', 'font_size', 'bar_height', 'desktop_label_style', 'desktop_label_dot', 'desktop_show_counter', 'desktop_show_progress', 'desktop_show_thumbnail', 'desktop_thumb_position', 'desktop_thumb_size', 'align_container', 'max_width', 'gutter' ),
 					),
 					array(
@@ -571,9 +573,9 @@ final class Settings_Page {
 		return array(
 			'enabled'                     => array(
 				'section' => 'general',
-				'type'    => 'checkbox',
-				'label'   => __( 'Enable the news bar', 'horizon-press-news-bar' ),
-				'text'    => __( 'Display the bar on the public site.', 'horizon-press-news-bar' ),
+				'type'    => 'switch',
+				'label'   => __( 'Initial bar', 'horizon-press-news-bar' ),
+				'text'    => __( 'Enable the initial bar (the news bar)', 'horizon-press-news-bar' ),
 			),
 			'label_text'                  => array(
 				'section' => 'general',
@@ -1115,9 +1117,23 @@ final class Settings_Page {
 			),
 			'urgent_enabled'              => array(
 				'section' => 'urgent',
-				'type'    => 'checkbox',
-				'label'   => __( 'Enable the URGENT bar', 'horizon-press-news-bar' ),
-				'text'    => __( 'Show the "Urgent article" box on the edit screen and the red bar on the site.', 'horizon-press-news-bar' ),
+				'type'    => 'switch',
+				'label'   => __( 'URGENT bar', 'horizon-press-news-bar' ),
+				'text'    => __( 'Enable the URGENT bar', 'horizon-press-news-bar' ),
+			),
+			'urgent_desktop'              => array(
+				'section' => 'urgent',
+				'type'    => 'switch',
+				'label'   => __( 'URGENT bar on desktop', 'horizon-press-news-bar' ),
+				'text'    => __( 'From 768 px wide.', 'horizon-press-news-bar' ),
+				'reveal'  => 'urgent_enabled',
+			),
+			'urgent_mobile'               => array(
+				'section' => 'urgent',
+				'type'    => 'switch',
+				'label'   => __( 'URGENT bar on mobile', 'horizon-press-news-bar' ),
+				'text'    => __( 'Under 768 px wide.', 'horizon-press-news-bar' ),
+				'reveal'  => 'urgent_enabled',
 			),
 			'urgent_minutes'              => array(
 				'section' => 'urgent',
@@ -1300,15 +1316,17 @@ final class Settings_Page {
 			),
 			'show_on_desktop'             => array(
 				'section' => 'behavior',
-				'type'    => 'checkbox',
-				'label'   => __( 'Desktop', 'horizon-press-news-bar' ),
-				'text'    => __( 'Show the bar on screens of 768 px and wider.', 'horizon-press-news-bar' ),
+				'type'    => 'switch',
+				'label'   => __( 'Initial bar on desktop', 'horizon-press-news-bar' ),
+				'text'    => __( 'From 768 px wide.', 'horizon-press-news-bar' ),
+				'reveal'  => 'enabled',
 			),
 			'show_on_mobile'              => array(
 				'section' => 'behavior',
-				'type'    => 'checkbox',
-				'label'   => __( 'Mobile', 'horizon-press-news-bar' ),
-				'text'    => __( 'Show the bar on screens narrower than 768 px (CSS only, no device detection).', 'horizon-press-news-bar' ),
+				'type'    => 'switch',
+				'label'   => __( 'Initial bar on mobile', 'horizon-press-news-bar' ),
+				'text'    => __( 'Under 768 px wide.', 'horizon-press-news-bar' ),
+				'reveal'  => 'enabled',
 			),
 			'desktop_contexts'            => array(
 				'section' => 'desktop',
@@ -1665,7 +1683,7 @@ final class Settings_Page {
 	 */
 	private static function render_card( array $card, array $fields, array $settings, array $advanced, string $id ): void {
 		$switch  = ! empty( $card['switch'] ) && isset( $fields[ $card['switch'] ] ) ? $card['switch'] : '';
-		$classes = 'hprnb-card' . ( empty( $card['compact'] ) ? '' : ' hprnb-card--compact' ) . ( empty( $card['advanced'] ) ? '' : ' hprnb-card--advanced' );
+		$classes = 'hprnb-card' . ( empty( $card['compact'] ) ? '' : ' hprnb-card--compact' ) . ( empty( $card['advanced'] ) ? '' : ' hprnb-card--advanced' ) . ( empty( $card['class'] ) ? '' : ' ' . $card['class'] );
 		// A card that only makes sense for one choice (the "Custom" behaviour) follows it as a whole:
 		// the script hides it otherwise. Without the script every card stays in view.
 		$depends = empty( $card['depends'] ) ? '' : ' data-hprnb-card-depends="' . esc_attr( $card['depends'] ) . '"';
@@ -1724,7 +1742,10 @@ final class Settings_Page {
 		echo '<table class="form-table" role="presentation"><tbody>';
 		foreach ( $fields as $key => $field ) {
 			$id = 'hprnb-field-' . str_replace( '_', '-', $key );
-			echo '<tr class="hprnb-row hprnb-row--' . esc_attr( $field['type'] ) . ( empty( $field['advanced'] ) ? '' : ' hprnb-row--advanced' ) . '"' . ( ! empty( $field['depends'] ) ? ' data-hprnb-depends="' . esc_attr( $field['depends'] ) . '"' : '' ) . '>';
+			// A sub-choice (2.16) is hidden, not greyed out, while the switch it belongs to is off: it
+			// plays no part then. Its value stays in the form, so switching back on finds it unchanged.
+			$reveal = empty( $field['reveal'] ) ? '' : (string) $field['reveal'];
+			echo '<tr class="hprnb-row hprnb-row--' . esc_attr( $field['type'] ) . ( empty( $field['advanced'] ) ? '' : ' hprnb-row--advanced' ) . ( '' === $reveal ? '' : ' hprnb-row--sub' ) . '"' . ( ! empty( $field['depends'] ) ? ' data-hprnb-depends="' . esc_attr( $field['depends'] ) . '"' : '' ) . ( '' === $reveal ? '' : ' data-hprnb-reveal="' . esc_attr( $reveal ) . '"' . ( empty( $settings[ $reveal ] ) ? ' hidden' : '' ) ) . '>';
 			if ( 'choice' === $field['type'] ) {
 				// The boxes carry their own titles: the whole width goes to them, the legend names the group.
 				echo '<td colspan="2">';
@@ -1770,6 +1791,16 @@ final class Settings_Page {
 			case 'checkbox':
 				printf(
 					'<label for="%1$s"><input type="checkbox" id="%1$s" name="%2$s" value="1" %3$s> %4$s</label>',
+					esc_attr( $id ),
+					esc_attr( $name ),
+					checked( ! empty( $value ), true, false ),
+					esc_html( $field['text'] ?? '' )
+				);
+				break;
+
+			case 'switch':
+				printf(
+					'<label class="hprnb-switch" for="%1$s"><input type="checkbox" id="%1$s" name="%2$s" value="1" %3$s><span class="hprnb-switch__track" aria-hidden="true"></span><span class="hprnb-switch__text">%4$s</span></label>',
 					esc_attr( $id ),
 					esc_attr( $name ),
 					checked( ! empty( $value ), true, false ),

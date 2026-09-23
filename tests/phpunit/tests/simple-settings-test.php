@@ -28,7 +28,7 @@ class Simple_Settings_Test extends HPRNB_Test_Case {
 		$this->assertSame( 'reading', $d['mobile_behavior'], 'Folds as soon as the reader scrolls back up.' );
 		$this->assertTrue( $d['mobile_peek_thumbnail'], 'The folded strip keeps its picture.' );
 		$this->assertSame( 'headline', $d['mobile_peek'] );
-		$this->assertSame( 8, HPRNB_SCHEMA_VERSION );
+		$this->assertSame( 9, HPRNB_SCHEMA_VERSION );
 	}
 
 	/**
@@ -78,7 +78,7 @@ class Simple_Settings_Test extends HPRNB_Test_Case {
 		$this->assertSame( '#000000', $now['mobile_bg_color'], 'So do the colours.' );
 		$this->assertSame( 'DIRECT', $now['label_text'], 'And the content.' );
 		$this->assertFalse( $now['mobile_show_close'], 'A cross the site switched off stays off.' );
-		$this->assertSame( '8', get_option( Settings::SCHEMA_OPTION ) );
+		$this->assertSame( '9', get_option( Settings::SCHEMA_OPTION ) );
 		$this->assertContains( 'hprnb-root--m-ctrl-tab', Renderer::root_classes( $now ) );
 		$this->assertContains( 'hprnb-root--m-peek-thumb', Renderer::root_classes( $now ) );
 

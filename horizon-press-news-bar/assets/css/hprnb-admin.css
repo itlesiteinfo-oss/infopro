@@ -736,3 +736,60 @@
 .hprnb-preview--loading .hprnb-preview__stage {
 	opacity: .6;
 }
+
+/* ---------------------------------------------------------------------------
+ * 2.16 — "Bars shown": one switch per bar, and under it the devices, shown only while it is on.
+ * ------------------------------------------------------------------------- */
+.hprnb-row[hidden] {
+	display: none;
+}
+
+.hprnb-card--bars .form-table th {
+	inline-size: 230px;
+}
+
+.hprnb-card--bars .hprnb-row--switch:not(.hprnb-row--sub) th {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.hprnb-card--bars .hprnb-row--switch:not(.hprnb-row--sub):not(:first-child) th,
+.hprnb-card--bars .hprnb-row--switch:not(.hprnb-row--sub):not(:first-child) td {
+	border-block-start: 1px solid #f0f0f1;
+	padding-block-start: 18px;
+}
+
+.hprnb-row--sub th,
+.hprnb-row--sub td {
+	padding-block: 6px;
+}
+
+.hprnb-row--sub th {
+	position: relative;
+	padding-inline-start: 34px;
+	color: #50575e;
+	font-weight: 400;
+}
+
+/* The elbow that ties a device to its bar. */
+.hprnb-row--sub th::before {
+	content: "";
+	position: absolute;
+	inset-block: 0 50%;
+	inset-inline-start: 14px;
+	inline-size: 12px;
+	border-inline-start: 1px solid #c3c4c7;
+	border-block-end: 1px solid #c3c4c7;
+	border-end-start-radius: 4px;
+}
+
+.hprnb-row--sub .hprnb-switch__text {
+	color: #50575e;
+	font-weight: 400;
+}
+
+@media (max-width: 782px) {
+	.hprnb-row--sub th {
+		padding-inline-start: 28px;
+	}
+}

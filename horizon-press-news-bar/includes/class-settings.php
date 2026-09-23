@@ -265,6 +265,15 @@ final class Settings {
 				'type'    => 'bool',
 				'default' => true,
 			),
+			// 2.16: the URGENT bar on each device, like the news bar's show_on_desktop / show_on_mobile.
+			'urgent_desktop'              => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
+			'urgent_mobile'               => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
 			'urgent_minutes'              => array(
 				'type'    => 'int',
 				'default' => 10,
@@ -1015,6 +1024,12 @@ final class Settings {
 		// in the tab, the picture kept in the folded strip). Behaviour, colours and content are left alone.
 		if ( $stored < 8 && ! empty( $raw ) ) {
 			$upgraded = array_merge( $upgraded, self::image_bar_design() );
+		}
+
+		// Schema 9: each bar has its own switch — `enabled` is the news bar's alone, and the URGENT bar
+		// no longer depends on it. A site that had switched the plugin off keeps every bar off.
+		if ( $stored < 9 && array_key_exists( 'enabled', $raw ) && ! self::to_bool_loose( $raw['enabled'] ) ) {
+			$upgraded['urgent_enabled'] = false;
 		}
 
 		return $upgraded;
