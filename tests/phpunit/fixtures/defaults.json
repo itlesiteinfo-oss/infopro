@@ -42,6 +42,18 @@
     "urgent_label": "URGENT",
     "urgent_bg_color": "#E11D2B",
     "urgent_text_color": "#FFFFFF",
+    "urgent_contexts": {
+        "front_page": true,
+        "blog_home": true,
+        "single_post": true,
+        "page": true,
+        "category": true,
+        "tag": true,
+        "archive": true,
+        "search": true,
+        "not_found": true
+    },
+    "urgent_desktop_layout": "line",
     "desktop_behavior": "always",
     "mobile_behavior": "reading",
     "desktop_reveal_mode": "immediate",

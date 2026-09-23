@@ -26,4 +26,4 @@ npx playwright test -c tests/e2e/playwright.config.mjs   # site WordPress attend
 bin/build-zip.sh                 # dist/horizon-press-news-bar-<version>.zip
 ```
 
-Les tests e2e s’appuient sur WP-CLI (`/opt/wp/bin/wp-cli.phar`) pour changer les réglages entre scénarios et sur deux mu-plugins du site de développement (`?hprnb_rtl=1`, `?hprnb_lang=fr_FR`) qui ne font pas partie de l’extension.
+Les tests e2e s’appuient sur WP-CLI (`/opt/wp/bin/wp-cli.phar`) pour changer les réglages entre scénarios et sur deux mu-plugins du site de développement (`?hprnb_rtl=1`, `?hprnb_lang=fr_FR`, et depuis la 2.15 `?hprnb_classic=1` qui force l’éditeur classique sur l’écran d’édition) qui ne font pas partie de l’extension.

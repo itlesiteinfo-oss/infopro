@@ -2,6 +2,29 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.15.0] — 2026-09-23
+
+### Modifié — la case URGENT a son propre bloc, en tête de la colonne de droite
+
+- **Un bloc « Bandeau URGENT » à part** sur l'écran d'édition des articles, **en premier en haut de la colonne de droite, au-dessus de « Publier »**, avec son en-tête rouge et son point animé ; il s'affiche par défaut et passe avant l'ordre qu'un rédacteur a enregistré en déplaçant les blocs (priorité « high »), dans l'éditeur classique comme dans l'éditeur de blocs. Il a son propre jeton de sécurité : chacun des deux blocs peut être masqué dans les Options de l'écran sans empêcher l'autre d'enregistrer. Le bloc « Barre d'actualités » garde ses deux cases.
+
+### Ajouté — le bandeau URGENT sur la une
+
+- **Ses propres types de pages** (`urgent_contexts`, onglet Urgent → « Où s'affiche le bandeau URGENT », les neuf cochés par défaut, page d'accueil comprise), indépendants de ceux de la barre d'actualités (onglet Où), de ses listes par appareil et de ses interrupteurs d'appareil : **une urgence arrive sur la page d'accueil même si la barre d'actualités en est exclue**, sur téléphone comme sur ordinateur. Restent décisifs : l'interrupteur général, les exclusions absolues, et une page désactivée dans son bloc Barre d'actualités ou listée dans les exceptions (« aucune barre du tout »).
+- Sur une page où seule l'une des deux barres a sa place, la racine le dit (`data-hprnb-show="urgent"` ou `"news"`) et ne contient que celle-là ; le script d'amorçage, qui rafraîchit à partir du corps REST complet, n'en garde que celle-là, et une telle page ne sert plus de session aux autres. En mode hybride, une page réservée au bandeau rouge rend une racine vide et cachée tant qu'il n'y a pas d'urgence, pour qu'une page en cache la reçoive à son prochain rafraîchissement.
+- Quand la barre d'actualités est limitée à un appareil sur cette page, sa restriction est mise de côté (`hprnb-news-hide-*`) le temps de l'urgence, puis rétablie par le script au passage de relais.
+- Un lecteur qui a fermé la barre d'actualités (fermeture mémorisée) reçoit quand même les urgences, y compris sur une page en cache ; `data-hprnb-urgent="off"` quand la fonction est coupée, pour qu'aucune requête ne soit faite à son compte.
+
+### Ajouté — le design téléphone comme deuxième design sur ordinateur
+
+- **Onglet Urgent → « Design sur ordinateur »** (`urgent_desktop_layout`) : « Une seule ligne » (défaut, inchangé) ou **« Même design que sur téléphone »** — l'étiquette devant un titre à la fois sur deux lignes au plus, le fondu en fin de ligne, et le bouton fermer dans l'onglet au-dessus du coin de l'écran ; le texte reste dans la largeur du site. Hauteur 76 px, réservée par la page. L'aperçu de l'onglet le montre aussitôt.
+
+### Amélioré — le bandeau rouge
+
+- Hauteur fixe dès le premier affichage pour le design téléphone ; un titre sur une seule ligne glisse au milieu (`hprnb-bar--u-one`) : plus de saut pendant la rotation.
+- Le fondu du titre se fond exactement dans le rouge (le reflet clair de fin de bandeau est retiré ; le dégradé sombre du début est inversé de droite à gauche).
+- L'animation de halo de la pastille de la barre d'actualités ne s'applique plus à l'étiquette du bandeau rouge ; seul son point pulse.
+
 ## [2.14.0] — 2026-09-23
 
 ### Ajouté — le bandeau URGENT

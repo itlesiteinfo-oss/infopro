@@ -948,3 +948,39 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   maps `urgent_bg_color` / `urgent_text_color` to `--hprnb-u-bg` / `--hprnb-u-fg` and `urgent_label` to
   the label text live. `assets/css/hprnb-post.css` styles the box on `post.php` / `post-new.php`.
 - Budgets: CSS 46 KB, bootstrap 4 KB, interactive script 26 KB. Uninstall deletes the three meta keys.
+
+## 29. The URGENT box, the URGENT bar's reach, its second desktop design (2.15.0)
+
+- Edit screen: `Post_Controls::add_meta_box()` also registers `hprnb-urgent-postbox` ("URGENT bar") for
+  `post`, context `side`, priority `high` (rendered before `sorted` and `core` boxes, so above Publish and
+  above any saved order), only while `urgent_enabled`. `render_urgent_box()` prints the nonce
+  `hprnb_urgent_box` and the urgent section; the News Bar box no longer carries it. `save()` checks
+  `edit_post`, then saves the urgent flag when the `hprnb_urgent_box` nonce verifies (posts only), then
+  the two News Bar flags when the `hprnb_post_controls` nonce verifies. Stylesheet `hprnb-post.css`: red
+  header with a pulsing dot (none under reduced motion).
+- Settings: `urgent_contexts` (bool_map over the nine context keys, all true) and `urgent_desktop_layout`
+  (`line` | `mobile`, `line`). No schema bump.
+- `Visibility::urgent_allowed()` = `enabled` && `urgent_enabled` && not an absolute exclusion && not
+  `is_excluded_id()` (per-page hide or exception IDs) && `urgent_context_allowed()` (the context's box; an
+  unknown context only when every box is ticked), then the filter `hprnb_urgent_should_display`.
+- `Frontend`: `$urgent_ok` beside `$eligible`; `renders()` = either; enqueue / head / body class / footer
+  use `shown_payload()`: the cached payload minus the news bar when not eligible (`show` = `urgent`),
+  minus the urgent bar when not allowed (`show` = `news`). A root rendered for the urgent bar alone forces
+  both device switches on. Hybrid mode renders the empty root on such pages too.
+- `Renderer::root()`: `data-hprnb-show` when the payload says `news` or `urgent`; `data-hprnb-urgent`
+  is `off` when the feature is switched off; `data-hprnb-js` whenever the feature is on. `root_classes()`
+  with urgent in front renames `hprnb-hide-{mobile|desktop}` to `hprnb-news-hide-*`; adds
+  `hprnb-root--u-d-flow` when `urgent_desktop_layout = mobile`. `urgent_height('d')` is the phone height
+  then.
+- Bootstrap: `show` and `urgentOff` (`show = news` or `data-hprnb-urgent = off`); a dismissed reader
+  returns early only when `urgentOff`; `apply()` keeps only the bars the page may show and parks / restores
+  the device classes; a fresh SSR is saved to the session only when `show` is absent.
+- Script: `uFlow` = urgent && (phone || `hprnb-root--u-d-flow`): mobile profile as the base, rotation,
+  pause per the mobile switch, tab counted in `--hprnb-tab`; `parkDevices()` on taking the front and on
+  retiring; `balanceUrgent()` toggles `hprnb-bar--u-one` when the visible headline is under 1.5 lines.
+- Stylesheet section 17: `.hprnb-root--u-d-flow .hprnb-bar--urgent` block from 768px (content within
+  `--hprnb-max` + gutters, tab at the screen corner, 96px fade); `min-block-size` of the phone design
+  (`--hprnb-u-m-height`, `--hprnb-u-height` on desktop); `.hprnb-bar--u-one` adds
+  (`--hprnb-u-lines` − 1) × line / 2 to the block padding, transitioned; the end sheen is gone and the
+  start shade mirrors under `.hprnb-bar--rtl`; the news bar's label beacon is cancelled on the red label.
+- Budgets: CSS 48 KB.

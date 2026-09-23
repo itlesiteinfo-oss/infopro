@@ -31,6 +31,7 @@ class Urgent_Test extends HPRNB_Test_Case {
 	private function submit( int $post_id, array $fields ): void {
 		$_POST                         = array();
 		$_POST[ Post_Controls::NONCE ] = wp_create_nonce( Post_Controls::NONCE );
+		$_POST[ Post_Controls::URGENT_NONCE ] = wp_create_nonce( Post_Controls::URGENT_NONCE );
 		foreach ( $fields as $key ) {
 			$_POST[ $key ] = '1';
 		}
@@ -139,7 +140,7 @@ class Urgent_Test extends HPRNB_Test_Case {
 		$this->assertSame( array(), Urgent::items( Settings::get() ) );
 
 		ob_start();
-		Post_Controls::render( get_post( $post_id ) );
+		Post_Controls::render_urgent_box( get_post( $post_id ) );
 		$box = ob_get_clean();
 		$this->assertStringContainsString( 'switched off', $box );
 		$this->assertStringNotContainsString( 'name="' . Post_Controls::FIELD_URGENT . '"', $box );
@@ -148,7 +149,7 @@ class Urgent_Test extends HPRNB_Test_Case {
 	public function test_the_box_shows_the_state() {
 		$post_id = $this->create_post_ago( 60 );
 		ob_start();
-		Post_Controls::render( get_post( $post_id ) );
+		Post_Controls::render_urgent_box( get_post( $post_id ) );
 		$box = ob_get_clean();
 		$this->assertStringContainsString( 'name="' . Post_Controls::FIELD_URGENT . '"', $box );
 		$this->assertStringContainsString( 'For 10 minutes after you publish or update', $box );
@@ -156,7 +157,7 @@ class Urgent_Test extends HPRNB_Test_Case {
 
 		Urgent::flag( $post_id, Settings::get() );
 		ob_start();
-		Post_Controls::render( get_post( $post_id ) );
+		Post_Controls::render_urgent_box( get_post( $post_id ) );
 		$box = ob_get_clean();
 		$this->assertMatchesRegularExpression( '/name="' . Post_Controls::FIELD_URGENT . '" value="1"\s+checked/', $box );
 		$this->assertStringContainsString( 'Urgent until ' . wp_date( (string) get_option( 'time_format' ), Urgent::until( $post_id ) ), $box );
@@ -164,7 +165,7 @@ class Urgent_Test extends HPRNB_Test_Case {
 
 		update_post_meta( $post_id, Urgent::META_UNTIL, (string) ( time() - 60 ) );
 		ob_start();
-		Post_Controls::render( get_post( $post_id ) );
+		Post_Controls::render_urgent_box( get_post( $post_id ) );
 		$box = ob_get_clean();
 		$this->assertDoesNotMatchRegularExpression( '/name="' . Post_Controls::FIELD_URGENT . '" value="1"\s+checked/', $box, 'Expired: the box is clear again.' );
 		$this->assertStringContainsString( 'Was urgent until', $box );

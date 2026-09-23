@@ -38,6 +38,12 @@ final class Post_Controls {
 	const FIELD_RESTART = 'hprnb_urgent_restart';
 
 	/**
+	 * The URGENT box of its own (2.15): id, and its nonce action and field name.
+	 */
+	const URGENT_BOX   = 'hprnb-urgent-postbox';
+	const URGENT_NONCE = 'hprnb_urgent_box';
+
+	/**
 	 * Nonce action and field name.
 	 */
 	const NONCE = 'hprnb_post_controls';
@@ -97,6 +103,32 @@ final class Post_Controls {
 			'side',
 			'default'
 		);
+		// 2.15: the urgent flag in a box of its own, first at the top of the side column — "high" boxes
+		// come before the Publish box and before any order an editor saved by dragging boxes around.
+		if ( Urgent::enabled( Settings::get() ) ) {
+			add_meta_box(
+				self::URGENT_BOX,
+				__( 'URGENT bar', 'horizon-press-news-bar' ),
+				array( self::class, 'render_urgent_box' ),
+				array( 'post' ),
+				'side',
+				'high'
+			);
+		}
+	}
+
+	/**
+	 * Draws the URGENT box: its own nonce, then the checkbox and the state of the countdown.
+	 *
+	 * @param WP_Post $post Post being edited.
+	 * @return void
+	 */
+	public static function render_urgent_box( $post ): void {
+		if ( ! $post instanceof WP_Post ) {
+			return;
+		}
+		wp_nonce_field( self::URGENT_NONCE, self::URGENT_NONCE );
+		self::render_urgent( (int) $post->ID, $post );
 	}
 
 	/**
@@ -143,7 +175,6 @@ final class Post_Controls {
 			</label>
 			<span class="description"><?php esc_html_e( 'The headline is left out of the bar everywhere on the site. The two options are independent.', 'horizon-press-news-bar' ); ?></span>
 		</p>
-			<?php self::render_urgent( $id, $post ); ?>
 		<?php endif; ?>
 		<?php
 	}
@@ -247,15 +278,16 @@ final class Post_Controls {
 		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
 			return;
 		}
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+		// 2.15: the URGENT box has a nonce of its own; either box may be hidden from Screen Options.
+		if ( $post instanceof WP_Post && 'post' === $post->post_type && self::verified( self::URGENT_NONCE ) ) {
+			self::save_urgent( $post_id, $post );
+		}
 		// The block editor posts its meta boxes in a second request; both carry the nonce. A REST
 		// save without the box (quick edit, bulk edit, an API client) must leave the flags alone.
-		if ( ! isset( $_POST[ self::NONCE ] ) ) {
-			return;
-		}
-		if ( ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST[ self::NONCE ] ) ), self::NONCE ) ) {
-			return;
-		}
-		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		if ( ! self::verified( self::NONCE ) ) {
 			return;
 		}
 		if ( $post instanceof WP_Post && ! in_array( $post->post_type, self::post_types(), true ) ) {
@@ -277,10 +309,16 @@ final class Post_Controls {
 				delete_post_meta( $post_id, $key );
 			}
 		}
+	}
 
-		if ( $post instanceof WP_Post && 'post' === $post->post_type ) {
-			self::save_urgent( $post_id, $post );
-		}
+	/**
+	 * Whether the request carries a valid nonce of one of the two boxes.
+	 *
+	 * @param string $action Nonce action, also the field name.
+	 * @return bool
+	 */
+	private static function verified( string $action ): bool {
+		return isset( $_POST[ $action ] ) && false !== wp_verify_nonce( sanitize_key( wp_unslash( $_POST[ $action ] ) ), $action );
 	}
 
 	/**
@@ -298,7 +336,7 @@ final class Post_Controls {
 		if ( ! Urgent::enabled( $settings ) ) {
 			return; // The box was not shown: leave whatever the article carries alone.
 		}
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by save().
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by save() through verified().
 		$want    = isset( $_POST[ self::FIELD_URGENT ] ) && Settings::to_bool_loose( sanitize_key( wp_unslash( $_POST[ self::FIELD_URGENT ] ) ) );
 		$restart = isset( $_POST[ self::FIELD_RESTART ] ) && Settings::to_bool_loose( sanitize_key( wp_unslash( $_POST[ self::FIELD_RESTART ] ) ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing

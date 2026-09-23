@@ -536,4 +536,15 @@ return array(
 	'Example: the prime minister announces a snap election for next month' => 'Exemple : le Premier ministre annonce des élections anticipées le mois prochain',
 	'Example: the airport is evacuated after a security alert' => 'Exemple : l’aéroport est évacué après une alerte de sécurité',
 	'Breaking news' => 'Dernière minute',
+	// 2.15: the URGENT bar's reach.
+	'URGENT bar' => 'Bandeau URGENT',
+	'Where the URGENT bar shows' => 'Où s’affiche le bandeau URGENT',
+	'Its own page types, whatever the news bar does in the Where tab: with the front page ticked, breaking news reaches the front page even where the news bar stays away. On phones and desktops alike. A page switched off in its News Bar box shows neither bar.' => 'Ses propres types de pages, quoi que fasse la barre d’actualités dans l’onglet Où : avec la page d’accueil cochée, l’urgence arrive sur la une même là où la barre d’actualités ne s’affiche pas. Sur téléphone comme sur ordinateur. Une page désactivée dans son bloc Barre d’actualités n’affiche aucune des deux barres.',
+	'Design on desktop' => 'Design sur ordinateur',
+	'On phones the URGENT bar always has its two-line design with the close button in the tab above the corner. From 768 px, choose between one line and that same design.' => 'Sur téléphone, le bandeau URGENT a toujours son design sur deux lignes avec le bouton fermer dans l’onglet au-dessus du coin. À partir de 768 px, choisissez entre une seule ligne et ce même design.',
+	'Pages where the red bar shows' => 'Pages où s’affiche le bandeau rouge',
+	'One line' => 'Une seule ligne',
+	'The label, the headlines in a row as the news bar scrolls them, the buttons at the end of the bar.' => 'L’étiquette, les titres à la suite qui défilent comme dans la barre d’actualités, les boutons au bout du bandeau.',
+	'Same design as on phones' => 'Même design que sur téléphone',
+	'The label before one headline at a time on up to two lines, fading at the end, and the close button in the tab above the corner of the screen.' => 'L’étiquette devant un titre à la fois sur deux lignes au plus, qui s’efface en fondu, et le bouton fermer dans l’onglet au-dessus du coin de l’écran.',
 );

@@ -1345,7 +1345,7 @@
 			// The two phone designs carry their buttons in a tab above the bar: what sits in the
 			// corner (Jannah's "go to top") must clear it too.
 			var controls = aside.querySelector( '.hprnb-bar__controls' );
-			var tabbed = mobile && ( !! state.urgent || root.classList.contains( 'hprnb-root--m-ctrl-tab' ) || root.classList.contains( 'hprnb-root--m-card' ) );
+			var tabbed = ( !! state.urgent && !! state.uFlow ) || ( mobile && ( root.classList.contains( 'hprnb-root--m-ctrl-tab' ) || root.classList.contains( 'hprnb-root--m-card' ) ) );
 			var tab = ( hidden || inflow || ! tabbed || ! controls ) ? 0 : controls.offsetHeight;
 			return { mobile: mobile, collapsed: collapsed, height: full, offset: offset, tab: tab };
 		}
@@ -1692,6 +1692,25 @@
 		return closed < newestUrgent( items );
 	}
 
+	/**
+	 * The URGENT bar shows on both devices: the news bar's own restriction (hprnb-hide-*) is parked
+	 * under another name while it is in front, and put back when it hands over (2.15).
+	 *
+	 * @param {Element} root   The root.
+	 * @param {boolean} urgent Whether the URGENT bar is in front.
+	 */
+	function parkDevices( root, urgent ) {
+		forEach( [ 'mobile', 'desktop' ], function ( d ) {
+			var hide = 'hprnb-hide-' + d;
+			var park = 'hprnb-news-hide-' + d;
+			if ( urgent && root.classList.contains( hide ) ) {
+				root.classList.replace( hide, park );
+			} else if ( ! urgent && root.classList.contains( park ) ) {
+				root.classList.replace( park, hide );
+			}
+		} );
+	}
+
 	/** The news bar waits for the reader again, exactly as the server renders it without urgent articles. */
 	function restorePending( root ) {
 		var all = parseJson( root.getAttribute( 'data-hprnb-reveal' ) ) || {};
@@ -1744,6 +1763,7 @@
 		}
 		root.classList.remove( 'hprnb-root--urgent' );
 		root.setAttribute( 'data-hprnb-urgent', '0' );
+		parkDevices( root, false );
 		if ( root.classList.contains( 'hprnb-root--preview' ) ) {
 			return;
 		}
@@ -1813,6 +1833,35 @@
 	}
 
 	/**
+	 * The URGENT bar in its phone design keeps one height (2.15): a headline shorter than the lines the
+	 * bar is made for sits in the middle instead of at the top, so the bar never jumps while it rotates
+	 * and the space the page keeps for it is exactly its height.
+	 *
+	 * @param {Object}  state Teardown registry of the bar.
+	 * @param {Element} aside The urgent bar.
+	 */
+	function balanceUrgent( state, aside ) {
+		var viewport = aside.querySelector( '.hprnb-bar__viewport' );
+		var inner = aside.querySelector( '.hprnb-bar__inner' );
+		if ( ! viewport || ! inner ) {
+			return;
+		}
+		function check() {
+			if ( aside.hprnbState !== state ) {
+				return;
+			}
+			var title = aside.querySelector( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' );
+			var line = parseFloat( getComputedStyle( inner ).lineHeight ) || 26;
+			aside.classList.toggle( 'hprnb-bar--u-one', !! title && title.getBoundingClientRect().height < line * 1.5 );
+		}
+		observeSize( state, viewport, check );
+		state.add( function () {
+			aside.classList.remove( 'hprnb-bar--u-one' );
+		} );
+		check();
+	}
+
+	/**
 	 * A headline taller than its clipped viewport fades out at the end of its last line: the flag the
 	 * rotation sets, for a bar with a single headline.
 	 *
@@ -1857,7 +1906,10 @@
 
 		var cfg = readConfig( aside, root );
 		var mobile = isNarrow( root );
-		var profile = mobile ? cfg.m : cfg.d;
+		// The URGENT bar in its phone design: always on a phone, and from 768px too when chosen (2.15).
+		var uFlow = !! urgent && ( mobile || root.classList.contains( 'hprnb-root--u-d-flow' ) );
+		state.uFlow = uFlow;
+		var profile = ( mobile || uFlow ) ? cfg.m : cfg.d;
 		if ( urgent ) {
 			// One shape, in front at once, never folding, never leaving for the next article, always closable.
 			profile = merge( merge( {}, profile ), { collapse: false, next: false, deep: false, place: 'fixed', close: true, counter: false } );
@@ -1874,7 +1926,7 @@
 			root.style.removeProperty( '--hprnb-bleed-w' );
 		} );
 		var mode = mobile ? cfg.tickerMobile : cfg.ticker;
-		if ( urgent && mobile ) {
+		if ( uFlow ) {
 			mode = 'rotate'; // The two-line strip shows one headline at a time, whatever the news bar does.
 		}
 		var reduced = prefersReducedMotion();
@@ -1889,8 +1941,9 @@
 
 		// Buttons that make no sense for the effective mode are hidden; under 768px each one can also
 		// be switched off in the settings.
-		var wantsPause = ! mobile || profile.pause !== false;
-		var wantsClose = ! mobile || profile.close !== false;
+		var phoneLike = mobile || uFlow;
+		var wantsPause = ! phoneLike || profile.pause !== false;
+		var wantsClose = ! phoneLike || profile.close !== false;
 		state.hide( toggle, ( mode !== 'marquee' && mode !== 'rotate' ) || ! wantsPause );
 		state.hide( prev, mode !== 'manual' );
 		state.hide( next, mode !== 'manual' );
@@ -1932,6 +1985,9 @@
 		}
 		if ( urgent ) {
 			scheduleUrgent( state, root, aside );
+		}
+		if ( uFlow ) {
+			balanceUrgent( state, aside );
 		}
 
 		if ( profile.collapse && profile.place !== 'inline' && ! root.classList.contains( 'hprnb-root--preview' ) ) {
@@ -1986,6 +2042,7 @@
 		if ( urgent ) {
 			if ( urgentLive( root, urgent ) ) {
 				root.classList.add( 'hprnb-root--urgent' );
+				parkDevices( root, true );
 				root.classList.remove( 'hprnb-root--d-pending', 'hprnb-root--m-pending', 'hprnb-root--reveal' );
 				if ( ! root.classList.contains( 'hprnb-root--preview' ) ) {
 					document.body.classList.remove( 'hprnb-d-pending', 'hprnb-m-pending' );

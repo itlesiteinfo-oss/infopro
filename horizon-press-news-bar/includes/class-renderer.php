@@ -150,20 +150,27 @@ final class Renderer {
 			'data-hprnb-empty'     => $empty ? '1' : '0',
 			// Read by the stylesheet (a single headline carries no separator) and by the analytics.
 			'data-hprnb-count'     => (string) $count,
-			// Urgent articles in front of the news bar right now (the script keeps it current).
-			'data-hprnb-urgent'    => (string) $urgent_count,
+			// Urgent articles in front of the news bar right now (the script keeps it current); "off" when
+			// the feature is switched off, so the bootstrap never asks the server on their account.
+			'data-hprnb-urgent'    => Urgent::enabled( $settings ) ? (string) $urgent_count : 'off',
 			// The article being read, so an impression can be tied to its page. 0 off a singular.
 			'data-hprnb-post'      => (string) self::current_post_id(),
 			'data-hprnb-desktop'   => (string) wp_json_encode( self::profile_data( $settings, 'd' ) ),
 			'data-hprnb-mobile'    => (string) wp_json_encode( self::profile_data( $settings, 'm' ) ),
 			'data-hprnb-reveal'    => (string) wp_json_encode( self::reveal_data( $settings ) ),
 		);
+		// 2.15: a page where only one of the two bars may show says which ("news" or "urgent"): the
+		// bootstrap refreshes from the complete REST body and keeps only that one.
+		if ( isset( $payload['show'] ) && in_array( $payload['show'], array( 'news', 'urgent' ), true ) ) {
+			$attributes['data-hprnb-show'] = $payload['show'];
+		}
 
 		$urls = array();
 		if ( 'hybrid' === $settings['render_mode'] ) {
 			$urls['data-hprnb-endpoint'] = rest_url( Rest_Controller::NAMESPACE . '/items' );
 			$urls['data-hprnb-css']      = Assets::style_url();
-			if ( self::needs_interactive_js( $settings ) ) {
+			// An urgent article brought in by the bootstrap needs the script that ends it on time.
+			if ( self::needs_interactive_js( $settings ) || Urgent::enabled( $settings ) ) {
 				$urls['data-hprnb-js'] = Assets::script_url( 'bar' );
 			}
 		}
@@ -276,9 +283,15 @@ final class Renderer {
 	 * @return string[]
 	 */
 	public static function root_classes( array $settings, bool $preview = false, bool $urgent = false ): array {
+		$device = self::device_class( $settings );
+		if ( $urgent ) {
+			// 2.15: the URGENT bar shows on both devices. The news bar's own restriction is parked on the
+			// root under another name, and the script puts it back when it hands over.
+			$device = str_replace( 'hprnb-hide-', 'hprnb-news-hide-', $device );
+		}
 		$classes = array(
 			'hprnb-root',
-			self::device_class( $settings ),
+			$device,
 			'hprnb-root--' . ( 'overlay' === $settings['layout_mode'] ? 'overlay' : 'reserve' ),
 		);
 		if ( ! empty( $settings['align_container'] ) ) {
@@ -388,6 +401,10 @@ final class Renderer {
 		if ( $urgent ) {
 			// Urgent articles in front: the news bar is out of sight until the script hands over.
 			$classes[] = 'hprnb-root--urgent';
+		}
+		if ( 'mobile' === ( $settings['urgent_desktop_layout'] ?? 'line' ) ) {
+			// 2.15: the URGENT bar keeps its phone design from 768px too (two lines, the tab above the corner).
+			$classes[] = 'hprnb-root--u-d-flow';
 		}
 
 		return $classes;
@@ -620,14 +637,15 @@ final class Renderer {
 	}
 
 	/**
-	 * Height of the urgent bar (2.14) on a device: one line on desktop, the metrics above on a phone.
+	 * Height of the urgent bar (2.14) on a device: one line on desktop, the metrics above on a phone —
+	 * and on desktop too when it keeps the phone design there (2.15).
 	 *
 	 * @param array  $settings Settings.
 	 * @param string $p        'd' or 'm'.
 	 * @return int
 	 */
 	public static function urgent_height( array $settings, string $p ): int {
-		if ( 'm' === $p ) {
+		if ( 'm' === $p || 'mobile' === ( $settings['urgent_desktop_layout'] ?? 'line' ) ) {
 			return self::urgent_metrics( $settings )['height'];
 		}
 		return max( (int) ( $settings['bar_height'] ?? 40 ), (int) ceil( (int) ( $settings['font_size'] ?? 15 ) * self::LINE_HEIGHT ) + self::BLOCK_PAD );

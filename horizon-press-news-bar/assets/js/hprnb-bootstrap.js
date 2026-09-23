@@ -79,7 +79,11 @@
 		if (!root) {
 			return;
 		}
-		if (document.documentElement.classList.contains('hprnb-dismissed')) {
+		// 2.15: a page may show only one of the two bars ("news" or "urgent"), and the URGENT bar may be
+		// switched off ("off"). A reader who closed the news bar still gets urgent articles.
+		var show = root.dataset.hprnbShow || 'all';
+		var urgentOff = show === 'news' || root.dataset.hprnbUrgent === 'off';
+		if (document.documentElement.classList.contains('hprnb-dismissed') && urgentOff) {
 			return;
 		}
 		var endpoint = root.dataset.hprnbEndpoint;
@@ -156,9 +160,27 @@
 		/**
 		 * @param {Object} p Payload that passed isValid().
 		 */
+		/**
+		 * The news bar's device restriction is parked while the URGENT bar, shown on both devices, is
+		 * in front (the interactive script puts it back when it hands over).
+		 *
+		 * @param {boolean} urgent Whether the URGENT bar is in front.
+		 */
+		function parkDevices(urgent) {
+			['mobile', 'desktop'].forEach(function (d) {
+				var hide = 'hprnb-hide-' + d;
+				var park = 'hprnb-news-hide-' + d;
+				if (urgent && root.classList.contains(hide)) {
+					root.classList.replace(hide, park);
+				} else if (!urgent && root.classList.contains(park)) {
+					root.classList.replace(park, hide);
+				}
+			});
+		}
+
 		function apply(p) {
-			var urgent = urgentCount(p);
-			var html = (p.count === 0 || p.html === '') ? '' : p.html;
+			var urgent = urgentOff ? 0 : urgentCount(p);
+			var html = (show === 'urgent' || p.count === 0 || p.html === '') ? '' : p.html;
 			if (html === '' && urgent === 0) {
 				root.innerHTML = '';
 				root.hidden = true;
@@ -170,7 +192,7 @@
 				return;
 			}
 			ensureCss();
-			root.innerHTML = urgentHtml(p) + html;
+			root.innerHTML = (urgent ? p.urgent_html : '') + html;
 			root.hidden = false;
 			root.dataset.hprnbEmpty = '0';
 			root.dataset.hprnbCount = String(html === '' ? 0 : p.count);
@@ -179,6 +201,7 @@
 			// Urgent articles wait for nobody: in front at once, whatever the news bar waits for.
 			// The interactive script prunes the expired ones and hands over when none is left.
 			root.classList.toggle('hprnb-root--urgent', urgent > 0);
+			parkDevices(urgent > 0);
 			if (urgent > 0) {
 				root.classList.remove('hprnb-root--d-pending', 'hprnb-root--m-pending');
 				document.body.classList.remove('hprnb-d-pending', 'hprnb-m-pending');
@@ -191,7 +214,8 @@
 		if (age <= stale) {
 			ensureLayout();
 			var stored = readSession();
-			if (!stored || stored.generated_at < ssrGen) {
+			// Only a page that shows everything the payload carries may stand for the others.
+			if (show === 'all' && (!stored || stored.generated_at < ssrGen)) {
 				var ssrUrgent = root.querySelector('.hprnb-bar--urgent');
 				var ssrBar = root.querySelector('.hprnb-bar:not(.hprnb-bar--urgent)');
 				saveSession({

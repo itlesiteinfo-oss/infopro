@@ -29,6 +29,13 @@ final class Frontend {
 	private static bool $eligible = false;
 
 	/**
+	 * Whether the URGENT bar may show on the current page (2.15: its own page types).
+	 *
+	 * @var bool
+	 */
+	private static bool $urgent_ok = false;
+
+	/**
 	 * Whether prepare() has run.
 	 *
 	 * @var bool
@@ -66,13 +73,60 @@ final class Frontend {
 		}
 		self::$prepared = true;
 
-		$settings       = Settings::get();
-		self::$settings = $settings;
-		self::$eligible = ! empty( $settings['auto_display'] ) && Visibility::should_display( $settings );
+		$settings        = Settings::get();
+		self::$settings  = $settings;
+		self::$eligible  = ! empty( $settings['auto_display'] ) && Visibility::should_display( $settings );
+		self::$urgent_ok = ! empty( $settings['auto_display'] ) && Visibility::urgent_allowed( $settings );
 
-		if ( self::$eligible ) {
+		if ( self::$eligible || self::$urgent_ok ) {
 			Payload::get( $settings );
 		}
+	}
+
+	/**
+	 * Whether the URGENT bar may show on the current page, whatever the news bar does there.
+	 *
+	 * @return bool
+	 */
+	public static function urgent_allowed(): bool {
+		self::prepare();
+		return self::$urgent_ok;
+	}
+
+	/**
+	 * Whether this page renders a root at all: the news bar is allowed, or the URGENT bar is.
+	 *
+	 * @return bool
+	 */
+	public static function renders(): bool {
+		self::prepare();
+		return self::$eligible || self::$urgent_ok;
+	}
+
+	/**
+	 * The payload as this page shows it (2.15). The cached payload carries both bars for every page;
+	 * a page where the news bar is not allowed keeps only the urgent one, a page outside the URGENT
+	 * bar's page types only the news bar, and `show` tells the root — hence the bootstrap, which
+	 * refreshes from the complete REST body — which of the two this page may show.
+	 *
+	 * @return array
+	 */
+	public static function shown_payload(): array {
+		self::prepare();
+		$payload = Payload::get( self::$settings );
+		if ( ! self::$eligible ) {
+			$payload['count'] = 0;
+			$payload['items'] = array();
+			$payload['html']  = '';
+			$payload['show']  = 'urgent';
+		}
+		if ( ! self::$urgent_ok ) {
+			$payload['urgent_count'] = 0;
+			$payload['urgent_items'] = array();
+			$payload['urgent_html']  = '';
+			$payload['show']         = 'news';
+		}
+		return $payload;
 	}
 
 	/**
@@ -113,12 +167,12 @@ final class Frontend {
 	 * @return void
 	 */
 	public static function enqueue(): void {
-		if ( ! self::is_eligible() ) {
+		if ( ! self::renders() ) {
 			return;
 		}
 
 		$settings = self::$settings;
-		$payload  = Payload::get( $settings );
+		$payload  = self::shown_payload();
 		$count    = (int) $payload['count'];
 		$urgent   = self::urgent_count( $payload );
 
@@ -177,11 +231,11 @@ final class Frontend {
 		if ( empty( $settings['remember_dismiss'] ) || empty( $settings['close_button'] ) ) {
 			return;
 		}
-		if ( ! self::is_eligible() && ! self::shortcode_expected() ) {
+		if ( ! self::renders() && ! self::shortcode_expected() ) {
 			return;
 		}
 
-		$payload = Payload::get( $settings );
+		$payload = self::renders() ? self::shown_payload() : Payload::get( $settings );
 		if ( 'hybrid' === $settings['render_mode'] || (int) $payload['count'] > 0 || self::urgent_count( $payload ) > 0 ) {
 			Assets::print_dismiss_script();
 		}
@@ -203,11 +257,11 @@ final class Frontend {
 		if ( 'reserve' !== $settings['layout_mode'] ) {
 			return $classes;
 		}
-		if ( ! self::is_eligible() && ! self::shortcode_expected() ) {
+		if ( ! self::renders() && ! self::shortcode_expected() ) {
 			return $classes;
 		}
 
-		$payload = Payload::get( $settings );
+		$payload = self::renders() ? self::shown_payload() : Payload::get( $settings );
 		$urgent  = self::urgent_count( $payload ) > 0;
 		if ( ( (int) $payload['count'] > 0 || $urgent ) && ! in_array( 'hprnb-reserve', $classes, true ) ) {
 			$classes[] = 'hprnb-reserve';
@@ -232,20 +286,28 @@ final class Frontend {
 	 * @return void
 	 */
 	public static function footer(): void {
-		if ( ! self::is_eligible() || self::$root_claimed ) {
+		if ( ! self::renders() || self::$root_claimed ) {
 			return;
 		}
 
 		$settings = self::$settings;
-		$payload  = Payload::get( $settings );
+		$payload  = self::shown_payload();
 
 		if ( 'php' === $settings['render_mode'] && (int) $payload['count'] < 1 && self::urgent_count( $payload ) < 1 ) {
 			return;
 		}
 
 		self::$root_claimed = true;
-		// The per-profile page types decide, here and nowhere else, which profiles may show.
-		echo Renderer::root( $payload, Visibility::with_context_devices( $settings ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup built and escaped by the Renderer.
+		// The per-profile page types decide, here and nowhere else, which profiles may show. A root
+		// that only carries the URGENT bar shows it on both devices.
+		$rendered = self::$eligible ? Visibility::with_context_devices( $settings ) : array_merge(
+			$settings,
+			array(
+				'show_on_desktop' => true,
+				'show_on_mobile'  => true,
+			)
+		);
+		echo Renderer::root( $payload, $rendered ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup built and escaped by the Renderer.
 	}
 
 	/**
@@ -277,6 +339,7 @@ final class Frontend {
 		Placement::reset();
 		self::$settings     = null;
 		self::$eligible     = false;
+		self::$urgent_ok    = false;
 		self::$prepared     = false;
 		self::$root_claimed = false;
 	}

@@ -2420,6 +2420,12 @@ mode hybrid:
 3. **Un onglet « Urgent » dans les réglages** : durée en minutes, étiquette, couleurs, aperçu.
 4. **Le design** : rouge, étiquette en capitales avec point animé et chevron, titre en gras, bouton fermer dans l'onglet au-dessus du coin comme la barre normale, sens de lecture de gauche à droite.
 
+### 15.8.3 quindecies — Le bloc URGENT, la une, le design téléphone sur ordinateur (2.15.0)
+
+1. **La case « Article urgent » dans un bloc à part, en premier en haut de la colonne de droite**, affiché par défaut.
+2. **Le bandeau URGENT peut apparaître sur la page d'accueil (la une)**, même si la barre d'actualités n'y est pas : il a ses propres types de pages.
+3. **Le design téléphone du bandeau URGENT comme deuxième design sur ordinateur.**
+
 ---
 
 # ANNEXE C — CONSIGNE FINALE À CLAUDE CODE

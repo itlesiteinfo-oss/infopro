@@ -1,8 +1,69 @@
-/* Horizon Press News Bar — the "News Bar" box on the edit screens (2.14: the urgent section). */
-.hprnb-urgent-box {
-	margin-block-start: 12px;
-	padding-block-start: 10px;
-	border-block-start: 1px solid #dcdcde;
+/* Horizon Press News Bar — the edit screen: the URGENT box (2.15: a box of its own, first in the side
+   column, in the red of the bar) and the News Bar box. */
+#hprnb-urgent-postbox {
+	border-color: #e11d2b;
+	box-shadow: 0 1px 6px rgba(225, 29, 43, .18);
+}
+
+#hprnb-urgent-postbox .postbox-header {
+	border-block-end: 0;
+	background: linear-gradient(90deg, #c4151f, #e11d2b 60%, #ec3b47);
+}
+
+#hprnb-urgent-postbox .postbox-header .hndle,
+#hprnb-urgent-postbox .postbox-header .handle-actions button,
+#hprnb-urgent-postbox .postbox-header .handle-actions .toggle-indicator::before {
+	color: #fff;
+}
+
+#hprnb-urgent-postbox .postbox-header .hndle {
+	font-weight: 700;
+	letter-spacing: .06em;
+	text-transform: uppercase;
+}
+
+#hprnb-urgent-postbox .postbox-header .hndle::before {
+	content: "";
+	display: inline-block;
+	inline-size: 8px;
+	block-size: 8px;
+	margin-inline-end: 8px;
+	border-radius: 50%;
+	background: #fff;
+	vertical-align: middle;
+	animation: hprnb-post-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes hprnb-post-pulse {
+	0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 255, 255, .6); }
+	50% { opacity: .45; box-shadow: 0 0 0 5px rgba(255, 255, 255, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#hprnb-urgent-postbox .postbox-header .hndle::before {
+		animation: none;
+	}
+}
+
+.hprnb-urgent-box__label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-block-end: 6px;
+	font-size: 14px;
+}
+
+.hprnb-urgent-box__label input[type="checkbox"] {
+	inline-size: 20px;
+	block-size: 20px;
+	margin: 0;
+	accent-color: #e11d2b;
+}
+
+.hprnb-urgent-box__label input[type="checkbox"]::before {
+	margin: -1px 0 0 -1px;
+	inline-size: 22px;
+	block-size: 22px;
 }
 
 .hprnb-urgent-box__label strong {
@@ -12,9 +73,9 @@
 }
 
 .hprnb-urgent-box__state {
-	margin: 6px 0;
+	margin: 8px 0;
 	padding: 6px 10px;
-	border-inline-start: 3px solid #b32d2e;
+	border-inline-start: 3px solid #e11d2b;
 	background: #fcf0f1;
 	font-weight: 600;
 }

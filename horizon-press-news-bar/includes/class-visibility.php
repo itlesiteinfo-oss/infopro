@@ -192,6 +192,50 @@ final class Visibility {
 	}
 
 	/**
+	 * Whether the URGENT bar (2.14) may show on the current page (2.15): its own page types, the front
+	 * page included by default, whatever the news bar's page types, per-device lists and device
+	 * switches say. The plugin switch, the absolute exclusions and a page switched off in its News
+	 * Bar box (or listed in the exceptions) still mean no bar at all.
+	 *
+	 * @param array $settings Settings.
+	 * @return bool
+	 */
+	public static function urgent_allowed( array $settings ): bool {
+		$allowed = ! empty( $settings['enabled'] )
+			&& Urgent::enabled( $settings )
+			&& ! self::is_absolute_exclusion()
+			&& ! self::is_excluded_id( $settings )
+			&& self::urgent_context_allowed( $settings );
+
+		/**
+		 * Filters whether the URGENT bar may show on the current page.
+		 *
+		 * @param bool  $allowed  Whether the URGENT bar may show.
+		 * @param array $settings Settings.
+		 */
+		return (bool) apply_filters( 'hprnb_urgent_should_display', $allowed, $settings );
+	}
+
+	/**
+	 * Whether the URGENT bar's page types allow the current context. A page of an unknown kind (a
+	 * custom post type, say) is allowed only while every page type is ticked.
+	 *
+	 * @param array $settings Settings.
+	 * @return bool
+	 */
+	public static function urgent_context_allowed( array $settings ): bool {
+		$map = isset( $settings['urgent_contexts'] ) && is_array( $settings['urgent_contexts'] ) ? $settings['urgent_contexts'] : array();
+		if ( empty( $map ) ) {
+			return true;
+		}
+		$key = self::context_key();
+		if ( '' === $key || ! array_key_exists( $key, $map ) ) {
+			return ! in_array( false, array_map( 'boolval', $map ), true );
+		}
+		return ! empty( $map[ $key ] );
+	}
+
+	/**
 	 * Full decision tree for automatic display.
 	 *
 	 * @param array $settings Settings.

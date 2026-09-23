@@ -2045,9 +2045,9 @@ html.hprnb-dismissed body.hprnb-reserve:has(.hprnb-root--urgent) {
 	inset-inline: 0;
 	bottom: 0;
 	border-radius: 0;
-	/* The theme red with a faint sheen: darker at the start, a touch of light at the end. */
+	/* The theme red, a shade darker at the start; the end stays the flat red the headline fades into. */
 	background-color: var(--hprnb-u-bg);
-	background-image: linear-gradient(90deg, rgba(0, 0, 0, .16), transparent 42%, rgba(255, 255, 255, .1));
+	background-image: linear-gradient(90deg, rgba(0, 0, 0, .16), transparent 42%);
 	box-shadow: var(--hprnb-u-shadow);
 }
 
@@ -2056,6 +2056,17 @@ html.hprnb-dismissed body.hprnb-reserve:has(.hprnb-root--urgent) {
 	margin-inline-end: 14px;
 	gap: 8px;
 	white-space: nowrap;
+}
+
+/* The news bar's pill halo (the beacon of its appearance) has no place on the red bar: its label is
+   plain capitals, and only its dot pulses. */
+.hprnb-root .hprnb-bar.hprnb-bar--urgent .hprnb-bar__label {
+	animation: none;
+	box-shadow: none;
+}
+
+.hprnb-root .hprnb-bar--rtl.hprnb-bar--urgent {
+	background-image: linear-gradient(270deg, rgba(0, 0, 0, .16), transparent 42%);
 }
 
 .hprnb-root .hprnb-bar--urgent .hprnb-bar__label-text {
@@ -2143,6 +2154,7 @@ html.hprnb-dismissed body.hprnb-reserve:has(.hprnb-root--urgent) {
 		block-size: auto;
 		max-inline-size: none;
 		margin: 0;
+		min-block-size: var(--hprnb-u-m-height);
 		padding: var(--hprnb-u-pad) var(--hprnb-gutter);
 		overflow-x: clip;
 		overflow-y: visible;
@@ -2241,8 +2253,135 @@ html.hprnb-dismissed body.hprnb-reserve:has(.hprnb-root--urgent) {
 	}
 }
 
+/* 2.15 — the phone design from 768px too (setting urgent_desktop_layout = mobile): the label floats at
+   the head of a headline on two lines that fades at the end, and the close button sits in the tab of
+   the same red above the screen's end corner. The text keeps to the site's width; the tab keeps to the
+   corner, where the news bar's tab is on a phone. */
+@container hprnb (min-width: 768px) {
+	.hprnb-root--u-d-flow .hprnb-bar--urgent {
+		--hprnb-e-display: block;
+		--hprnb-e-label-size: 12px;
+		--hprnb-e-font-size: var(--hprnb-m-font-size);
+		overflow-x: clip;
+		overflow-y: visible;
+	}
+
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__inner {
+		position: static;
+		display: block;
+		block-size: auto;
+		min-block-size: var(--hprnb-u-height);
+		max-inline-size: calc(var(--hprnb-max) + 2 * var(--hprnb-gutter));
+		margin-inline: auto;
+		padding: var(--hprnb-u-pad) var(--hprnb-gutter);
+		line-height: var(--hprnb-u-line);
+	}
+
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__label {
+		float: inline-start;
+		block-size: var(--hprnb-u-line);
+		margin: 0;
+		margin-inline-end: 12px;
+	}
+
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__viewport,
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__list,
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__item,
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__link,
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__title {
+		display: block;
+		overflow: visible;
+		inline-size: auto;
+		max-inline-size: none;
+		margin: 0;
+		padding: 0;
+		white-space: normal;
+	}
+
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__item[hidden] {
+		display: none;
+	}
+
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__viewport {
+		position: relative;
+		max-block-size: calc(var(--hprnb-u-lines) * var(--hprnb-u-line));
+		overflow: visible clip;
+		transition: opacity .18s;
+	}
+
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__viewport::after {
+		content: "";
+		position: absolute;
+		inset-inline-end: 0;
+		inset-block-end: 0;
+		display: none;
+		inline-size: 96px;
+		block-size: var(--hprnb-u-line);
+		background: linear-gradient(to right, transparent, var(--hprnb-u-bg) 78%);
+		pointer-events: none;
+	}
+
+	.hprnb-root--u-d-flow .hprnb-bar--rtl.hprnb-bar--urgent .hprnb-bar__viewport::after {
+		background: linear-gradient(to left, transparent, var(--hprnb-u-bg) 78%);
+	}
+
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__viewport.is-clipped::after {
+		display: block;
+	}
+
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__controls {
+		position: absolute;
+		inset-block: auto 100%;
+		inset-inline: auto 0;
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+		gap: 0;
+		block-size: auto;
+		margin: 0;
+		padding: 0;
+		background: var(--hprnb-u-bg);
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3);
+	}
+
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__btn {
+		position: static;
+		flex: none;
+		inline-size: 44px;
+		min-inline-size: 44px;
+		block-size: 44px;
+		min-block-size: 44px;
+		border-radius: 0;
+		opacity: 1;
+	}
+
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__btn svg {
+		inline-size: 22px;
+		block-size: 22px;
+	}
+
+	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__progress {
+		block-size: 3px;
+	}
+}
+
+/* One height for the phone design, whatever the headline (2.15): the bar has its full height from the
+   first paint (min-block-size above), and a headline on fewer lines than it is made for glides to the
+   middle (class set by the script), so nothing jumps as it rotates. */
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__inner {
+	transition: padding-block .25s ease;
+}
+
+.hprnb-root .hprnb-bar--urgent.hprnb-bar--u-one .hprnb-bar__inner {
+	padding-block: calc(var(--hprnb-u-pad) + (var(--hprnb-u-lines) - 1) * var(--hprnb-u-line) / 2);
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.hprnb-root--urgent .hprnb-bar--urgent[data-hprnb-init] {
 		animation: none;
+	}
+
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__inner {
+		transition: none;
 	}
 }

@@ -284,6 +284,17 @@ final class Settings {
 				'type'    => 'color',
 				'default' => '#FFFFFF',
 			),
+			// 2.15: the red bar has its own page types (the front page included), and a second desktop design.
+			'urgent_contexts'             => array(
+				'type'    => 'bool_map',
+				'default' => $contexts_default,
+				'keys'    => self::CONTEXT_KEYS,
+			),
+			'urgent_desktop_layout'       => array(
+				'type'    => 'enum',
+				'default' => 'line',
+				'options' => array( 'line', 'mobile' ),
+			),
 			'desktop_behavior'            => array(
 				'type'    => 'enum',
 				'default' => 'always',

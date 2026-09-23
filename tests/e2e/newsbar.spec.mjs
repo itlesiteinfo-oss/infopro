@@ -1008,10 +1008,21 @@ test( 'v2.4: page types per profile, the bar inside the article, desktop collaps
 		await page.goto( url );
 		await expect( root ).toHaveClass( /hprnb-device-all/ );
 
-		// Both profiles refused: nothing is rendered at all.
+		// Both profiles refused: nothing of the news bar is rendered. Since 2.15 the URGENT bar has page
+		// types of its own, so an empty, hidden root waits there for an urgent article; with the URGENT
+		// bar switched off, nothing at all.
 		setSettings( {
 			desktop_contexts: { ...defaults.desktop_contexts, front_page: false },
 			mobile_contexts: { ...defaults.mobile_contexts, front_page: false },
+		} );
+		await page.goto( '/' );
+		await expect( root ).toHaveAttribute( 'data-hprnb-show', 'urgent' );
+		await expect( root ).toBeHidden();
+		await expect( page.locator( '#hprnb-root .hprnb-bar' ) ).toHaveCount( 0 );
+		setSettings( {
+			desktop_contexts: { ...defaults.desktop_contexts, front_page: false },
+			mobile_contexts: { ...defaults.mobile_contexts, front_page: false },
+			urgent_enabled: false,
 		} );
 		await page.goto( '/' );
 		await expect( root ).toHaveCount( 0 );
@@ -2651,7 +2662,7 @@ test( 'v2.14: the URGENT bar takes the place of the news bar, each article leave
 		await page.goto( '/wp-admin/post.php?post=' + n + '&action=edit' );
 		await expect( page.locator( '#hprnb-urgent' ) ).not.toBeChecked();
 		await expect( page.locator( '#hprnb-urgent-restart' ) ).toHaveCount( 0 );
-		await expect( page.locator( '#hprnb-post-controls' ) ).toContainText( 'For 10 minutes after you publish or update' );
+		await expect( page.locator( '#hprnb-urgent-postbox' ) ).toContainText( 'For 10 minutes after you publish or update' );
 
 		// The settings page: an Urgent tab whose preview shows the red bar, live label and colours.
 		await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar' );
@@ -2670,6 +2681,122 @@ test( 'v2.14: the URGENT bar takes the place of the news bar, each article leave
 		expect( errors ).toEqual( [] );
 	} finally {
 		wp( [ 'post', 'delete', a, b, n, '--force' ] );
+		setSettings( {} );
+	}
+} );
+
+test( 'v2.15: the URGENT bar on the front page where the news bar stays away, the phone design on desktop, its own box first in the side column', async ( { page } ) => {
+	const errors = collectErrors( page );
+	const root = page.locator( '#hprnb-root' );
+	const urgent = page.locator( '.hprnb-bar--urgent' );
+	const now = () => Math.floor( Date.now() / 1000 );
+	const flag = ( id, since, until ) => {
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_since', String( since ) ] );
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_until', String( until ) ] );
+		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+	};
+	const noFront = Object.fromEntries( Object.keys( defaults.contexts ).map( ( k ) => [ k, k !== 'front_page' ] ) );
+	const a = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Urgent — la une annonce une édition spéciale ce soir', '--porcelain' ] );
+	try {
+		// The news bar kept off the front page ("Everywhere except the home page"); one urgent article.
+		setDefaultSettings( { display_scope: 'custom', contexts: noFront } );
+		let t = now();
+		flag( a, t - 30, t + 600 );
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( '/' );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( root ).toHaveAttribute( 'data-hprnb-show', 'urgent' );
+		await expect( root ).toHaveClass( /hprnb-root--urgent/ );
+		await expect( page.locator( '.hprnb-bar:not(.hprnb-bar--urgent)' ) ).toHaveCount( 0 );
+		expect( await urgent.evaluate( ( el ) => Math.round( el.getBoundingClientRect().height ) ) ).toBe( 76 );
+		await page.setViewportSize( { width: 1366, height: 900 } );
+		await page.goto( '/' );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await urgent.evaluate( ( el ) => [ Math.round( el.getBoundingClientRect().height ), getComputedStyle( el.querySelector( '.hprnb-bar__inner' ) ).display ] ) ).toEqual( [ 40, 'grid' ] );
+
+		// The second desktop design: the phone design, two lines, the close button in the tab at the screen corner.
+		setDefaultSettings( { display_scope: 'custom', contexts: noFront, urgent_desktop_layout: 'mobile' } );
+		await page.goto( '/' );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( root ).toHaveClass( /hprnb-root--u-d-flow/ );
+		await expect( urgent ).toHaveClass( /hprnb-bar--mode-rotate/ );
+		await expect( urgent.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden();
+		const bar = await urgent.boundingBox();
+		const tab = await urgent.locator( '.hprnb-bar__controls' ).boundingBox();
+		expect( [ Math.round( bar.height ), Math.round( tab.width ), Math.round( tab.height ), Math.round( tab.x + tab.width ), Math.round( tab.y + tab.height ) ] ).toEqual( [ 76, 44, 44, 1366, Math.round( bar.y ) ] );
+		// A one-line headline sits in the middle: the bar keeps its height, the page keeps exactly that.
+		await expect( urgent ).toHaveClass( /hprnb-bar--u-one/ );
+		const centre = async () => { const t = await urgent.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' ).boundingBox(); return Math.round( Math.abs( ( t.y + t.height / 2 ) - ( bar.y + bar.height / 2 ) ) ) <= 2; };
+		await expect.poll( centre ).toBe( true );
+		const title = await urgent.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' ).boundingBox();
+		expect( await page.evaluate( () => [ getComputedStyle( document.body ).paddingBottom, getComputedStyle( document.body ).getPropertyValue( '--hprnb-tab' ).trim() ] ) ).toEqual( [ '76px', '44px' ] );
+		// The text keeps to the site's width.
+		expect( Math.round( title.x ) ).toBe( Math.round( ( 1366 - 1230 ) / 2 ) );
+
+		// The news bar kept to desktop on the front page: the red bar still reaches phones, then the
+		// restriction is back and nothing is left on the phone.
+		setDefaultSettings( { mobile_contexts: noFront } );
+		t = now();
+		flag( a, t - 30, t + 6 );
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( '/' );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( root ).toHaveClass( /hprnb-news-hide-mobile/ );
+		await expect( urgent ).toBeVisible();
+		await expect( urgent ).toHaveCount( 0, { timeout: 15000 } );
+		await expect( root ).toHaveClass( /hprnb-hide-mobile/ );
+		await expect( root ).toBeHidden();
+		expect( await page.evaluate( () => getComputedStyle( document.body ).paddingBottom ) ).toBe( '0px' );
+
+		// A reader who closed the news bar still gets an urgent article.
+		setDefaultSettings();
+		t = now();
+		flag( a, t - 5, t + 600 );
+		await page.setViewportSize( { width: 1366, height: 900 } );
+		await page.goto( '/' );
+		await page.evaluate( () => localStorage.setItem( 'hprnb_dismissed_until', String( Date.now() + 3600000 ) ) );
+		await page.reload();
+		await expect( urgent ).toBeVisible();
+		await expect( page.locator( '.hprnb-bar:not(.hprnb-bar--urgent)' ) ).toBeHidden();
+		await page.evaluate( () => localStorage.removeItem( 'hprnb_dismissed_until' ) );
+		expect( errors ).toEqual( [] );
+
+		// The edit screen (classic editor, as on the client's site): the URGENT box first in the side
+		// column, above Publish, even after the editor saved another order by dragging boxes around.
+		wp( [ 'user', 'meta', 'update', '1', 'meta-box-order_post', JSON.stringify( { side: 'submitdiv,categorydiv,tagsdiv-post_tag,postimagediv,hprnb-post-controls', normal: '', advanced: '' } ), '--format=json' ] );
+		const draft = wp( [ 'post', 'create', '--post_type=post', '--post_status=draft', '--post_title=Brouillon urgent', '--porcelain' ] );
+		await page.goto( '/wp-login.php' );
+		await page.fill( '#user_login', 'admin' );
+		await page.fill( '#user_pass', 'admin' );
+		await page.click( '#wp-submit' );
+		await page.waitForURL( /wp-admin/ );
+		await page.setViewportSize( { width: 1400, height: 1000 } );
+		await page.goto( '/wp-admin/post.php?post=' + draft + '&action=edit&hprnb_classic=1' );
+		expect( await page.$$eval( '#side-sortables > .postbox', ( boxes ) => boxes.map( ( b ) => b.id ).slice( 0, 2 ) ) ).toEqual( [ 'hprnb-urgent-postbox', 'submitdiv' ] );
+		await expect( page.locator( '#hprnb-urgent-postbox' ) ).toBeVisible();
+		await expect( page.locator( '#hprnb-urgent-postbox .hndle' ) ).toHaveText( 'URGENT bar' );
+		await expect( page.locator( '#hprnb-post-controls #hprnb-urgent' ) ).toHaveCount( 0 );
+		await page.check( '#hprnb-urgent' );
+		await page.click( '#publish' );
+		await expect( page.locator( '.hprnb-urgent-box__state' ) ).toContainText( 'Urgent until' );
+		expect( Number( wp( [ 'post', 'meta', 'get', draft, '_hprnb_urgent_until' ] ) ) ).toBeGreaterThan( now() + 500 );
+		wp( [ 'post', 'delete', draft, '--force' ] );
+
+		// The settings: the URGENT bar's own page types (the front page ticked) and the two desktop designs.
+		await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar' );
+		await page.click( '[data-hprnb-tab="urgent"]' );
+		await expect( page.locator( '#hprnb-field-urgent-contexts-front_page' ) ).toBeChecked();
+		await expect( page.locator( '#hprnb-field-urgent-desktop-layout-line' ) ).toBeChecked();
+		await page.locator( 'label[for="hprnb-field-urgent-desktop-layout-mobile"]' ).click();
+		await expect( page.locator( '#hprnb-preview-root' ) ).toHaveClass( /hprnb-root--u-d-flow/ );
+		expect( errors ).toEqual( [] );
+	} finally {
+		try {
+			wp( [ 'user', 'meta', 'delete', '1', 'meta-box-order_post' ] );
+		} catch ( e ) {
+			// Never saved: the scenario stopped before the edit screen.
+		}
+		wp( [ 'post', 'delete', a, '--force' ] );
 		setSettings( {} );
 	}
 } );

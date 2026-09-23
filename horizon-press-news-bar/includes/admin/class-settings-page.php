@@ -273,6 +273,16 @@ final class Settings_Page {
 						),
 					),
 					array(
+						'title'       => __( 'Where the URGENT bar shows', 'horizon-press-news-bar' ),
+						'description' => __( 'Its own page types, whatever the news bar does in the Where tab: with the front page ticked, breaking news reaches the front page even where the news bar stays away. On phones and desktops alike. A page switched off in its News Bar box shows neither bar.', 'horizon-press-news-bar' ),
+						'keys'        => array( 'urgent_contexts' ),
+					),
+					array(
+						'title'       => __( 'Design on desktop', 'horizon-press-news-bar' ),
+						'description' => __( 'On phones the URGENT bar always has its two-line design with the close button in the tab above the corner. From 768 px, choose between one line and that same design.', 'horizon-press-news-bar' ),
+						'keys'        => array( 'urgent_desktop_layout' ),
+					),
+					array(
 						'title'       => __( 'Colours of the URGENT bar', 'horizon-press-news-bar' ),
 						'description' => __( 'The red of the reference site and white text. The label carries a live dot and a chevron, the headline is bold, and the close button sits in the tab above the corner, as on the news bar. The preview on the right shows it while this tab is open.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'urgent_bg_color', 'urgent_text_color' ),
@@ -453,6 +463,25 @@ final class Settings_Page {
 					),
 				),
 			),
+		);
+	}
+
+	/**
+	 * Labels of the nine page types, shared by the news bar's list and the URGENT bar's (2.15).
+	 *
+	 * @return array<string, string>
+	 */
+	private static function context_labels(): array {
+		return array(
+			'front_page'  => __( 'Front page', 'horizon-press-news-bar' ),
+			'blog_home'   => __( 'Blog home', 'horizon-press-news-bar' ),
+			'single_post' => __( 'Single post', 'horizon-press-news-bar' ),
+			'page'        => __( 'Page', 'horizon-press-news-bar' ),
+			'category'    => __( 'Category archive', 'horizon-press-news-bar' ),
+			'tag'         => __( 'Tag archive', 'horizon-press-news-bar' ),
+			'archive'     => __( 'Other archives', 'horizon-press-news-bar' ),
+			'search'      => __( 'Search results', 'horizon-press-news-bar' ),
+			'not_found'   => __( '404 page', 'horizon-press-news-bar' ),
 		);
 	}
 
@@ -1114,6 +1143,27 @@ final class Settings_Page {
 				'label'    => __( 'Text colour of the red bar', 'horizon-press-news-bar' ),
 				'contrast' => 'urgent',
 			),
+			'urgent_contexts'             => array(
+				'section' => 'urgent',
+				'type'    => 'contexts',
+				'label'   => __( 'Pages where the red bar shows', 'horizon-press-news-bar' ),
+				'options' => self::context_labels(),
+			),
+			'urgent_desktop_layout'       => array(
+				'section' => 'urgent',
+				'type'    => 'choice',
+				'label'   => __( 'Design on desktop', 'horizon-press-news-bar' ),
+				'options' => array(
+					'line'   => array(
+						'title' => __( 'One line', 'horizon-press-news-bar' ),
+						'text'  => __( 'The label, the headlines in a row as the news bar scrolls them, the buttons at the end of the bar.', 'horizon-press-news-bar' ),
+					),
+					'mobile' => array(
+						'title' => __( 'Same design as on phones', 'horizon-press-news-bar' ),
+						'text'  => __( 'The label before one headline at a time on up to two lines, fading at the end, and the close button in the tab above the corner of the screen.', 'horizon-press-news-bar' ),
+					),
+				),
+			),
 			'mobile_reveal_mode'          => array(
 				'section' => 'appearance',
 				'type'    => 'radio',
@@ -1429,17 +1479,7 @@ final class Settings_Page {
 				'type'    => 'contexts',
 				'label'   => __( 'Page types', 'horizon-press-news-bar' ),
 				'depends' => 'display_scope:custom',
-				'options' => array(
-					'front_page'  => __( 'Front page', 'horizon-press-news-bar' ),
-					'blog_home'   => __( 'Blog home', 'horizon-press-news-bar' ),
-					'single_post' => __( 'Single post', 'horizon-press-news-bar' ),
-					'page'        => __( 'Page', 'horizon-press-news-bar' ),
-					'category'    => __( 'Category archive', 'horizon-press-news-bar' ),
-					'tag'         => __( 'Tag archive', 'horizon-press-news-bar' ),
-					'archive'     => __( 'Other archives', 'horizon-press-news-bar' ),
-					'search'      => __( 'Search results', 'horizon-press-news-bar' ),
-					'not_found'   => __( '404 page', 'horizon-press-news-bar' ),
-				),
+				'options' => self::context_labels(),
 				'desc'    => __( 'The bar is never shown in wp-admin, feeds, embeds, previews, the login page, sitemaps, AMP pages, REST, AJAX or cron requests.', 'horizon-press-news-bar' ),
 			),
 			'display_exclude_ids'         => array(
