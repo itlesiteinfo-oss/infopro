@@ -74,6 +74,28 @@ class Settings_Test extends HPRNB_Test_Case {
 		$this->assertSame( 1, $clean['window_value'] );
 	}
 
+	public function test_2_7_reveal_paragraph_and_article_collapse_are_sanitised() {
+		$clean = Settings::sanitize( array_merge( Settings::defaults(), array( 'reveal_mode' => 'paragraph', 'reveal_paragraph' => 4, 'desktop_collapse_mode' => 'article', 'mobile_collapse_mode' => 'article' ) ) );
+		$this->assertSame( 'paragraph', $clean['reveal_mode'] );
+		$this->assertSame( 4, $clean['reveal_paragraph'] );
+		$this->assertSame( 'article', $clean['desktop_collapse_mode'] );
+		$this->assertSame( 'article', $clean['mobile_collapse_mode'] );
+
+		$this->assertSame( 2, Settings::defaults()['reveal_paragraph'], 'The second-to-last paragraph by default.' );
+		$this->assertSame( 1, Settings::sanitize( array( 'reveal_paragraph' => -3 ) )['reveal_paragraph'] );
+		$this->assertSame( 30, Settings::sanitize( array( 'reveal_paragraph' => 500 ) )['reveal_paragraph'] );
+		$this->assertSame( 2, Settings::sanitize( array( 'reveal_paragraph' => 'many' ) )['reveal_paragraph'], 'Garbage falls back to the default.' );
+
+		// An existing install keeps its stored values: nothing is switched to the new modes.
+		$stored = array_merge( Settings::defaults(), array( 'reveal_mode' => 'scroll', 'mobile_collapse_mode' => 'threshold' ) );
+		unset( $stored['reveal_paragraph'] );
+		update_option( Settings::OPTION, $stored );
+		Settings::flush();
+		$this->assertSame( 'scroll', Settings::get()['reveal_mode'] );
+		$this->assertSame( 'threshold', Settings::get()['mobile_collapse_mode'] );
+		$this->assertSame( 2, Settings::get()['reveal_paragraph'], 'The missing key takes its default without a schema bump.' );
+	}
+
 	public function test_enum_fallback_to_default() {
 		$this->assertSame( 'date_desc', Settings::sanitize( array( 'orderby' => 'rand' ) )['orderby'] );
 		$this->assertSame( 'date_asc', Settings::sanitize( array( 'orderby' => 'date_asc' ) )['orderby'] );

@@ -527,7 +527,7 @@ final class Renderer {
 	 */
 	public static function reveal_data( array $settings ): array {
 		$mode  = (string) ( $settings['reveal_mode'] ?? 'immediate' );
-		$mode  = in_array( $mode, array( 'immediate', 'scroll', 'percent', 'end', 'smart' ), true ) ? $mode : 'immediate';
+		$mode  = in_array( $mode, array( 'immediate', 'scroll', 'percent', 'end', 'paragraph', 'smart' ), true ) ? $mode : 'immediate';
 		$value = (int) ( $settings['reveal_value'] ?? 400 );
 		if ( 'percent' === $mode ) {
 			$value = max( 1, min( 100, $value ) );
@@ -538,8 +538,18 @@ final class Renderer {
 			'mode'  => $mode,
 			'value' => $value,
 		);
+		if ( 'paragraph' === $mode ) {
+			// Counted from the end of the article body: 2 is the second-to-last paragraph.
+			$data['paragraph'] = max( 1, min( 30, (int) ( $settings['reveal_paragraph'] ?? 2 ) ) );
+		}
 		if ( 'smart' === $mode ) {
 			$data['smart'] = self::smart_data( $settings );
+		}
+		// The editorial-body selector serves the paragraph trigger and the "follows the reading"
+		// collapse as well as the smart mode, so it travels at the top level whenever it is set.
+		$selector = trim( (string) ( $settings['smart_selector'] ?? '' ) );
+		if ( '' !== $selector ) {
+			$data['sel'] = $selector;
 		}
 
 		return $data;

@@ -1938,3 +1938,160 @@ test( 'v2.6: the settings page names what it does — page types, appearing, fol
 
 	expect( errors ).toEqual( [] );
 } );
+
+test( 'v2.7: before the end of the article, and a bar that follows the reading', async ( { page } ) => {
+	const body = Array.from( { length: 40 }, ( _, i ) =>
+		`<p>Paragraphe ${ i + 1 }. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>` ).join( '\n' );
+	const article = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Article long pour le paragraphe avant la fin', `--post_content=${ body }`, '--porcelain' ] );
+	const brief = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Brève', '--post_content=<p>Deux phrases.</p><p>Pas plus.</p>', '--porcelain' ] );
+	const url = new URL( wp( [ 'post', 'url', article ] ) ).pathname;
+	const briefUrl = new URL( wp( [ 'post', 'url', brief ] ) ).pathname;
+
+	const aside = page.locator( '.hprnb-bar' );
+	const pending = () => page.evaluate( () => document.querySelector( '#hprnb-root' ).classList.contains( 'hprnb-root--pending' ) );
+	const folded = () => page.evaluate( () => document.querySelector( '.hprnb-bar' ).classList.contains( 'hprnb-bar--collapsed' ) );
+	const impressions = () => page.evaluate( () => ( window.dataLayer || [] ).filter( ( r ) => r.event === 'hprnb_impression' ).map( ( r ) => ( { reason: r.trigger_reason, n: r.paragraph_from_end, found: r.paragraph_found } ) ) );
+	const paragraphTop = ( i ) => page.evaluate( ( k ) => {
+		const p = document.querySelectorAll( '.entry-content p, .wp-block-post-content p' )[ k ];
+		return Math.round( p.getBoundingClientRect().top + window.scrollY );
+	}, i );
+	const articleEnd = () => page.evaluate( () => {
+		const a = document.querySelector( '.entry-content, .wp-block-post-content' );
+		return Math.round( a.getBoundingClientRect().bottom + window.scrollY );
+	} );
+	const scrollTo = async ( y ) => {
+		await page.evaluate( ( v ) => window.scrollTo( 0, v ), y );
+		await page.waitForTimeout( 160 );
+	};
+	await page.addInitScript( () => { window.dataLayer = []; } );
+
+	try {
+		const errors = collectErrors( page );
+		await page.setViewportSize( { width: 390, height: 700 } );
+		const vh = 700;
+
+		// --- The reveal: nothing until the second-to-last paragraph enters the screen. ---------
+		setSettings( { reveal_mode: 'paragraph', reveal_paragraph: 2, rotate_interval: 60000, mobile_hide_on_scroll: true, mobile_collapse_mode: 'article', mobile_deep_collapse: false } );
+		await page.goto( url );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await pending() ).toBe( true );
+		expect( await paragraphTop( 38 ) ).toBeGreaterThan( vh * 3, 'The penultimate paragraph is far below the fold.' );
+
+		// Deep into the article but short of that paragraph: still nothing.
+		const p30 = await paragraphTop( 29 );
+		await scrollTo( p30 - vh + 40 );
+		expect( await pending() ).toBe( true, 'Paragraph 30 on screen is not paragraph 39.' );
+		expect( await impressions() ).toEqual( [] );
+
+		// The penultimate paragraph reaches the bottom of the screen: the bar appears, in full.
+		const p39 = await paragraphTop( 38 );
+		const B = p39 - vh + 30;
+		await scrollTo( B );
+		await expect.poll( pending ).toBe( false );
+		expect( await impressions() ).toEqual( [ { reason: 'paragraph_before_end', n: 2, found: true } ] );
+		expect( await folded() ).toBe( false, 'The first appearance is the whole bar.' );
+		expect( await page.evaluate( () => window.hprnbBar.state().collapsed ) ).toBe( false );
+
+		// --- The folding: three zones on the article. -------------------------------------------
+		// Back up inside the body: folded.
+		await scrollTo( B - 200 );
+		await expect.poll( folded ).toBe( true, 'Any scroll back up inside the article folds it.' );
+		// Down again but still short of the trigger point: stays folded — the text is never covered.
+		await scrollTo( B - 100 );
+		await page.waitForTimeout( 120 );
+		expect( await folded() ).toBe( true, 'Between the top and the trigger point it stays folded.' );
+		// Past the trigger point, reading on: open again.
+		await scrollTo( B + 150 );
+		await expect.poll( folded ).toBe( false, 'Only past the trigger point does it unfold.' );
+		// A small scroll up inside the body, past the trigger point: folded again.
+		await scrollTo( B + 90 );
+		await expect.poll( folded ).toBe( true );
+		// Reading on again: open.
+		await scrollTo( B + 150 );
+		await expect.poll( folded ).toBe( false );
+
+		// Past the end of the article: open, and a scroll back up no longer folds it.
+		const endY = await articleEnd();
+		await scrollTo( endY - vh + 60 );
+		await expect.poll( folded ).toBe( false, 'The article is over: the bar stays.' );
+		await scrollTo( endY - vh + 20 );
+		await page.waitForTimeout( 120 );
+		expect( await folded() ).toBe( false, 'Scrolling up while still past the end never folds it.' );
+		// Back into the body, scrolling up: folded — the only place it ever folds.
+		await scrollTo( endY - vh - 240 );
+		await expect.poll( folded ).toBe( true );
+		// A tap on the folded strip opens it and holds it open for a moment, as in every mode.
+		await aside.click( { position: { x: 60, y: 12 } } );
+		await expect.poll( folded ).toBe( false );
+		await scrollTo( endY - vh - 300 );
+		await page.waitForTimeout( 120 );
+		expect( await folded() ).toBe( false, 'Held open after the tap, whatever the scroll.' );
+		// And the bar appeared exactly once for all that.
+		expect( await impressions() ).toHaveLength( 1 );
+		expect( await noHorizontalOverflow( page ) ).toBe( true );
+
+		// --- The count is the editor's: 10 paragraphs before the end fires ten paragraphs earlier.
+		setSettings( { reveal_mode: 'paragraph', reveal_paragraph: 10, rotate_interval: 60000 } );
+		await page.goto( url );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		const p31 = await paragraphTop( 30 );
+		await scrollTo( p31 - vh - 200 );
+		expect( await pending() ).toBe( true, 'Paragraph 31 still below the screen.' );
+		await scrollTo( p31 - vh + 30 );
+		await expect.poll( pending ).toBe( false );
+		expect( await impressions() ).toEqual( [ { reason: 'paragraph_before_end', n: 10, found: true } ] );
+
+		// --- A two-paragraph brief: its second-to-last paragraph is on screen at once. ------------
+		setSettings( { reveal_mode: 'paragraph', reveal_paragraph: 2, rotate_interval: 60000 } );
+		await page.goto( briefUrl );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect.poll( pending ).toBe( false );
+		expect( await impressions() ).toEqual( [ { reason: 'paragraph_before_end', n: 2, found: true } ] );
+
+		// --- Restored mid-page beyond the paragraph: the reader is past the point, the bar shows. --
+		setSettings( { reveal_mode: 'paragraph', reveal_paragraph: 2, rotate_interval: 60000 } );
+		await page.goto( url );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await page.evaluate( () => window.scrollTo( 0, document.documentElement.scrollHeight ) );
+		await page.reload();
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect.poll( pending ).toBe( false );
+		expect( [ 'paragraph_passed', 'paragraph_before_end' ] ).toContain( ( await impressions() )[ 0 ].reason );
+
+		// --- Desktop follows the same three zones with its own switch. ---------------------------
+		await page.setViewportSize( { width: 1366, height: 800 } );
+		setSettings( { reveal_mode: 'paragraph', reveal_paragraph: 2, ticker_mode: 'none', desktop_hide_on_scroll: true, desktop_collapse_mode: 'article' } );
+		await page.goto( url );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await pending() ).toBe( true );
+		const dB = ( await paragraphTop( 38 ) ) - 800 + 30;
+		await scrollTo( dB );
+		await expect.poll( pending ).toBe( false );
+		expect( await folded() ).toBe( false );
+		await scrollTo( dB - 150 );
+		await expect.poll( folded ).toBe( true, 'Desktop folds on the way back up too.' );
+		await scrollTo( dB + 120 );
+		await expect.poll( folded ).toBe( false );
+		const dEnd = await articleEnd();
+		await scrollTo( dEnd - 800 + 80 );
+		await expect.poll( folded ).toBe( false );
+		await scrollTo( dEnd - 800 + 30 );
+		await page.waitForTimeout( 120 );
+		expect( await folded() ).toBe( false, 'Past the end on desktop: never folded.' );
+
+		// --- The three older triggers are untouched: "scroll" still folds on the way down. -------
+		await page.setViewportSize( { width: 390, height: 700 } );
+		setSettings( { reveal_mode: 'immediate', rotate_interval: 60000, mobile_hide_on_scroll: true, mobile_collapse_mode: 'scroll', mobile_collapse_after: 120 } );
+		await page.goto( url );
+		await expect( aside ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await scrollTo( 900 );
+		await expect.poll( folded ).toBe( true );
+		await scrollTo( 700 );
+		await expect.poll( folded ).toBe( false );
+		expect( errors ).toEqual( [] );
+	} finally {
+		wp( [ 'post', 'delete', article, '--force' ] );
+		wp( [ 'post', 'delete', brief, '--force' ] );
+		setSettings();
+	}
+} );

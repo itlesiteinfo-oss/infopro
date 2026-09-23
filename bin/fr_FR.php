@@ -413,4 +413,14 @@ return array(
 	'Never show the bar on these pages'                => 'Ne jamais afficher la barre sur ces pages',
 	'Typical set-ups'                                  => 'Cas d’usage courants',
 	'News Bar'                                         => 'Barre d’actualités',
+
+	// --- 2.7.0: the paragraph-before-the-end trigger and the "follows the reading" folding. ------
+	'Never over the text'                              => 'Jamais sur le texte',
+	'"Before the end of the article" with 2 paragraphs, and the folding of each device set to "Follows the reading": the bar arrives in full at the second-to-last paragraph, folds away the moment the reader scrolls back up into the article, stays folded until that paragraph is reached again, and stays open once the article is over.' => '« Avant la fin de l’article » avec 2 paragraphes, et le repli de chaque appareil sur « Suit la lecture » : la barre arrive entière à l’avant-dernier paragraphe, se replie dès que le lecteur remonte dans l’article, reste repliée jusqu’à ce que ce paragraphe soit de nouveau atteint, et reste ouverte une fois l’article terminé.',
+	'Follows the reading — open when reading on past the point where it appeared, folded on any scroll back up inside the article, never folded once the article is over' => 'Suit la lecture — ouverte quand on poursuit au-delà du point où elle est apparue, repliée à toute remontée dans l’article, jamais repliée une fois l’article terminé',
+	'0 to 800 px of scrolling; 120 px by default. Ignored when the bar is always folded or follows the reading.' => 'De 0 à 800 px de défilement ; 120 px par défaut. Ignoré lorsque la barre est toujours repliée ou suit la lecture.',
+	'Before the end of the article — as soon as the chosen paragraph, counted from the end, comes into view' => 'Avant la fin de l’article — dès que le paragraphe choisi, compté depuis la fin, apparaît à l’écran',
+	'Until then no space is reserved and the bar stays out of view; once it appears it stays. "Before the end" and Smart measure the article body, not the page; Smart fires once on whichever signal comes first.' => 'Jusque-là aucun espace n’est réservé et la barre reste hors de vue ; une fois apparue, elle reste. « Avant la fin » et Intelligent mesurent le corps de l’article, pas la page ; Intelligent se déclenche une fois, au premier signal venu.',
+	'Paragraphs before the end'                        => 'Paragraphes avant la fin',
+	'2 = the second-to-last paragraph of the article. Counted from the end of the article body, so a larger number shows the bar earlier. 1 to 30.' => '2 = l’avant-dernier paragraphe de l’article. Compté depuis la fin du corps de l’article : un nombre plus grand affiche la barre plus tôt. De 1 à 30.',
 );

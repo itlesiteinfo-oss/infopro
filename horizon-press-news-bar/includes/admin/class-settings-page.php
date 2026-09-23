@@ -282,7 +282,7 @@ final class Settings_Page {
 					array(
 						'title'       => __( 'When the bar appears', 'horizon-press-news-bar' ),
 						'description' => __( 'Both devices share this choice. Until the bar appears no space is reserved for it and it stays out of view; once it appears it stays.', 'horizon-press-news-bar' ),
-						'keys'        => array( 'reveal_mode', 'reveal_value', 'smart_selector', 'smart_mobile_progress', 'smart_mobile_time', 'smart_mobile_up', 'smart_mobile_fallback', 'smart_mobile_fallback_time', 'smart_desktop_progress', 'smart_desktop_time', 'smart_desktop_up', 'smart_desktop_fallback', 'smart_desktop_fallback_time' ),
+						'keys'        => array( 'reveal_mode', 'reveal_value', 'reveal_paragraph', 'smart_selector', 'smart_mobile_progress', 'smart_mobile_time', 'smart_mobile_up', 'smart_mobile_fallback', 'smart_mobile_fallback_time', 'smart_desktop_progress', 'smart_desktop_time', 'smart_desktop_up', 'smart_desktop_fallback', 'smart_desktop_fallback_time' ),
 						'scenarios'   => array(
 							array(
 								'title' => __( 'Seen immediately', 'horizon-press-news-bar' ),
@@ -295,6 +295,10 @@ final class Settings_Page {
 							array(
 								'title' => __( 'After a fixed distance', 'horizon-press-news-bar' ),
 								'body'  => __( 'After a scroll distance, with the threshold below: predictable, and it keeps the opening of the page clear.', 'horizon-press-news-bar' ),
+							),
+							array(
+								'title' => __( 'Never over the text', 'horizon-press-news-bar' ),
+								'body'  => __( '"Before the end of the article" with 2 paragraphs, and the folding of each device set to "Follows the reading": the bar arrives in full at the second-to-last paragraph, folds away the moment the reader scrolls back up into the article, stays folded until that paragraph is reached again, and stays open once the article is over.', 'horizon-press-news-bar' ),
 							),
 						),
 					),
@@ -796,6 +800,7 @@ final class Settings_Page {
 					'scroll'    => __( 'While scrolling down past the threshold; it unfolds again when scrolling up', 'horizon-press-news-bar' ),
 					'threshold' => __( 'As soon as the threshold is passed, and it stays folded while below it', 'horizon-press-news-bar' ),
 					'immediate' => __( 'Always folded — the reader opens it with a tap', 'horizon-press-news-bar' ),
+					'article'   => __( 'Follows the reading — open when reading on past the point where it appeared, folded on any scroll back up inside the article, never folded once the article is over', 'horizon-press-news-bar' ),
 				),
 				'depends' => 'mobile_hide_on_scroll',
 			),
@@ -803,7 +808,7 @@ final class Settings_Page {
 				'section' => 'mobile',
 				'type'    => 'number',
 				'label'   => __( 'Collapse threshold (px)', 'horizon-press-news-bar' ),
-				'desc'    => __( '0 to 800 px of scrolling; 120 px by default. Ignored when the bar is always collapsed.', 'horizon-press-news-bar' ),
+				'desc'    => __( '0 to 800 px of scrolling; 120 px by default. Ignored when the bar is always folded or follows the reading.', 'horizon-press-news-bar' ),
 				'depends' => 'mobile_hide_on_scroll',
 			),
 			'mobile_controls_place'       => array(
@@ -960,9 +965,17 @@ final class Settings_Page {
 					'scroll'    => __( 'After a scroll distance — recommended on articles: the opening of the page stays clear', 'horizon-press-news-bar' ),
 					'percent'   => __( 'After a share of the page has been read', 'horizon-press-news-bar' ),
 					'end'       => __( 'Near the end of the page (90 %)', 'horizon-press-news-bar' ),
+					'paragraph' => __( 'Before the end of the article — as soon as the chosen paragraph, counted from the end, comes into view', 'horizon-press-news-bar' ),
 					'smart'     => __( 'Smart — recommended on articles: the end of the article, a real scroll back up, or a reader who got deep into it', 'horizon-press-news-bar' ),
 				),
-				'desc'    => __( 'Until then no space is reserved and the bar stays out of view; once it appears it stays. Smart measures the article body, not the page, and fires once on whichever signal comes first.', 'horizon-press-news-bar' ),
+				'desc'    => __( 'Until then no space is reserved and the bar stays out of view; once it appears it stays. "Before the end" and Smart measure the article body, not the page; Smart fires once on whichever signal comes first.', 'horizon-press-news-bar' ),
+			),
+			'reveal_paragraph'            => array(
+				'section' => 'appearance',
+				'type'    => 'number',
+				'label'   => __( 'Paragraphs before the end', 'horizon-press-news-bar' ),
+				'depends' => 'reveal_mode:paragraph',
+				'desc'    => __( '2 = the second-to-last paragraph of the article. Counted from the end of the article body, so a larger number shows the bar earlier. 1 to 30.', 'horizon-press-news-bar' ),
 			),
 			'reveal_value'                => array(
 				'section' => 'appearance',
@@ -976,7 +989,7 @@ final class Settings_Page {
 				'type'    => 'text',
 				'label'   => __( 'Article body selector', 'horizon-press-news-bar' ),
 				'desc'    => __( 'Optional. A CSS selector for the editorial body of an article, when the theme needs one. Left empty, the usual containers are tried in turn (.entry-content, .post-content, .article-content, .wp-block-post-content…). Never the footer, the comments or what follows the article.', 'horizon-press-news-bar' ),
-				'depends' => 'reveal_mode:smart',
+				'depends' => 'reveal_mode:smart|paragraph',
 			),
 			'smart_mobile_progress'       => array(
 				'section' => 'appearance',
@@ -1166,6 +1179,7 @@ final class Settings_Page {
 					'scroll'    => __( 'While scrolling down past the threshold; it unfolds again when scrolling up', 'horizon-press-news-bar' ),
 					'threshold' => __( 'As soon as the threshold is passed, and it stays folded while below it', 'horizon-press-news-bar' ),
 					'immediate' => __( 'Always folded — the reader opens it from the tab', 'horizon-press-news-bar' ),
+					'article'   => __( 'Follows the reading — open when reading on past the point where it appeared, folded on any scroll back up inside the article, never folded once the article is over', 'horizon-press-news-bar' ),
 				),
 				'depends' => 'desktop_hide_on_scroll',
 			),
@@ -1173,7 +1187,7 @@ final class Settings_Page {
 				'section' => 'desktop',
 				'type'    => 'number',
 				'label'   => __( 'Collapse threshold (px)', 'horizon-press-news-bar' ),
-				'desc'    => __( '0 to 800 px of scrolling; 120 px by default. Ignored when the bar is always collapsed.', 'horizon-press-news-bar' ),
+				'desc'    => __( '0 to 800 px of scrolling; 120 px by default. Ignored when the bar is always folded or follows the reading.', 'horizon-press-news-bar' ),
 				'depends' => 'desktop_hide_on_scroll',
 			),
 			'mobile_card_thumb'           => array(

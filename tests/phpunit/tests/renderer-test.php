@@ -163,7 +163,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$this->assertStringContainsString( esc_attr( '{"mode":"immediate","value":400}' ), $root, 'The bar shows up with the page by default.' );
 		$this->assertStringContainsString( 'data-hprnb-endpoint="' . esc_url( rest_url( 'hprnb/v1/items' ) ) . '"', $root );
 		$this->assertStringContainsString( 'data-hprnb-css="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=2.6.0"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=2.7.0"', $root );
 		$this->assertStringContainsString( 'data-hprnb-js', $root, 'The default mobile presentation (rotate, flow card) needs the interactive script.' );
 		$this->assertStringContainsString( 'style="--hprnb-bg:#1B1C20;--hprnb-fg:#F5F5F5;--hprnb-label-bg:#CE3029;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-accent:#CE3029;--hprnb-font-size:15px;--hprnb-height:40px;--hprnb-d-lines:1;--hprnb-max:1230px;--hprnb-gutter:15px;--hprnb-z:99990;--hprnb-sep:&#039;•&#039;;--hprnb-m-bg:#1B1C20;--hprnb-m-fg:#F5F5F5;--hprnb-m-accent:#CE3029;--hprnb-m-label-fg:#FFFFFF;--hprnb-m-font-size:16px;--hprnb-m-height:76px;--hprnb-m-lines:2;--hprnb-m-line:26px;--hprnb-m-pad:12px;--hprnb-peek:40px;--hprnb-m-ctrls:1;--hprnb-d-thumb:32px;--hprnb-m-thumb:48px;--hprnb-m-card-thumb:96px;--hprnb-m-card-thumb-h:75px;--hprnb-m-card-lines:2;--hprnb-m-gap:0px"', $root );
 		$this->assertStringNotContainsString( ' hidden', $root );
@@ -182,7 +182,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$hybrid_js = $this->with_settings( array( 'close_button' => true, 'show_on_desktop' => false ) );
 		$root = Renderer::root( Renderer::payload( array( $this->item() ), $hybrid_js ), $hybrid_js );
 		$this->assertStringContainsString( 'data-hprnb-js="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=2.6.0"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=2.7.0"', $root );
 		$this->assertStringContainsString( 'hprnb-hide-desktop', $root );
 
 		add_filter( 'hprnb_stale_threshold', static fn() => 900 );
@@ -320,6 +320,34 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$end = $this->with_settings( array( 'reveal_mode' => 'end', 'reveal_value' => 10 ) );
 		$this->assertSame( array( 'mode' => 'end', 'value' => 90 ), Renderer::reveal_data( $end ) );
 		$this->assertSame( array( 'mode' => 'immediate', 'value' => 400 ), Renderer::reveal_data( array_merge( $settings, array( 'reveal_mode' => 'nonsense' ) ) ), 'Unknown modes fall back.' );
+
+		// 2.7.0: "before the end of the article" carries the paragraph count, from the end, clamped.
+		$para = $this->with_settings( array( 'reveal_mode' => 'paragraph', 'reveal_paragraph' => 2 ) );
+		$this->assertSame( array( 'mode' => 'paragraph', 'value' => 400, 'paragraph' => 2 ), Renderer::reveal_data( $para ) );
+		$this->assertContains( 'hprnb-root--pending', Renderer::root_classes( $para ), 'It waits like every other deferred mode.' );
+		$this->assertContains( 'hprnb-root--reveal', Renderer::root_classes( $para ) );
+		$this->assertTrue( Renderer::needs_interactive_js( $para ) );
+		$this->assertSame( 30, Renderer::reveal_data( $this->with_settings( array( 'reveal_mode' => 'paragraph', 'reveal_paragraph' => 99 ) ) )['paragraph'], 'Sanitised to the schema maximum.' );
+		$this->assertSame( 1, Renderer::reveal_data( $this->with_settings( array( 'reveal_mode' => 'paragraph', 'reveal_paragraph' => 0 ) ) )['paragraph'], 'And to the minimum.' );
+		$this->assertSame( 2, Renderer::reveal_data( array_merge( $settings, array( 'reveal_mode' => 'paragraph' ) ) )['paragraph'], 'Second-to-last by default.' );
+		$this->assertArrayNotHasKey( 'paragraph', Renderer::reveal_data( $scroll ), 'Only the mode that uses it carries it.' );
+
+		// The body selector serves the paragraph trigger and the "follows the reading" collapse too,
+		// so it travels at the top level whenever it is set — and never as an empty string.
+		$with_sel = $this->with_settings( array( 'reveal_mode' => 'paragraph', 'smart_selector' => '.my-article' ) );
+		$this->assertSame( '.my-article', Renderer::reveal_data( $with_sel )['sel'] );
+		$this->assertArrayNotHasKey( 'sel', Renderer::reveal_data( $para ) );
+		$smart_sel = $this->with_settings( array( 'reveal_mode' => 'smart', 'smart_selector' => '.my-article' ) );
+		$this->assertSame( '.my-article', Renderer::reveal_data( $smart_sel )['sel'] );
+		$this->assertSame( '.my-article', Renderer::reveal_data( $smart_sel )['smart']['sel'], 'The smart block keeps its own copy.' );
+
+		// The "follows the reading" collapse is a trigger value on each profile, and nothing else.
+		$follow = $this->with_settings( array( 'desktop_hide_on_scroll' => true, 'desktop_collapse_mode' => 'article', 'mobile_collapse_mode' => 'article' ) );
+		$this->assertSame( 'article', Renderer::profile_data( $follow, 'm' )['trigger'] );
+		$this->assertSame( 'article', Renderer::profile_data( $follow, 'd' )['trigger'] );
+		$this->assertTrue( Renderer::profile_data( $follow, 'd' )['collapse'] );
+		$this->assertContains( 'hprnb-root--d-collapse', Renderer::root_classes( $follow ) );
+		$this->assertSame( 'scroll', Renderer::profile_data( $this->with_settings( array( 'mobile_collapse_mode' => 'sideways' ) ), 'm' )['trigger'], 'An unknown trigger falls back to the default.' );
 
 		// The mobile profile carries the collapse trigger, its threshold and the two buttons.
 		$mobile = Renderer::profile_data( $settings, 'm' );

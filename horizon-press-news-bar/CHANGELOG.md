@@ -2,6 +2,32 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.7.0] — 2026-09-23
+
+### Ajouté — apparition « avant la fin de l'article »
+
+- **Nouveau mode `paragraph`** dans *Moment d'apparition de la barre*, à côté des cinq modes existants, tous inchangés : la barre apparaît **dès que le Nᵉ paragraphe compté depuis la fin de l'article entre à l'écran** en descendant. Nouveau réglage `reveal_paragraph` (défaut **2** = l'avant-dernier paragraphe, de 1 à 30) : un nombre plus grand affiche la barre plus tôt. Positionnel et déterministe — le même lecteur voit toujours la barre à la même ligne.
+- Il mesure **le corps de l'article** (mêmes sélecteurs que le mode intelligent, `smart_selector` en tête), jamais la page ; les paragraphes vides et le texte de la barre elle-même (placement dans l'article) ne comptent pas. Sans corps d'article, ou sans paragraphe, il retombe honnêtement sur « vers la fin de la page » et le dit dans la mesure (`paragraph_fallback`).
+- **Une position restaurée ou un lien profond au-delà du paragraphe affiche la barre immédiatement** (`paragraph_passed`). Ce cas a été trouvé en test : un `IntersectionObserver` ne voit jamais un paragraphe que le navigateur saute d'un coup, aussi le déclencheur compare une position mesurée — recalculée quand la page reflue — dans un défilement passif, sans lecture de mise en page dans le gestionnaire.
+- Mesure : `trigger_reason` gagne `paragraph_before_end`, `paragraph_passed` et `paragraph_fallback`, avec `paragraph_from_end` et `paragraph_found`.
+
+### Ajouté — repli « suit la lecture »
+
+- **Nouvelle valeur `article`** pour `desktop_collapse_mode` et `mobile_collapse_mode`, à côté de `scroll`, `threshold` et `immediate`, inchangés. Trois zones sur l'article, avec **B le point où la barre est apparue** et **C la fin du corps de l'article** :
+  - la première apparition est **toujours la barre entière** — c'est tout l'intérêt d'avoir attendu ;
+  - **entre le haut et B**, la barre reste repliée, même en redescendant : le texte n'est jamais recouvert ;
+  - **entre B et C**, elle s'ouvre quand on poursuit la lecture et **se replie à toute remontée** ;
+  - **au-delà de C**, elle reste ouverte, et ne se replie plus tant qu'on ne revient pas dans le corps.
+- Le seuil de repli (`collapse_after`) n'y joue aucun rôle, comme pour « toujours repliée » ; la description du champ le dit. Le tap qui ouvre la barre repliée et la retient quatre secondes vaut ici comme partout. Sans corps d'article, la fin n'est jamais atteinte et seules les deux premières zones s'appliquent.
+- Aucun moteur nouveau : `setupCollapse()` gagne une branche, et partage avec `setupReveal()` la position d'apparition et le corps d'article localisé une seule fois.
+
+### Modifié
+
+- Le sélecteur du corps de l'article se règle aussi pour le mode « avant la fin » (il suivait seulement le mode intelligent) et voyage désormais au premier niveau de `data-hprnb-reveal` dès qu'il est renseigné.
+- Nouveau cas d'usage expliqué dans l'onglet *Apparition et repli* : « Jamais sur le texte », qui combine les deux nouveautés.
+- Budget du script de la barre relevé de 20 à 22 Ko (il pèse 19,9 Ko).
+- Aucun schéma modifié : une installation existante garde ses modes et reçoit `reveal_paragraph` à sa valeur par défaut.
+
 ## [2.6.0] — 2026-09-16
 
 ### Ajouté — contrôle par article

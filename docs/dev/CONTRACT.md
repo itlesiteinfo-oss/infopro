@@ -729,3 +729,29 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   `--hprnb-m-card-lines` carries the effective count; `hprnb-admin.js` applies the identical clamp so the
   live preview and the height hint cannot drift from the front end.
 - Admin `depends` supports `key`, `key:value` **and `key:a|b`** (any of several options of one control).
+
+## 21. Paragraph trigger and "follows the reading" collapse (2.7.0)
+
+- `reveal_mode` gains `paragraph`; `reveal_paragraph` (int, default 2, 1–30) is the count from the
+  **end** of the article body. `Renderer::reveal_data()` emits `paragraph` for that mode only, and
+  `sel` (the trimmed `smart_selector`) at the top level whenever it is non-empty, for every mode;
+  the `smart` block keeps its own `sel` copy.
+- `setupReveal()` now publishes on the bar's state: `articleSel`, `article` (located once by
+  `articleOf()`, shared with the smart engine and the collapse engine), `revealY` (the `scrollY` at
+  which the bar became visible; `0` for an immediate bar; `null` while pending) and `onReveal[]`
+  (callbacks run right after the pending class is removed).
+- `setupParagraph()`: the target is the Nth non-empty `<p>` from the end of the article body,
+  excluding any `<p>` inside `.hprnb-root`. Its document offsets are measured at init and on
+  `document.body` resize (`observeSize`, debounced 200 ms) and compared in a passive rAF scroll
+  handler: `scrollY > bottom` → `paragraph_passed`, `scrollY + innerHeight >= top` →
+  `paragraph_before_end`. No paragraph → `watchPage( 'percent', 90, 'paragraph_fallback' )`.
+  Extra analytics fields: `paragraph_from_end`, `article_found`, `paragraph_found`.
+- `desktop_collapse_mode` / `mobile_collapse_mode` gain `article`. In `setupCollapse()`, with
+  `B = state.revealY` and `endY` the article's document bottom (re-measured on body resize):
+  `pastEnd(y) = y + innerHeight >= endY`. Scroll rule, after the short-screen guard:
+  `revealY === null` → no-op; `pastEnd` → open; `y < B` → folded; `y > lastY + 8` → open;
+  `y < lastY - 8` → folded. `onReveal` forces open and resets `lastY`. `collapse_after` is
+  ignored; the deep-landing fold applies only to an already visible bar inside the body. The
+  4-second hold after a tap or keyboard focus is unchanged.
+- Bar script budget: 22 KB (was 20 KB).
+

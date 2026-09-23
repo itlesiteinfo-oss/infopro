@@ -39,6 +39,7 @@
     "dismiss_duration_hours": 24,
     "reveal_mode": "immediate",
     "reveal_value": 400,
+    "reveal_paragraph": 2,
     "smart_selector": "",
     "smart_mobile_progress": 55,
     "smart_mobile_time": 15,

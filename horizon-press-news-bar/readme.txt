@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.6.0
+Stable tag: 2.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,11 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.7.0 =
+* New reveal mode "Before the end of the article": the bar appears as soon as the Nth paragraph from the end comes into view (2 = second-to-last, configurable 1–30). Measures the article body, not the page.
+* New folding mode "Follows the reading" on each device: the bar first appears in full, folds on any scroll back up inside the article, stays folded until the trigger point is reached again, and stays open once the article is over.
+* A restored position or a deep link beyond the paragraph shows the bar at once.
 
 = 2.6.0 =
 * New: a "News Bar" box on every post and page edit screen — keep one article out of the bar, or keep the bar off one page. Two independent switches.

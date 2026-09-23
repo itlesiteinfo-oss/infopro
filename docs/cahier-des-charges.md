@@ -2367,6 +2367,12 @@ mode hybrid:
 4. **Page de réglages en six onglets** nommés d'après la question posée : Contenu, Où, Apparition et repli, Ordinateur et mobile, Couleurs, Avancé. Un seul endroit décide des types de pages ; l'interrupteur de repli est un interrupteur ; chaque carte qui le mérite porte un dépliant « Cas d'usage courants ». Aucun réglage supprimé, aucun schéma modifié.
 5. **Trois correctifs trouvés par inspection** : la taille de police d'ordinateur était déclarée mais sur aucun onglet (donc inaccessible, et réinitialisée à chaque enregistrement) ; l'animation d'entrée empruntait la transition du repli, désactivé par défaut sur ordinateur ; `prefers-reduced-motion` ne couvrait pas la barre d'ordinateur.
 
+### 15.8.3 septies — Avant la fin de l'article et repli qui suit la lecture (2.7.0)
+
+1. **Mode d'apparition `paragraph`** : la barre apparaît dès que le Nᵉ paragraphe compté depuis la fin du corps de l'article entre à l'écran ; `reveal_paragraph` (défaut 2, de 1 à 30). Corps de l'article via `smart_selector` puis les sélecteurs usuels ; paragraphes vides et texte de la barre exclus ; repli honnête sur « vers la fin de la page » sans corps ni paragraphe. Une position au-delà du paragraphe (restauration, lien profond) affiche la barre immédiatement — position mesurée et recalculée au reflux, comparée dans un défilement passif, jamais un `IntersectionObserver` (qui ne voit pas un saut).
+2. **Repli `article`** sur chaque profil, B = point d'apparition, C = fin du corps : première apparition entière ; repliée entre le haut et B quel que soit le sens ; entre B et C ouverte en descendant, repliée à toute remontée ; au-delà de C toujours ouverte. `collapse_after` ignoré ; tap et retenue de quatre secondes inchangés.
+3. **Aucun second moteur** : une branche dans `setupReveal()`, une dans `setupCollapse()`, la position d'apparition et le corps d'article partagés sur l'état de la barre. Aucun schéma modifié.
+
 ---
 
 # ANNEXE C — CONSIGNE FINALE À CLAUDE CODE

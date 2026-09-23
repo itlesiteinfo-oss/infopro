@@ -256,13 +256,19 @@ final class Settings {
 			'reveal_mode'                 => array(
 				'type'    => 'enum',
 				'default' => 'immediate',
-				'options' => array( 'immediate', 'scroll', 'percent', 'end', 'smart' ),
+				'options' => array( 'immediate', 'scroll', 'percent', 'end', 'paragraph', 'smart' ),
 			),
 			'reveal_value'                => array(
 				'type'    => 'int',
 				'default' => 400,
 				'min'     => 0,
 				'max'     => 4000,
+			),
+			'reveal_paragraph'            => array(
+				'type'    => 'int',
+				'default' => 2,
+				'min'     => 1,
+				'max'     => 30,
 			),
 			'smart_selector'              => array(
 				'type'        => 'text',
@@ -417,7 +423,7 @@ final class Settings {
 			'desktop_collapse_mode'       => array(
 				'type'    => 'enum',
 				'default' => 'scroll',
-				'options' => array( 'scroll', 'threshold', 'immediate' ),
+				'options' => array( 'scroll', 'threshold', 'immediate', 'article' ),
 			),
 			'desktop_collapse_after'      => array(
 				'type'    => 'int',
@@ -536,7 +542,7 @@ final class Settings {
 			'mobile_collapse_mode'        => array(
 				'type'    => 'enum',
 				'default' => 'scroll',
-				'options' => array( 'scroll', 'threshold', 'immediate' ),
+				'options' => array( 'scroll', 'threshold', 'immediate', 'article' ),
 			),
 			'mobile_collapse_after'       => array(
 				'type'    => 'int',

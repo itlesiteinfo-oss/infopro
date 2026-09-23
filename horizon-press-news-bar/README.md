@@ -268,6 +268,22 @@ Clés de métadonnée `_hprnb_exclude_item` et `_hprnb_hide_bar`, protégées pa
 
 **Nouvelle classe racine `hprnb-root--reveal`** : l'animation d'entrée porte sa propre transition au lieu d'emprunter celle du repli, qui est désactivé par défaut sur ordinateur.
 
+## 9 undecies. Avant la fin de l'article et repli qui suit la lecture (2.7)
+
+**Mode `paragraph`** dans *Moment d'apparition de la barre* : la barre apparaît **dès que le Nᵉ paragraphe compté depuis la fin de l'article entre à l'écran**. `reveal_paragraph` (défaut 2 = l'avant-dernier, de 1 à 30). Il mesure le corps de l'article (`smart_selector` puis les sélecteurs usuels) ; les paragraphes vides et le texte de la barre elle-même ne comptent pas ; sans corps ou sans paragraphe, il retombe sur « vers la fin de la page ». Une position restaurée ou un lien profond **au-delà** du paragraphe affiche la barre immédiatement. La position est mesurée puis recalculée quand la page reflue, et comparée dans un défilement passif — pas d'`IntersectionObserver` ici, qui ne verrait jamais un paragraphe que le navigateur saute d'un coup.
+
+**Repli `article`** (« Suit la lecture »), sur chaque profil. Avec **B** le point où la barre est apparue et **C** la fin du corps de l'article :
+
+| Zone | En descendant | En remontant |
+|---|---|---|
+| Haut → B | repliée | repliée |
+| B → C | **ouverte** | **repliée** |
+| Au-delà de C | ouverte | ouverte |
+
+La première apparition est toujours la barre entière. `collapse_after` n'y joue aucun rôle. Le tap qui ouvre la barre repliée la retient quatre secondes, comme partout.
+
+**Mesure** : `trigger_reason` gagne `paragraph_before_end`, `paragraph_passed` et `paragraph_fallback`, avec `paragraph_from_end` et `paragraph_found`.
+
 ## 10. Ticker (optionnel)
 
 Désactivé par défaut. Trois modes :

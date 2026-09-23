@@ -801,7 +801,14 @@
 		var cfg = parseJson( root.getAttribute( 'data-hprnb-reveal' ) );
 		var mode = cfg && cfg.mode ? cfg.mode : 'immediate';
 		var pending = root.classList.contains( 'hprnb-root--pending' );
+		// Shared with the collapse engine: where the reader was when the bar became visible (null
+		// while it is still pending), the editorial body once located, and who wants to know.
+		state.articleSel = ( cfg && ( cfg.sel || ( cfg.smart && cfg.smart.sel ) ) ) || '';
+		state.article = undefined;
+		state.revealY = null;
+		state.onReveal = [];
 		if ( 'immediate' === mode || ! pending ) {
+			state.revealY = 0; // Visible from the top of the page: the trigger point is the top.
 			if ( analytics ) {
 				analytics.impression( 'legacy_immediate' );
 			}
@@ -817,10 +824,14 @@
 				return;
 			}
 			done = true;
+			state.revealY = window.scrollY;
 			root.classList.remove( 'hprnb-root--pending' );
 			body.classList.remove( 'hprnb-pending' );
 			if ( contract ) {
 				contract.emit();
+			}
+			for ( var i = 0; i < state.onReveal.length; i++ ) {
+				state.onReveal[ i ]();
 			}
 			if ( analytics ) {
 				analytics.impression( reason, extra );
@@ -837,7 +848,25 @@
 			setupSmart( state, cfg, mobile, reveal );
 			return;
 		}
+		if ( 'paragraph' === mode ) {
+			setupParagraph( state, cfg, reveal );
+			return;
+		}
+		watchPage( state, mode, value, 'legacy_' + mode, reveal );
+	}
 
+	/**
+	 * The page-based triggers: a scroll distance, or a share of the whole page. Also the honest
+	 * stand-in when a body-based trigger finds no article to measure.
+	 *
+	 * @param {Object}   state  Teardown registry of the bar.
+	 * @param {string}   mode   'scroll' | 'percent' | 'end'.
+	 * @param {number}   value  Pixels, or a percentage.
+	 * @param {string}   reason Impression reason reported when it fires.
+	 * @param {Function} reveal The single decision point.
+	 * @param {Object=}  extra  Extra analytics fields.
+	 */
+	function watchPage( state, mode, value, reason, reveal, extra ) {
 		function reached() {
 			var y = window.scrollY;
 			if ( 'scroll' === mode ) {
@@ -848,7 +877,7 @@
 		}
 
 		if ( reached() ) {
-			reveal( 'legacy_' + mode );
+			reveal( reason, extra );
 			return;
 		}
 		var ticking = false;
@@ -860,7 +889,96 @@
 			window.requestAnimationFrame( function () {
 				ticking = false;
 				if ( reached() ) {
-					reveal( 'legacy_' + mode );
+					reveal( reason, extra );
+					window.removeEventListener( 'scroll', onScroll );
+				}
+			} );
+		}
+		state.on( window, 'scroll', onScroll, { passive: true } );
+	}
+
+	/** The editorial body, located once per bar and shared by the reveal and collapse engines. */
+	function articleOf( state ) {
+		if ( state.article === undefined ) {
+			state.article = findArticle( state.articleSel || '' );
+		}
+		return state.article;
+	}
+
+	/**
+	 * "Before the end of the article": the bar appears as soon as the Nth paragraph counted from
+	 * the end of the editorial body comes into view — 2 is the second-to-last one. Positional and
+	 * deterministic, so the same reader always sees the bar at the same line.
+	 *
+	 * @param {Object}   state  Teardown registry of the bar.
+	 * @param {Object}   cfg    Parsed data-hprnb-reveal.
+	 * @param {Function} reveal The single decision point.
+	 */
+	function setupParagraph( state, cfg, reveal ) {
+		var n = typeof cfg.paragraph === 'number' ? Math.max( 1, cfg.paragraph ) : 2;
+		var article = articleOf( state );
+		var target = null;
+		if ( article ) {
+			var all = article.querySelectorAll( 'p' );
+			var prose = [];
+			for ( var i = 0; i < all.length; i++ ) {
+				var p = all[ i ];
+				// The bar itself can sit inside the article (inline placement): its text never counts.
+				if ( p.closest && p.closest( '.hprnb-root' ) ) {
+					continue;
+				}
+				if ( ( p.textContent || '' ).replace( /\s+/g, '' ).length > 0 ) {
+					prose.push( p );
+				}
+			}
+			if ( prose.length ) {
+				target = prose[ Math.max( 0, prose.length - n ) ];
+			}
+		}
+		var extra = { paragraph_from_end: n, article_found: !! article, paragraph_found: !! target };
+		if ( ! target ) {
+			// Nothing to count: near the end of the page is the only honest stand-in.
+			watchPage( state, 'percent', 90, 'paragraph_fallback', reveal, extra );
+			return;
+		}
+
+		// Where the paragraph sits, measured now and again whenever the page reflows (lazy images,
+		// ads), never inside the scroll handler. A scroll — including the browser restoring a
+		// position, or a deep link jumping straight past the paragraph — is then a plain comparison.
+		// An IntersectionObserver would miss that jump: nothing ever crosses the screen.
+		var top = 0;
+		var bottom = 0;
+		function measure() {
+			var rect = target.getBoundingClientRect();
+			top = rect.top + window.scrollY;
+			bottom = rect.bottom + window.scrollY;
+		}
+		function check() {
+			var y = window.scrollY;
+			if ( y > bottom ) {
+				reveal( 'paragraph_passed', extra ); // Already beyond it: the reader is past the point.
+				return true;
+			}
+			if ( y + window.innerHeight >= top ) {
+				reveal( 'paragraph_before_end', extra );
+				return true;
+			}
+			return false;
+		}
+		measure();
+		if ( check() ) {
+			return;
+		}
+		observeSize( state, document.body, measure );
+		var ticking = false;
+		function onScroll() {
+			if ( ticking ) {
+				return;
+			}
+			ticking = true;
+			window.requestAnimationFrame( function () {
+				ticking = false;
+				if ( check() ) {
 					window.removeEventListener( 'scroll', onScroll );
 				}
 			} );
@@ -887,7 +1005,7 @@
 		var fallbackProgress = ( typeof tune.fp === 'number' ? tune.fp : 75 ) / 100;
 		var fallbackTime = ( typeof tune.ft === 'number' ? tune.ft : 25 ) * 1000;
 
-		var article = findArticle( smart.sel || '' );
+		var article = articleOf( state );
 		// Geometry is read here and on resize only: never inside the scroll handler.
 		var top = 0;
 		var height = 0;
@@ -1206,9 +1324,40 @@
 			chevron.parentNode.removeChild( chevron );
 		} );
 
+		// "Follows the reading": three zones on the article. Before the trigger point (where the bar
+		// first appeared) the bar stays folded so the body is never covered; inside the body it
+		// unfolds while reading on and folds on any scroll back up; once the reader is past the
+		// end of the article it stays open. The collapse threshold plays no part here.
+		var article = 'article' === trigger ? articleOf( state ) : null;
+		var endY = Infinity;
+		function measureEnd() {
+			if ( article ) {
+				endY = article.getBoundingClientRect().bottom + window.scrollY;
+			}
+		}
+		function pastEnd( y ) {
+			return y + window.innerHeight >= endY;
+		}
+		if ( 'article' === trigger ) {
+			measureEnd();
+			if ( article ) {
+				observeSize( state, document.body, measureEnd );
+			}
+			// The first appearance is always the full bar: that is the whole point of waiting.
+			state.onReveal.push( function () {
+				set( false );
+				lastY = window.scrollY;
+			} );
+		}
+
 		// Always collapsed (the reader opens it on demand), or landing past the threshold: start
 		// collapsed, without a slide.
-		if ( ( 'immediate' === trigger || ( profile.deep && window.scrollY > after ) ) && ! isShortScreen() ) {
+		var landed = profile.deep && window.scrollY > after;
+		if ( 'article' === trigger ) {
+			// A pending bar has nothing to fold yet; a visible one landing inside the body does.
+			landed = landed && state.revealY !== null && ! pastEnd( window.scrollY );
+		}
+		if ( ( 'immediate' === trigger || landed ) && ! isShortScreen() ) {
 			aside.style.transition = 'none';
 			set( true );
 			void aside.offsetHeight;
@@ -1235,6 +1384,21 @@
 				} else if ( 'threshold' === trigger ) {
 					// Collapse once past the threshold and stay collapsed until the reader taps.
 					set( y > after );
+				} else if ( 'article' === trigger ) {
+					var b = state.revealY;
+					if ( b === null ) {
+						lastY = y;
+						return; // Still waiting to appear: nothing to fold.
+					}
+					if ( pastEnd( y ) ) {
+						set( false );
+					} else if ( y < b ) {
+						set( true );
+					} else if ( y > lastY + 8 ) {
+						set( false );
+					} else if ( y < lastY - 8 ) {
+						set( true );
+					}
 				} else if ( y > lastY + 8 && y > after ) {
 					set( true );
 				} else if ( y < lastY - 8 || y <= after ) {
