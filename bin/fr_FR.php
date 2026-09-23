@@ -577,4 +577,10 @@ return array(
 	'Theme font' => 'Police du thème',
 	'The bars use the site\'s own font, as before 2.16.' => 'Les barres utilisent la police du site, comme avant la 2.16.',
 	'The URGENT bar is switched off on this device (Content → Bars shown).' => 'Le bandeau URGENT est désactivé sur cet appareil (Contenu → Barres affichées).',
+	// 2.16: help texts of the new design.
+	'The red of the reference site and white text. The label is a plate in the two colours swapped, with a live dot; the headline is bold. The contrast of the pair is checked as you type. The preview on the right shows the bar while this tab is open.' => 'Le rouge du site de référence et un texte blanc. L’étiquette est une plaque aux deux couleurs inversées, avec son point animé ; le titre est en gras. Le contraste du couple est vérifié pendant la saisie. L’aperçu à droite montre le bandeau tant que cet onglet est ouvert.',
+	'In capitals on a plate before the headline, with a live dot. "URGENT" by default.' => 'En capitales sur une plaque devant le titre, avec un point animé. « URGENT » par défaut.',
+	'From 14 to 22 px, 17 by default. The bar is at least 48 px tall (more from 19 px, or with a taller news bar).' => 'De 14 à 22 px, 17 par défaut. Le bandeau mesure au moins 48 px de haut (davantage à partir de 19 px, ou avec une barre d’actualités plus haute).',
+	'From 14 to 20 px, 17 by default; also used by the phone design on desktop. The bar keeps the height of the mobile news bar (76 px by default) while two lines fit in it.' => 'De 14 à 20 px, 17 par défaut ; sert aussi au design mobile sur ordinateur. Le bandeau garde la hauteur de la barre d’actualités mobile (76 px par défaut) tant que deux lignes y tiennent.',
+	'The plate, then one headline at a time on a single line, with pause and close at the end of the bar.' => 'La plaque, puis un titre à la fois sur une seule ligne, avec pause et fermer au bout du bandeau.',
 );

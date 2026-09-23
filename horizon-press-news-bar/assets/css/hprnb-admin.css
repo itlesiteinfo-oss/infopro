@@ -832,6 +832,10 @@
 	padding-block: 0;
 }
 
+.hprnb-root.hprnb-root--flat:not(.hprnb-root--u-d-flow) .hprnb-bar--urgent {
+	--hprnb-u-tabw: 0px;
+}
+
 .hprnb-root.hprnb-root--flat:not(.hprnb-root--u-d-flow) .hprnb-bar--urgent .hprnb-bar__controls {
 	position: static;
 	align-self: stretch;

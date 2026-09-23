@@ -6,8 +6,8 @@ msgstr ""
 "Language-Team: Français\n"
 "Last-Translator: Horizon Press\n"
 "MIME-Version: 1.0\n"
-"PO-Revision-Date: 2026-09-23 22:47+0000\n"
-"POT-Creation-Date: 2026-09-23 22:47+0000\n"
+"PO-Revision-Date: 2026-09-23 23:45+0000\n"
+"POT-Creation-Date: 2026-09-23 23:45+0000\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Project-Id-Version: Horizon Press News Bar 2.16.0\n"
 "Report-Msgid-Bugs-To: https://horizonpress.example/news-bar\n"
@@ -350,8 +350,8 @@ msgid "Colours of the URGENT bar"
 msgstr "Couleurs du bandeau URGENT"
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:296
-msgid "The red of the reference site and white text. The label carries a live dot and a chevron, the headline is bold, and the close button sits in the tab above the corner, as on the news bar. The preview on the right shows it while this tab is open."
-msgstr "Le rouge du site de référence et du texte blanc. L’étiquette porte un point animé et un chevron, le titre est en gras, et le bouton fermer se trouve dans l’onglet au-dessus du coin, comme sur la barre d’actualités. L’aperçu à droite le montre tant que cet onglet est ouvert."
+msgid "The red of the reference site and white text. The label is a plate in the two colours swapped, with a live dot; the headline is bold. The contrast of the pair is checked as you type. The preview on the right shows the bar while this tab is open."
+msgstr "Le rouge du site de référence et un texte blanc. L’étiquette est une plaque aux deux couleurs inversées, avec son point animé ; le titre est en gras. Le contraste du couple est vérifié pendant la saisie. L’aperçu à droite montre le bandeau tant que cet onglet est ouvert."
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:302
 msgid "Where"
@@ -1348,24 +1348,24 @@ msgid "Label of the red bar"
 msgstr "Étiquette du bandeau rouge"
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1157
-msgid "In capitals before the headline, with a live dot and a chevron. \"URGENT\" by default."
-msgstr "En capitales avant le titre, avec un point animé et un chevron. « URGENT » par défaut."
+msgid "In capitals on a plate before the headline, with a live dot. \"URGENT\" by default."
+msgstr "En capitales sur une plaque devant le titre, avec un point animé. « URGENT » par défaut."
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1163
 msgid "Headline size on desktop (one line)"
 msgstr "Taille du titre sur ordinateur (une ligne)"
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1164
-msgid "From 14 to 22 px, 17 by default. The bar is 48 px tall, a little more for the largest sizes."
-msgstr "De 14 à 22 px, 17 par défaut. Le bandeau mesure 48 px de haut, un peu plus pour les plus grandes tailles."
+msgid "From 14 to 22 px, 17 by default. The bar is at least 48 px tall (more from 19 px, or with a taller news bar)."
+msgstr "De 14 à 22 px, 17 par défaut. Le bandeau mesure au moins 48 px de haut (davantage à partir de 19 px, ou avec une barre d’actualités plus haute)."
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1169
 msgid "Headline size on phones"
 msgstr "Taille du titre sur mobile"
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1170
-msgid "From 14 to 20 px, 17 by default; also used by the phone design on desktop. The bar stays 76 px tall up to 18 px."
-msgstr "De 14 à 20 px, 17 par défaut ; sert aussi au design mobile sur ordinateur. Le bandeau garde 76 px de haut jusqu’à 18 px."
+msgid "From 14 to 20 px, 17 by default; also used by the phone design on desktop. The bar keeps the height of the mobile news bar (76 px by default) while two lines fit in it."
+msgstr "De 14 à 20 px, 17 par défaut ; sert aussi au design mobile sur ordinateur. Le bandeau garde la hauteur de la barre d’actualités mobile (76 px par défaut) tant que deux lignes y tiennent."
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1178
 msgid "News face — recommended"
@@ -1400,8 +1400,8 @@ msgid "One line"
 msgstr "Une seule ligne"
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1211
-msgid "The label, the headlines in a row as the news bar scrolls them, the buttons at the end of the bar."
-msgstr "L’étiquette, les titres à la suite qui défilent comme dans la barre d’actualités, les boutons au bout du bandeau."
+msgid "The plate, then one headline at a time on a single line, with pause and close at the end of the bar."
+msgstr "La plaque, puis un titre à la fois sur une seule ligne, avec pause et fermer au bout du bandeau."
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1214
 msgid "Same design as on phones"
@@ -1862,7 +1862,7 @@ msgid "Colours, sizes and label update instantly. Content criteria are applied b
 msgstr "Les couleurs, tailles et le label se mettent à jour instantanément. Les critères de contenu sont appliqués par « Actualiser les articles de l’aperçu » (également déclenché automatiquement peu après un changement). Rien n’est enregistré tant que vous ne cliquez pas sur « Enregistrer les réglages »."
 
 #. translators: %s: human-readable time difference, e.g. "2 hours".
-#: horizon-press-news-bar/includes/class-renderer.php:1046
+#: horizon-press-news-bar/includes/class-renderer.php:1047
 msgid "%s ago"
 msgstr "il y a %s"
 

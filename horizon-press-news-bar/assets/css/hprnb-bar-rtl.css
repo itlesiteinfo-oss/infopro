@@ -918,7 +918,8 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		display: none !important;
 	}
 
-	body.hprnb-reserve:has(.hprnb-root--d-inflow) {
+	/* Unless the URGENT bar, always fixed, is in front on this device. */
+	body.hprnb-reserve:has(.hprnb-root--d-inflow:not(.hprnb-root--urgent:not(.hprnb-root--u-no-d))) {
 		--hprnb-offset: 0px;
 		padding-block-end: 0;
 	}
@@ -989,7 +990,7 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		display: none !important;
 	}
 
-	body.hprnb-reserve:has(.hprnb-root--m-inflow) {
+	body.hprnb-reserve:has(.hprnb-root--m-inflow:not(.hprnb-root--urgent:not(.hprnb-root--u-no-m))) {
 		--hprnb-offset: 0px;
 		padding-block-end: 0;
 	}
@@ -1831,6 +1832,13 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		--hprnb-peek: 44px !important;
 	}
 
+	/* The URGENT bar too: one line in the same 44px (2.16). */
+	.hprnb-root {
+		--hprnb-u-m-height: 44px !important;
+		--hprnb-u-lines: 1 !important;
+		--hprnb-u-pad: calc((44px - var(--hprnb-u-line)) / 2) !important;
+	}
+
 	.hprnb-root--m-flow .hprnb-bar .hprnb-bar__title {
 		white-space: nowrap;
 		overflow: hidden;
@@ -2082,16 +2090,30 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 	--hprnb-u-lfs: 13px;
 	--hprnb-u-lpad: 14px;
 	--hprnb-u-wipe: inset(0 100% 0 0);
+	/* Width of the tab above the end corner: the bevel and the progress line stop under it, so the
+	   tab and the band read as one piece (0 on the one-line design, which has no tab). */
+	--hprnb-u-tabw: 44px;
 	position: fixed;
 	inset-inline: 0;
 	bottom: 0;
 	border-radius: 0;
-	background: var(--hprnb-u-bg) linear-gradient(rgba(255, 255, 255, .14), rgba(255, 255, 255, 0) 12px);
+	background: linear-gradient(rgba(255, 255, 255, .14), rgba(255, 255, 255, 0)) 0 0 / calc(100% - var(--hprnb-u-tabw)) 12px no-repeat, var(--hprnb-u-bg);
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, .32), 0 -1px 0 rgba(0, 0, 0, .18), 0 -12px 32px rgba(0, 0, 0, .28);
 }
 
 .hprnb-root .hprnb-bar--urgent:dir(rtl) {
 	--hprnb-u-wipe: inset(0 0 0 100%);
+	background-position: 100% 0;
+}
+
+/* Pause shown in the tab too: two buttons wide. */
+.hprnb-root .hprnb-bar--urgent:where(:has(.hprnb-bar__btn--toggle:not([hidden]))) {
+	--hprnb-u-tabw: 88px;
+}
+
+/* Its own safe area, even where the news bar sits inside the article (section 13 bis). */
+.hprnb-root .hprnb-bar.hprnb-bar--urgent {
+	padding-block-end: env(safe-area-inset-bottom, 0px);
 }
 
 /* Every value set here, not through the news bar's tokens: no news-bar design (card, strip label,
@@ -2127,7 +2149,8 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 	to { clip-path: inset(0); }
 }
 
-.hprnb-root .hprnb-bar--urgent .hprnb-bar__viewport {
+/* As strong as the fold engine's viewport rule (section 14), which it follows. */
+.hprnb-root .hprnb-bar.hprnb-bar--urgent .hprnb-bar__viewport {
 	animation: hprnb-appear .24s .26s backwards;
 }
 
@@ -2218,6 +2241,7 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 
 .hprnb-root .hprnb-bar--urgent .hprnb-bar__progress {
 	z-index: 1;
+	inset-inline-end: var(--hprnb-u-tabw);
 	block-size: 3px;
 }
 
@@ -2239,6 +2263,10 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 
 	.hprnb-root .hprnb-bar--urgent .hprnb-bar__inner {
 		padding-block: 0;
+	}
+
+	.hprnb-root:not(.hprnb-root--u-d-flow) .hprnb-bar--urgent {
+		--hprnb-u-tabw: 0px;
 	}
 
 	.hprnb-root:not(.hprnb-root--u-d-flow) .hprnb-bar--urgent .hprnb-bar__controls {
@@ -2431,7 +2459,7 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 
 /* Reduced motion: no take (section 12 already stops the label and its dot), no headline fade, no glide. */
 @media (prefers-reduced-motion: reduce) {
-	.hprnb-root .hprnb-bar--urgent .hprnb-bar__viewport {
+	.hprnb-root .hprnb-bar.hprnb-bar--urgent .hprnb-bar__viewport {
 		animation: none;
 	}
 

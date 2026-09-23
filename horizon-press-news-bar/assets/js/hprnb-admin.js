@@ -40,7 +40,7 @@
 	};
 	var PX_KEYS = { font_size: true, max_width: true, gutter: true };
 	var MOBILE_VARS = { mobile_bg_color: '--hprnb-m-bg', mobile_text_color: '--hprnb-m-fg', mobile_accent_color: '--hprnb-m-accent', mobile_label_text_color: '--hprnb-m-label-fg', mobile_font_size: '--hprnb-m-font-size' };
-	var VISUAL_ONLY = { bar_font: true, urgent_desktop: true, urgent_mobile: true, urgent_desktop_layout: true, urgent_contexts: true, label_position: true, layout_mode: true, z_index: true, bar_height: true, align_container: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_bar_height: true, mobile_peek: true, mobile_deep_collapse: true, mobile_kbd_hide: true, theme_offset: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, desktop_thumb_position: true, desktop_thumb_size: true, mobile_thumb_position: true, mobile_thumb_size: true, mobile_controls_layout: true, mobile_controls_place: true, mobile_show_pause: true, mobile_show_close: true, mobile_collapse_mode: true, mobile_collapse_after: true, accent_edge: true, mobile_label_pulse: true, mobile_peek_thumbnail: true, mobile_label_compact: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_card_thumb: true, mobile_card_float: true, desktop_hide_on_scroll: true, desktop_collapse_mode: true, desktop_collapse_after: true, desktop_placement: true, mobile_placement: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
+	var VISUAL_ONLY = { bar_font: true, urgent_desktop: true, urgent_mobile: true, urgent_desktop_layout: true, urgent_contexts: true, urgent_font_size: true, urgent_mobile_font_size: true, label_position: true, layout_mode: true, z_index: true, bar_height: true, align_container: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_bar_height: true, mobile_peek: true, mobile_deep_collapse: true, mobile_kbd_hide: true, theme_offset: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, desktop_thumb_position: true, desktop_thumb_size: true, mobile_thumb_position: true, mobile_thumb_size: true, mobile_controls_layout: true, mobile_controls_place: true, mobile_show_pause: true, mobile_show_close: true, mobile_collapse_mode: true, mobile_collapse_after: true, accent_edge: true, mobile_label_pulse: true, mobile_peek_thumbnail: true, mobile_label_compact: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_card_thumb: true, mobile_card_float: true, desktop_hide_on_scroll: true, desktop_collapse_mode: true, desktop_collapse_after: true, desktop_placement: true, mobile_placement: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
 	/* Row height of the stacked label strip, row gap, block padding and title line-height: mirrors Renderer::profile_height(). */
 	var STRIP = 22;
 	var ROW_GAP = 4;
@@ -291,6 +291,19 @@
 		previewRoot.classList.toggle( 'hprnb-root--u-no-m', uD && ! uM );
 		// 2.15: the URGENT bar in its phone design from 768px.
 		previewRoot.classList.toggle( 'hprnb-root--u-d-flow', valueOf( 'urgent_desktop_layout' ) === 'mobile' );
+		// 2.16: its sizes and heights, exactly like Renderer::urgent_font() / urgent_metrics() / urgent_height().
+		var clampInt = function ( key, min, max, fallback ) {
+			return Math.max( min, Math.min( max, parseInt( valueOf( key ), 10 ) || fallback ) );
+		};
+		var uFsD = clampInt( 'urgent_font_size', 14, 22, 17 );
+		var uFsM = clampInt( 'urgent_mobile_font_size', 14, 20, 17 );
+		var uLines = clampInt( 'mobile_lines', 1, 2, 2 );
+		var uLine = Math.round( uFsM * 1.4 );
+		var uHm = Math.max( parseInt( valueOf( 'mobile_bar_height' ), 10 ) || 76, uLines * uLine + 24 );
+		var uHd = valueOf( 'urgent_desktop_layout' ) === 'mobile' ? uHm : Math.max( 48, minHeight, Math.ceil( uFsD * LINE_HEIGHT ) + 24 );
+		[ [ '--hprnb-u-fs', uFsD + 'px' ], [ '--hprnb-u-m-fs', uFsM + 'px' ], [ '--hprnb-u-line', uLine + 'px' ], [ '--hprnb-u-lines', String( uLines ) ], [ '--hprnb-u-pad', Math.floor( ( uHm - uLines * uLine ) / 2 ) + 'px' ], [ '--hprnb-u-height', uHd + 'px' ], [ '--hprnb-u-m-height', uHm + 'px' ] ].forEach( function ( pair ) {
+			previewRoot.style.setProperty( pair[ 0 ], pair[ 1 ] );
+		} );
 		previewRoot.classList.toggle( 'hprnb-root--m-ctrl-out', outside );
 		previewRoot.classList.toggle( 'hprnb-root--m-ctrl-tab', tabDesign );
 		var shownThumb = valueOf( 'mobile_show_thumbnail' ) === '1';

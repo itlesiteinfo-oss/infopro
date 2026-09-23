@@ -1025,5 +1025,19 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
 - Settings page: card "Bars shown" first in Content; `switch` rows get `<label for>` in their `<th>`;
   sub-rows are hidden by the script only. The preview endpoint renders the news bar with `Query::items()`
   whatever its switches.
-- Budgets: CSS 48 KB, bootstrap 5 KB, interactive script 28 KB.
+- Second review: the bootstrap signs the bars (`signature()`: bar, id, `data-hprnb-until`, title of
+  each headline of the first list) at start and skips `apply()` when a refreshed payload has the same
+  signature and the same devices; otherwise it reads each device's wait (`-pending`, or URGENT in front)
+  before `hprnbBar.destroy()` and restores it. `parkDevices()` (both scripts) un-parks per device where the
+  URGENT bar is not in front. The script does not start a news bar that `html.hprnb-dismissed` or its
+  `hprnb-hide-*` hides on this device (it watches instead); `watch()` publishes an idle state (offset 0)
+  through `hprnb:state` and `hprnbBar.state()`; the URGENT bar's contract reads the root's computed
+  `--hprnb-u-height` / `--hprnb-u-m-height`; starting it also clears the pending class of the presentation
+  it runs in. Stylesheet: `--hprnb-u-tabw` (44px, 88px with pause shown, 0 on the one-line design) stops
+  the bevel and the progress line under the tab; the viewport animation rule outranks the fold engine's;
+  short screens give the URGENT bar one line in 44px; the in-article placement keeps the body padding
+  where the URGENT bar is in front; the URGENT aside keeps its safe-area padding. `root_classes( $s, true )`
+  uses `hprnb-device-all`. The admin script mirrors `urgent_font()` / `urgent_metrics()` / `urgent_height()`
+  on the preview root.
+- Budgets: CSS 48 KB, bootstrap 6 KB, interactive script 28 KB.
 

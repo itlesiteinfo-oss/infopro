@@ -96,6 +96,7 @@
 		var now = Math.floor(Date.now() / 1000);
 		var age = now - ssrGen; // Negative (client clock behind) counts as fresh.
 		var hasAside = !!root.querySelector('.hprnb-bar');
+		var ssrSig = signature(root);
 
 		/**
 		 * Reserve layout: copy the root's inline --hprnb-height onto <body>
@@ -178,12 +179,26 @@
 			['mobile', 'desktop'].forEach(function (d) {
 				var hide = 'hprnb-hide-' + d;
 				var park = 'hprnb-news-hide-' + d;
-				if (urgent && urgentOn(d.charAt(0)) && root.classList.contains(hide)) {
+				var front = urgent && urgentOn(d.charAt(0));
+				if (front && root.classList.contains(hide)) {
 					root.classList.replace(hide, park);
-				} else if (!urgent && root.classList.contains(park)) {
+				} else if (!front && root.classList.contains(park)) {
 					root.classList.replace(park, hide);
 				}
 			});
+		}
+
+		/**
+		 * What a set of bars shows: each headline (bar, id, end of urgency, title), in order.
+		 *
+		 * @param {Element} el The root, or a template holding a payload's markup.
+		 * @return {string} A signature to compare two sets of bars.
+		 */
+		function signature(el) {
+			return Array.prototype.map.call(el.querySelectorAll('.hprnb-bar__list:not([aria-hidden]) > .hprnb-bar__item'), function (li) {
+				var title = li.querySelector('.hprnb-bar__title');
+				return [li.closest('.hprnb-bar--urgent') ? 'u' : 'n', li.getAttribute('data-hprnb-id'), li.getAttribute('data-hprnb-until'), title ? title.textContent : ''].join(':');
+			}).join('|');
 		}
 
 		/**
@@ -192,16 +207,29 @@
 		function apply(p) {
 			var urgent = urgentOff ? 0 : urgentCount(p);
 			var html = (show === 'urgent' || p.count === 0 || p.html === '') ? '' : p.html;
+			var devices = p.urgent_devices;
+			var known = devices && typeof devices === 'object';
+			var next = document.createElement('template');
+			next.innerHTML = (urgent ? p.urgent_html : '') + html;
+			// Nothing new (same headlines, same devices): the bars already running keep going, without
+			// replaying their entrance.
+			if (signature(next.content) === ssrSig && (!known || ((devices.d !== false) === urgentOn('d') && (devices.m !== false) === urgentOn('m')))) {
+				root.dataset.hprnbGenerated = String(p.generated_at);
+				return;
+			}
+			// The wait of each device, and where the URGENT bar was in front (the server then left the
+			// news bar's wait out), read before the running bars stop: stopping reveals them.
+			var was = root.classList.contains('hprnb-root--urgent');
+			var wait = {};
+			['d', 'm'].forEach(function (d) {
+				wait[d] = root.classList.contains('hprnb-root--' + d + '-pending') || (was && urgentOn(d));
+			});
 			// The bars running on the old markup stop first, their timers with them.
 			if (window.hprnbBar && typeof window.hprnbBar.destroy === 'function') {
 				window.hprnbBar.destroy(root);
 			}
-			// Where the URGENT bar was in front, the server left out the news bar's wait.
-			var was = root.classList.contains('hprnb-root--urgent');
-			var front = { d: was && urgentOn('d'), m: was && urgentOn('m') };
 			// 2.16: the devices the URGENT bar is switched on for, newer than a page from a page cache.
-			var devices = p.urgent_devices;
-			if (devices && typeof devices === 'object') {
+			if (known) {
 				root.classList.toggle('hprnb-root--u-no-d', devices.d === false);
 				root.classList.toggle('hprnb-root--u-no-m', devices.m === false);
 			}
@@ -236,8 +264,8 @@
 				if (urgent > 0 && urgentOn(d)) {
 					root.classList.remove('hprnb-root--' + d + '-pending');
 					document.body.classList.remove('hprnb-' + d + '-pending');
-				} else if (front[d] && html !== '' && reveal[d] && reveal[d].mode && reveal[d].mode !== 'immediate') {
-					// The news bar takes over there: it waits for the reader as the server renders it.
+				} else if (wait[d] && html !== '' && reveal[d] && reveal[d].mode && reveal[d].mode !== 'immediate') {
+					// The news bar is (or takes over) there: it waits for the reader as the server renders it.
 					root.classList.add('hprnb-root--' + d + '-pending', 'hprnb-root--reveal');
 					document.body.classList.add('hprnb-' + d + '-pending');
 				}

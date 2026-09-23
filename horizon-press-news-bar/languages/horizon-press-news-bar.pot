@@ -4,7 +4,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
-"POT-Creation-Date: 2026-09-23 22:47+0000\n"
+"POT-Creation-Date: 2026-09-23 23:45+0000\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 "Project-Id-Version: Horizon Press News Bar 2.16.0\n"
 "Report-Msgid-Bugs-To: https://horizonpress.example/news-bar\n"
@@ -343,7 +343,7 @@ msgid "Colours of the URGENT bar"
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:296
-msgid "The red of the reference site and white text. The label carries a live dot and a chevron, the headline is bold, and the close button sits in the tab above the corner, as on the news bar. The preview on the right shows it while this tab is open."
+msgid "The red of the reference site and white text. The label is a plate in the two colours swapped, with a live dot; the headline is bold. The contrast of the pair is checked as you type. The preview on the right shows the bar while this tab is open."
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:302
@@ -1341,7 +1341,7 @@ msgid "Label of the red bar"
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1157
-msgid "In capitals before the headline, with a live dot and a chevron. \"URGENT\" by default."
+msgid "In capitals on a plate before the headline, with a live dot. \"URGENT\" by default."
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1163
@@ -1349,7 +1349,7 @@ msgid "Headline size on desktop (one line)"
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1164
-msgid "From 14 to 22 px, 17 by default. The bar is 48 px tall, a little more for the largest sizes."
+msgid "From 14 to 22 px, 17 by default. The bar is at least 48 px tall (more from 19 px, or with a taller news bar)."
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1169
@@ -1357,7 +1357,7 @@ msgid "Headline size on phones"
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1170
-msgid "From 14 to 20 px, 17 by default; also used by the phone design on desktop. The bar stays 76 px tall up to 18 px."
+msgid "From 14 to 20 px, 17 by default; also used by the phone design on desktop. The bar keeps the height of the mobile news bar (76 px by default) while two lines fit in it."
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1178
@@ -1393,7 +1393,7 @@ msgid "One line"
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1211
-msgid "The label, the headlines in a row as the news bar scrolls them, the buttons at the end of the bar."
+msgid "The plate, then one headline at a time on a single line, with pause and close at the end of the bar."
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:1214
@@ -1854,7 +1854,7 @@ msgid "Colours, sizes and label update instantly. Content criteria are applied b
 msgstr ""
 
 #. translators: %s: human-readable time difference, e.g. "2 hours".
-#: horizon-press-news-bar/includes/class-renderer.php:1046
+#: horizon-press-news-bar/includes/class-renderer.php:1047
 msgid "%s ago"
 msgstr ""
 

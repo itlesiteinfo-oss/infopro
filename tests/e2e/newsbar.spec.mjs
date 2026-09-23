@@ -2963,3 +2963,146 @@ test( 'v2.16: one switch per bar and per device — sub-choices hidden while the
 		setSettings( {} );
 	}
 } );
+
+test( 'v2.16: a refreshed cached page keeps its waits and its running bars, short screens, the article placement, a remembered close, the preview', async ( { page, browser } ) => {
+	const errors = collectErrors( page );
+	const now = () => Math.floor( Date.now() / 1000 );
+	const body = '<p>Paragraphe de lecture, assez long pour donner de la hauteur à la page et laisser la barre attendre son moment.</p>'.repeat( 12 );
+	const n = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Article du jour pour la recette', '--post_content=' + body, '--porcelain' ] );
+	const url = new URL( wp( [ 'post', 'url', n ] ) );
+	const path = url.pathname + url.search;
+	let u = null;
+	const flag = ( id, since, until ) => {
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_since', String( since ) ] );
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_until', String( until ) ] );
+		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+	};
+	// A page served from a page cache: rendered long ago, optionally with a headline since edited.
+	const cachedPage = async ( width, height, edit ) => {
+		const p = await browser.newPage( { viewport: { width, height }, baseURL: 'http://127.0.0.1:8080' } );
+		p.on( 'pageerror', ( e ) => errors.push( e.message ) );
+		await p.addInitScript( () => {
+			// Markup swaps of the root once the page is parsed (the parser's own insertions do not count).
+			window.__swaps = 0;
+			let parsed = false;
+			document.addEventListener( 'DOMContentLoaded', () => {
+				parsed = true;
+			} );
+			new MutationObserver( ( list ) => {
+				list.forEach( ( m ) => {
+					if ( parsed && m.target.id === 'hprnb-root' && m.type === 'childList' ) {
+						window.__swaps++;
+					}
+				} );
+			} ).observe( document, { childList: true, subtree: true } );
+		} );
+		await p.route( ( x ) => x.pathname === url.pathname, async ( route ) => {
+			const response = await route.fetch();
+			let html = ( await response.text() ).replace( /data-hprnb-generated="\d+"/, 'data-hprnb-generated="' + ( now() - 3600 ) + '"' );
+			if ( edit ) {
+				html = html.replace( 'Article du jour pour la recette</span>', 'Ancien titre</span>' );
+			}
+			await route.fulfill( { response, body: html } );
+		} );
+		const rest = p.waitForResponse( ( r ) => r.url().includes( 'hprnb/v1/items' ) );
+		await p.goto( path );
+		await rest;
+		await p.waitForTimeout( 400 );
+		return p;
+	};
+	try {
+		// 1. Phone, the news bar waiting for the paragraph (Continuous reading). The refresh brings the
+		// same headlines: nothing is swapped and the bar keeps waiting.
+		setDefaultSettings();
+		let p = await cachedPage( 390, 844, false );
+		expect( await p.evaluate( () => window.__swaps ) ).toBe( 0 );
+		await expect( p.locator( '#hprnb-root' ) ).toHaveClass( /hprnb-root--m-pending/ );
+		expect( await p.evaluate( () => [ document.body.classList.contains( 'hprnb-m-pending' ), getComputedStyle( document.body ).paddingBottom ] ) ).toEqual( [ true, '0px' ] );
+		await p.close();
+		// A headline edited since: the bars are swapped, and the new one still waits for the paragraph.
+		p = await cachedPage( 390, 844, true );
+		expect( await p.evaluate( () => window.__swaps ) ).toBeGreaterThan( 0 );
+		await expect( p.locator( '.hprnb-bar' ).first() ).toContainText( 'Article du jour pour la recette' );
+		await expect( p.locator( '#hprnb-root' ) ).toHaveClass( /hprnb-root--m-pending/ );
+		expect( await p.evaluate( () => [ document.body.classList.contains( 'hprnb-m-pending' ), getComputedStyle( document.body ).paddingBottom ] ) ).toEqual( [ true, '0px' ] );
+		await p.close();
+
+		// 2. An URGENT article: an unchanged refresh keeps the running red bar (no second entrance).
+		u = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Urgent — la recette vérifie le bandeau', '--porcelain' ] );
+		const t = now();
+		flag( u, t - 30, t + 900 );
+		p = await cachedPage( 1366, 900, false );
+		expect( await p.evaluate( () => window.__swaps ) ).toBe( 0 );
+		await expect( p.locator( '.hprnb-bar--urgent' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await p.close();
+
+		// 3. Phone: the headline appears after its plate (not the fold engine's animation); the
+		// progress line and the bevel stop under the tab.
+		const second = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Urgent — second titre pour la rotation', '--porcelain' ] );
+		flag( second, t - 10, t + 900 );
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( path );
+		const urgent = page.locator( '.hprnb-bar--urgent' );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await urgent.evaluate( ( el ) => getComputedStyle( el.querySelector( '.hprnb-bar__viewport' ) ).animationName ) ).toBe( 'hprnb-appear' );
+		const progress = await urgent.locator( '.hprnb-bar__progress' ).boundingBox();
+		expect( Math.round( progress.x + progress.width ) ).toBe( 390 - 44 );
+		wp( [ 'post', 'delete', second, '--force' ] );
+
+		// 4. A phone in landscape (short screen): the red bar fits the 44px the page keeps.
+		await page.setViewportSize( { width: 740, height: 360 } );
+		await page.goto( path );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await urgent.evaluate( ( el ) => [ Math.round( el.getBoundingClientRect().height ), getComputedStyle( document.body ).paddingBottom ] ) ).toEqual( [ 44, '44px' ] );
+
+		// 5. The news bar placed inside the article: the fixed red bar still gets its space.
+		setDefaultSettings( { desktop_placement: 'inline' } );
+		await page.setViewportSize( { width: 1366, height: 900 } );
+		await page.goto( path );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( page.locator( '#hprnb-root' ) ).toHaveClass( /hprnb-root--d-inflow/ );
+		expect( await page.evaluate( () => getComputedStyle( document.body ).paddingBottom ) ).toBe( '48px' );
+		wp( [ 'post', 'delete', u, '--force' ] );
+		u = null;
+		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+
+		// 6. A remembered close: the hidden news bar does not run, and nothing is lifted for it.
+		setDefaultSettings();
+		await page.goto( path );
+		await page.evaluate( () => localStorage.setItem( 'hprnb_dismissed_until', String( Date.now() + 3600000 ) ) );
+		await page.reload();
+		await expect( page.locator( '#hprnb-root' ) ).toBeHidden();
+		await page.waitForTimeout( 500 );
+		expect( await page.evaluate( () => [ document.querySelector( '.hprnb-bar' ).getAttribute( 'data-hprnb-init' ), getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim(), window.hprnbBar.state().offset ] ) ).toEqual( [ null, '0px', 0 ] );
+		await page.evaluate( () => localStorage.removeItem( 'hprnb_dismissed_until' ) );
+
+		// 7. The settings preview: never hidden by the admin window, and the URGENT heights follow the form.
+		setDefaultSettings( { show_on_desktop: false } );
+		await page.goto( '/wp-login.php' );
+		await page.fill( '#user_login', 'admin' );
+		await page.fill( '#user_pass', 'admin' );
+		await page.click( '#wp-submit' );
+		await page.waitForURL( /wp-admin/ );
+		await page.setViewportSize( { width: 1400, height: 1000 } );
+		await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar#content' );
+		await expect( page.locator( '#hprnb-preview-root' ) ).toHaveClass( /hprnb-device-all/ );
+		await expect( page.locator( '#hprnb-preview-root' ) ).toBeVisible();
+		await page.click( '[data-hprnb-tab="urgent"]' );
+		await expect( page.locator( '#hprnb-preview-root .hprnb-bar--urgent' ) ).toHaveCount( 1, { timeout: 10000 } );
+		const uHeight = () => page.locator( '#hprnb-preview-root' ).evaluate( ( el ) => el.style.getPropertyValue( '--hprnb-u-height' ) );
+		expect( await uHeight() ).toBe( '48px' );
+		await page.click( 'label:has(input[name="hprnb_settings[urgent_desktop_layout]"][value="mobile"])' );
+		expect( await uHeight() ).toBe( '76px' );
+		await page.click( 'label:has(input[name="hprnb_settings[urgent_desktop_layout]"][value="line"])' );
+		await page.fill( '#hprnb-field-urgent-font-size', '22' );
+		await page.locator( '#hprnb-field-urgent-font-size' ).dispatchEvent( 'input' );
+		expect( await uHeight() ).toBe( '53px' );
+		expect( errors ).toEqual( [] );
+	} finally {
+		wp( [ 'post', 'delete', n, '--force' ] );
+		if ( u ) {
+			wp( [ 'post', 'delete', u, '--force' ] );
+		}
+		setSettings( {} );
+	}
+} );

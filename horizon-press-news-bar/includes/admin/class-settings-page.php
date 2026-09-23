@@ -293,7 +293,7 @@ final class Settings_Page {
 					),
 					array(
 						'title'       => __( 'Colours of the URGENT bar', 'horizon-press-news-bar' ),
-						'description' => __( 'The red of the reference site and white text. The label carries a live dot and a chevron, the headline is bold, and the close button sits in the tab above the corner, as on the news bar. The preview on the right shows it while this tab is open.', 'horizon-press-news-bar' ),
+						'description' => __( 'The red of the reference site and white text. The label is a plate in the two colours swapped, with a live dot; the headline is bold. The contrast of the pair is checked as you type. The preview on the right shows the bar while this tab is open.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'urgent_bg_color', 'urgent_text_color' ),
 					),
 				),
@@ -1154,20 +1154,20 @@ final class Settings_Page {
 				'section' => 'urgent',
 				'type'    => 'text',
 				'label'   => __( 'Label of the red bar', 'horizon-press-news-bar' ),
-				'desc'    => __( 'In capitals before the headline, with a live dot and a chevron. "URGENT" by default.', 'horizon-press-news-bar' ),
+				'desc'    => __( 'In capitals on a plate before the headline, with a live dot. "URGENT" by default.', 'horizon-press-news-bar' ),
 				'attrs'   => array( 'maxlength' => 40 ),
 			),
 			'urgent_font_size'            => array(
 				'section' => 'urgent',
 				'type'    => 'number',
 				'label'   => __( 'Headline size on desktop (one line)', 'horizon-press-news-bar' ),
-				'desc'    => __( 'From 14 to 22 px, 17 by default. The bar is 48 px tall, a little more for the largest sizes.', 'horizon-press-news-bar' ),
+				'desc'    => __( 'From 14 to 22 px, 17 by default. The bar is at least 48 px tall (more from 19 px, or with a taller news bar).', 'horizon-press-news-bar' ),
 			),
 			'urgent_mobile_font_size'     => array(
 				'section' => 'urgent',
 				'type'    => 'number',
 				'label'   => __( 'Headline size on phones', 'horizon-press-news-bar' ),
-				'desc'    => __( 'From 14 to 20 px, 17 by default; also used by the phone design on desktop. The bar stays 76 px tall up to 18 px.', 'horizon-press-news-bar' ),
+				'desc'    => __( 'From 14 to 20 px, 17 by default; also used by the phone design on desktop. The bar keeps the height of the mobile news bar (76 px by default) while two lines fit in it.', 'horizon-press-news-bar' ),
 			),
 			'bar_font'                    => array(
 				'section' => 'appearance',
@@ -1208,7 +1208,7 @@ final class Settings_Page {
 				'options' => array(
 					'line'   => array(
 						'title' => __( 'One line', 'horizon-press-news-bar' ),
-						'text'  => __( 'The label, the headlines in a row as the news bar scrolls them, the buttons at the end of the bar.', 'horizon-press-news-bar' ),
+						'text'  => __( 'The plate, then one headline at a time on a single line, with pause and close at the end of the bar.', 'horizon-press-news-bar' ),
 					),
 					'mobile' => array(
 						'title' => __( 'Same design as on phones', 'horizon-press-news-bar' ),

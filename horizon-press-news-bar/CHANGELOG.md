@@ -17,7 +17,7 @@ Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr
 - **Le titre en gras, 17 px, un seul à la fois** (rotation, jamais de défilement continu), souligné au survol et au clavier ; **48 px de haut sur ordinateur, 76 px sur mobile**, un léger biseau lumineux en haut, un filet de progression de 3 px, l'arrivée en volet (rien sous « mouvement réduit »), un anneau de focus autour du bandeau entier.
 - **Sur ordinateur (une ligne), pause et fermer à la fin du bandeau**, dans deux cases plus sombres ; sur mobile et dans le design téléphone, le bouton fermer reste dans l'onglet au-dessus du coin, désormais fondu dans le bandeau (1 px de recouvrement, sans couture).
 - **Onglet Urgent → « Taille du titre du bandeau URGENT »** : sur ordinateur (14 à 22 px, 17 par défaut) et sur mobile (14 à 20 px, 17 par défaut, aussi pour le design téléphone sur ordinateur). La hauteur réservée par la page suit : 48 px sur ordinateur (un peu plus à partir de 19 px), 76 px sur mobile jusqu'à 18 px.
-- **Onglet Couleurs → « Police des deux barres »** : **« Police info — recommandée »** (défaut : la police sans empattement du système, San Francisco sur Apple, Segoe UI sur Windows, Roboto sur Android, rien n'est téléchargé) ou « Police du thème » (comme avant la 2.16). **Elle s'applique aussi à la barre d'actualités** : sur un thème à empattements comme Jannah, les deux barres passent en sans empattement ; choisir « Police du thème » pour garder l'ancien rendu.
+- **Onglet Couleurs → « Police des deux barres »** : **« Police info — recommandée »** (défaut : la police sans empattement du système, San Francisco sur Apple, Segoe UI sur Windows, Roboto sur Android, rien n'est téléchargé) ou « Police du thème » (comme avant la 2.16). **Elle s'applique aussi à la barre d'actualités** : sur un thème à empattements comme Jannah, les deux barres passent en sans empattement ; choisir « Police du thème » pour garder l'ancien rendu. **Videz le cache de pages après la mise à jour** : une page mise en cache avant la 2.16 garde l'ancienne police et l'ancienne hauteur du bandeau rouge jusqu'à sa régénération.
 - Le contraste des couleurs du bandeau URGENT est vérifié en direct dans l'onglet, comme celui de la barre d'actualités.
 
 ### Corrigé — revue multi-agents du travail 2.16
@@ -27,6 +27,18 @@ Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr
 - Fermer la barre d'actualités sur l'appareil où le bandeau URGENT est désactivé ne le cache plus sur l'autre appareil (tablette tournée, fenêtre élargie).
 - Mode hybride : un rafraîchissement arrête d'abord les barres en cours (un minuteur de l'ancien bandeau ne peut plus retirer le nouveau), remet l'attente de la barre d'actualités quand l'urgence est finie, et applique les interrupteurs d'appareil reçus par REST (`urgent_devices`, aussi dans l'ETag et la session) à une page servie par un cache de pages plus ancienne que le réglage.
 - L'aperçu des réglages suit les interrupteurs d'appareil (onglet Ordinateur ou Mobile : le bandeau désactivé laisse place à une note) et montre le vrai design une ligne sur ordinateur ; la barre initiale désactivée garde son aperçu (plus de « Aucun article ne correspond »).
+
+### Corrigé — seconde revue multi-agents (design et correctifs)
+
+- **Mode hybride, page servie par un cache de pages** : quand le rafraîchissement apporte les mêmes titres, les barres déjà lancées continuent (le bandeau rouge ne rejoue plus son entrée) ; quand il en apporte d'autres, **la barre d'actualités garde son attente** (« Lecture continue » : elle attendait de nouveau le paragraphe, et non plus tout de suite) ; une restriction d'appareil de la barre d'actualités mise de côté pendant l'urgence est rétablie sur l'appareil où le bandeau rouge vient d'être désactivé.
+- **Barre d'actualités cachée par la feuille de style** (fermeture mémorisée, ou désactivée sur cet appareil) : elle ne tourne plus du tout — plus d'impression comptée, plus de bouton « haut de page » de Jannah soulevé pour rien ; l'événement `hprnb:state` et `hprnbBar.state()` annoncent 0 quand aucune barre n'est visible.
+- Téléphone en paysage (écran court) : le bandeau rouge tient sur une ligne dans les 44 px que la page réserve (il en faisait 76).
+- Barre d'actualités placée dans l'article : le bandeau rouge, toujours fixé en bas, garde l'espace réservé et la marge de sécurité de l'iPhone.
+- Entre 768 px et 768 px plus la largeur de la barre de défilement : le bandeau rouge d'ordinateur n'est plus caché par l'attente mobile, et l'espace annoncé au thème est le sien.
+- Sur mobile, le titre apparaît après la plaque (l'animation de repli de la barre d'actualités ne passe plus devant) ; « mouvement réduit » coupe bien son fondu.
+- Le filet de progression et le biseau s'arrêtent sous l'onglet du bouton fermer, qui fait corps avec le bandeau.
+- Aperçu des réglages : il n'est plus vide quand la barre d'actualités est désactivée sur ordinateur (ou sur mobile, sur un écran étroit) ; les hauteurs et tailles du bandeau rouge suivent le formulaire aussitôt (design, taille du titre, hauteur de la barre).
+- Textes d'aide de l'onglet Urgent réécrits pour le nouveau design (plaque, un titre à la fois, hauteurs « au moins »).
 
 ## [2.15.0] — 2026-09-23
 

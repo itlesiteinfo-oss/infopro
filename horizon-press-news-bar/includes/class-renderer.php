@@ -296,8 +296,9 @@ final class Renderer {
 	public static function root_classes( array $settings, bool $preview = false, bool $urgent = false ): array {
 		// 2.16: the URGENT bar has a switch per device. It is in front only where it shows; elsewhere the
 		// news bar keeps the page as if nothing were urgent (its wait, its restriction, its height).
-		$front  = self::urgent_front( $settings, $urgent );
-		$device = self::device_class( $settings );
+		$front = self::urgent_front( $settings, $urgent );
+		// The preview's frame is the device (2.16): the admin window's width never hides it.
+		$device = $preview ? 'hprnb-device-all' : self::device_class( $settings );
 		$names  = array(
 			'd' => 'desktop',
 			'm' => 'mobile',

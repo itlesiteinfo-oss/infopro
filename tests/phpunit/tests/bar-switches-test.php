@@ -353,4 +353,12 @@ class Bar_Switches_Test extends HPRNB_Test_Case {
 		$this->assertNotContains( 'hprnb-root--font-news', Renderer::root_classes( Settings::sanitize( array( 'bar_font' => 'theme' ) ) ), 'The theme\'s font when chosen.' );
 		$this->assertSame( 'news', Settings::sanitize( array( 'bar_font' => 'comic' ) )['bar_font'] );
 	}
+
+	public function test_the_preview_root_is_never_hidden_by_the_admin_window() {
+		$phones_only = Settings::sanitize( array( 'show_on_desktop' => false ) );
+		$this->assertContains( 'hprnb-hide-desktop', Renderer::root_classes( $phones_only ), 'On the site, the device class hides it from 768px.' );
+		$preview = Renderer::root_classes( $phones_only, true );
+		$this->assertContains( 'hprnb-device-all', $preview, 'In the preview the frame is the device.' );
+		$this->assertNotContains( 'hprnb-hide-desktop', $preview );
+	}
 }

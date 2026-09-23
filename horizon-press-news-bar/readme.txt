@@ -69,7 +69,9 @@ A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `h
 * One switch per bar and one per device (Content → Bars shown): enable the URGENT bar, then desktop and mobile; enable the initial (news) bar, then desktop and mobile. Sub-choices are hidden while their bar is off; the URGENT box on the edit screen only appears while the URGENT bar is on for a device.
 * The URGENT bar in a news channel's design: a plate in the band's colours swapped, a bold 17px headline one at a time, 48px on desktop with pause and close at the end, 76px on phones; headline sizes of its own in the Urgent tab.
 * "Font of both bars" (Colours tab): the system news face by default, also for the news bar, or the theme's font as before.
-* Fixes: no empty reserved band where no bar shows, device switches measured like the reserved space, closing the news bar no longer hides the URGENT bar of the other device, hybrid refreshes stop the running bars first and apply the device switches, the settings preview follows the device switches.
+* Fixes: no empty reserved band where no bar shows, device switches measured like the reserved space, closing the news bar no longer hides the URGENT bar of the other device, the settings preview follows the device switches.
+* Hybrid mode behind a page cache: an unchanged refresh keeps the running bars, a changed one keeps the news bar's wait and applies the device switches; a news bar hidden by the stylesheet no longer runs.
+* Short phone screens, the article placement and the gap between 768px and the scrollbar keep the right space for the URGENT bar.
 
 = 2.15.0 =
 * The URGENT checkbox has its own box, first at the top of the side column of the edit screen, above Publish, shown by default.
@@ -194,7 +196,7 @@ A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `h
 == Upgrade Notice ==
 
 = 2.16.0 =
-Both bars now use the system news face by default. To keep your theme's font on the news bar, choose "Theme font" in Colours → Font of both bars.
+Both bars now use the system news face by default. To keep your theme's font on the news bar, choose "Theme font" in Colours → Font of both bars. Purge your page cache after updating: pages cached before 2.16 keep the previous font and URGENT bar height until they are regenerated.
 
 = 1.1.0 =
 Separator rendering moved to CSS; theme template overrides of item.php no longer need a separator element.

@@ -74,7 +74,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 		// phone design of the URGENT bar on desktop too (CSS); 2.16: one switch per device for the URGENT bar
 		// (which bar is in front, per device, in the script and the bootstrap).
 		$this->assertLessThanOrEqual( 48 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
-		$this->assertLessThanOrEqual( 5 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bootstrap.min.js' ) ); // 2.16: the device switches from REST, the hand-over of a refresh.
+		$this->assertLessThanOrEqual( 6 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bootstrap.min.js' ) ); // 2.16: the device switches from REST, an unchanged refresh kept, the waits kept.
 		$this->assertLessThanOrEqual( 28 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
 	}
 
@@ -137,7 +137,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 					},
 					explode( ",\n", $rule[1] )
 				);
-				$body = preg_replace( '/^\t/m', '', $rule[2] );
+				$body      = preg_replace( '/^\t/m', '', $rule[2] );
 				$this->assertStringContainsString( implode( ",\n", $selectors ) . " {\n" . $body . '}', $admin, 'Missing in the admin sheet: ' . $rule[1] );
 				++$rules;
 			}

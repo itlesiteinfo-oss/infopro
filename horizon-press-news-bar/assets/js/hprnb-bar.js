@@ -1350,6 +1350,11 @@
 			var peek = parseFloat( cs.getPropertyValue( '--hprnb-peek' ) ) || 40;
 			// A floating mobile layout also keeps its distance from the bottom edge.
 			var gap = mobile ? ( parseFloat( cs.getPropertyValue( '--hprnb-m-gap' ) ) || 0 ) : 0;
+			if ( state.urgent ) {
+				// The red bar's own height, whatever the device's news bar measures (2.16).
+				full = parseFloat( getComputedStyle( root ).getPropertyValue( state.uFlow ? '--hprnb-u-m-height' : '--hprnb-u-height' ) ) || aside.offsetHeight;
+				gap = 0;
+			}
 			var hidden = aside.hidden || root.hidden || body.classList.contains( 'hprnb-kbd' ) || root.classList.contains( 'hprnb-root--' + ( mobile ? 'm' : 'd' ) + '-pending' )
 				|| root.classList.contains( 'hprnb-root--' + ( mobile ? 'm' : 'd' ) + '-away' );
 			// In flow the bar is a block of the page: it covers nothing, so it reserves nothing.
@@ -1738,9 +1743,10 @@
 		forEach( [ 'mobile', 'desktop' ], function ( d ) {
 			var hide = 'hprnb-hide-' + d;
 			var park = 'hprnb-news-hide-' + d;
-			if ( urgent && urgentOn( root, d.charAt( 0 ) ) && root.classList.contains( hide ) ) {
+			var front = urgent && urgentOn( root, d.charAt( 0 ) );
+			if ( front && root.classList.contains( hide ) ) {
 				root.classList.replace( hide, park );
-			} else if ( ! urgent && root.classList.contains( park ) ) {
+			} else if ( ! front && root.classList.contains( park ) ) {
 				root.classList.replace( park, hide );
 			}
 		} );
@@ -2107,6 +2113,13 @@
 					reserveFor( root, true );
 				}
 				if ( urgentOn( root, deviceOf( root ) ) ) {
+					// The presentation may be the other device's (a screen past 768px whose bar is under it):
+					// nothing waits there either while the red bar is in front.
+					var shown = isNarrow( root ) ? 'm' : 'd';
+					root.classList.remove( 'hprnb-root--' + shown + '-pending' );
+					if ( ! preview ) {
+						document.body.classList.remove( 'hprnb-' + shown + '-pending' );
+					}
 					initAside( root, urgent, true );
 					return;
 				}
@@ -2117,11 +2130,14 @@
 			}
 		}
 		var news = root.querySelector( '.hprnb-bar:not(.hprnb-bar--urgent)' );
-		if ( news ) {
+		// A news bar the stylesheet hides here (closed and remembered, or switched off on this device)
+		// does not run: no impression, no space announced to the theme.
+		var hidden = document.documentElement.classList.contains( 'hprnb-dismissed' ) || root.classList.contains( 'hprnb-hide-' + ( 'd' === deviceOf( root ) ? 'desktop' : 'mobile' ) );
+		if ( news && ! hidden ) {
 			initAside( root, news, false );
-		} else if ( urgent && urgent.parentNode ) {
-			// Nothing runs on this device (the URGENT bar is switched off here and the page has no news
-			// bar): still re-evaluate when the screen crosses 768px, where the red bar may be on (2.16).
+		} else if ( news || ( urgent && urgent.parentNode ) ) {
+			// Nothing runs on this device: still re-evaluate when the screen crosses 768px, where a bar
+			// may be on (2.16).
 			watch( root );
 		}
 	}
@@ -2135,6 +2151,16 @@
 		var state = createState();
 		var device = deviceOf( root );
 		root.hprnbWatch = state;
+		// No bar in view: the contract says so (hprnb:state and hprnbBar.state()).
+		var idle = { mobile: 'm' === device, collapsed: false, height: 0, offset: 0, tab: 0 };
+		api.state = function () {
+			return idle;
+		};
+		try {
+			document.dispatchEvent( new CustomEvent( 'hprnb:state', { detail: idle } ) );
+		} catch ( e ) {
+			// Very old engines without CustomEvent.
+		}
 		observeSize( state, root, function () {
 			if ( root.hprnbWatch === state && deviceOf( root ) !== device ) {
 				init( root );
