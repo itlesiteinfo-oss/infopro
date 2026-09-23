@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.11.0
+Stable tag: 2.12.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,10 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.12.0 =
+* Existing sites switch once to the bar with the article picture, as delivered (two lines, pill with its dot, cross alone in the tab, picture kept in the folded strip); behaviour, colours and content are kept.
+* Mobile design picker: two boxes, each with a drawing of the bar open and folded.
 
 = 2.11.0 =
 * Two mobile designs left: the bar with the article picture (default) and the "Explore More" card. Sites on a removed design move to the bar with the picture.

@@ -495,4 +495,11 @@ return array(
 	'Keep the picture at the end of the folded strip, resized so it never exceeds one line.' => 'Garder l’image au bout de la bande repliée, réduite pour ne jamais dépasser une ligne.',
 	'Number of lines a headline may take; the height shown beside this field follows it. Marquee always uses one line, and the "Explore More" card stops at three.' => 'Nombre de lignes qu’un titre peut occuper ; la hauteur affichée à côté de ce champ le suit. Le défilement continu tient sur une ligne, et la carte « Explore More » s’arrête à trois.',
 	'Show the close button on mobile (the "Closing" block below must be enabled too).' => 'Afficher le bouton de fermeture sur mobile (le bloc « Fermeture » ci-dessous doit aussi être activé).',
+	'Under 768 px. Click the design you want: the live preview on the right shows it with your own headlines. The height shown beside the line count is the height the page reserves.' => 'Sous 768 px. Cliquez sur le design voulu : l’aperçu à droite le montre avec vos propres titres. La hauteur affichée à côté du nombre de lignes est la hauteur que la page réserve.',
+	'Bar with the article picture — the default' => 'Bandeau avec l’image de l’article — par défaut',
+	'The "EN CONTINU" pill in front of the headline on two lines, the article picture at the end of the line, the close button in a tab above the corner. Folded: the dot, the first line, the small picture, and the unfold button in the tab.' => 'La pastille « EN CONTINU » devant le titre sur deux lignes, l’image de l’article au bout de la ligne, la croix dans un onglet au-dessus du coin. Replié : le point, la première ligne, la petite image, et le bouton pour déplier dans l’onglet.',
+	'"Explore More" card' => 'Carte « Explore More »',
+	'A label row, then the picture at the left and the headline beside it, the close button in a tab above the corner. Folded: the dot, the first line, a small picture, and the unfold button in the tab.' => 'Une ligne d’étiquette, puis l’image à gauche et le titre à côté, la croix dans un onglet au-dessus du coin. Repliée : le point, la première ligne, une petite image, et le bouton pour déplier dans l’onglet.',
+	'Open' => 'Ouvert',
+	'Folded' => 'Replié',
 );

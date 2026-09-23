@@ -2402,6 +2402,11 @@ mode hybrid:
 4. **Replié, le bouton pour déplier sort du bandeau**, dans l'onglet au-dessus du coin, comme la croix du bandeau déplié. Le bouton « haut de page » de Jannah passe au-dessus.
 5. **Page de réglages simple** : seuls les réglages de travail sont visibles ; l'interrupteur « Réglages avancés » montre tout le reste et s'en souvient.
 
+### 15.8.3 duodecies — Le design choisi par l'image, et appliqué au site (2.12.0)
+
+1. **Le bandeau avec l'image de l'article devient le design mobile du site existant** à la mise à jour, tel que livré (deux lignes, pastille avec son point, croix seule dans l'onglet, image gardée repliée) ; comportement, couleurs et contenu inchangés.
+2. **Le choix du design se fait sur un dessin** : chaque design est montré ouvert et replié dans *Mobile → Design* ; un clic le choisit et l'aperçu le montre avec les vrais titres.
+
 ---
 
 # ANNEXE C — CONSIGNE FINALE À CLAUDE CODE

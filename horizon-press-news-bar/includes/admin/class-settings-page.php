@@ -308,7 +308,7 @@ final class Settings_Page {
 					),
 					array(
 						'title'       => __( 'Design', 'horizon-press-news-bar' ),
-						'description' => __( 'Under 768 px, two designs. The bar with the article picture, the default: the label in front of the headline, the picture where the buttons were and the close button in a tab above the corner. The "Explore More" card: a label row, then the picture and the headline beside it. Folded, both keep a strip with the first line and the small picture, and the unfold button in the same tab. The height shown beside the line count is the height the page reserves.', 'horizon-press-news-bar' ),
+						'description' => __( 'Under 768 px. Click the design you want: the live preview on the right shows it with your own headlines. The height shown beside the line count is the height the page reserves.', 'horizon-press-news-bar' ),
 						'switch'      => 'show_on_mobile',
 						'keys'        => array( 'mobile_layout', 'mobile_lines', 'mobile_thumb_size', 'mobile_card_thumb', 'mobile_card_float', 'mobile_font_size', 'mobile_bar_height', 'mobile_peek', 'mobile_peek_thumbnail', 'mobile_label_style', 'mobile_label_dot', 'mobile_label_pulse', 'mobile_label_compact', 'mobile_show_counter', 'mobile_show_progress', 'mobile_show_separator', 'mobile_show_thumbnail', 'mobile_thumb_position', 'mobile_swipe', 'mobile_kbd_hide' ),
 						'scenarios'   => array(
@@ -417,6 +417,50 @@ final class Settings_Page {
 				),
 			),
 		);
+	}
+
+	/**
+	 * The two phone designs, each shown as a small drawing of the bar open and folded, so the choice
+	 * is made on what the reader will see rather than on a description.
+	 *
+	 * @return array<string, array{title: string, text: string, mock: string}>
+	 */
+	private static function design_choices(): array {
+		return array(
+			'flow_image' => array(
+				'title' => __( 'Bar with the article picture — the default', 'horizon-press-news-bar' ),
+				'text'  => __( 'The "EN CONTINU" pill in front of the headline on two lines, the article picture at the end of the line, the close button in a tab above the corner. Folded: the dot, the first line, the small picture, and the unfold button in the tab.', 'horizon-press-news-bar' ),
+				'mock'  => 'image',
+			),
+			'card'       => array(
+				'title' => __( '"Explore More" card', 'horizon-press-news-bar' ),
+				'text'  => __( 'A label row, then the picture at the left and the headline beside it, the close button in a tab above the corner. Folded: the dot, the first line, a small picture, and the unfold button in the tab.', 'horizon-press-news-bar' ),
+				'mock'  => 'card',
+			),
+		);
+	}
+
+	/**
+	 * A small drawing of a phone design, open then folded: plain elements coloured by the admin
+	 * stylesheet, no image file.
+	 *
+	 * @param string $kind 'image' or 'card'.
+	 * @return string
+	 */
+	private static function design_mock( string $kind ): string {
+		$kind   = 'card' === $kind ? 'card' : 'image';
+		$states = array(
+			'open'   => __( 'Open', 'horizon-press-news-bar' ),
+			'folded' => __( 'Folded', 'horizon-press-news-bar' ),
+		);
+		$html   = '<span class="hprnb-mock hprnb-mock--' . esc_attr( $kind ) . '" aria-hidden="true">';
+		foreach ( $states as $state => $caption ) {
+			$html .= '<span class="hprnb-mock__state hprnb-mock__state--' . esc_attr( $state ) . '">';
+			$html .= '<span class="hprnb-mock__screen"><span class="hprnb-mock__tab"></span><span class="hprnb-mock__bar">';
+			$html .= '<span class="hprnb-mock__pill"></span><span class="hprnb-mock__line"></span><span class="hprnb-mock__line"></span><span class="hprnb-mock__pic"></span>';
+			$html .= '</span></span><span class="hprnb-mock__caption">' . esc_html( $caption ) . '</span></span>';
+		}
+		return $html . '</span>';
 	}
 
 	/**
@@ -716,12 +760,9 @@ final class Settings_Page {
 			),
 			'mobile_layout'               => array(
 				'section' => 'mobile',
-				'type'    => 'radio',
+				'type'    => 'choice',
 				'label'   => __( 'Design', 'horizon-press-news-bar' ),
-				'options' => array(
-					'flow_image' => __( 'Bar with the article picture (default) — the label opens the headline on two lines, the picture of the article at the end of the line, the close button in a tab above the corner', 'horizon-press-news-bar' ),
-					'card'       => __( '"Explore More" card — a label row, then the picture at the left and the headline beside it, the close button in a tab above the corner', 'horizon-press-news-bar' ),
-				),
+				'options' => self::design_choices(),
 			),
 			'mobile_label_style'          => array(
 				'section' => 'mobile',
@@ -1683,18 +1724,21 @@ final class Settings_Page {
 				break;
 
 			case 'choice':
-				// Radio buttons drawn as large boxes: a title and one plain sentence each.
-				echo '<fieldset class="hprnb-choices"><legend class="screen-reader-text">' . esc_html( $field['label'] ) . '</legend>';
+				// Radio buttons drawn as large boxes: a title, one plain sentence, and for the designs a
+				// drawing of the bar open and folded.
+				$with_mocks = ! empty( array_filter( array_column( (array) $field['options'], 'mock' ) ) );
+				echo '<fieldset class="hprnb-choices' . ( $with_mocks ? ' hprnb-choices--designs' : '' ) . '"><legend class="screen-reader-text">' . esc_html( $field['label'] ) . '</legend>';
 				foreach ( (array) $field['options'] as $option_value => $option ) {
 					$option_id = $id . '-' . sanitize_key( (string) $option_value );
 					printf(
-						'<label for="%1$s" class="hprnb-choice"><input type="radio" id="%1$s" name="%2$s" value="%3$s"%4$s> <span class="hprnb-choice__body"><strong class="hprnb-choice__title">%5$s</strong> <span class="hprnb-choice__text">%6$s</span></span></label>',
+						'<label for="%1$s" class="hprnb-choice"><input type="radio" id="%1$s" name="%2$s" value="%3$s"%4$s> <span class="hprnb-choice__body"><strong class="hprnb-choice__title">%5$s</strong> <span class="hprnb-choice__text">%6$s</span>%7$s</span></label>',
 						esc_attr( $option_id ),
 						esc_attr( $name ),
 						esc_attr( (string) $option_value ),
 						checked( (string) $value, (string) $option_value, false ),
 						esc_html( (string) ( $option['title'] ?? '' ) ),
-						esc_html( (string) ( $option['text'] ?? '' ) )
+						esc_html( (string) ( $option['text'] ?? '' ) ),
+						empty( $option['mock'] ) ? '' : self::design_mock( (string) $option['mock'] ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built from escaped parts in design_mock().
 					);
 				}
 				echo '</fieldset>';

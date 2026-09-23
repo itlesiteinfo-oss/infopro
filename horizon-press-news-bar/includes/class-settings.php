@@ -976,7 +976,35 @@ final class Settings {
 			$upgraded['mobile_layout'] = 'flow_image';
 		}
 
+		// Schema 8: at the client's request, the bar with the article picture becomes the phone design
+		// of existing sites too, exactly as delivered (two lines, the pill with its dot, the cross alone
+		// in the tab, the picture kept in the folded strip). Behaviour, colours and content are left alone.
+		if ( $stored < 8 && ! empty( $raw ) ) {
+			$upgraded = array_merge( $upgraded, self::image_bar_design() );
+		}
+
 		return $upgraded;
+	}
+
+	/**
+	 * The phone design as delivered: the bar with the article picture. Applied once to existing sites
+	 * by schema 8, and the defaults of a new one.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function image_bar_design(): array {
+		return array(
+			'mobile_layout'         => 'flow_image',
+			'mobile_lines'          => 2,
+			'mobile_font_size'      => 16,
+			'mobile_bar_height'     => 76,
+			'mobile_thumb_size'     => 48,
+			'mobile_label_style'    => 'pill',
+			'mobile_label_dot'      => true,
+			'mobile_show_pause'     => false,
+			'mobile_peek'           => 'headline',
+			'mobile_peek_thumbnail' => true,
+		);
 	}
 
 	/**

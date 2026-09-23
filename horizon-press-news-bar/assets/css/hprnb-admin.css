@@ -153,6 +153,203 @@
 	max-inline-size: 75ch;
 }
 
+/* The two phone designs side by side, each with a drawing of the bar open and folded. */
+@media (min-width: 900px) {
+	.hprnb-choices--designs {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.hprnb-mock {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px;
+	margin-block-start: 10px;
+}
+
+.hprnb-mock__state {
+	display: grid;
+	justify-items: center;
+	gap: 4px;
+}
+
+.hprnb-mock__caption {
+	color: #50575e;
+	font-size: 12px;
+}
+
+.hprnb-mock__screen {
+	position: relative;
+	inline-size: 150px;
+	block-size: 96px;
+	overflow: hidden;
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	background: repeating-linear-gradient(#f6f7f7 0 9px, #e8e9ea 9px 11px);
+}
+
+.hprnb-mock__bar,
+.hprnb-mock__tab {
+	position: absolute;
+	inset-inline-end: 0;
+	background: #1b1c20;
+	box-shadow: inset 0 2px 0 #ce3029;
+}
+
+.hprnb-mock__bar {
+	inset-inline-start: 0;
+	inset-block-end: 0;
+	block-size: 38px;
+}
+
+.hprnb-mock__tab {
+	inset-block-end: 38px;
+	inline-size: 22px;
+	block-size: 22px;
+}
+
+/* The cross of the open bar, the chevron of the folded one. */
+.hprnb-mock__tab::before,
+.hprnb-mock__tab::after {
+	content: "";
+	position: absolute;
+	inset-block-start: 11px;
+	inset-inline-start: 6px;
+	inline-size: 10px;
+	block-size: 1.5px;
+	background: #fff;
+	transform: rotate(45deg);
+}
+
+.hprnb-mock__tab::after {
+	transform: rotate(-45deg);
+}
+
+.hprnb-mock__state--folded .hprnb-mock__tab::before,
+.hprnb-mock__state--folded .hprnb-mock__tab::after {
+	inset-block-start: 11px;
+	inline-size: 7px;
+	transform: translateX(-2.5px) rotate(-45deg);
+}
+
+.hprnb-mock__state--folded .hprnb-mock__tab::after {
+	transform: translateX(2.5px) rotate(45deg);
+}
+
+.hprnb-mock__pill,
+.hprnb-mock__line,
+.hprnb-mock__pic {
+	position: absolute;
+	display: block;
+}
+
+.hprnb-mock__pill {
+	inset-block-start: 8px;
+	inset-inline-start: 8px;
+	inline-size: 34px;
+	block-size: 9px;
+	border-radius: 9px;
+	background: #ce3029;
+}
+
+.hprnb-mock__line {
+	block-size: 5px;
+	border-radius: 3px;
+	background: #e8e8e8;
+}
+
+.hprnb-mock__line:nth-child(2) {
+	inset-block-start: 10px;
+	inset-inline-start: 46px;
+	inline-size: 60px;
+}
+
+.hprnb-mock__line:nth-child(3) {
+	inset-block-start: 23px;
+	inset-inline-start: 8px;
+	inline-size: 98px;
+}
+
+.hprnb-mock__pic {
+	inset-block-start: 7px;
+	inset-inline-end: 8px;
+	inline-size: 24px;
+	block-size: 24px;
+	border-radius: 4px;
+	background: linear-gradient(#8fb8de, #34506b);
+}
+
+/* Folded: a strip with the dot, the first line and the small picture; the tab holds the chevron. */
+.hprnb-mock__state--folded .hprnb-mock__bar {
+	block-size: 18px;
+}
+
+.hprnb-mock__state--folded .hprnb-mock__tab {
+	inset-block-end: 18px;
+}
+
+.hprnb-mock__state--folded .hprnb-mock__pill {
+	inset-block-start: 5px;
+	inline-size: 9px;
+}
+
+.hprnb-mock__state--folded .hprnb-mock__line:nth-child(2) {
+	inset-block-start: 7px;
+	inset-inline-start: 22px;
+	inline-size: 90px;
+}
+
+.hprnb-mock__state--folded .hprnb-mock__line:nth-child(3) {
+	display: none;
+}
+
+.hprnb-mock__state--folded .hprnb-mock__pic {
+	inset-block-start: 4px;
+	inline-size: 10px;
+	block-size: 10px;
+	border-radius: 2px;
+}
+
+/* The card: a label row, then the 16:9 picture at the start and the headline beside it. */
+.hprnb-mock--card .hprnb-mock__state--open .hprnb-mock__bar {
+	block-size: 54px;
+}
+
+.hprnb-mock--card .hprnb-mock__state--open .hprnb-mock__tab {
+	inset-block-end: 54px;
+}
+
+.hprnb-mock--card .hprnb-mock__state--open .hprnb-mock__pill {
+	inset-block-start: 7px;
+	inline-size: 30px;
+	block-size: 8px;
+}
+
+.hprnb-mock--card .hprnb-mock__state--open .hprnb-mock__pic {
+	inset-block-start: 21px;
+	inset-inline: 8px auto;
+	inline-size: 40px;
+	block-size: 23px;
+}
+
+.hprnb-mock--card .hprnb-mock__state--open .hprnb-mock__line:nth-child(2) {
+	inset-block-start: 23px;
+	inset-inline-start: 56px;
+	inline-size: 80px;
+}
+
+.hprnb-mock--card .hprnb-mock__state--open .hprnb-mock__line:nth-child(3) {
+	inset-block-start: 34px;
+	inset-inline-start: 56px;
+	inline-size: 64px;
+}
+
+.hprnb-mock--card .hprnb-mock__state--folded .hprnb-mock__pic {
+	inline-size: 16px;
+	block-size: 9px;
+	inset-block-start: 5px;
+}
+
 .hprnb-color {
 	inline-size: 64px;
 	block-size: 32px;

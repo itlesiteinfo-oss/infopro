@@ -2,6 +2,16 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.12.0] — 2026-09-23
+
+### Modifié — le bandeau avec l'image de l'article, aussi sur les sites existants
+
+- **Schéma 8**, à la demande du client : à la mise à jour, un site existant prend une fois le design mobile tel que livré — bandeau avec l'image de l'article, 2 lignes, police de 16 px, pastille « EN CONTINU » avec son point, croix seule dans l'onglet (pause masquée), image de 48 px gardée dans la bande repliée (`Settings::image_bar_design()`). Le comportement, les couleurs, le contenu et l'affichage de la croix restent ceux du site. Une seule fois : choisir la carte ensuite la garde.
+
+### Ajouté — le choix du design par l'image
+
+- *Mobile → Design* n'est plus une liste de phrases : **deux grandes cases, chacune avec un dessin du bandeau ouvert et replié** (la pastille, les lignes du titre, l'image, l'onglet avec la croix puis le chevron). Un clic sur la case ou sur le dessin choisit le design, et l'aperçu à droite le montre aussitôt avec les vrais titres. Dessins en éléments HTML colorés par la feuille d'administration, sans fichier image, et en miroir sur un site de droite à gauche.
+
 ## [2.11.0] — 2026-09-23
 
 ### Modifié — deux designs mobiles, et les réglages du client par défaut

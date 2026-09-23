@@ -2479,3 +2479,55 @@ test( 'v2.11: the new defaults, a premium fold with the unfold button in the tab
 		setSettings( { mobile_layout: 'flow', mobile_lines: 2 } );
 	}
 } );
+
+test( 'v2.12: the bar with the article picture on an existing site, and a design picker drawn open and folded', async ( { page } ) => {
+	const errors = collectErrors( page );
+	const root = page.locator( '#hprnb-root' );
+	try {
+		// A 2.11 site on the card, pause shown, three lines: the update applies the design as delivered.
+		setSettings( { mobile_layout: 'card', mobile_lines: 3, mobile_show_pause: true, mobile_label_style: 'strip' } );
+		wp( [ 'option', 'update', 'hprnb_schema_version', '7' ] );
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( '/' );
+		await expect( page.locator( '.hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( wp( [ 'option', 'get', 'hprnb_schema_version' ] ) ).toBe( '8' );
+		const stored = JSON.parse( wp( [ 'option', 'get', 'hprnb_settings', '--format=json' ] ) );
+		expect( [ stored.mobile_layout, stored.mobile_lines, stored.mobile_show_pause, stored.mobile_label_style ] ).toEqual( [ 'flow_image', 2, false, 'pill' ] );
+		expect( stored.mobile_behavior ).toBe( 'fold', 'The behaviour the site had is kept.' );
+		await expect( root ).toHaveClass( /hprnb-root--m-flow/ );
+		await expect( root ).toHaveClass( /hprnb-root--m-ctrl-tab/ );
+		await expect( page.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden();
+		expect( errors ).toEqual( [] );
+
+		// The picker: two boxes, each drawn open and folded; a click on the drawing chooses the design.
+		await page.goto( '/wp-login.php' );
+		await page.fill( '#user_login', 'admin' );
+		await page.fill( '#user_pass', 'admin' );
+		await page.click( '#wp-submit' );
+		await page.waitForURL( /wp-admin/ );
+		await page.setViewportSize( { width: 1400, height: 1000 } );
+		await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar' );
+		await page.click( '[data-hprnb-tab="mobile"]' );
+		await expect( page.locator( '#hprnb-field-mobile-layout-flow_image' ) ).toBeChecked();
+		await expect( page.locator( '.hprnb-choices--designs .hprnb-mock' ) ).toHaveCount( 2 );
+		await expect( page.locator( '.hprnb-mock--image .hprnb-mock__state' ) ).toHaveCount( 2 );
+		const drawing = page.locator( '.hprnb-mock--image .hprnb-mock__state--open .hprnb-mock__screen' );
+		await expect( drawing ).toBeVisible();
+		const box = await drawing.boundingBox();
+		expect( [ Math.round( box.width ), Math.round( box.height ) ] ).toEqual( [ 152, 98 ] );
+		// The drawing's tab sits on the bar, against the end corner, as on the phone.
+		const tab = await page.locator( '.hprnb-mock--image .hprnb-mock__state--open .hprnb-mock__tab' ).boundingBox();
+		const bar = await page.locator( '.hprnb-mock--image .hprnb-mock__state--open .hprnb-mock__bar' ).boundingBox();
+		expect( Math.round( tab.y + tab.height ) ).toBe( Math.round( bar.y ) );
+		expect( Math.round( tab.x + tab.width ) ).toBe( Math.round( bar.x + bar.width ) );
+		await page.locator( '.hprnb-mock--card .hprnb-mock__state--folded .hprnb-mock__screen' ).click();
+		await expect( page.locator( '#hprnb-field-mobile-layout-card' ) ).toBeChecked();
+		await expect( page.locator( '#hprnb-preview-root' ) ).toHaveClass( /hprnb-root--m-card/ );
+		await page.locator( '.hprnb-mock--image .hprnb-mock__state--open .hprnb-mock__screen' ).click();
+		await expect( page.locator( '#hprnb-field-mobile-layout-flow_image' ) ).toBeChecked();
+		await expect( page.locator( '#hprnb-preview-root' ) ).toHaveClass( /hprnb-root--m-ctrl-tab/ );
+		expect( errors ).toEqual( [] );
+	} finally {
+		setSettings( { mobile_layout: 'flow', mobile_lines: 2 } );
+	}
+} );

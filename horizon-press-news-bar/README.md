@@ -333,6 +333,10 @@ Le nombre de paragraphes, le seuil de repli et l'aspect du bandeau replié reste
 
 **Réglages** : interrupteur « Réglages avancés » dans l'en-tête (mémorisé par le navigateur, `localStorage` `hprnb_admin_advanced`). `Settings_Page::advanced_fields()` liste les réglages avancés ; les cartes `advanced` et les onglets entièrement avancés sont masqués en mode simple.
 
+## 9 sexdecies. Le design par l'image, et appliqué aux sites existants (2.12)
+
+*Mobile → Design* : deux cases, chacune avec un dessin du bandeau ouvert et replié (`Settings_Page::design_choices()`, `design_mock()`, classes `hprnb-mock*` de la feuille d'administration). **Schéma 8** : un site existant reçoit une fois `Settings::image_bar_design()` — `mobile_layout = flow_image`, 2 lignes, 16 px, barre de 76 px, image de 48 px, pastille avec point, pause masquée, bande repliée avec la première ligne et l'image.
+
 ## 10. Ticker (optionnel)
 
 Désactivé par défaut. Trois modes :

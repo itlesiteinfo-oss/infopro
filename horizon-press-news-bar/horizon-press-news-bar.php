@@ -3,7 +3,7 @@
  * Plugin Name:       Horizon Press News Bar
  * Plugin URI:        https://horizonpress.example/news-bar
  * Description:       Barre d'actualités récentes, fixe en bas de page, filtrée par fenêtre temporelle et catégories.
- * Version:           2.11.0
+ * Version:           2.12.0
  * Requires at least: 6.6
  * Requires PHP:      8.0
  * Author:            Horizon Press
@@ -17,14 +17,14 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'HPRNB_VERSION', '2.11.0' );
+define( 'HPRNB_VERSION', '2.12.0' );
 define( 'HPRNB_FILE', __FILE__ );
 define( 'HPRNB_PATH', plugin_dir_path( __FILE__ ) );
 define( 'HPRNB_URL', plugin_dir_url( __FILE__ ) );
 define( 'HPRNB_BASENAME', plugin_basename( __FILE__ ) );
 define( 'HPRNB_MIN_WP', '6.6' );
 define( 'HPRNB_MIN_PHP', '8.0' );
-define( 'HPRNB_SCHEMA_VERSION', 7 );
+define( 'HPRNB_SCHEMA_VERSION', 8 );
 
 /**
  * Whether the current PHP and WordPress versions satisfy the plugin requirements.

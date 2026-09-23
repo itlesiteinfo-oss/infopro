@@ -865,3 +865,16 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   unless `localStorage.hprnb_admin_advanced === '1'`, skips hidden tabs in `selectTab()` and arrow keys,
   and falls back to the first visible tab. CSS budget of the bar: 40 KB (test).
 
+## 26. The design picker and schema 8 (2.12.0)
+
+- Schema 8: `Settings::migrate()` merges `Settings::image_bar_design()` into a non-empty option written
+  under schema 7 or older: `mobile_layout` flow_image, `mobile_lines` 2, `mobile_font_size` 16,
+  `mobile_bar_height` 76, `mobile_thumb_size` 48, `mobile_label_style` pill, `mobile_label_dot` true,
+  `mobile_show_pause` false, `mobile_peek` headline, `mobile_peek_thumbnail` true. Every other key —
+  behaviour, colours, content, `mobile_show_close` — is left as stored. These values equal the defaults.
+- Admin: `mobile_layout` is a `choice` field; `design_choices()` gives each option a `mock` (`image` or
+  `card`), and the `choice` renderer appends `design_mock()` — a static span tree (`hprnb-mock`,
+  `__state--open|folded`, `__screen`, `__tab`, `__bar`, `__pill`, `__line`, `__pic`, `__caption`) drawn by
+  the admin stylesheet with logical properties. The fieldset gets `hprnb-choices--designs` (two columns
+  from 900px). Input ids are unchanged (`hprnb-field-mobile-layout-flow_image`, `…-card`).
+
