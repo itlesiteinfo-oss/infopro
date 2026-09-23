@@ -197,9 +197,12 @@ final class Frontend {
 		$payload = Payload::get( $settings );
 		if ( (int) $payload['count'] > 0 && ! in_array( 'hprnb-reserve', $classes, true ) ) {
 			$classes[] = 'hprnb-reserve';
-			if ( 'immediate' !== ( self::$settings['reveal_mode'] ?? 'immediate' ) ) {
-				// No reserved space until the bar is revealed (the script drops the class).
-				$classes[] = 'hprnb-pending';
+			// No reserved space until the bar is revealed on that device (the script drops the class).
+			if ( 'immediate' !== ( self::$settings['desktop_reveal_mode'] ?? 'immediate' ) ) {
+				$classes[] = 'hprnb-d-pending';
+			}
+			if ( 'immediate' !== ( self::$settings['mobile_reveal_mode'] ?? 'immediate' ) ) {
+				$classes[] = 'hprnb-m-pending';
 			}
 			if ( ! empty( self::$settings['theme_offset'] ) ) {
 				$classes[] = 'hprnb-theme-offset';

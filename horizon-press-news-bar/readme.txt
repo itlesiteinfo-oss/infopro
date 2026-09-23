@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.7.0
+Stable tag: 2.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,13 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.8.0 =
+* When the bar appears is now decided per device (mobile_reveal_* / desktop_reveal_*), migrated from the single setting; imports of older exports are migrated too.
+* Settings page: one tab per device — design, headlines, when it appears, folding, buttons.
+* The mobile card follows the client's reference and is the default: label row, 16:9 132×74 picture, 18px headline on three lines, edge to edge, close button in a 44px tab above the corner. Floating is an option.
+* Fixed: the admin preview was empty or cut off whenever the bar waited for the reader.
+* Fixed: the two device switches were rendered twice on the settings page.
 
 = 2.7.0 =
 * New reveal mode "Before the end of the article": the bar appears as soon as the Nth paragraph from the end comes into view (2 = second-to-last, configurable 1–30). Measures the article body, not the page.

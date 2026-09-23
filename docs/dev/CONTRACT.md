@@ -755,3 +755,28 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   4-second hold after a tap or keyboard focus is unchanged.
 - Bar script budget: 22 KB (was 20 KB).
 
+## 22. Per-device reveal and the reference card (2.8.0)
+
+- Schema 5. `reveal_mode` / `reveal_value` / `reveal_paragraph` are replaced by `mobile_reveal_*` and
+  `desktop_reveal_*` (same types and bounds; `Settings::REVEAL_MODES`). `Settings::migrate( array $raw,
+  int $from ): array` is pure and holds every schema step; `maybe_upgrade()` and
+  `Import_Export::import_json()` (for `_meta.schema_version < HPRNB_SCHEMA_VERSION`) both call it.
+  Step 5 copies each global key to both prefixes when the prefixed key is absent, then drops it.
+- `Renderer::reveal_mode( $settings, 'd'|'m' )`; `reveal_data()` returns `{ d: {mode, value, paragraph?},
+  m: {...}, sel?, smart? }` (`smart` when either device is on smart). `root_classes( $settings, bool
+  $preview = false )` emits `hprnb-root--d-pending` / `--m-pending` per waiting device and
+  `hprnb-root--reveal` when any waits — none of them in preview. `Frontend::body_class()` emits
+  `hprnb-d-pending` / `hprnb-m-pending`. Stylesheet: the root classes are scoped by
+  `@container hprnb (min-width: 768px)` / `(max-width: 767.98px)` at the end of the sheet (section 16),
+  the body classes by the matching media queries. The flat preview root matches neither.
+- `setupReveal()` reads `all[ mobile ? 'm' : 'd' ]` and removes only its own classes; `setupContract()`
+  checks the profile's pending class.
+- Card: `CARD_RATIO 0.5625`, `CARD_ROW 8`; `mobile_card_thumb` 72–160 (default 132);
+  `card_metrics()['text'] = lines × line`, `height = 2·PAD + LABEL + ROW + max(thumb_h, text)` = 126 by
+  default. `mobile_card_float` (bool, default false) → `mobile_gap()` 8 and root class
+  `hprnb-root--m-float`; otherwise gap 0, flush, square corners. The card's `.hprnb-bar__controls` is
+  a tab above the end corner (`inset-block-end: 100%`, 44px buttons, the card's background); collapsed,
+  it moves into the strip and shows the chevron only. `mobile_controls()` stays 0 for the card.
+- Defaults changed: `mobile_layout` card, `mobile_lines` 3, `mobile_card_thumb` 132. Existing installs
+  keep their stored values.
+

@@ -77,15 +77,18 @@ class Cache_Test extends HPRNB_Test_Case {
 		// (it decides the buttons) and the layout (the "discover" design always pulls the picture in).
 		$mobile_mode = Settings::sanitize( array_merge( $settings, array( 'mobile_ticker_mode' => 'manual' ) ) );
 		$this->assertNotSame( $key, Cache::key( $mobile_mode ) );
-		$mobile_card = Settings::sanitize( array_merge( $settings, array( 'mobile_layout' => 'card' ) ) );
-		$this->assertNotSame( $key, Cache::key( $mobile_card ), 'The card carries a picture the other layouts do not.' );
-		$this->assertTrue( Settings::wants_thumbnails( $mobile_card ) );
+		$mobile_flow = Settings::sanitize( array_merge( $settings, array( 'mobile_layout' => 'flow' ) ) );
+		$this->assertNotSame( $key, Cache::key( $mobile_flow ), 'The card (the default) carries a picture the other layouts do not.' );
+		$this->assertTrue( Settings::wants_thumbnails( $settings ), 'The default mobile design is the card.' );
+		$this->assertFalse( Settings::wants_thumbnails( $mobile_flow ) );
 		$mobile_rest = Settings::sanitize( array_merge( $settings, array( 'mobile_font_size' => 20, 'mobile_lines' => 4, 'mobile_label_style' => 'hidden', 'mobile_label_dot' => true, 'mobile_show_counter' => false, 'mobile_show_progress' => false, 'mobile_swipe' => false, 'mobile_hide_on_scroll' => false, 'mobile_show_separator' => true, 'mobile_custom_colors' => false, 'mobile_bg_color' => '#000000', 'desktop_layout' => 'stacked', 'desktop_label_style' => 'pill', 'desktop_label_dot' => true, 'desktop_show_counter' => true, 'desktop_lines' => 3, 'desktop_show_progress' => false ) ) );
 		$this->assertSame( $key, Cache::key( $mobile_rest ), 'Every other presentation setting lives on the root, outside the cache.' );
 
 		// A single headline drops its separator in CSS, so the count never fragments the cache.
 		$this->assertNotContains( 'mobile_card_thumb', Cache::PAYLOAD_KEYS );
-		$this->assertNotContains( 'reveal_mode', Cache::PAYLOAD_KEYS, 'When the bar appears is a script concern.' );
+		$this->assertNotContains( 'mobile_reveal_mode', Cache::PAYLOAD_KEYS, 'When the bar appears is a script concern.' );
+		$this->assertNotContains( 'desktop_reveal_mode', Cache::PAYLOAD_KEYS );
+		$this->assertNotContains( 'mobile_card_float', Cache::PAYLOAD_KEYS, 'Floating or flush is a class on the root.' );
 
 		// The separator is a CSS concern on the root: none of its settings may fragment the cache.
 		$separator = Settings::sanitize( array_merge( $settings, array( 'show_separator' => true, 'separator_char' => '|', 'separator_after_last' => false ) ) );

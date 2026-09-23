@@ -36,7 +36,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 	public function test_default_markup() {
 		$html = Renderer::bar( array( $this->item() ), Settings::get() );
 
-		$this->assertStringStartsWith( '<aside class="hprnb-bar hprnb-bar--label-start hprnb-bar--reserve hprnb-bar--ticker-marquee"', $html );
+		$this->assertStringStartsWith( '<aside class="hprnb-bar hprnb-bar--label-start hprnb-bar--reserve hprnb-bar--ticker-marquee hprnb-bar--has-thumbs"', $html );
 		$this->assertStringContainsString( 'role="region"', $html );
 		$this->assertStringContainsString( 'aria-label="Latest news"', $html );
 		$this->assertStringContainsString( 'aria-live="off"', $html );
@@ -157,15 +157,15 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$payload  = Renderer::payload( array( $this->item() ), $settings, 1757600000 );
 		$root     = Renderer::root( $payload, $settings );
 
-		$this->assertStringStartsWith( '<div id="hprnb-root" class="hprnb-root hprnb-device-all hprnb-root--reserve hprnb-root--align hprnb-bar--sep hprnb-bar--sep-loop hprnb-root--d-inline hprnb-root--d-label-pill hprnb-root--d-dot hprnb-root--m-flow hprnb-root--m-label-pill hprnb-root--m-dot hprnb-root--m-collapse hprnb-root--edge hprnb-root--m-ctrl-col hprnb-root--m-pulse-appear" data-hprnb-generated="1757600000" data-hprnb-stale="180" data-hprnb-layout="reserve" data-hprnb-empty="0" data-hprnb-count="1" data-hprnb-post="0" data-hprnb-desktop="', $root );
+		$this->assertStringStartsWith( '<div id="hprnb-root" class="hprnb-root hprnb-device-all hprnb-root--reserve hprnb-root--align hprnb-bar--sep hprnb-bar--sep-loop hprnb-root--d-inline hprnb-root--d-label-pill hprnb-root--d-dot hprnb-root--m-card hprnb-root--m-label-pill hprnb-root--m-dot hprnb-root--m-thumb hprnb-root--m-thumb-after hprnb-root--m-collapse hprnb-root--edge hprnb-root--m-pulse-appear" data-hprnb-generated="1757600000" data-hprnb-stale="180" data-hprnb-layout="reserve" data-hprnb-empty="0" data-hprnb-count="1" data-hprnb-post="0" data-hprnb-desktop="', $root );
 		$this->assertStringContainsString( esc_attr( '{"layout":"inline","lines":1,"counter":false,"progress":false,"place":"fixed","collapse":false,"trigger":"scroll","after":120}' ), $root );
-		$this->assertStringContainsString( esc_attr( '{"layout":"flow","lines":2,"counter":false,"progress":true,"place":"fixed","swipe":true,"collapse":true,"peek":"headline","deep":true,"kbd":true,"pause":true,"close":true,"trigger":"scroll","after":120}' ), $root );
+		$this->assertStringContainsString( esc_attr( '{"layout":"card","lines":3,"counter":false,"progress":true,"place":"fixed","swipe":true,"collapse":true,"peek":"headline","deep":true,"kbd":true,"pause":true,"close":true,"trigger":"scroll","after":120}' ), $root );
 		$this->assertStringContainsString( esc_attr( '{"mode":"immediate","value":400}' ), $root, 'The bar shows up with the page by default.' );
 		$this->assertStringContainsString( 'data-hprnb-endpoint="' . esc_url( rest_url( 'hprnb/v1/items' ) ) . '"', $root );
 		$this->assertStringContainsString( 'data-hprnb-css="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=2.7.0"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=2.8.0"', $root );
 		$this->assertStringContainsString( 'data-hprnb-js', $root, 'The default mobile presentation (rotate, flow card) needs the interactive script.' );
-		$this->assertStringContainsString( 'style="--hprnb-bg:#1B1C20;--hprnb-fg:#F5F5F5;--hprnb-label-bg:#CE3029;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-accent:#CE3029;--hprnb-font-size:15px;--hprnb-height:40px;--hprnb-d-lines:1;--hprnb-max:1230px;--hprnb-gutter:15px;--hprnb-z:99990;--hprnb-sep:&#039;•&#039;;--hprnb-m-bg:#1B1C20;--hprnb-m-fg:#F5F5F5;--hprnb-m-accent:#CE3029;--hprnb-m-label-fg:#FFFFFF;--hprnb-m-font-size:16px;--hprnb-m-height:76px;--hprnb-m-lines:2;--hprnb-m-line:26px;--hprnb-m-pad:12px;--hprnb-peek:40px;--hprnb-m-ctrls:1;--hprnb-d-thumb:32px;--hprnb-m-thumb:48px;--hprnb-m-card-thumb:96px;--hprnb-m-card-thumb-h:75px;--hprnb-m-card-lines:2;--hprnb-m-gap:0px"', $root );
+		$this->assertStringContainsString( 'style="--hprnb-bg:#1B1C20;--hprnb-fg:#F5F5F5;--hprnb-label-bg:#CE3029;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-accent:#CE3029;--hprnb-font-size:15px;--hprnb-height:40px;--hprnb-d-lines:1;--hprnb-max:1230px;--hprnb-gutter:15px;--hprnb-z:99990;--hprnb-sep:&#039;•&#039;;--hprnb-m-bg:#1B1C20;--hprnb-m-fg:#F5F5F5;--hprnb-m-accent:#CE3029;--hprnb-m-label-fg:#FFFFFF;--hprnb-m-font-size:16px;--hprnb-m-height:126px;--hprnb-m-lines:3;--hprnb-m-line:22px;--hprnb-m-pad:12px;--hprnb-peek:36px;--hprnb-m-ctrls:0;--hprnb-d-thumb:32px;--hprnb-m-thumb:48px;--hprnb-m-card-thumb:132px;--hprnb-m-card-thumb-h:74px;--hprnb-m-card-lines:3;--hprnb-m-gap:0px"', $root );
 		$this->assertStringNotContainsString( ' hidden', $root );
 		$this->assertStringContainsString( '<aside', $root );
 		$this->assertStringEndsWith( '</aside></div>', $root );
@@ -182,7 +182,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$hybrid_js = $this->with_settings( array( 'close_button' => true, 'show_on_desktop' => false ) );
 		$root = Renderer::root( Renderer::payload( array( $this->item() ), $hybrid_js ), $hybrid_js );
 		$this->assertStringContainsString( 'data-hprnb-js="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=2.7.0"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=2.8.0"', $root );
 		$this->assertStringContainsString( 'hprnb-hide-desktop', $root );
 
 		add_filter( 'hprnb_stale_threshold', static fn() => 900 );
@@ -217,14 +217,17 @@ class Renderer_Test extends HPRNB_Test_Case {
 		// Heights. Desktop: lines × ceil(font × 1.3) + 12, never below bar_height (40). Mobile flow card:
 		// max(mobile_bar_height, lines × round(font × 1.625) + 12); the collapsed strip is pad + line + 2.
 		$this->assertSame( 40, Renderer::profile_height( $settings, 'd' ) );
-		$this->assertSame( 76, Renderer::profile_height( $settings, 'm' ), 'Flow card: 12 + 2 × 26 + 12.' );
-		$this->assertSame( array( 'line' => 26, 'height' => 76, 'pad' => 12, 'peek' => 40 ), Renderer::flow_metrics( $settings ) );
-		$this->assertSame( array( 'line' => 26, 'height' => 64, 'pad' => 6, 'peek' => 34 ), Renderer::flow_metrics( array_merge( $settings, array( 'mobile_bar_height' => 64 ) ) ) );
-		$this->assertSame( array( 'line' => 26, 'height' => 96, 'pad' => 22, 'peek' => 50 ), Renderer::flow_metrics( array_merge( $settings, array( 'mobile_bar_height' => 96 ) ) ) );
-		$this->assertSame( 40, Renderer::peek_height( $settings ) );
+		$this->assertSame( 126, Renderer::profile_height( $settings, 'm' ), 'The card, the default since 2.8.0: 12 + 20 + 8 + max(74, 66) + 12.' );
+		$flow = array_merge( $settings, array( 'mobile_layout' => 'flow', 'mobile_lines' => 2 ) );
+		$this->assertSame( 76, Renderer::profile_height( $flow, 'm' ), 'Flow card: 12 + 2 × 26 + 12.' );
+		$this->assertSame( array( 'line' => 26, 'height' => 76, 'pad' => 12, 'peek' => 40 ), Renderer::flow_metrics( $flow ) );
+		$this->assertSame( array( 'line' => 26, 'height' => 64, 'pad' => 6, 'peek' => 34 ), Renderer::flow_metrics( array_merge( $flow, array( 'mobile_bar_height' => 64 ) ) ) );
+		$this->assertSame( array( 'line' => 26, 'height' => 96, 'pad' => 22, 'peek' => 50 ), Renderer::flow_metrics( array_merge( $flow, array( 'mobile_bar_height' => 96 ) ) ) );
+		$this->assertSame( 40, Renderer::peek_height( $flow ) );
+		$this->assertSame( 36, Renderer::peek_height( $settings ), 'The card collapses to one line and its padding.' );
 		$this->assertSame( 36, Renderer::peek_height( array_merge( $settings, array( 'mobile_layout' => 'stacked' ) ) ), 'Stacked: the 22px label row and its padding.' );
-		$this->assertSame( 54, Renderer::profile_height( array_merge( $settings, array( 'mobile_layout' => 'inline' ) ), 'm' ), 'Inline, two 16px lines.' );
-		$this->assertSame( 54, Renderer::peek_height( array_merge( $settings, array( 'mobile_layout' => 'inline' ) ) ), 'Inline never collapses: the strip is the bar.' );
+		$this->assertSame( 54, Renderer::profile_height( array_merge( $settings, array( 'mobile_layout' => 'inline', 'mobile_lines' => 2 ) ), 'm' ), 'Inline, two 16px lines.' );
+		$this->assertSame( 54, Renderer::peek_height( array_merge( $settings, array( 'mobile_layout' => 'inline', 'mobile_lines' => 2 ) ) ), 'Inline never collapses: the strip is the bar.' );
 		$this->assertSame( 40, Renderer::profile_height( array_merge( $settings, array( 'mobile_layout' => 'inline', 'mobile_lines' => 1 ) ), 'm' ) );
 		$this->assertSame( 78, Renderer::profile_height( array_merge( $settings, array( 'desktop_layout' => 'stacked', 'desktop_lines' => 2, 'ticker_enabled' => false ) ), 'd' ), '22 + 4 + 2 × 20 + 12.' );
 		$this->assertSame( 56, Renderer::profile_height( array_merge( $settings, array( 'bar_height' => 56, 'desktop_lines' => 2, 'ticker_enabled' => false ) ), 'd' ), 'Minimum height above the computed one (2 × 20 + 12 = 52 < 56).' );
@@ -233,8 +236,9 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$this->assertSame( 3, Renderer::profile_lines( array_merge( $settings, array( 'desktop_lines' => 3, 'ticker_enabled' => false ) ), 'd' ) );
 		$this->assertSame( 'stacked', Renderer::profile( array_merge( $settings, array( 'mobile_ticker_mode' => 'static' ) ), 'm' )['layout'], 'The flow card needs the rotation: other modes fall back to the label row.' );
 		// Featured image: one switch, one position and one size per profile; shared markup, CSS decides.
-		$this->assertFalse( Settings::wants_thumbnails( $settings ) );
-		$images = array_merge( $settings, array( 'desktop_show_thumbnail' => true, 'mobile_show_thumbnail' => true, 'mobile_thumb_position' => 'after', 'desktop_thumb_size' => 56, 'ticker_enabled' => false ) );
+		$this->assertTrue( Settings::wants_thumbnails( $settings ), 'The card, the default, always carries its picture.' );
+		$this->assertFalse( Settings::wants_thumbnails( $flow ) );
+		$images = array_merge( $settings, array( 'mobile_layout' => 'flow', 'mobile_lines' => 2, 'desktop_show_thumbnail' => true, 'mobile_show_thumbnail' => true, 'mobile_thumb_position' => 'after', 'desktop_thumb_size' => 56, 'ticker_enabled' => false ) );
 		$this->assertTrue( Settings::wants_thumbnails( $images ) );
 		$this->assertTrue( Renderer::profile( $images, 'd' )['thumb'] );
 		$this->assertSame( 'before', Renderer::profile( $images, 'd' )['thumb_position'] );
@@ -246,18 +250,20 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$this->assertNotContains( 'hprnb-root--m-thumb', Renderer::root_classes( array_merge( $images, array( 'mobile_show_thumbnail' => false ) ) ) );
 		$this->assertSame( 64, Renderer::profile_height( $images, 'd' ), 'A 56px image grows the 40px bar (56 + 12 − 4).' );
 		$this->assertSame( 76, Renderer::profile_height( $images, 'm' ), 'The flow card keeps its height: the image is clamped by the stylesheet.' );
-		$this->assertStringContainsString( '--hprnb-d-thumb:56px;--hprnb-m-thumb:48px;--hprnb-m-card-thumb:96px;--hprnb-m-card-thumb-h:75px;--hprnb-m-card-lines:2;--hprnb-m-gap:0px', Renderer::root_style( $images ) );
+		$this->assertStringContainsString( '--hprnb-d-thumb:56px;--hprnb-m-thumb:48px;--hprnb-m-card-thumb:132px;--hprnb-m-card-thumb-h:74px;--hprnb-m-card-lines:2;--hprnb-m-gap:0px', Renderer::root_style( $images ) );
 
 		// Stacked buttons (default) take one column whatever their number; side by side, one each.
-		$this->assertSame( 1, Renderer::mobile_controls( $settings ), 'Close above pause: a single column.' );
-		$row = array_merge( $settings, array( 'mobile_controls_layout' => 'row' ) );
+		$this->assertSame( 0, Renderer::mobile_controls( $settings ), 'The card places its buttons in a tab: no column.' );
+		$this->assertSame( 1, Renderer::mobile_controls( $flow ), 'Close above pause: a single column.' );
+		$row = array_merge( $flow, array( 'mobile_controls_layout' => 'row' ) );
 		$this->assertSame( 2, Renderer::mobile_controls( $row ), 'Pause and close.' );
 		$this->assertSame( 3, Renderer::mobile_controls( array_merge( $row, array( 'mobile_ticker_mode' => 'manual' ) ) ) );
 		$this->assertSame( 0, Renderer::mobile_controls( array_merge( $row, array( 'mobile_ticker_mode' => 'static', 'close_button' => false ) ) ), 'No button left: the card takes the whole width.' );
-		$this->assertSame( 0, Renderer::mobile_controls( array_merge( $settings, array( 'mobile_show_pause' => false, 'mobile_show_close' => false ) ) ), 'Both hidden on mobile.' );
-		$this->assertSame( 1, Renderer::mobile_controls( array_merge( $settings, array( 'mobile_show_pause' => false ) ) ), 'Close alone.' );
-		$this->assertSame( 0, Renderer::mobile_controls( array_merge( $settings, array( 'mobile_controls_place' => 'outside' ) ) ), 'Floating above the bar.' );
-		$this->assertContains( 'hprnb-root--m-ctrl-col', Renderer::root_classes( $settings ) );
+		$this->assertSame( 0, Renderer::mobile_controls( array_merge( $flow, array( 'mobile_show_pause' => false, 'mobile_show_close' => false ) ) ), 'Both hidden on mobile.' );
+		$this->assertSame( 1, Renderer::mobile_controls( array_merge( $flow, array( 'mobile_show_pause' => false ) ) ), 'Close alone.' );
+		$this->assertSame( 0, Renderer::mobile_controls( array_merge( $flow, array( 'mobile_controls_place' => 'outside' ) ) ), 'Floating above the bar.' );
+		$this->assertNotContains( 'hprnb-root--m-ctrl-col', Renderer::root_classes( $settings ), 'The card has no button column: its tab is above the corner.' );
+		$this->assertContains( 'hprnb-root--m-ctrl-col', Renderer::root_classes( $flow ) );
 		$this->assertNotContains( 'hprnb-root--m-ctrl-col', Renderer::root_classes( $row ) );
 
 		// Pulsing pill and the two image sub-options of the collapsed strip.
@@ -270,21 +276,21 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$this->assertContains( 'hprnb-root--m-label-compact', Renderer::root_classes( array_merge( $with_image, array( 'mobile_label_compact' => true ) ) ) );
 		$this->assertNotContains( 'hprnb-root--m-peek-thumb', Renderer::root_classes( array_merge( $with_image, array( 'mobile_peek_thumbnail' => false ) ) ) );
 
-		$this->assertSame( array( 'hprnb-root', 'hprnb-device-all', 'hprnb-root--reserve', 'hprnb-root--align', 'hprnb-bar--sep', 'hprnb-bar--sep-loop', 'hprnb-root--d-inline', 'hprnb-root--d-label-pill', 'hprnb-root--d-dot', 'hprnb-root--m-flow', 'hprnb-root--m-label-pill', 'hprnb-root--m-dot', 'hprnb-root--m-collapse', 'hprnb-root--edge', 'hprnb-root--m-ctrl-col', 'hprnb-root--m-pulse-appear' ), Renderer::root_classes( $settings ) );
-		$inline = array_merge( $settings, array( 'mobile_layout' => 'inline', 'mobile_label_style' => 'hidden', 'mobile_label_dot' => true, 'mobile_custom_colors' => false, 'mobile_hide_on_scroll' => true, 'label_position' => 'start', 'align_container' => false, 'show_separator' => false ) );
+		$this->assertSame( array( 'hprnb-root', 'hprnb-device-all', 'hprnb-root--reserve', 'hprnb-root--align', 'hprnb-bar--sep', 'hprnb-bar--sep-loop', 'hprnb-root--d-inline', 'hprnb-root--d-label-pill', 'hprnb-root--d-dot', 'hprnb-root--m-flow', 'hprnb-root--m-label-pill', 'hprnb-root--m-dot', 'hprnb-root--m-collapse', 'hprnb-root--edge', 'hprnb-root--m-ctrl-col', 'hprnb-root--m-pulse-appear' ), Renderer::root_classes( $flow ) );
+		$inline = array_merge( $settings, array( 'mobile_layout' => 'inline', 'mobile_lines' => 2, 'mobile_label_style' => 'hidden', 'mobile_label_dot' => true, 'mobile_custom_colors' => false, 'mobile_hide_on_scroll' => true, 'label_position' => 'start', 'align_container' => false, 'show_separator' => false ) );
 		$this->assertSame( array( 'hprnb-root', 'hprnb-device-all', 'hprnb-root--reserve', 'hprnb-root--d-inline', 'hprnb-root--d-label-pill', 'hprnb-root--d-dot', 'hprnb-root--m-inline', 'hprnb-root--m-label-hidden', 'hprnb-root--m-wrap', 'hprnb-root--edge', 'hprnb-root--m-ctrl-col', 'hprnb-root--m-pulse-appear' ), Renderer::root_classes( $inline ), 'Inline layout never collapses; a hidden label has no dot; label at the start has no -end class.' );
 		$this->assertNotContains( 'hprnb-root--m-end', Renderer::root_classes( array_merge( $inline, array( 'label_position' => 'end' ) ) ), 'On a phone the inline label always precedes the headline.' );
 		$this->assertContains( 'hprnb-root--d-end', Renderer::root_classes( array_merge( $inline, array( 'label_position' => 'end' ) ) ), 'On desktop the inline label may follow the headline.' );
 		$desktop = array_merge( $settings, array( 'desktop_layout' => 'stacked', 'desktop_lines' => 2, 'ticker_enabled' => false, 'mobile_show_separator' => true, 'mobile_lines' => 1, 'mobile_peek' => 'label', 'mobile_custom_colors' => true ) );
-		$this->assertSame( array( 'hprnb-root', 'hprnb-device-all', 'hprnb-root--reserve', 'hprnb-root--align', 'hprnb-bar--sep', 'hprnb-bar--sep-loop', 'hprnb-root--d-stacked', 'hprnb-root--d-label-pill', 'hprnb-root--d-dot', 'hprnb-root--d-wrap', 'hprnb-root--m-flow', 'hprnb-root--m-label-pill', 'hprnb-root--m-dot', 'hprnb-root--m-sep', 'hprnb-root--m-sep-loop', 'hprnb-root--m-colors', 'hprnb-root--m-collapse', 'hprnb-root--peek-label', 'hprnb-root--edge', 'hprnb-root--m-ctrl-col', 'hprnb-root--m-pulse-appear' ), Renderer::root_classes( $desktop ) );
+		$this->assertSame( array( 'hprnb-root', 'hprnb-device-all', 'hprnb-root--reserve', 'hprnb-root--align', 'hprnb-bar--sep', 'hprnb-bar--sep-loop', 'hprnb-root--d-stacked', 'hprnb-root--d-label-pill', 'hprnb-root--d-dot', 'hprnb-root--d-wrap', 'hprnb-root--m-card', 'hprnb-root--m-label-pill', 'hprnb-root--m-dot', 'hprnb-root--m-thumb', 'hprnb-root--m-thumb-after', 'hprnb-root--m-sep', 'hprnb-root--m-sep-loop', 'hprnb-root--m-colors', 'hprnb-root--m-collapse', 'hprnb-root--peek-label', 'hprnb-root--edge', 'hprnb-root--m-pulse-appear' ), Renderer::root_classes( $desktop ) );
 
-		$this->assertSame( array( 'layout' => 'flow', 'lines' => 2, 'counter' => false, 'progress' => true, 'place' => 'fixed', 'swipe' => true, 'collapse' => true, 'peek' => 'headline', 'deep' => true, 'kbd' => true, 'pause' => true, 'close' => true, 'trigger' => 'scroll', 'after' => 120 ), Renderer::profile_data( $settings, 'm' ) );
+		$this->assertSame( array( 'layout' => 'card', 'lines' => 3, 'counter' => false, 'progress' => true, 'place' => 'fixed', 'swipe' => true, 'collapse' => true, 'peek' => 'headline', 'deep' => true, 'kbd' => true, 'pause' => true, 'close' => true, 'trigger' => 'scroll', 'after' => 120 ), Renderer::profile_data( $settings, 'm' ) );
 		$this->assertSame( array( 'layout' => 'inline', 'lines' => 2, 'counter' => false, 'progress' => true, 'place' => 'fixed', 'swipe' => true, 'collapse' => false, 'peek' => 'headline', 'deep' => false, 'kbd' => true, 'pause' => true, 'close' => true, 'trigger' => 'scroll', 'after' => 120 ), Renderer::profile_data( $inline, 'm' ) );
 		$this->assertSame( array( 'layout' => 'inline', 'lines' => 1, 'counter' => false, 'progress' => false, 'place' => 'fixed', 'collapse' => false, 'trigger' => 'scroll', 'after' => 120 ), Renderer::profile_data( $settings, 'd' ), 'Marquee desktop: no counter, no progress.' );
 		$rotate = array_merge( $settings, array( 'ticker_mode' => 'rotate', 'desktop_show_counter' => true ) );
 		$this->assertSame( array( 'layout' => 'inline', 'lines' => 1, 'counter' => true, 'progress' => true, 'place' => 'fixed', 'collapse' => false, 'trigger' => 'scroll', 'after' => 120 ), Renderer::profile_data( $rotate, 'd' ) );
 
-		$custom = $this->with_settings( array( 'mobile_bg_color' => '#000000', 'mobile_font_size' => 20, 'mobile_lines' => 3, 'mobile_accent_color' => '#0000FF' ) );
+		$custom = $this->with_settings( array( 'mobile_layout' => 'flow', 'mobile_bg_color' => '#000000', 'mobile_font_size' => 20, 'mobile_lines' => 3, 'mobile_accent_color' => '#0000FF' ) );
 		$style  = Renderer::root_style( $custom );
 		$this->assertStringContainsString( '--hprnb-m-bg:#000000;--hprnb-m-fg:#F5F5F5;--hprnb-m-accent:#0000FF;--hprnb-m-label-fg:#FFFFFF;--hprnb-m-font-size:20px;--hprnb-m-height:111px;--hprnb-m-lines:3;--hprnb-m-line:33px;--hprnb-m-pad:6px;--hprnb-peek:41px;--hprnb-m-ctrls:1', $style, '3 × 33 + 12 = 111 > 76; pad (111 − 99) / 2 = 6; peek 6 + 33 + 2.' );
 	}
@@ -295,49 +301,64 @@ class Renderer_Test extends HPRNB_Test_Case {
 	public function test_reveal_collapse_and_edge() {
 		$settings = Settings::defaults();
 
-		// Immediate by default: nothing pending, no interactive JS needed for that alone.
-		$this->assertSame( array( 'mode' => 'immediate', 'value' => 400 ), Renderer::reveal_data( $settings ) );
-		$this->assertNotContains( 'hprnb-root--pending', Renderer::root_classes( $settings ) );
+		// Immediate by default on both devices: nothing pending, no interactive JS needed for that alone.
+		$this->assertSame( array( 'd' => array( 'mode' => 'immediate', 'value' => 400 ), 'm' => array( 'mode' => 'immediate', 'value' => 400 ) ), Renderer::reveal_data( $settings ) );
+		$this->assertNotContains( 'hprnb-root--d-pending', Renderer::root_classes( $settings ) );
+		$this->assertNotContains( 'hprnb-root--m-pending', Renderer::root_classes( $settings ) );
 		$this->assertNotContains( 'hprnb-root--reveal', Renderer::root_classes( $settings ), 'Nothing to slide in.' );
-		$this->assertStringContainsString( 'data-hprnb-reveal="{&quot;mode&quot;:&quot;immediate&quot;,&quot;value&quot;:400}"', Renderer::root( Renderer::payload( array(), $settings ), $settings ) );
+		$this->assertStringContainsString( 'data-hprnb-reveal="{&quot;d&quot;:{&quot;mode&quot;:&quot;immediate&quot;,&quot;value&quot;:400},&quot;m&quot;:{&quot;mode&quot;:&quot;immediate&quot;,&quot;value&quot;:400}}"', Renderer::root( Renderer::payload( array(), $settings ), $settings ) );
 
-		// A scroll distance, a share of the page (clamped to 1-100) and the end of the page (90 %).
-		$scroll = $this->with_settings( array( 'reveal_mode' => 'scroll', 'reveal_value' => 600 ) );
-		$this->assertSame( array( 'mode' => 'scroll', 'value' => 600 ), Renderer::reveal_data( $scroll ) );
-		$this->assertContains( 'hprnb-root--pending', Renderer::root_classes( $scroll ) );
-		$this->assertTrue( Renderer::needs_interactive_js( $scroll ), 'The threshold is watched by the script.' );
-
-		// 2.6.0: the entrance owns its transition instead of borrowing the collapse one, which the
-		// desktop profile does not switch on by default — the bar used to snap into place.
+		// 2.8.0: each device decides for itself, and carries its own pending class — so a desktop
+		// that appears at once and a mobile that waits share one root.
+		$scroll = $this->with_settings( array( 'mobile_reveal_mode' => 'scroll', 'mobile_reveal_value' => 600 ) );
+		$this->assertSame( array( 'mode' => 'scroll', 'value' => 600 ), Renderer::reveal_data( $scroll )['m'] );
+		$this->assertSame( array( 'mode' => 'immediate', 'value' => 400 ), Renderer::reveal_data( $scroll )['d'], 'Desktop untouched.' );
+		$this->assertSame( 'scroll', Renderer::reveal_mode( $scroll, 'm' ) );
+		$this->assertSame( 'immediate', Renderer::reveal_mode( $scroll, 'd' ) );
+		$this->assertContains( 'hprnb-root--m-pending', Renderer::root_classes( $scroll ) );
+		$this->assertNotContains( 'hprnb-root--d-pending', Renderer::root_classes( $scroll ) );
 		$this->assertContains( 'hprnb-root--reveal', Renderer::root_classes( $scroll ) );
-		$no_fold = $this->with_settings( array( 'reveal_mode' => 'smart', 'desktop_hide_on_scroll' => false, 'mobile_hide_on_scroll' => false ) );
+		$this->assertTrue( Renderer::needs_interactive_js( $scroll ), 'The threshold is watched by the script.' );
+		$both = $this->with_settings( array( 'mobile_reveal_mode' => 'smart', 'desktop_reveal_mode' => 'percent', 'desktop_reveal_value' => 4000 ) );
+		$this->assertContains( 'hprnb-root--m-pending', Renderer::root_classes( $both ) );
+		$this->assertContains( 'hprnb-root--d-pending', Renderer::root_classes( $both ) );
+		$this->assertSame( array( 'mode' => 'percent', 'value' => 100 ), Renderer::reveal_data( $both )['d'], 'Clamped to 1-100.' );
+		$this->assertArrayHasKey( 'smart', Renderer::reveal_data( $both ), 'One device on smart is enough to ship the tuning.' );
+		$this->assertArrayNotHasKey( 'smart', Renderer::reveal_data( $scroll ) );
+
+		// The admin preview must show the bar whatever the site waits for: never pending there.
+		$this->assertNotContains( 'hprnb-root--m-pending', Renderer::root_classes( $both, true ) );
+		$this->assertNotContains( 'hprnb-root--d-pending', Renderer::root_classes( $both, true ) );
+		$this->assertNotContains( 'hprnb-root--reveal', Renderer::root_classes( $both, true ) );
+		$this->assertContains( 'hprnb-root--m-card', Renderer::root_classes( $both, true ), 'Everything else is rendered as usual.' );
+
+		// The entrance owns its transition instead of borrowing the collapse one, which the desktop
+		// profile does not switch on by default — the bar used to snap into place.
+		$no_fold = $this->with_settings( array( 'desktop_reveal_mode' => 'smart', 'desktop_hide_on_scroll' => false, 'mobile_hide_on_scroll' => false ) );
 		$classes = Renderer::root_classes( $no_fold );
 		$this->assertContains( 'hprnb-root--reveal', $classes, 'Folding off, the slide still belongs to the entrance.' );
 		$this->assertNotContains( 'hprnb-root--d-collapse', $classes );
 		$this->assertNotContains( 'hprnb-root--m-collapse', $classes );
-		$percent = $this->with_settings( array( 'reveal_mode' => 'percent', 'reveal_value' => 4000 ) );
-		$this->assertSame( array( 'mode' => 'percent', 'value' => 100 ), Renderer::reveal_data( $percent ) );
-		$end = $this->with_settings( array( 'reveal_mode' => 'end', 'reveal_value' => 10 ) );
-		$this->assertSame( array( 'mode' => 'end', 'value' => 90 ), Renderer::reveal_data( $end ) );
-		$this->assertSame( array( 'mode' => 'immediate', 'value' => 400 ), Renderer::reveal_data( array_merge( $settings, array( 'reveal_mode' => 'nonsense' ) ) ), 'Unknown modes fall back.' );
+		$end = $this->with_settings( array( 'desktop_reveal_mode' => 'end', 'desktop_reveal_value' => 10 ) );
+		$this->assertSame( array( 'mode' => 'end', 'value' => 90 ), Renderer::reveal_data( $end )['d'] );
+		$this->assertSame( 'immediate', Renderer::reveal_data( array_merge( $settings, array( 'mobile_reveal_mode' => 'nonsense' ) ) )['m']['mode'], 'Unknown modes fall back.' );
 
-		// 2.7.0: "before the end of the article" carries the paragraph count, from the end, clamped.
-		$para = $this->with_settings( array( 'reveal_mode' => 'paragraph', 'reveal_paragraph' => 2 ) );
-		$this->assertSame( array( 'mode' => 'paragraph', 'value' => 400, 'paragraph' => 2 ), Renderer::reveal_data( $para ) );
-		$this->assertContains( 'hprnb-root--pending', Renderer::root_classes( $para ), 'It waits like every other deferred mode.' );
-		$this->assertContains( 'hprnb-root--reveal', Renderer::root_classes( $para ) );
+		// "Before the end of the article" carries the paragraph count, from the end, clamped.
+		$para = $this->with_settings( array( 'mobile_reveal_mode' => 'paragraph', 'mobile_reveal_paragraph' => 2 ) );
+		$this->assertSame( array( 'mode' => 'paragraph', 'value' => 400, 'paragraph' => 2 ), Renderer::reveal_data( $para )['m'] );
+		$this->assertContains( 'hprnb-root--m-pending', Renderer::root_classes( $para ), 'It waits like every other deferred mode.' );
 		$this->assertTrue( Renderer::needs_interactive_js( $para ) );
-		$this->assertSame( 30, Renderer::reveal_data( $this->with_settings( array( 'reveal_mode' => 'paragraph', 'reveal_paragraph' => 99 ) ) )['paragraph'], 'Sanitised to the schema maximum.' );
-		$this->assertSame( 1, Renderer::reveal_data( $this->with_settings( array( 'reveal_mode' => 'paragraph', 'reveal_paragraph' => 0 ) ) )['paragraph'], 'And to the minimum.' );
-		$this->assertSame( 2, Renderer::reveal_data( array_merge( $settings, array( 'reveal_mode' => 'paragraph' ) ) )['paragraph'], 'Second-to-last by default.' );
-		$this->assertArrayNotHasKey( 'paragraph', Renderer::reveal_data( $scroll ), 'Only the mode that uses it carries it.' );
+		$this->assertSame( 30, Renderer::reveal_data( $this->with_settings( array( 'desktop_reveal_mode' => 'paragraph', 'desktop_reveal_paragraph' => 99 ) ) )['d']['paragraph'], 'Sanitised to the schema maximum.' );
+		$this->assertSame( 1, Renderer::reveal_data( $this->with_settings( array( 'desktop_reveal_mode' => 'paragraph', 'desktop_reveal_paragraph' => 0 ) ) )['d']['paragraph'], 'And to the minimum.' );
+		$this->assertSame( 2, Renderer::reveal_data( array_merge( $settings, array( 'mobile_reveal_mode' => 'paragraph' ) ) )['m']['paragraph'], 'Second-to-last by default.' );
+		$this->assertArrayNotHasKey( 'paragraph', Renderer::reveal_data( $scroll )['m'], 'Only the mode that uses it carries it.' );
 
-		// The body selector serves the paragraph trigger and the "follows the reading" collapse too,
-		// so it travels at the top level whenever it is set — and never as an empty string.
-		$with_sel = $this->with_settings( array( 'reveal_mode' => 'paragraph', 'smart_selector' => '.my-article' ) );
+		// The body selector serves both devices and every body-based trigger, so it travels at the
+		// top level whenever it is set — and never as an empty string.
+		$with_sel = $this->with_settings( array( 'mobile_reveal_mode' => 'paragraph', 'smart_selector' => '.my-article' ) );
 		$this->assertSame( '.my-article', Renderer::reveal_data( $with_sel )['sel'] );
 		$this->assertArrayNotHasKey( 'sel', Renderer::reveal_data( $para ) );
-		$smart_sel = $this->with_settings( array( 'reveal_mode' => 'smart', 'smart_selector' => '.my-article' ) );
+		$smart_sel = $this->with_settings( array( 'desktop_reveal_mode' => 'smart', 'smart_selector' => '.my-article' ) );
 		$this->assertSame( '.my-article', Renderer::reveal_data( $smart_sel )['sel'] );
 		$this->assertSame( '.my-article', Renderer::reveal_data( $smart_sel )['smart']['sel'], 'The smart block keeps its own copy.' );
 
@@ -372,7 +393,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$this->assertNotContains( 'hprnb-root--edge', Renderer::root_classes( $this->with_settings( array( 'accent_edge' => false ) ) ) );
 
 		// Buttons outside the bar.
-		$outside = Renderer::root_classes( $this->with_settings( array( 'mobile_controls_place' => 'outside' ) ) );
+		$outside = Renderer::root_classes( $this->with_settings( array( 'mobile_layout' => 'flow', 'mobile_controls_place' => 'outside' ) ) );
 		$this->assertContains( 'hprnb-root--m-ctrl-out', $outside );
 		$this->assertNotContains( 'hprnb-root--m-ctrl-col', $outside, 'The floating group is a row of its own.' );
 		$this->assertNotContains( 'hprnb-root--m-ctrl-out', Renderer::root_classes( $settings ) );
@@ -383,82 +404,80 @@ class Renderer_Test extends HPRNB_Test_Case {
 	 * fills what it leaves under it, and the collapsed strip is one line like the flowing card.
 	 */
 	public function test_card_metrics_follow_the_picture() {
-		$card = $this->with_settings( array( 'mobile_layout' => 'card' ) );
+		// The client's reference: a label row, then a 16:9 picture at the start of the line and the
+		// headline beside it on three lines. 2.8.0 makes it the default mobile design.
+		$card = Settings::defaults();
+		$this->assertSame( 'card', $card['mobile_layout'] );
 		$this->assertSame( 'card', Renderer::profile( $card, 'm' )['layout'] );
 		$this->assertTrue( Renderer::profile( $card, 'm' )['thumb'], 'The design always carries its picture.' );
 		$this->assertTrue( Settings::wants_thumbnails( $card ), 'So the <img> enters the cached markup.' );
 
-		// 16px profile → an 18px headline on 22px lines; a 96px picture is 75px tall.
+		// 16px profile → an 18px headline on 22px lines; a 132px picture is 74px tall (16:9).
 		$metrics = Renderer::card_metrics( $card );
 		$this->assertSame( 18, $metrics['font'] );
 		$this->assertSame( 22, $metrics['line'] );
-		$this->assertSame( 96, $metrics['thumb'] );
-		$this->assertSame( 75, $metrics['thumb_height'] );
-		$this->assertSame( 2, $metrics['lines'], 'The default profile asks for two lines.' );
-		$this->assertSame( 70, $metrics['text'], 'Label row 20 + 6 + two 22px lines.' );
-		$this->assertSame( 99, $metrics['height'], '12 + max(75, 70) + 12 — inside the 96-112px target.' );
-		$this->assertSame( 36, $metrics['peek'], 'One line and its padding.' );
-		$this->assertSame( 99, Renderer::profile_height( $card, 'm' ) );
+		$this->assertSame( 132, $metrics['thumb'] );
+		$this->assertSame( 74, $metrics['thumb_height'] );
+		$this->assertSame( 3, $metrics['lines'], 'Three lines by default, as on the reference.' );
+		$this->assertSame( 66, $metrics['text'], 'Three 22px lines.' );
+		$this->assertSame( 126, $metrics['height'], '12 + label row 20 + 8 + max(74, 66) + 12: the picture drives it.' );
+		$this->assertSame( 36, $metrics['peek'], 'Collapsed: one line and its padding.' );
+		$this->assertSame( 126, Renderer::profile_height( $card, 'm' ) );
 		$this->assertSame( 36, Renderer::peek_height( $card ) );
-		$this->assertSame( 8, Renderer::mobile_gap( $card ), 'The card floats clear of the edges.' );
-		$this->assertSame( 0, Renderer::mobile_gap( Settings::defaults() ), 'Every other layout is flush.' );
+		$this->assertStringContainsString( '--hprnb-m-card-thumb:132px;--hprnb-m-card-thumb-h:74px;--hprnb-m-card-lines:3;--hprnb-m-gap:0px', Renderer::root_style( $card ) );
 
-		// The picture sets the height, and the whole range stays inside the target band.
-		foreach ( array( 72 => 94, 88 => 94, 100 => 102, 120 => 118 ) as $width => $height ) {
-			$sized = Renderer::card_metrics( $this->with_settings( array( 'mobile_layout' => 'card', 'mobile_card_thumb' => $width ) ) );
+		// Edge to edge by default, like the reference; floating is an option and carries the gap.
+		$this->assertSame( 0, Renderer::mobile_gap( $card ), 'Flush: nothing between the card and the edges.' );
+		$this->assertNotContains( 'hprnb-root--m-float', Renderer::root_classes( $card ) );
+		$float = $this->with_settings( array( 'mobile_card_float' => true ) );
+		$this->assertSame( 8, Renderer::mobile_gap( $float ) );
+		$this->assertContains( 'hprnb-root--m-float', Renderer::root_classes( $float ) );
+		$this->assertStringContainsString( '--hprnb-m-gap:8px', Renderer::root_style( $float ) );
+		$this->assertSame( 0, Renderer::mobile_gap( $this->with_settings( array( 'mobile_layout' => 'flow', 'mobile_card_float' => true ) ) ), 'Only the card floats.' );
+		$this->assertNotContains( 'hprnb-root--m-float', Renderer::root_classes( $this->with_settings( array( 'mobile_layout' => 'flow', 'mobile_card_float' => true ) ) ) );
+
+		// The picture width is the editor's, 72 to 160: the text drives the height until the picture
+		// is taller than three lines (from 120px on).
+		foreach ( array( 72 => 118, 96 => 118, 118 => 118, 120 => 120, 132 => 126, 160 => 142 ) as $width => $height ) {
+			$sized = Renderer::card_metrics( $this->with_settings( array( 'mobile_card_thumb' => $width ) ) );
 			$this->assertSame( $height, $sized['height'], 'A ' . $width . 'px picture.' );
-			$this->assertSame( 2, $sized['lines'] );
-			$this->assertLessThanOrEqual( 120, $sized['height'], 'Never more than 120px.' );
+			$this->assertSame( (int) round( $width * 0.5625 ), $sized['thumb_height'], '16:9.' );
 		}
-		// Out-of-range values are clamped to the compact design, not honoured.
-		$this->assertSame( 120, Renderer::card_metrics( $this->with_settings( array( 'mobile_layout' => 'card', 'mobile_card_thumb' => 220 ) ) )['thumb'] );
+		$this->assertSame( 160, Renderer::card_metrics( $this->with_settings( array( 'mobile_card_thumb' => 220 ) ) )['thumb'], 'Clamped to the schema maximum.' );
+		$this->assertSame( 72, Renderer::card_metrics( $this->with_settings( array( 'mobile_card_thumb' => 10 ) ) )['thumb'] );
 
-		// 2.6.0: the card honours mobile_lines like every other mobile design, up to its own cap of
-		// three — a fourth line stops being a card. The reserved height follows honestly.
+		// The card honours mobile_lines like every other mobile design, up to its own cap of three.
 		foreach ( array( 1 => 1, 2 => 2, 3 => 3, 4 => 3 ) as $asked => $effective ) {
-			$lined = $this->with_settings( array( 'mobile_layout' => 'card', 'mobile_lines' => $asked ) );
-			$this->assertSame( $effective, Renderer::card_metrics( $lined )['lines'], $asked . ' lines asked.' );
+			$this->assertSame( $effective, Renderer::card_metrics( $this->with_settings( array( 'mobile_lines' => $asked ) ) )['lines'], $asked . ' lines asked.' );
 		}
-		$three = $this->with_settings( array( 'mobile_layout' => 'card', 'mobile_lines' => 3 ) );
-		$this->assertSame( 92, Renderer::card_metrics( $three )['text'], 'Label row 20 + 6 + three 22px lines.' );
-		$this->assertSame( 116, Renderer::card_metrics( $three )['height'], '12 + max(75, 92) + 12.' );
+		$two = $this->with_settings( array( 'mobile_lines' => 2, 'mobile_card_thumb' => 96 ) );
+		$this->assertSame( 106, Renderer::card_metrics( $two )['height'], '12 + 20 + 8 + max(54, 44) + 12: a small picture, two lines.' );
+		$three = $this->with_settings( array( 'mobile_lines' => 3, 'mobile_card_thumb' => 96 ) );
+		$this->assertSame( 118, Renderer::card_metrics( $three )['height'], 'The third line grows it.' );
 		$this->assertSame( 36, Renderer::card_metrics( $three )['peek'], 'The collapsed strip is one line whatever the count.' );
-		$this->assertSame( 116, Renderer::profile_height( $three, 'm' ), 'And the page reserves exactly that.' );
-		$this->assertStringContainsString( '--hprnb-m-card-lines:3', Renderer::root_style( $three ), 'The clamp travels to the stylesheet.' );
+		$this->assertStringContainsString( '--hprnb-m-card-lines:3', Renderer::root_style( $three ) );
 
-		// Across the picture range at the default font, three lines stay inside the 120px band.
-		foreach ( array( 72, 88, 96, 100, 120 ) as $width ) {
-			$sized = Renderer::card_metrics( $this->with_settings( array( 'mobile_layout' => 'card', 'mobile_lines' => 3, 'mobile_card_thumb' => $width ) ) );
-			$this->assertSame( 3, $sized['lines'] );
-			$this->assertLessThanOrEqual( 120, $sized['height'], 'Three lines at a ' . $width . 'px picture.' );
-		}
-
-		// A larger font legitimately grows the card: the height hint beside the field says so, and
-		// the reserved height always matches what card_metrics() computed — never a stale constant.
+		// Whatever the font and the count, the reserved height is what card_metrics() computed.
 		foreach ( array( 12, 16, 20, 24 ) as $font ) {
 			foreach ( array( 1, 2, 3 ) as $lines ) {
-				$probe   = $this->with_settings( array( 'mobile_layout' => 'card', 'mobile_font_size' => $font, 'mobile_lines' => $lines ) );
+				$probe   = $this->with_settings( array( 'mobile_font_size' => $font, 'mobile_lines' => $lines ) );
 				$metrics = Renderer::card_metrics( $probe );
 				$this->assertSame( $lines, $metrics['lines'] );
-				$this->assertSame( 24 + max( $metrics['thumb_height'], $metrics['text'] ), $metrics['height'] );
+				$this->assertSame( 24 + 20 + 8 + max( $metrics['thumb_height'], $metrics['text'] ), $metrics['height'] );
 				$this->assertSame( $metrics['height'], Renderer::profile_height( $probe, 'm' ), $font . 'px / ' . $lines . ' lines.' );
 			}
 		}
 
 		// Marquee flattens every design to one line, the card included.
-		$marquee = $this->with_settings( array( 'mobile_layout' => 'card', 'mobile_lines' => 3, 'mobile_ticker_mode' => 'marquee' ) );
-		$this->assertSame( 1, Renderer::card_metrics( $marquee )['lines'] );
+		$this->assertSame( 1, Renderer::card_metrics( $this->with_settings( array( 'mobile_lines' => 3, 'mobile_ticker_mode' => 'marquee' ) ) )['lines'] );
 
-		// The design places its own buttons: nothing is reserved and neither option applies.
+		// The design places its own buttons in a tab above the corner: nothing is reserved and
+		// neither placement option applies.
 		$this->assertSame( 0, Renderer::mobile_controls( $card ) );
 		$this->assertSame( 0, Renderer::mobile_controls( array_merge( $card, array( 'mobile_controls_place' => 'outside' ) ) ) );
-		$classes = Renderer::root_classes( $card );
-		$this->assertContains( 'hprnb-root--m-card', $classes );
-		$this->assertNotContains( 'hprnb-root--m-ctrl-col', $classes );
-		$this->assertNotContains( 'hprnb-root--m-ctrl-out', $classes );
-
-		// Any mode other than the rotation falls back to the label row, like the flowing card.
-		$this->assertSame( 'stacked', Renderer::profile( array_merge( $card, array( 'mobile_ticker_mode' => 'marquee' ) ), 'm' )['layout'] );
+		$this->assertNotContains( 'hprnb-root--m-ctrl-out', Renderer::root_classes( array_merge( $card, array( 'mobile_controls_place' => 'outside' ) ) ) );
+		$this->assertNotContains( 'hprnb-root--m-ctrl-col', Renderer::root_classes( $card ) );
+		$this->assertStringContainsString( '--hprnb-m-ctrls:0', Renderer::root_style( $card ) );
 	}
 
 	public function test_relative_time_label() {

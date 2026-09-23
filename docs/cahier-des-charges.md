@@ -2373,6 +2373,13 @@ mode hybrid:
 2. **Repli `article`** sur chaque profil, B = point d'apparition, C = fin du corps : première apparition entière ; repliée entre le haut et B quel que soit le sens ; entre B et C ouverte en descendant, repliée à toute remontée ; au-delà de C toujours ouverte. `collapse_after` ignoré ; tap et retenue de quatre secondes inchangés.
 3. **Aucun second moteur** : une branche dans `setupReveal()`, une dans `setupCollapse()`, la position d'apparition et le corps d'article partagés sur l'état de la barre. Aucun schéma modifié.
 
+### 15.8.3 octies — Apparition par appareil, onglets par appareil, la carte de la maquette (2.8.0)
+
+1. **Le moment d'apparition se décide par appareil** : `mobile_reveal_*` / `desktop_reveal_*`, schéma 5 recopiant le réglage unique sur les deux, migrations pures appliquées aussi à l'import. Une classe d'attente par appareil sur la racine (requêtes de conteneur) et sur le body (requêtes média).
+2. **L'aperçu de l'administration n'est jamais en attente** : il montrait un bloc vide ou une barre coupée dès que le site attendait le lecteur.
+3. **Six onglets, un par appareil pour Mobile et Ordinateur** : design, titres, moment d'apparition, repli, boutons. Le choix du design mobile est le premier champ de l'onglet Mobile. Aucun champ n'est rendu deux fois (test).
+4. **La carte mobile suit la maquette du client et devient le défaut** : ligne d'étiquette, image 16:9 de 132 × 74 au début de la ligne, titre 18 px gras sur 3 lignes, d'un bord à l'autre, croix en onglet 44 × 44 au-dessus du coin de fin ; 126 px. Flottante en option. Une installation existante garde son design ; « Réinitialiser l'onglet » applique la maquette.
+
 ---
 
 # ANNEXE C — CONSIGNE FINALE À CLAUDE CODE

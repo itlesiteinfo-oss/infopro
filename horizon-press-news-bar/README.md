@@ -284,6 +284,22 @@ La première apparition est toujours la barre entière. `collapse_after` n'y jou
 
 **Mesure** : `trigger_reason` gagne `paragraph_before_end`, `paragraph_passed` et `paragraph_fallback`, avec `paragraph_from_end` et `paragraph_found`.
 
+## 9 duodecies. Apparition par appareil, onglets par appareil, la carte de la maquette (2.8)
+
+**Apparition par appareil** : `mobile_reveal_mode` / `desktop_reveal_mode` (+ `_value`, `_paragraph`) remplacent le réglage unique ; schéma 5 recopie l'ancien réglage sur les deux appareils. `data-hprnb-reveal` porte un bloc `d` et un bloc `m` ; la racine porte `hprnb-root--d-pending` / `--m-pending` (requêtes de conteneur sur sa propre largeur) et le body `hprnb-d-pending` / `hprnb-m-pending`. `Settings::migrate()` est pure et l'import l'applique aux exports antérieurs.
+
+**Onglets** : Contenu · Où · **Mobile** · **Ordinateur** · Couleurs · Avancé. Chaque appareil : design, titres, moment d'apparition, repli, boutons. L'aperçu de l'administration n'est **jamais** en attente (`root_classes( $settings, true )`).
+
+**La carte mobile, par défaut** (`mobile_layout = card`, `mobile_lines = 3`, `mobile_card_thumb = 132`) :
+
+| | |
+|---|---|
+| Ligne 1 | l'étiquette seule (pastille, ou titre blanc en gras avec le style « bandeau ») |
+| Ligne 2 | image 16:9 de 132 × 74 au début, titre 18 px gras sur 3 lignes à côté |
+| Bords | d'un bord à l'autre, coins droits (`mobile_card_float` : 8 px, coins 12 px, ombre) |
+| Croix | onglet 44 × 44 de la couleur de la carte, au-dessus du coin de fin, hors de la carte |
+| Hauteur | 12 + 20 + 8 + max(74, 3 × 22) + 12 = **126 px** ; repliée : 36 px |
+
 ## 10. Ticker (optionnel)
 
 Désactivé par défaut. Trois modes :

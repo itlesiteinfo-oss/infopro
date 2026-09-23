@@ -145,16 +145,17 @@ final class Renderer {
 	const PEEK_EXTRA = 2;
 
 	/**
-	 * Mobile "card" layout: heading row, gap under it, block padding and the aspect ratio of the
-	 * landscape image (5:4). Mirrored by the stylesheet and the admin script.
+	 * Mobile "card" layout (the client's "Explore More" reference): block padding, the label row and
+	 * the gap under it, the gap beside the 16:9 picture, and the distance a floating card keeps from
+	 * the edges. Mirrored by the stylesheet and the admin script.
 	 */
 	const CARD_PAD       = 12;
 	const CARD_GAP       = 10;
-	const CARD_RATIO     = 0.78;
+	const CARD_RATIO     = 0.5625;
 	const CARD_FONT_PLUS = 2;
 	const CARD_LINE      = 1.24;
 	const CARD_LABEL     = 20;
-	const CARD_ROW       = 6;
+	const CARD_ROW       = 8;
 	const CARD_LINES_MAX = 3;
 	const CARD_FLOAT     = 8;
 
@@ -206,9 +207,10 @@ final class Renderer {
 	 * `-end` when the inline label follows the headline), label style, live dot, multi-line wrap.
 	 *
 	 * @param array $settings Settings.
+	 * @param bool  $preview  True for the admin preview root, which never carries the pending classes.
 	 * @return string[]
 	 */
-	public static function root_classes( array $settings ): array {
+	public static function root_classes( array $settings, bool $preview = false ): array {
 		$classes = array(
 			'hprnb-root',
 			self::device_class( $settings ),
@@ -272,16 +274,28 @@ final class Renderer {
 		if ( ! empty( $settings['accent_edge'] ) ) {
 			$classes[] = 'hprnb-root--edge';
 		}
-		if ( 'immediate' !== ( $settings['reveal_mode'] ?? 'immediate' ) ) {
-			// Server-rendered so the bar never flashes before the reader reaches the threshold.
-			$classes[] = 'hprnb-root--pending';
+		// Server-rendered so the bar never flashes before the reader reaches that device's trigger.
+		// The admin preview is never pending: it must show the bar, whatever the site waits for.
+		$waits = false;
+		foreach ( array( 'd', 'm' ) as $p ) {
+			if ( 'immediate' !== self::reveal_mode( $settings, $p ) ) {
+				$waits = true;
+				if ( ! $preview ) {
+					$classes[] = 'hprnb-root--' . $p . '-pending';
+				}
+			}
+		}
+		if ( $waits && ! $preview ) {
 			// The entrance carries its own transition: the script removes the pending class, not
 			// this one, so the bar slides in whether or not the profile folds away afterwards.
 			$classes[] = 'hprnb-root--reveal';
 		}
 		$outside = 'outside' === ( $settings['mobile_controls_place'] ?? 'inside' );
 		if ( 'card' === self::profile( $settings, 'm' )['layout'] ) {
-			$outside = false; // The "discover" card places its own buttons: the close tab, the pause in the heading.
+			$outside = false; // The card places its own buttons: a tab of its own colour above its end corner.
+			if ( ! empty( $settings['mobile_card_float'] ) ) {
+				$classes[] = 'hprnb-root--m-float';
+			}
 		} elseif ( $outside ) {
 			$classes[] = 'hprnb-root--m-ctrl-out';
 		} elseif ( 'row' !== ( $settings['mobile_controls_layout'] ?? 'column' ) ) {
@@ -457,10 +471,10 @@ final class Renderer {
 	}
 
 	/**
-	 * Metrics of the mobile "discover" card: a heading row, then the headline beside a landscape
-	 * image. The headline follows `mobile_lines`, capped at CARD_LINES_MAX so a floating card stays
-	 * a card. 16px / 2 lines / a 96px image → line 22, image 96 x 75, height 99, peek 36; the same
-	 * at 3 lines → height 116 (118 with the widest image).
+	 * Metrics of the mobile card: a label row, then the picture at the start of the line and the
+	 * headline beside it. The headline follows `mobile_lines`, capped at CARD_LINES_MAX so a card
+	 * stays a card. 16px / 3 lines / a 132px picture → line 22, picture 132 x 74, height 126
+	 * (12 + 20 + 8 + max(74, 66) + 12), peek 36.
 	 *
 	 * @param array $settings Settings.
 	 * @return array{line:int,thumb:int,thumb_height:int,height:int,pad:int,peek:int}
@@ -470,13 +484,14 @@ final class Renderer {
 		// The headline is the point of this design: two sizes above the profile, tight line.
 		$font    = $profile['font_size'] + self::CARD_FONT_PLUS;
 		$line    = (int) round( $font * self::CARD_LINE );
-		$thumb   = max( 72, min( 120, (int) ( $settings['mobile_card_thumb'] ?? 96 ) ) );
+		$thumb   = max( 72, min( 160, (int) ( $settings['mobile_card_thumb'] ?? 132 ) ) );
 		$thumb_h = (int) round( $thumb * self::CARD_RATIO );
-		// Label row, then the headline over as many lines as the profile asks, up to the card cap.
+		// The headline over as many lines as the profile asks, up to the card cap, beside the picture;
+		// the label has a row of its own above them.
 		$lines  = max( 1, min( self::CARD_LINES_MAX, (int) $profile['lines'] ) );
-		$text   = self::CARD_LABEL + self::CARD_ROW + $lines * $line;
+		$text   = $lines * $line;
 		$body   = max( $thumb_h, $text );
-		$height = 2 * self::CARD_PAD + $body;
+		$height = 2 * self::CARD_PAD + self::CARD_LABEL + self::CARD_ROW + $body;
 
 		return array(
 			'font'         => $font,
@@ -515,7 +530,19 @@ final class Renderer {
 	 * @return int
 	 */
 	public static function mobile_gap( array $settings ): int {
-		return 'card' === self::profile( $settings, 'm' )['layout'] ? self::CARD_FLOAT : 0;
+		return ( 'card' === self::profile( $settings, 'm' )['layout'] && ! empty( $settings['mobile_card_float'] ) ) ? self::CARD_FLOAT : 0;
+	}
+
+	/**
+	 * Effective reveal mode of a profile.
+	 *
+	 * @param array  $settings Settings.
+	 * @param string $p        'd' or 'm'.
+	 * @return string
+	 */
+	public static function reveal_mode( array $settings, string $p ): string {
+		$mode = (string) ( $settings[ ( 'm' === $p ? 'mobile_' : 'desktop_' ) . 'reveal_mode' ] ?? 'immediate' );
+		return in_array( $mode, Settings::REVEAL_MODES, true ) ? $mode : 'immediate';
 	}
 
 	/**
@@ -526,23 +553,31 @@ final class Renderer {
 	 * @return array{mode:string,value:int}
 	 */
 	public static function reveal_data( array $settings ): array {
-		$mode  = (string) ( $settings['reveal_mode'] ?? 'immediate' );
-		$mode  = in_array( $mode, array( 'immediate', 'scroll', 'percent', 'end', 'paragraph', 'smart' ), true ) ? $mode : 'immediate';
-		$value = (int) ( $settings['reveal_value'] ?? 400 );
-		if ( 'percent' === $mode ) {
-			$value = max( 1, min( 100, $value ) );
-		} elseif ( 'end' === $mode ) {
-			$value = 90;
-		}
+		$profile = static function ( string $p ) use ( $settings ): array {
+			$prefix = 'm' === $p ? 'mobile_' : 'desktop_';
+			$mode   = self::reveal_mode( $settings, $p );
+			$value  = (int) ( $settings[ $prefix . 'reveal_value' ] ?? 400 );
+			if ( 'percent' === $mode ) {
+				$value = max( 1, min( 100, $value ) );
+			} elseif ( 'end' === $mode ) {
+				$value = 90;
+			}
+			$data = array(
+				'mode'  => $mode,
+				'value' => $value,
+			);
+			if ( 'paragraph' === $mode ) {
+				// Counted from the end of the article body: 2 is the second-to-last paragraph.
+				$data['paragraph'] = max( 1, min( 30, (int) ( $settings[ $prefix . 'reveal_paragraph' ] ?? 2 ) ) );
+			}
+			return $data;
+		};
+		// Each device decides for itself; the script reads the block of the active profile.
 		$data = array(
-			'mode'  => $mode,
-			'value' => $value,
+			'd' => $profile( 'd' ),
+			'm' => $profile( 'm' ),
 		);
-		if ( 'paragraph' === $mode ) {
-			// Counted from the end of the article body: 2 is the second-to-last paragraph.
-			$data['paragraph'] = max( 1, min( 30, (int) ( $settings['reveal_paragraph'] ?? 2 ) ) );
-		}
-		if ( 'smart' === $mode ) {
+		if ( 'smart' === $data['d']['mode'] || 'smart' === $data['m']['mode'] ) {
 			$data['smart'] = self::smart_data( $settings );
 		}
 		// The editorial-body selector serves the paragraph trigger and the "follows the reading"
@@ -743,7 +778,8 @@ final class Renderer {
 			|| self::profile( $settings, 'm' )['kbd']
 			|| 'inline' === self::profile( $settings, 'm' )['placement']
 			|| 'inline' === self::profile( $settings, 'd' )['placement']
-			|| 'immediate' !== ( $settings['reveal_mode'] ?? 'immediate' );
+			|| 'immediate' !== self::reveal_mode( $settings, 'd' )
+			|| 'immediate' !== self::reveal_mode( $settings, 'm' );
 	}
 
 	/**

@@ -75,25 +75,105 @@ class Settings_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_2_7_reveal_paragraph_and_article_collapse_are_sanitised() {
-		$clean = Settings::sanitize( array_merge( Settings::defaults(), array( 'reveal_mode' => 'paragraph', 'reveal_paragraph' => 4, 'desktop_collapse_mode' => 'article', 'mobile_collapse_mode' => 'article' ) ) );
-		$this->assertSame( 'paragraph', $clean['reveal_mode'] );
-		$this->assertSame( 4, $clean['reveal_paragraph'] );
+		$clean = Settings::sanitize( array_merge( Settings::defaults(), array( 'mobile_reveal_mode' => 'paragraph', 'mobile_reveal_paragraph' => 4, 'desktop_reveal_mode' => 'scroll', 'desktop_collapse_mode' => 'article', 'mobile_collapse_mode' => 'article' ) ) );
+		$this->assertSame( 'paragraph', $clean['mobile_reveal_mode'] );
+		$this->assertSame( 'scroll', $clean['desktop_reveal_mode'], 'Each device keeps its own.' );
+		$this->assertSame( 4, $clean['mobile_reveal_paragraph'] );
 		$this->assertSame( 'article', $clean['desktop_collapse_mode'] );
 		$this->assertSame( 'article', $clean['mobile_collapse_mode'] );
 
-		$this->assertSame( 2, Settings::defaults()['reveal_paragraph'], 'The second-to-last paragraph by default.' );
-		$this->assertSame( 1, Settings::sanitize( array( 'reveal_paragraph' => -3 ) )['reveal_paragraph'] );
-		$this->assertSame( 30, Settings::sanitize( array( 'reveal_paragraph' => 500 ) )['reveal_paragraph'] );
-		$this->assertSame( 2, Settings::sanitize( array( 'reveal_paragraph' => 'many' ) )['reveal_paragraph'], 'Garbage falls back to the default.' );
+		foreach ( array( 'mobile_', 'desktop_' ) as $prefix ) {
+			$this->assertSame( 2, Settings::defaults()[ $prefix . 'reveal_paragraph' ], 'The second-to-last paragraph by default.' );
+			$this->assertSame( 1, Settings::sanitize( array( $prefix . 'reveal_paragraph' => -3 ) )[ $prefix . 'reveal_paragraph' ] );
+			$this->assertSame( 30, Settings::sanitize( array( $prefix . 'reveal_paragraph' => 500 ) )[ $prefix . 'reveal_paragraph' ] );
+			$this->assertSame( 2, Settings::sanitize( array( $prefix . 'reveal_paragraph' => 'many' ) )[ $prefix . 'reveal_paragraph' ], 'Garbage falls back to the default.' );
+			$this->assertSame( 'immediate', Settings::defaults()[ $prefix . 'reveal_mode' ], 'Nothing waits by default.' );
+		}
+		$this->assertArrayNotHasKey( 'reveal_mode', Settings::defaults(), 'The single setting is gone: each device decides.' );
+	}
 
-		// An existing install keeps its stored values: nothing is switched to the new modes.
-		$stored = array_merge( Settings::defaults(), array( 'reveal_mode' => 'scroll', 'mobile_collapse_mode' => 'threshold' ) );
-		unset( $stored['reveal_paragraph'] );
-		update_option( Settings::OPTION, $stored );
+	/**
+	 * 2.8.0: when the bar appears is decided per device. A site that had tuned the single setting
+	 * keeps exactly that behaviour on both devices, and the mobile design is left alone.
+	 */
+	public function test_schema_5_splits_the_reveal_per_device() {
+		$old = array_merge( Settings::defaults(), array( 'reveal_mode' => 'paragraph', 'reveal_value' => 700, 'reveal_paragraph' => 4, 'mobile_layout' => 'flow', 'mobile_lines' => 2 ) );
+		foreach ( array( 'desktop_', 'mobile_' ) as $prefix ) {
+			unset( $old[ $prefix . 'reveal_mode' ], $old[ $prefix . 'reveal_value' ], $old[ $prefix . 'reveal_paragraph' ] );
+		}
+		unset( $old['mobile_card_float'] );
+		update_option( Settings::OPTION, $old );
+		update_option( Settings::SCHEMA_OPTION, '4' );
 		Settings::flush();
-		$this->assertSame( 'scroll', Settings::get()['reveal_mode'] );
-		$this->assertSame( 'threshold', Settings::get()['mobile_collapse_mode'] );
-		$this->assertSame( 2, Settings::get()['reveal_paragraph'], 'The missing key takes its default without a schema bump.' );
+
+		Settings::maybe_upgrade();
+
+		$now = Settings::get();
+		foreach ( array( 'desktop_', 'mobile_' ) as $prefix ) {
+			$this->assertSame( 'paragraph', $now[ $prefix . 'reveal_mode' ], $prefix . 'inherits the mode.' );
+			$this->assertSame( 700, $now[ $prefix . 'reveal_value' ] );
+			$this->assertSame( 4, $now[ $prefix . 'reveal_paragraph' ] );
+		}
+		$this->assertArrayNotHasKey( 'reveal_mode', $now );
+		$this->assertSame( 'flow', $now['mobile_layout'], 'The design a site chose is never switched under it.' );
+		$this->assertSame( 2, $now['mobile_lines'] );
+		$this->assertFalse( $now['mobile_card_float'], 'The new key takes its default.' );
+		$this->assertSame( (string) HPRNB_SCHEMA_VERSION, get_option( Settings::SCHEMA_OPTION ) );
+
+		// The migration is pure: the same input gives the same output without touching the option.
+		$twice = Settings::migrate( $old, 4 );
+		$this->assertSame( 'paragraph', $twice['mobile_reveal_mode'] );
+		$this->assertArrayNotHasKey( 'reveal_paragraph', $twice );
+		// And a site that had already set a device keeps that device's choice.
+		$mixed = Settings::migrate( array( 'reveal_mode' => 'smart', 'mobile_reveal_mode' => 'scroll' ), 4 );
+		$this->assertSame( 'scroll', $mixed['mobile_reveal_mode'] );
+		$this->assertSame( 'smart', $mixed['desktop_reveal_mode'] );
+		// Nothing to migrate leaves the array untouched.
+		$this->assertSame( array( 'label_text' => 'x' ), Settings::migrate( array( 'label_text' => 'x' ), 5 ) );
+	}
+
+	/**
+	 * Until 2.8.0 an older export skipped every migration: import sanitised the file as-is, so a
+	 * 2.7 export restored on 2.8 would have silently lost its reveal mode.
+	 */
+	public function test_import_migrates_an_older_export() {
+		$export = array(
+			'_meta'    => array( 'plugin' => 'horizon-press-news-bar', 'schema_version' => 4, 'plugin_version' => '2.7.0' ),
+			'settings' => array_merge( Settings::defaults(), array( 'reveal_mode' => 'smart', 'reveal_value' => 900 ) ),
+		);
+		foreach ( array( 'desktop_', 'mobile_' ) as $prefix ) {
+			unset( $export['settings'][ $prefix . 'reveal_mode' ], $export['settings'][ $prefix . 'reveal_value' ], $export['settings'][ $prefix . 'reveal_paragraph' ] );
+		}
+		$json = wp_json_encode( $export );
+		$this->assertIsString( $json );
+		$result = \HorizonPress\NewsBar\Admin\Import_Export::import_json( $json );
+		$this->assertContains( $result, array( 'imported', 'imported_ids' ), 'The older export is accepted.' );
+		$this->assertSame( 'smart', Settings::get()['mobile_reveal_mode'] );
+		$this->assertSame( 'smart', Settings::get()['desktop_reveal_mode'] );
+		$this->assertSame( 900, Settings::get()['desktop_reveal_value'] );
+	}
+
+	/**
+	 * A field rendered twice posts twice, and the last input wins silently. 2.6.0 listed the two
+	 * device switches both as card toggles and as rows of the Where tab.
+	 */
+	public function test_no_setting_input_is_rendered_twice() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( Settings::OPTION, Settings::defaults() );
+		Settings::flush();
+		self::factory()->term->create( array( 'taxonomy' => 'post_tag' ) );
+
+		ob_start();
+		\HorizonPress\NewsBar\Admin\Settings_Page::render();
+		$html = (string) ob_get_clean();
+
+		// Radios legitimately share a name; everything else must appear exactly once.
+		preg_match_all( '/<(?:input type="(?:text|number|checkbox)"|select)[^>]*name="(hprnb_settings\[[^"]+\])"/', $html, $m );
+		$counts = array_count_values( $m[1] );
+		$dupes  = array_keys( array_filter( $counts, static fn( $c ) => $c > 1 ) );
+		$this->assertSame( array(), $dupes, 'Rendered more than once: ' . implode( ', ', $dupes ) );
+		$this->assertSame( 1, $counts['hprnb_settings[show_on_desktop]'] ?? 0 );
+		$this->assertSame( 1, $counts['hprnb_settings[show_on_mobile]'] ?? 0 );
 	}
 
 	public function test_enum_fallback_to_default() {
@@ -272,7 +352,9 @@ class Settings_Test extends HPRNB_Test_Case {
 
 		// And a form that posts every rendered control round-trips to the same settings.
 		$this->assertContains( 'where', $panels, 'The page-type tab exists under its own key.' );
-		$this->assertContains( 'timing', $panels, 'Appearing and folding have their own tab.' );
+		$this->assertContains( 'mobile', $panels, 'Each device has its own tab.' );
+		$this->assertContains( 'desktop', $panels );
+		$this->assertNotContains( 'timing', $panels, 'Appearing and folding live on the device tabs now.' );
 	}
 
 	public function test_schema_4_repairs_the_maps_emptied_by_the_2_4_0_form() {
@@ -290,7 +372,7 @@ class Settings_Test extends HPRNB_Test_Case {
 		$this->assertSame( array_fill_keys( Settings::CONTEXT_KEYS, true ), $repaired['desktop_contexts'] );
 		$this->assertSame( array_fill_keys( Settings::CONTEXT_KEYS, true ), $repaired['mobile_contexts'] );
 		$this->assertFalse( $repaired['contexts']['search'], 'The global scope, which the form saved correctly, is left alone.' );
-		$this->assertSame( '4', get_option( Settings::SCHEMA_OPTION ) );
+		$this->assertSame( (string) HPRNB_SCHEMA_VERSION, get_option( Settings::SCHEMA_OPTION ) );
 
 		// A deliberate partial map is not a symptom of the bug: it stays.
 		$chosen                     = Settings::defaults();

@@ -241,11 +241,6 @@
 	box-shadow: inset 0 2px 0 var(--hprnb-e-accent), 0 -8px 28px rgba(0, 0, 0, .28);
 }
 
-/* The bar waits for the reader (reveal_mode): rendered, but out of view and out of the way. */
-.hprnb-root--pending .hprnb-bar {
-	transform: translateY(110%);
-	pointer-events: none;
-}
 
 /* ...and slides in when its moment comes. Until 2.6.0 this transition was borrowed from the
    collapse switch, so a bar that waited for the reader snapped into place whenever folding was
@@ -255,9 +250,11 @@
 	will-change: transform;
 }
 
-body.hprnb-reserve.hprnb-pending {
-	--hprnb-offset: 0px;
-	padding-block-end: 0;
+@media (min-width: 768px) {
+	body.hprnb-reserve.hprnb-d-pending {
+		--hprnb-offset: 0px;
+		padding-block-end: 0;
+	}
 }
 
 .hprnb-bar *,
@@ -742,10 +739,6 @@ body.hprnb-reserve.hprnb-pending {
 		transition: none;
 	}
 
-	.hprnb-root--pending .hprnb-bar {
-		transform: translateY(110%);
-	}
-
 	.hprnb-bar__label::before {
 		box-shadow: none;
 	}
@@ -817,11 +810,11 @@ html.hprnb-dismissed body.hprnb-reserve {
 	}
 
 	body.hprnb-reserve.hprnb-kbd,
-	body.hprnb-reserve.hprnb-pending {
+	body.hprnb-reserve.hprnb-m-pending {
 		--hprnb-offset: 0px;
 	}
 
-	body.hprnb-reserve.hprnb-pending {
+	body.hprnb-reserve.hprnb-m-pending {
 		padding-block-end: 0;
 	}
 }
@@ -1322,6 +1315,9 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	   line, the label sits on the first line beside it, the headline runs from the second on two
 	   lines at most, and the close button lives INSIDE the card, in its top end corner.
 	   Collapsed it becomes the strip of the flowing card: the pulsing dot and the first line. */
+	/* The "Explore More" card — the client's reference: a label row, then the picture at the start
+	   of the line and the headline beside it on up to three lines. Edge to edge with square corners
+	   by default; the buttons sit in a tab of the card's own colour above its end corner. */
 	.hprnb-root--m-card .hprnb-bar {
 		--hprnb-e-display: block;
 		--hprnb-e-max: none;
@@ -1329,71 +1325,50 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		--hprnb-e-card-pad: 12px;
 		--hprnb-e-card-gap: 10px;
 		--hprnb-e-card-label: 20px;
-		--hprnb-e-card-row: 6px;
-		--hprnb-e-card-btn: 38px;
+		--hprnb-e-card-row: 8px;
+		--hprnb-e-card-tab: 44px;
 		--hprnb-e-card-col: calc(var(--hprnb-m-card-thumb) + var(--hprnb-e-card-gap));
-		/* Detached from the edges. The safe area is applied here and nowhere else on this layout:
-		   the bar drops its own padding-block-end so it is never counted twice. */
-		inset-inline: var(--hprnb-m-gap, 8px);
+		inset-inline: var(--hprnb-m-gap, 0px);
+		inset-block-end: var(--hprnb-m-gap, 0px);
+		border-radius: 0;
+	}
+
+	/* Floating (mobile_card_float): detached from the edges, rounded, with a shadow. The safe area
+	   is then applied here and nowhere else on this layout, so it is never counted twice. */
+	.hprnb-root--m-float .hprnb-bar {
 		inset-block-end: calc(var(--hprnb-m-gap, 8px) + env(safe-area-inset-bottom, 0px));
 		padding-block-end: 0;
 		border-radius: 12px;
 		box-shadow: 0 8px 28px rgba(0, 0, 0, .3);
 	}
 
-	/* The accent edge is a setting of its own: keep it on top of the card's shadow. */
-	.hprnb-root--edge.hprnb-root--m-card .hprnb-bar {
+	/* The accent edge is a setting of its own: keep it on top of the floating card's shadow. */
+	.hprnb-root--edge.hprnb-root--m-float .hprnb-bar {
 		box-shadow: inset 0 2px 0 var(--hprnb-e-accent), 0 8px 28px rgba(0, 0, 0, .3);
 	}
 
-	/* The card carries its own height, so the collapsed slide does not subtract the safe area. */
-	.hprnb-root--m-card .hprnb-bar--collapsed {
+	/* The floating card carries its own height, so its collapsed slide never subtracts the safe area. */
+	.hprnb-root--m-float .hprnb-bar--collapsed {
 		transform: translateY(calc(100% - var(--hprnb-peek)));
+	}
+
+	/* The tab lives above the bar, which clips its overflow against horizontal scrolling: clip that
+	   axis only, on the bar and on the inner that positions the buttons. */
+	.hprnb-root--m-card .hprnb-bar,
+	.hprnb-root--m-card .hprnb-bar__inner {
+		overflow-x: clip;
+		overflow-y: visible;
 	}
 
 	.hprnb-root--m-card .hprnb-bar__inner {
 		position: relative;
 		padding: var(--hprnb-e-card-pad);
-		padding-inline-start: calc(var(--hprnb-e-card-pad) + var(--hprnb-e-card-col));
-		padding-inline-end: calc(var(--hprnb-e-card-pad) + var(--hprnb-e-card-btn));
 		block-size: var(--hprnb-m-height);
 		line-height: var(--hprnb-m-line);
 	}
 
-	/* An article with no featured picture gives that column back to its headline. */
-	.hprnb-root--m-card .hprnb-bar__inner:not(:has(.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb)) {
-		padding-inline-start: var(--hprnb-e-card-pad);
-	}
-
-	/* The buttons are placed one by one, so the label and the headline reserve their column and
-	   never run underneath them. Reserved by default and given back when there is no button: an
-	   engine without :has() loses a little width, never the guarantee. */
-	.hprnb-root--m-card .hprnb-bar__inner:has(.hprnb-bar__btn--close:not([hidden])):has(.hprnb-bar__btn--toggle:not([hidden])) {
-		padding-inline-end: calc(var(--hprnb-e-card-pad) + 2 * var(--hprnb-e-card-btn));
-	}
-
-	.hprnb-root--m-card .hprnb-bar__inner:not(:has(.hprnb-bar__btn:not([hidden]):not(.hprnb-bar__btn--expand))) {
-		padding-inline-end: var(--hprnb-e-card-pad);
-	}
-
-	/* The picture sits in its own column, out of the text flow, centred on the card. */
-	.hprnb-root--m-card .hprnb-bar__thumb {
-		position: absolute;
-		inset-block-start: 50%;
-		inset-inline-start: var(--hprnb-e-card-pad);
-		display: block;
-		flex: none;
-		order: 0;
-		inline-size: var(--hprnb-m-card-thumb);
-		block-size: var(--hprnb-m-card-thumb-h);
-		aspect-ratio: auto;
-		margin: 0;
-		border-radius: 8px;
-		box-shadow: 0 0 0 1px rgba(255, 255, 255, .12);
-		transform: translateY(-50%);
-	}
-
-	/* First line: a small pill that must not compete with the headline. */
+	/* Row one: the label on its own. The pill keeps its badge; the strip style is the plain bold
+	   heading of the reference ("Explore More"). */
 	.hprnb-root--m-card .hprnb-bar__label {
 		float: none;
 		inline-size: fit-content;
@@ -1407,13 +1382,14 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		line-height: var(--hprnb-e-card-label);
 	}
 
-	/* The strip style becomes a plain bold heading on that same line. */
 	.hprnb-root--m-card:where(.hprnb-root--m-label-strip) .hprnb-bar__label {
 		padding-inline: 0;
 		background: transparent;
 		color: var(--hprnb-e-fg);
-		font-size: 12px;
-		letter-spacing: .04em;
+		font-size: 17px;
+		font-weight: 700;
+		letter-spacing: 0;
+		text-transform: none;
 		box-shadow: none;
 	}
 
@@ -1421,8 +1397,8 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		display: none;
 	}
 
-	/* Plain blocks from the viewport down, so the headline is text the pill can float against
-	   once the card is collapsed. */
+	/* Row two, plain blocks from the viewport down, so the headline is text the pill can float
+	   against once the card is collapsed. */
 	.hprnb-root--m-card .hprnb-bar__viewport,
 	.hprnb-root--m-card .hprnb-bar__list,
 	.hprnb-root--m-card .hprnb-bar__item,
@@ -1441,12 +1417,34 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		display: none;
 	}
 
-	/* Deliberately not positioned: the picture hangs off .hprnb-bar__inner, so this clip never
-	   reaches it and the picture can be taller than the headline beside it. */
+	/* The headline keeps clear of the picture's column. Deliberately not positioned: the picture
+	   hangs off .hprnb-bar__inner, so this clip never reaches it. */
 	.hprnb-root--m-card .hprnb-bar__viewport {
-		max-block-size: calc(var(--hprnb-m-card-lines, 2) * var(--hprnb-m-line));
+		margin-inline-start: var(--hprnb-e-card-col);
+		max-block-size: calc(var(--hprnb-m-card-lines, 3) * var(--hprnb-m-line));
 		overflow: visible clip;
 		touch-action: pan-y;
+	}
+
+	/* An article with no featured picture gives that column back to its headline. */
+	.hprnb-root--m-card .hprnb-bar__inner:not(:has(.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb)) .hprnb-bar__viewport {
+		margin-inline-start: 0;
+	}
+
+	/* The picture: 16:9, at the start of the line, level with the top of the headline. */
+	.hprnb-root--m-card .hprnb-bar__thumb {
+		position: absolute;
+		inset-block-start: calc(var(--hprnb-e-card-pad) + var(--hprnb-e-card-label) + var(--hprnb-e-card-row));
+		inset-inline-start: var(--hprnb-e-card-pad);
+		display: block;
+		flex: none;
+		order: 0;
+		inline-size: var(--hprnb-m-card-thumb);
+		block-size: var(--hprnb-m-card-thumb-h);
+		aspect-ratio: auto;
+		margin: 0;
+		border-radius: 4px;
+		box-shadow: 0 0 0 1px rgba(255, 255, 255, .12);
 	}
 
 	/* The headline is the point of the card: two sizes up, bold, over as many lines as the profile
@@ -1454,7 +1452,7 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	.hprnb-root--m-card .hprnb-bar__title {
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
-		-webkit-line-clamp: var(--hprnb-m-card-lines, 2);
+		-webkit-line-clamp: var(--hprnb-m-card-lines, 3);
 		min-inline-size: 0;
 		overflow: hidden;
 		font-size: calc(var(--hprnb-m-font-size) + 2px);
@@ -1471,50 +1469,44 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		display: none;
 	}
 
-	/* The container has no box of its own: each button is placed in the card's corner. */
+	/* The buttons: a tab of the card's own colour above its end corner, outside the card, each
+	   button a 44px square — the cross of the reference. Pause, when it is on, stands beside it. */
 	.hprnb-root--m-card .hprnb-bar__controls {
-		display: contents;
+		position: absolute;
+		inset-block-end: 100%;
+		inset-inline-end: 0;
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+		gap: 0;
+		background: var(--hprnb-e-bg);
+	}
+
+	.hprnb-root--edge.hprnb-root--m-card .hprnb-bar__controls {
+		box-shadow: inset 0 2px 0 var(--hprnb-e-accent);
+	}
+
+	.hprnb-root--m-float .hprnb-bar__controls {
+		border-start-start-radius: 10px;
+		border-start-end-radius: 10px;
 	}
 
 	.hprnb-root--m-card .hprnb-bar__btn {
-		position: absolute;
-		inset-block-start: var(--hprnb-e-card-pad);
-		inset-inline-end: var(--hprnb-e-card-pad);
-		inline-size: 34px;
-		min-inline-size: 34px;
-		block-size: 34px;
-		min-block-size: 34px;
-		border-radius: 9px;
-	}
-
-	/* 44 x 44 of touch target, grown outwards into the card's own padding only, never down over
-	   the headline. */
-	.hprnb-root--m-card .hprnb-bar__btn::after {
-		content: "";
-		position: absolute;
-		inset: -5px;
-	}
-
-	.hprnb-root--m-card .hprnb-bar__btn svg {
-		inline-size: 19px;
-		block-size: 19px;
-	}
-
-	.hprnb-root--m-card .hprnb-bar__btn--close {
-		background: color-mix(in srgb, var(--hprnb-e-fg) 12%, transparent);
+		position: static;
+		inline-size: var(--hprnb-e-card-tab);
+		min-inline-size: var(--hprnb-e-card-tab);
+		block-size: var(--hprnb-e-card-tab);
+		min-block-size: var(--hprnb-e-card-tab);
+		border-radius: 0;
 		opacity: 1;
 	}
 
-	/* Pause, when it is on, stands beside the close button and never under it. */
-	.hprnb-root--m-card .hprnb-bar__btn--toggle {
-		inset-inline-end: calc(var(--hprnb-e-card-pad) + var(--hprnb-e-card-btn));
+	.hprnb-root--m-card .hprnb-bar__btn svg {
+		inline-size: 22px;
+		block-size: 22px;
 	}
 
-	.hprnb-root--m-card .hprnb-bar__inner:not(:has(.hprnb-bar__btn--close:not([hidden]))) .hprnb-bar__btn--toggle {
-		inset-inline-end: var(--hprnb-e-card-pad);
-	}
-
-	/* A discreet rotation line along the top edge, clipped by the rounded corners. */
+	/* A discreet rotation line along the top edge. */
 	.hprnb-root--m-card .hprnb-bar__progress {
 		block-size: 2px;
 	}
@@ -1525,12 +1517,9 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		animation-name: hprnb-appear;
 	}
 
-	/* Collapsed: the picture and its column step aside, the pill floats back into the line and the
-	   first line of the headline runs beside it — the strip of the flowing card. */
-	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__inner {
-		padding-inline-start: var(--hprnb-e-card-pad);
-	}
-
+	/* Collapsed: the picture steps aside, the pill floats back into the line and the first line of
+	   the headline runs beside it — the strip of the flowing card. The tab goes with the rest, and
+	   the chevron takes the end of the strip. */
 	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__thumb {
 		display: none;
 	}
@@ -1541,11 +1530,29 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	}
 
 	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__viewport {
+		margin-inline: 0 var(--hprnb-btn);
 		max-block-size: var(--hprnb-m-line);
 	}
 
 	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__title {
 		-webkit-line-clamp: 1;
+	}
+
+	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__controls {
+		inset-block: 0 auto;
+		inset-inline-end: calc(var(--hprnb-e-card-pad) - 8px);
+		block-size: var(--hprnb-peek);
+		align-items: center;
+		background: transparent;
+		box-shadow: none;
+	}
+
+	.hprnb-root--m-card .hprnb-bar--collapsed .hprnb-bar__btn--expand {
+		display: inline-flex;
+		inline-size: var(--hprnb-btn);
+		min-inline-size: var(--hprnb-btn);
+		block-size: auto;
+		min-block-size: 30px;
 	}
 
 	.hprnb-root--m-label-hidden .hprnb-bar {
@@ -1685,8 +1692,8 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
    A viewport media query, not the container query: this is about the screen, not the component. */
 @media (max-width: 359.98px) {
 	.hprnb-root--m-card .hprnb-bar {
-		--hprnb-m-card-thumb: 72px;
-		--hprnb-m-card-thumb-h: 56px;
+		--hprnb-m-card-thumb: 96px;
+		--hprnb-m-card-thumb-h: 54px;
 	}
 }
 
@@ -1715,9 +1722,14 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 	   picture the height of that line, so nothing is clipped against the forced height above. */
 	.hprnb-root--m-card .hprnb-bar {
 		--hprnb-m-card-lines: 1;
-		--hprnb-m-card-thumb: 44px;
-		--hprnb-m-card-thumb-h: 34px;
+		--hprnb-m-card-thumb: 48px;
+		--hprnb-m-card-thumb-h: 27px;
 		--hprnb-e-card-pad: 5px;
+	}
+
+	.hprnb-root--m-card .hprnb-bar .hprnb-bar__thumb {
+		inset-block-start: 50%;
+		transform: translateY(-50%);
 	}
 
 	.hprnb-root--m-card .hprnb-bar .hprnb-bar__label {
@@ -1775,6 +1787,26 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 }
 
 /* A fixed news bar has no place on paper. */
+/* ---------------------------------------------------------------------------
+ * 16. Waiting for the reader — kept last: neither profile section owns it.
+ * ------------------------------------------------------------------------- */
+/* The bar waits for the reader (that device's reveal mode): rendered, but out of view and out of
+   the way. Each device carries its own class, so a desktop that appears at once and a mobile that
+   waits share one root; the admin preview root is flat and matches neither. */
+@container hprnb (min-width: 768px) {
+	.hprnb-root--d-pending .hprnb-bar {
+		transform: translateY(110%);
+		pointer-events: none;
+	}
+}
+
+@container hprnb (max-width: 767.98px) {
+	.hprnb-root--m-pending .hprnb-bar {
+		transform: translateY(110%);
+		pointer-events: none;
+	}
+}
+
 @media print {
 	#hprnb-root {
 		display: none;

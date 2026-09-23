@@ -47,6 +47,8 @@ final class Settings {
 	/**
 	 * Keys of the `contexts` map.
 	 */
+	const REVEAL_MODES = array( 'immediate', 'scroll', 'percent', 'end', 'paragraph', 'smart' );
+
 	const CONTEXT_KEYS = array( 'front_page', 'blog_home', 'single_post', 'page', 'category', 'tag', 'archive', 'search', 'not_found' );
 
 	/**
@@ -253,18 +255,35 @@ final class Settings {
 				'min'     => 1,
 				'max'     => 720,
 			),
-			'reveal_mode'                 => array(
+			'desktop_reveal_mode'         => array(
 				'type'    => 'enum',
 				'default' => 'immediate',
-				'options' => array( 'immediate', 'scroll', 'percent', 'end', 'paragraph', 'smart' ),
+				'options' => self::REVEAL_MODES,
 			),
-			'reveal_value'                => array(
+			'desktop_reveal_value'        => array(
 				'type'    => 'int',
 				'default' => 400,
 				'min'     => 0,
 				'max'     => 4000,
 			),
-			'reveal_paragraph'            => array(
+			'desktop_reveal_paragraph'    => array(
+				'type'    => 'int',
+				'default' => 2,
+				'min'     => 1,
+				'max'     => 30,
+			),
+			'mobile_reveal_mode'          => array(
+				'type'    => 'enum',
+				'default' => 'immediate',
+				'options' => self::REVEAL_MODES,
+			),
+			'mobile_reveal_value'         => array(
+				'type'    => 'int',
+				'default' => 400,
+				'min'     => 0,
+				'max'     => 4000,
+			),
+			'mobile_reveal_paragraph'     => array(
 				'type'    => 'int',
 				'default' => 2,
 				'min'     => 1,
@@ -433,14 +452,14 @@ final class Settings {
 			),
 			'mobile_layout'               => array(
 				'type'    => 'enum',
-				'default' => 'flow',
-				'options' => array( 'flow', 'stacked', 'inline', 'card' ),
+				'default' => 'card',
+				'options' => array( 'card', 'flow', 'stacked', 'inline' ),
 			),
 			'mobile_card_thumb'           => array(
 				'type'    => 'int',
-				'default' => 96,
+				'default' => 132,
 				'min'     => 72,
-				'max'     => 120,
+				'max'     => 160,
 			),
 			'mobile_contexts'             => array(
 				'type'    => 'bool_map',
@@ -476,9 +495,13 @@ final class Settings {
 				'type'    => 'bool',
 				'default' => false,
 			),
+			'mobile_card_float'           => array(
+				'type'    => 'bool',
+				'default' => false,
+			),
 			'mobile_lines'                => array(
 				'type'    => 'int',
-				'default' => 2,
+				'default' => 3,
 				'min'     => 1,
 				'max'     => 4,
 			),
@@ -763,6 +786,24 @@ final class Settings {
 		if ( ! is_array( $raw ) ) {
 			$raw = array();
 		}
+		$upgraded = self::migrate( $raw, $stored );
+		if ( $upgraded !== $raw ) {
+			update_option( self::OPTION, self::sanitize( $upgraded ), true );
+			Invalidation::invalidate();
+			self::$memo = null;
+		}
+		update_option( self::SCHEMA_OPTION, (string) HPRNB_SCHEMA_VERSION, true );
+	}
+
+	/**
+	 * Brings a raw settings array written under an older schema up to the current one. Pure: it
+	 * reads nothing and writes nothing, so the upgrade path and a settings import share it.
+	 *
+	 * @param array $raw    Stored (or imported) settings, not yet sanitised.
+	 * @param int   $stored Schema version they were written under.
+	 * @return array
+	 */
+	public static function migrate( array $raw, int $stored ): array {
 		$upgraded = $raw;
 		if ( $stored < 2 && ! empty( $raw ) ) {
 			$upgraded = array_merge( $upgraded, self::v2_preset() );
@@ -783,12 +824,23 @@ final class Settings {
 				}
 			}
 		}
-		if ( $upgraded !== $raw ) {
-			update_option( self::OPTION, self::sanitize( $upgraded ), true );
-			Invalidation::invalidate();
-			self::$memo = null;
+		// Schema 5: when the bar appears is decided per device. A site that had tuned the single
+		// setting keeps exactly that behaviour on both devices; the mobile design is untouched.
+		if ( $stored < 5 ) {
+			foreach ( array( 'reveal_mode', 'reveal_value', 'reveal_paragraph' ) as $key ) {
+				if ( ! array_key_exists( $key, $raw ) ) {
+					continue;
+				}
+				foreach ( array( 'desktop_', 'mobile_' ) as $prefix ) {
+					if ( ! array_key_exists( $prefix . $key, $raw ) ) {
+						$upgraded[ $prefix . $key ] = $raw[ $key ];
+					}
+				}
+				unset( $upgraded[ $key ] );
+			}
 		}
-		update_option( self::SCHEMA_OPTION, (string) HPRNB_SCHEMA_VERSION, true );
+
+		return $upgraded;
 	}
 
 	/**

@@ -57,7 +57,7 @@ class Frontend_Test extends HPRNB_Test_Case {
 		$this->assertTrue( wp_script_is( 'hprnb-bootstrap', 'enqueued' ) );
 		$this->assertTrue( wp_style_is( 'hprnb-bar', 'enqueued' ) );
 		$this->assertTrue( wp_script_is( 'hprnb-bar', 'enqueued' ), 'The default mobile presentation needs the interactive script.' );
-		$this->assertContains( 'body.hprnb-reserve{--hprnb-height:40px;--hprnb-m-height:76px;--hprnb-peek:40px;--hprnb-m-gap:0px}', wp_styles()->get_data( 'hprnb-bar', 'after' ) );
+		$this->assertContains( 'body.hprnb-reserve{--hprnb-height:40px;--hprnb-m-height:126px;--hprnb-peek:36px;--hprnb-m-gap:0px}', wp_styles()->get_data( 'hprnb-bar', 'after' ) );
 		$this->assertSame( 'replace', wp_styles()->get_data( 'hprnb-bar', 'rtl' ) );
 		$this->assertSame( 'defer', wp_scripts()->get_data( 'hprnb-bootstrap', 'strategy' ) );
 
@@ -71,7 +71,7 @@ class Frontend_Test extends HPRNB_Test_Case {
 
 	public function test_php_mode_with_items() {
 		$this->create_post_ago( 60 );
-		$this->with_settings( array( 'render_mode' => 'php', 'ticker_enabled' => true, 'bar_height' => 56, 'mobile_layout' => 'inline' ) );
+		$this->with_settings( array( 'render_mode' => 'php', 'ticker_enabled' => true, 'bar_height' => 56, 'mobile_layout' => 'inline', 'mobile_lines' => 2 ) );
 		$this->go_to_front( home_url( '/' ) );
 		$this->enqueue();
 
@@ -154,5 +154,32 @@ class Frontend_Test extends HPRNB_Test_Case {
 		$this->assertStringContainsString( 'id="hprnb-root"', $shortcode );
 		$this->assertSame( '', do_shortcode( '[' . Shortcode::TAG . ']' ), 'Second shortcode returns nothing.' );
 		$this->assertSame( '', $this->render_footer(), 'Footer does not render a second bar.' );
+	}
+
+	/**
+	 * 2.8.0: when the bar appears is decided per device, so the body carries one pending class per
+	 * device — the reserved space is dropped only where the bar really waits.
+	 */
+	public function test_body_pending_class_is_per_device() {
+		$this->create_post_ago( 60 );
+		$this->with_settings( array( 'mobile_reveal_mode' => 'scroll' ) );
+		$this->go_to_front( home_url( '/' ) );
+		$classes = Frontend::body_class( array( 'home' ) );
+		$this->assertContains( 'hprnb-reserve', $classes );
+		$this->assertContains( 'hprnb-m-pending', $classes );
+		$this->assertNotContains( 'hprnb-d-pending', $classes, 'Desktop appears at once: its space is reserved.' );
+		$this->assertNotContains( 'hprnb-pending', $classes, 'The single class is gone.' );
+
+		$this->with_settings( array( 'desktop_reveal_mode' => 'smart', 'mobile_reveal_mode' => 'paragraph' ) );
+		$this->go_to_front( home_url( '/' ) );
+		$classes = Frontend::body_class( array( 'home' ) );
+		$this->assertContains( 'hprnb-d-pending', $classes );
+		$this->assertContains( 'hprnb-m-pending', $classes );
+
+		$this->with_settings( array() );
+		$this->go_to_front( home_url( '/' ) );
+		$classes = Frontend::body_class( array( 'home' ) );
+		$this->assertNotContains( 'hprnb-d-pending', $classes );
+		$this->assertNotContains( 'hprnb-m-pending', $classes );
 	}
 }

@@ -147,7 +147,11 @@ final class Import_Export {
 			return 'import_error_schema';
 		}
 
-		$clean = Settings::sanitize( $data['settings'] );
+		$settings = is_array( $data['settings'] ) ? $data['settings'] : array();
+		if ( $schema_version < HPRNB_SCHEMA_VERSION ) {
+			$settings = Settings::migrate( $settings, $schema_version );
+		}
+		$clean = Settings::sanitize( $settings );
 		Settings::update( $clean );
 		Invalidation::invalidate();
 

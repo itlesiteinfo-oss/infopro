@@ -2,6 +2,30 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.8.0] — 2026-09-23
+
+### Corrigé
+
+- **L'aperçu de l'administration était vide ou coupé** dès que le moment d'apparition n'était pas « immédiat » : la racine de l'aperçu recevait la classe d'attente, et la règle qui pousse la barre hors de vue l'envoyait hors de la scène. `Renderer::root_classes()` gagne un paramètre `$preview` qui n'émet jamais les classes d'attente ; le script ne les cherche plus que sur la racine réelle.
+- **Deux réglages étaient rendus deux fois** (les interrupteurs d'appareil, à la fois en en-tête de carte et en lignes de l'onglet Où) : le dernier champ du formulaire l'emportait en silence. Un test interdit désormais qu'un champ soit rendu deux fois.
+
+### Modifié — le moment d'apparition se décide par appareil
+
+- `reveal_mode`, `reveal_value` et `reveal_paragraph` deviennent **`mobile_reveal_*` et `desktop_reveal_*`**. Schéma 5 : une installation qui avait réglé le moment unique retrouve exactement ce réglage sur les deux appareils. `data-hprnb-reveal` porte un bloc par appareil (`d` / `m`) et le script lit celui du profil actif.
+- **Une classe d'attente par appareil** — `hprnb-root--d-pending` / `--m-pending` sur la racine, portées par une requête de conteneur sur la largeur de la racine, et `hprnb-d-pending` / `hprnb-m-pending` sur le body — de sorte qu'un ordinateur qui apparaît tout de suite et un mobile qui attend partagent une seule racine.
+- **Les migrations sont pures** (`Settings::migrate( $raw, $from )`) et **l'import les applique** : un export d'une version antérieure sautait toutes les migrations et aurait perdu son mode d'apparition.
+
+### Modifié — page de réglages par appareil
+
+- Six onglets : Contenu, Où, **Mobile**, **Ordinateur**, Couleurs, Avancé. Chaque appareil regroupe, dans l'ordre, son **design**, ses titres, **le moment où la barre apparaît**, **son repli** et ses boutons ; la fermeture (commune) ferme l'onglet Mobile. Le choix du design est le premier champ du premier bloc de l'onglet Mobile.
+
+### Modifié — la carte mobile, sur la maquette du client, et par défaut
+
+- **La carte est le design mobile par défaut** (`mobile_layout = card`), avec **3 lignes** et une **image de 132 px**. Elle suit la maquette : une ligne d'étiquette, puis l'image **16:9 (132 × 74)** au début de la ligne et le titre de 18 px en gras sur trois lignes à côté, **d'un bord à l'autre** avec des coins droits, **126 px** de haut ; la croix est un onglet de 44 × 44 px de la couleur de la carte, **au-dessus de son coin de fin**, hors de la carte (la pause, si elle est active, se place à côté). Le style d'étiquette « bandeau » donne le titre blanc en gras de la maquette (« Explore More »).
+- **Flottante en option** (`mobile_card_float`, désactivé par défaut) : 8 px des bords, coins de 12 px, ombre — le rendu de la 2.5.
+- Une installation existante **garde son design** : « Réinitialiser l'onglet » sur l'onglet Mobile applique la maquette en un clic.
+- `mobile_card_thumb` : 72 à 160 px (défaut 132). Sur les écrans de moins de 360 px l'image passe à 96 × 54 ; en paysage à 48 × 27 sur une ligne.
+
 ## [2.7.0] — 2026-09-23
 
 ### Ajouté — apparition « avant la fin de l'article »

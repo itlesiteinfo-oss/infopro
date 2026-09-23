@@ -20,7 +20,8 @@ class Query_Test extends HPRNB_Test_Case {
 		$this->assertSame( 10, $args['posts_per_page'] );
 		$this->assertTrue( $args['no_found_rows'] );
 		$this->assertFalse( $args['update_post_term_cache'] );
-		$this->assertFalse( $args['update_post_meta_cache'] );
+		$this->assertTrue( $args['update_post_meta_cache'], 'The default mobile design (the card) carries a picture: the meta cache is primed.' );
+		$this->assertFalse( Query::args( array_merge( Settings::defaults(), array( 'mobile_layout' => 'flow' ) ) )['update_post_meta_cache'], 'No picture anywhere: no meta cache.' );
 		$this->assertSame( 'date', $args['orderby'] );
 		$this->assertSame( 'DESC', $args['order'] );
 		$this->assertSame( 'post_date_gmt', $args['date_query'][0]['column'] );

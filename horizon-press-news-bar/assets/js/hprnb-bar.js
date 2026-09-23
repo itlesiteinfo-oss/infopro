@@ -798,12 +798,18 @@
 	}
 
 	function setupReveal( state, root, contract, mobile, analytics ) {
-		var cfg = parseJson( root.getAttribute( 'data-hprnb-reveal' ) );
-		var mode = cfg && cfg.mode ? cfg.mode : 'immediate';
-		var pending = root.classList.contains( 'hprnb-root--pending' );
+		var all = parseJson( root.getAttribute( 'data-hprnb-reveal' ) );
+		// Each device decides for itself: the active profile's block, its own pending classes.
+		var cfg = ( all && all[ mobile ? 'm' : 'd' ] ) || {};
+		cfg.sel = all ? all.sel : '';
+		cfg.smart = all ? all.smart : null;
+		var mode = cfg.mode || 'immediate';
+		var pendingClass = 'hprnb-root--' + ( mobile ? 'm' : 'd' ) + '-pending';
+		var bodyClass = 'hprnb-' + ( mobile ? 'm' : 'd' ) + '-pending';
+		var pending = root.classList.contains( pendingClass );
 		// Shared with the collapse engine: where the reader was when the bar became visible (null
 		// while it is still pending), the editorial body once located, and who wants to know.
-		state.articleSel = ( cfg && ( cfg.sel || ( cfg.smart && cfg.smart.sel ) ) ) || '';
+		state.articleSel = cfg.sel || ( cfg.smart && cfg.smart.sel ) || '';
 		state.article = undefined;
 		state.revealY = null;
 		state.onReveal = [];
@@ -825,8 +831,8 @@
 			}
 			done = true;
 			state.revealY = window.scrollY;
-			root.classList.remove( 'hprnb-root--pending' );
-			body.classList.remove( 'hprnb-pending' );
+			root.classList.remove( pendingClass );
+			body.classList.remove( bodyClass );
 			if ( contract ) {
 				contract.emit();
 			}
@@ -840,8 +846,8 @@
 
 		state.add( function () {
 			// destroy() must not leave a half-revealed bar behind.
-			root.classList.remove( 'hprnb-root--pending' );
-			body.classList.remove( 'hprnb-pending' );
+			root.classList.remove( pendingClass );
+			body.classList.remove( bodyClass );
 		} );
 
 		if ( 'smart' === mode ) {
@@ -1194,7 +1200,7 @@
 			var peek = parseFloat( cs.getPropertyValue( '--hprnb-peek' ) ) || 40;
 			// A floating mobile layout also keeps its distance from the bottom edge.
 			var gap = mobile ? ( parseFloat( cs.getPropertyValue( '--hprnb-m-gap' ) ) || 0 ) : 0;
-			var hidden = aside.hidden || root.hidden || body.classList.contains( 'hprnb-kbd' ) || root.classList.contains( 'hprnb-root--pending' );
+			var hidden = aside.hidden || root.hidden || body.classList.contains( 'hprnb-kbd' ) || root.classList.contains( 'hprnb-root--' + ( mobile ? 'm' : 'd' ) + '-pending' );
 			// In flow the bar is a block of the page: it covers nothing, so it reserves nothing.
 			// Collapsed, a phone keeps its strip while the desktop bar slides fully away.
 			var inflow = !! profile && profile.place === 'inline';

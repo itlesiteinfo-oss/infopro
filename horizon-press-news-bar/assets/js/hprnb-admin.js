@@ -37,7 +37,7 @@
 	};
 	var PX_KEYS = { font_size: true, max_width: true, gutter: true };
 	var MOBILE_VARS = { mobile_bg_color: '--hprnb-m-bg', mobile_text_color: '--hprnb-m-fg', mobile_accent_color: '--hprnb-m-accent', mobile_label_text_color: '--hprnb-m-label-fg', mobile_font_size: '--hprnb-m-font-size' };
-	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, bar_height: true, align_container: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_bar_height: true, mobile_peek: true, mobile_deep_collapse: true, mobile_kbd_hide: true, theme_offset: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, desktop_thumb_position: true, desktop_thumb_size: true, mobile_thumb_position: true, mobile_thumb_size: true, mobile_controls_layout: true, mobile_controls_place: true, mobile_show_pause: true, mobile_show_close: true, mobile_collapse_mode: true, mobile_collapse_after: true, accent_edge: true, mobile_label_pulse: true, mobile_peek_thumbnail: true, mobile_label_compact: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_card_thumb: true, desktop_hide_on_scroll: true, desktop_collapse_mode: true, desktop_collapse_after: true, desktop_placement: true, mobile_placement: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
+	var VISUAL_ONLY = { label_position: true, layout_mode: true, z_index: true, bar_height: true, align_container: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_bar_height: true, mobile_peek: true, mobile_deep_collapse: true, mobile_kbd_hide: true, theme_offset: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, desktop_thumb_position: true, desktop_thumb_size: true, mobile_thumb_position: true, mobile_thumb_size: true, mobile_controls_layout: true, mobile_controls_place: true, mobile_show_pause: true, mobile_show_close: true, mobile_collapse_mode: true, mobile_collapse_after: true, accent_edge: true, mobile_label_pulse: true, mobile_peek_thumbnail: true, mobile_label_compact: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_card_thumb: true, mobile_card_float: true, desktop_hide_on_scroll: true, desktop_collapse_mode: true, desktop_collapse_after: true, desktop_placement: true, mobile_placement: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
 	/* Row height of the stacked label strip, row gap, block padding and title line-height: mirrors Renderer::profile_height(). */
 	var STRIP = 22;
 	var ROW_GAP = 4;
@@ -48,11 +48,11 @@
 	var FLOW_PAD = 6;
 	var PEEK_EXTRA = 2;
 	var CARD_PAD = 12;
-	var CARD_RATIO = 0.78;
+	var CARD_RATIO = 0.5625;
 	var CARD_FONT_PLUS = 2;
 	var CARD_LINE = 1.24;
 	var CARD_LABEL = 20;
-	var CARD_ROW = 6;
+	var CARD_ROW = 8;
 	var CARD_LINES_MAX = 3;
 	var CARD_FLOAT = 8;
 	var reinitTimer = null;
@@ -183,9 +183,9 @@
 		var mobile = ( p === 'm' );
 		var prefix = mobile ? 'mobile_' : 'desktop_';
 		var mode = effectiveMode( p );
-		var layout = valueOf( prefix + 'layout' ) || ( mobile ? 'flow' : 'inline' );
+		var layout = valueOf( prefix + 'layout' ) || ( mobile ? 'card' : 'inline' );
 		if ( layout !== 'stacked' && layout !== 'inline' && layout !== 'flow' && layout !== 'card' ) {
-			layout = mobile ? 'flow' : 'inline';
+			layout = mobile ? 'card' : 'inline';
 		}
 		if ( ! mobile && ( layout === 'flow' || layout === 'card' ) ) {
 			layout = 'inline';
@@ -194,7 +194,7 @@
 			layout = 'stacked';
 		}
 		var label = valueOf( prefix + 'label_style' ) || ( mobile ? 'pill' : 'strip' );
-		var lines = Math.max( 1, Math.min( 4, parseInt( valueOf( prefix + 'lines' ), 10 ) || ( mobile ? 2 : 1 ) ) );
+		var lines = Math.max( 1, Math.min( 4, parseInt( valueOf( prefix + 'lines' ), 10 ) || ( mobile ? 3 : 1 ) ) );
 		return {
 			layout: layout,
 			label: label,
@@ -228,11 +228,11 @@
 
 	function cardMetrics( profile ) {
 		var line = Math.round( ( profile.fontSize + CARD_FONT_PLUS ) * CARD_LINE );
-		var thumb = Math.max( 72, Math.min( 120, parseInt( valueOf( 'mobile_card_thumb' ), 10 ) || 96 ) );
+		var thumb = Math.max( 72, Math.min( 160, parseInt( valueOf( 'mobile_card_thumb' ), 10 ) || 132 ) );
 		var thumbH = Math.round( thumb * CARD_RATIO );
 		var lines = Math.max( 1, Math.min( CARD_LINES_MAX, profile.lines ) );
-		var text = CARD_LABEL + CARD_ROW + lines * line;
-		var height = 2 * CARD_PAD + Math.max( thumbH, text );
+		var text = lines * line;
+		var height = 2 * CARD_PAD + CARD_LABEL + CARD_ROW + Math.max( thumbH, text );
 		return { line: line, lines: lines, thumb: thumb, thumbH: thumbH, height: height, pad: CARD_PAD, peek: CARD_PAD + line + PEEK_EXTRA };
 	}
 
@@ -285,6 +285,9 @@
 			cls.toggle( 'hprnb-root--' + p + '-stacked', profile.layout === 'stacked' );
 			cls.toggle( 'hprnb-root--' + p + '-flow', profile.layout === 'flow' );
 			cls.toggle( 'hprnb-root--' + p + '-card', profile.layout === 'card' );
+			if ( p === 'm' ) {
+				cls.toggle( 'hprnb-root--m-float', profile.layout === 'card' && valueOf( 'mobile_card_float' ) === '1' );
+			}
 			cls.toggle( 'hprnb-root--' + p + '-inflow', profile.place === 'inline' );
 			cls.toggle( 'hprnb-root--' + p + '-end', p === 'd' && profile.layout === 'inline' && labelEnd );
 			[ 'pill', 'strip', 'hidden' ].forEach( function ( style ) {
@@ -311,7 +314,7 @@
 				previewRoot.style.setProperty( '--hprnb-m-card-thumb', card.thumb + 'px' );
 				previewRoot.style.setProperty( '--hprnb-m-card-thumb-h', card.thumbH + 'px' );
 				previewRoot.style.setProperty( '--hprnb-m-card-lines', String( card.lines ) );
-				previewRoot.style.setProperty( '--hprnb-m-gap', CARD_FLOAT + 'px' );
+				previewRoot.style.setProperty( '--hprnb-m-gap', ( valueOf( 'mobile_card_float' ) === '1' ? CARD_FLOAT : 0 ) + 'px' );
 			} else {
 				height = profile.lines * Math.ceil( profile.fontSize * LINE_HEIGHT ) + BLOCK_PAD + ( profile.layout === 'stacked' ? STRIP + ROW_GAP : 0 );
 				if ( profile.thumb ) {
