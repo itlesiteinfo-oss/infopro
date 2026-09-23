@@ -2503,9 +2503,10 @@ test( 'v2.12: the bar with the article picture on an existing site, and a design
 		await page.setViewportSize( { width: 390, height: 844 } );
 		await page.goto( '/' );
 		await expect( page.locator( '.hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
-		expect( wp( [ 'option', 'get', 'hprnb_schema_version' ] ) ).toBe( '8' );
+		expect( wp( [ 'option', 'get', 'hprnb_schema_version' ] ) ).toBe( '9', 'Brought up to the current schema (9 since 2.16).' );
 		const stored = JSON.parse( wp( [ 'option', 'get', 'hprnb_settings', '--format=json' ] ) );
 		expect( [ stored.mobile_layout, stored.mobile_lines, stored.mobile_show_pause, stored.mobile_label_style ] ).toEqual( [ 'flow_image', 2, false, 'pill' ] );
+		expect( stored.urgent_enabled ).not.toBe( false, 'A site that was on keeps its URGENT bar through step 9.' );
 		expect( stored.mobile_behavior ).toBe( 'fold', 'The behaviour the site had is kept.' );
 		await expect( root ).toHaveClass( /hprnb-root--m-flow/ );
 		await expect( root ).toHaveClass( /hprnb-root--m-ctrl-tab/ );
