@@ -64,6 +64,17 @@ final class Visibility {
 	}
 
 	/**
+	 * Whether the news bar (the "initial bar") is switched on for at least one device (2.16), the
+	 * counterpart of Urgent::enabled(): off, it runs no query and ships no headline.
+	 *
+	 * @param array $settings Settings.
+	 * @return bool
+	 */
+	public static function news_enabled( array $settings ): bool {
+		return ! empty( $settings['enabled'] ) && self::device_enabled( $settings );
+	}
+
+	/**
 	 * Key of the current front-end context, or '' when unknown.
 	 *
 	 * @return string

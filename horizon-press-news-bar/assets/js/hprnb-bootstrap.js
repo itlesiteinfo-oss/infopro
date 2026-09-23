@@ -62,13 +62,13 @@
 	}
 
 	/**
-	 * Stores exactly { generated_at, count, html, urgent_count, urgent_html }.
+	 * Stores exactly { generated_at, count, html, urgent_count, urgent_html, urgent_devices }.
 	 *
 	 * @param {Object} p Validated payload.
 	 */
 	function saveSession(p) {
 		try {
-			sessionStorage.setItem(SESSION_KEY, JSON.stringify({ generated_at: p.generated_at, count: p.count, html: p.html, urgent_count: urgentCount(p), urgent_html: urgentHtml(p) }));
+			sessionStorage.setItem(SESSION_KEY, JSON.stringify({ generated_at: p.generated_at, count: p.count, html: p.html, urgent_count: urgentCount(p), urgent_html: urgentHtml(p), urgent_devices: p.urgent_devices }));
 		} catch (e) {
 			// Storage unavailable or full: nothing to do.
 		}
@@ -161,15 +161,6 @@
 		}
 
 		/**
-		 * @param {Object} p Payload that passed isValid().
-		 */
-		/**
-		 * The news bar's device restriction is parked while the URGENT bar, shown on both devices, is
-		 * in front (the interactive script puts it back when it hands over).
-		 *
-		 * @param {boolean} urgent Whether the URGENT bar is in front.
-		 */
-		/**
 		 * @param {string} p 'd' or 'm'.
 		 * @return {boolean} Whether the URGENT bar is switched on for that device (2.16).
 		 */
@@ -177,6 +168,12 @@
 			return !root.classList.contains('hprnb-root--u-no-' + p);
 		}
 
+		/**
+		 * The news bar's device restriction is parked while the URGENT bar is in front on that device
+		 * (the interactive script puts it back when it hands over).
+		 *
+		 * @param {boolean} urgent Whether the URGENT bar is in front.
+		 */
 		function parkDevices(urgent) {
 			['mobile', 'desktop'].forEach(function (d) {
 				var hide = 'hprnb-hide-' + d;
@@ -189,9 +186,25 @@
 			});
 		}
 
+		/**
+		 * @param {Object} p Payload that passed isValid().
+		 */
 		function apply(p) {
 			var urgent = urgentOff ? 0 : urgentCount(p);
 			var html = (show === 'urgent' || p.count === 0 || p.html === '') ? '' : p.html;
+			// The bars running on the old markup stop first, their timers with them.
+			if (window.hprnbBar && typeof window.hprnbBar.destroy === 'function') {
+				window.hprnbBar.destroy(root);
+			}
+			// Where the URGENT bar was in front, the server left out the news bar's wait.
+			var was = root.classList.contains('hprnb-root--urgent');
+			var front = { d: was && urgentOn('d'), m: was && urgentOn('m') };
+			// 2.16: the devices the URGENT bar is switched on for, newer than a page from a page cache.
+			var devices = p.urgent_devices;
+			if (devices && typeof devices === 'object') {
+				root.classList.toggle('hprnb-root--u-no-d', devices.d === false);
+				root.classList.toggle('hprnb-root--u-no-m', devices.m === false);
+			}
 			if (html === '' && urgent === 0) {
 				root.innerHTML = '';
 				root.hidden = true;
@@ -213,14 +226,22 @@
 			// The interactive script prunes the expired ones and hands over when none is left.
 			root.classList.toggle('hprnb-root--urgent', urgent > 0);
 			parkDevices(urgent > 0);
-			if (urgent > 0) {
-				['d', 'm'].forEach(function (p) {
-					if (urgentOn(p)) {
-						root.classList.remove('hprnb-root--' + p + '-pending');
-						document.body.classList.remove('hprnb-' + p + '-pending');
-					}
-				});
+			var reveal = {};
+			try {
+				reveal = JSON.parse(root.dataset.hprnbReveal || '{}') || {};
+			} catch (e) {
+				// No reveal data: the news bar shows at once.
 			}
+			['d', 'm'].forEach(function (d) {
+				if (urgent > 0 && urgentOn(d)) {
+					root.classList.remove('hprnb-root--' + d + '-pending');
+					document.body.classList.remove('hprnb-' + d + '-pending');
+				} else if (front[d] && html !== '' && reveal[d] && reveal[d].mode && reveal[d].mode !== 'immediate') {
+					// The news bar takes over there: it waits for the reader as the server renders it.
+					root.classList.add('hprnb-root--' + d + '-pending', 'hprnb-root--reveal');
+					document.body.classList.add('hprnb-' + d + '-pending');
+				}
+			});
 			ensureLayout();
 			ensureJs();
 		}
@@ -238,7 +259,8 @@
 					count: ssrBar ? (+root.dataset.hprnbCount || 1) : 0,
 					html: ssrBar ? ssrBar.outerHTML : '',
 					urgent_count: ssrUrgent ? (+root.dataset.hprnbUrgent || 1) : 0,
-					urgent_html: ssrUrgent ? ssrUrgent.outerHTML : ''
+					urgent_html: ssrUrgent ? ssrUrgent.outerHTML : '',
+					urgent_devices: { d: urgentOn('d'), m: urgentOn('m') }
 				});
 			}
 			return;

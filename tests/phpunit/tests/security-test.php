@@ -71,7 +71,7 @@ class Security_Test extends HPRNB_Test_Case {
 
 	public function test_reset_refuses_subscribers_even_with_a_valid_nonce() {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
-		$_REQUEST['_wpnonce'] = wp_create_nonce( 'hprnb_reset' );
+		$_REQUEST['_wpnonce']         = wp_create_nonce( 'hprnb_reset' );
 		$_POST['hprnb_reset_confirm'] = '1';
 		$this->expect_die_with_status( 403 );
 		Import_Export::reset();
@@ -88,9 +88,27 @@ class Security_Test extends HPRNB_Test_Case {
 
 	public function test_public_rest_items_never_exposes_private_content() {
 		$this->create_post_ago( 60, array( 'post_title' => 'Public one' ) );
-		$this->create_post_ago( 60, array( 'post_title' => 'Private secret', 'post_status' => 'private' ) );
-		$this->create_post_ago( 60, array( 'post_title' => 'Draft secret', 'post_status' => 'draft' ) );
-		$this->create_post_ago( 60, array( 'post_title' => 'Locked secret', 'post_password' => 'pw' ) );
+		$this->create_post_ago(
+			60,
+			array(
+				'post_title'  => 'Private secret',
+				'post_status' => 'private',
+			)
+		);
+		$this->create_post_ago(
+			60,
+			array(
+				'post_title'  => 'Draft secret',
+				'post_status' => 'draft',
+			)
+		);
+		$this->create_post_ago(
+			60,
+			array(
+				'post_title'    => 'Locked secret',
+				'post_password' => 'pw',
+			)
+		);
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 
 		$data = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/hprnb/v1/items' ) )->get_data();

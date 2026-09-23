@@ -205,6 +205,10 @@ final class Urgent {
 			$settings,
 			array(
 				'mobile_layout'          => 'flow', // The flowing shape without the picture the image bar always pulls in.
+				// One headline at a time on every device (2.16), with its pause button, never a marquee.
+				'ticker_enabled'         => true,
+				'ticker_mode'            => 'rotate',
+				'mobile_ticker_mode'     => 'rotate',
 				'mobile_show_thumbnail'  => false,
 				'desktop_show_thumbnail' => false,
 				'mobile_peek_thumbnail'  => false,

@@ -712,6 +712,22 @@
 	overflow-x: auto;
 }
 
+/* The URGENT bar's device switches (2.16): the preview's tab is the device, and says why it is empty. */
+.hprnb-preview__stage[data-hprnb-device="desktop"] .hprnb-root--u-no-d .hprnb-bar--urgent,
+.hprnb-preview__stage[data-hprnb-device="mobile"] .hprnb-root--u-no-m .hprnb-bar--urgent {
+	display: none;
+}
+
+.hprnb-preview__stage[data-hprnb-device="desktop"]:has(.hprnb-root--u-no-d .hprnb-bar--urgent) .hprnb-preview__frame::after,
+.hprnb-preview__stage[data-hprnb-device="mobile"]:has(.hprnb-root--u-no-m .hprnb-bar--urgent) .hprnb-preview__frame::after {
+	content: attr(data-hprnb-off);
+	display: block;
+	padding: 12px;
+	background: #fff;
+	border-inline-start: 4px solid #dba617;
+	font-style: italic;
+}
+
 .hprnb-preview__empty {
 	margin: 0;
 	padding: 12px;
@@ -792,4 +808,114 @@
 	.hprnb-row--sub th {
 		padding-inline-start: 28px;
 	}
+}
+
+/* The URGENT bar's desktop designs in the Desktop tab (2.16). The flat root is no query container, so
+   the stylesheet's `@container hprnb (min-width: 768px)` blocks of section 17 never reach it: this is
+   their copy, selector for selector, on the flat root (a static test keeps the two in step). */
+.hprnb-root.hprnb-root--flat .hprnb-bar--urgent {
+	--hprnb-e-display: grid;
+	--hprnb-e-cols: auto minmax(0, 1fr) auto;
+	--hprnb-e-rows: minmax(0, 1fr);
+	--hprnb-e-areas: 'label title ctrl';
+	--hprnb-e-height: var(--hprnb-u-height);
+	--hprnb-e-lines: 1;
+	--hprnb-e-list-pad: 0;
+	--hprnb-e-title-display: block;
+	--hprnb-e-title-ws: nowrap;
+	--hprnb-e-title-max: none;
+	--hprnb-e-item-is: auto;
+	--hprnb-e-font-size: var(--hprnb-u-fs);
+}
+
+.hprnb-root.hprnb-root--flat .hprnb-bar--urgent .hprnb-bar__inner {
+	padding-block: 0;
+}
+
+.hprnb-root.hprnb-root--flat:not(.hprnb-root--u-d-flow) .hprnb-bar--urgent .hprnb-bar__controls {
+	position: static;
+	align-self: stretch;
+	margin-inline-start: 16px;
+	border-start-start-radius: 0;
+	border-inline-start: 1px solid color-mix(in srgb, var(--hprnb-u-fg) 22%, transparent);
+	background: rgba(0, 0, 0, .14);
+	box-shadow: none;
+}
+
+.hprnb-root.hprnb-root--flat:not(.hprnb-root--u-d-flow) .hprnb-bar--urgent .hprnb-bar__btn {
+	inline-size: var(--hprnb-u-height);
+	block-size: auto;
+	min-block-size: 0;
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow .hprnb-bar--urgent {
+	--hprnb-e-display: block;
+	--hprnb-e-font-size: var(--hprnb-u-m-fs);
+	--hprnb-u-lfs: 12px;
+	--hprnb-u-lpad: 8px;
+	overflow-x: clip;
+	overflow-y: visible;
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__inner {
+	position: static;
+	display: block;
+	block-size: auto;
+	min-block-size: var(--hprnb-u-height);
+	max-inline-size: calc(var(--hprnb-max) + 2 * var(--hprnb-gutter));
+	margin-inline: auto;
+	padding: var(--hprnb-u-pad) var(--hprnb-gutter);
+	line-height: var(--hprnb-u-line);
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__label {
+	float: inline-start;
+	block-size: calc(var(--hprnb-u-line) - 4px);
+	margin: 2px 0;
+	margin-inline-end: 12px;
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__viewport,
+.hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__list,
+.hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__item,
+.hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__link,
+.hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__title {
+	display: block;
+	overflow: visible;
+	inline-size: auto;
+	max-inline-size: none;
+	margin: 0;
+	padding: 0;
+	white-space: normal;
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__item[hidden] {
+	display: none;
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__viewport {
+	position: relative;
+	max-block-size: calc(var(--hprnb-u-lines) * var(--hprnb-u-line));
+	overflow: visible clip;
+	transition: opacity .18s;
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__viewport::after {
+	content: "";
+	position: absolute;
+	inset-inline-end: 0;
+	inset-block-end: 0;
+	display: none;
+	inline-size: 96px;
+	block-size: var(--hprnb-u-line);
+	background: linear-gradient(to right, transparent, var(--hprnb-u-bg) 78%);
+	pointer-events: none;
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow .hprnb-bar--rtl.hprnb-bar--urgent .hprnb-bar__viewport::after {
+	background: linear-gradient(to left, transparent, var(--hprnb-u-bg) 78%);
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__viewport.is-clipped::after {
+	display: block;
 }

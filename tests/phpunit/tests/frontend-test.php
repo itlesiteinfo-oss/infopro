@@ -71,7 +71,14 @@ class Frontend_Test extends HPRNB_Test_Case {
 
 	public function test_php_mode_with_items() {
 		$this->create_post_ago( 60 );
-		$this->with_settings( array( 'render_mode' => 'php', 'ticker_enabled' => true, 'bar_height' => 56, 'mobile_lines' => 2 ) );
+		$this->with_settings(
+			array(
+				'render_mode'    => 'php',
+				'ticker_enabled' => true,
+				'bar_height'     => 56,
+				'mobile_lines'   => 2,
+			)
+		);
 		$this->go_to_front( home_url( '/' ) );
 		$this->enqueue();
 
@@ -80,11 +87,18 @@ class Frontend_Test extends HPRNB_Test_Case {
 		$this->assertTrue( wp_script_is( 'hprnb-bar', 'enqueued' ) );
 		$this->assertContains( 'body.hprnb-reserve{--hprnb-height:56px;--hprnb-m-height:76px;--hprnb-peek:40px;--hprnb-m-gap:0px}', wp_styles()->get_data( 'hprnb-bar', 'after' ) );
 
-
 		$footer = $this->render_footer();
 		$this->assertStringContainsString( '<aside', $footer );
 		$this->assertStringNotContainsString( 'data-hprnb-endpoint', $footer );
-		$this->with_settings( array( 'mobile_behavior' => 'always', 'mobile_ticker_mode' => 'static', 'ticker_enabled' => false, 'close_button' => false, 'mobile_kbd_hide' => false ) );
+		$this->with_settings(
+			array(
+				'mobile_behavior'    => 'always',
+				'mobile_ticker_mode' => 'static',
+				'ticker_enabled'     => false,
+				'close_button'       => false,
+				'mobile_kbd_hide'    => false,
+			)
+		);
 		$GLOBALS['wp_scripts'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$GLOBALS['wp_styles']  = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$this->go_to_front( home_url( '/' ) );
@@ -102,7 +116,12 @@ class Frontend_Test extends HPRNB_Test_Case {
 	public function test_not_eligible_renders_nothing_and_runs_no_query() {
 		$this->create_post_ago( 60 );
 		// 2.16: each bar has its own switch — both off means nothing at all.
-		$this->with_settings( array( 'enabled' => false, 'urgent_enabled' => false ) );
+		$this->with_settings(
+			array(
+				'enabled'        => false,
+				'urgent_enabled' => false,
+			)
+		);
 		$this->post_queries = 0;
 		$this->go_to_front( home_url( '/' ) );
 		$this->enqueue();
@@ -130,18 +149,35 @@ class Frontend_Test extends HPRNB_Test_Case {
 		$this->go_to_front( home_url( '/' ) );
 		$this->assertSame( '', $this->head() );
 
-		$this->with_settings( array( 'close_button' => true, 'remember_dismiss' => false ) );
+		$this->with_settings(
+			array(
+				'close_button'     => true,
+				'remember_dismiss' => false,
+			)
+		);
 		$this->go_to_front( home_url( '/' ) );
 		$this->assertSame( '', $this->head() );
 
-		$this->with_settings( array( 'close_button' => true, 'remember_dismiss' => true ) );
+		$this->with_settings(
+			array(
+				'close_button'     => true,
+				'remember_dismiss' => true,
+			)
+		);
 		$this->go_to_front( home_url( '/' ) );
 		$head = $this->head();
 		$this->assertStringContainsString( '<script id="hprnb-dismiss">', $head );
 		$this->assertStringContainsString( "localStorage.getItem('hprnb_dismissed_until')", $head );
 		$this->assertStringContainsString( "classList.add('hprnb-dismissed')", $head );
 
-		$this->with_settings( array( 'close_button' => true, 'remember_dismiss' => true, 'render_mode' => 'php', 'content_exclude_post_ids' => wp_list_pluck( get_posts( array( 'numberposts' => -1 ) ), 'ID' ) ) );
+		$this->with_settings(
+			array(
+				'close_button'             => true,
+				'remember_dismiss'         => true,
+				'render_mode'              => 'php',
+				'content_exclude_post_ids' => wp_list_pluck( get_posts( array( 'numberposts' => -1 ) ), 'ID' ),
+			)
+		);
 		$this->go_to_front( home_url( '/' ) );
 		$this->assertSame( '', $this->head(), 'PHP mode with no item: no script.' );
 	}
@@ -171,7 +207,12 @@ class Frontend_Test extends HPRNB_Test_Case {
 		$this->assertNotContains( 'hprnb-d-pending', $classes, 'Desktop appears at once: its space is reserved.' );
 		$this->assertNotContains( 'hprnb-pending', $classes, 'The single class is gone.' );
 
-		$this->with_settings( array( 'desktop_reveal_mode' => 'smart', 'mobile_reveal_mode' => 'paragraph' ) );
+		$this->with_settings(
+			array(
+				'desktop_reveal_mode' => 'smart',
+				'mobile_reveal_mode'  => 'paragraph',
+			)
+		);
 		$this->go_to_front( home_url( '/' ) );
 		$classes = Frontend::body_class( array( 'home' ) );
 		$this->assertContains( 'hprnb-d-pending', $classes );

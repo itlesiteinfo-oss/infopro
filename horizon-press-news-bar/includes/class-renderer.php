@@ -224,6 +224,15 @@ final class Renderer {
 	const CARD_FLOAT     = 8;
 
 	/**
+	 * The URGENT bar (2.16, the chyron design): the one-line desktop bar is never under 48px, keeps at
+	 * least 12px above and below its text (the top 12px carry the bevel), and the phone design sets
+	 * its headline on a 1.4 line.
+	 */
+	const URGENT_D_MIN = 48;
+	const URGENT_PAD   = 12;
+	const URGENT_LINE  = 1.4;
+
+	/**
 	 * Inline CSS variables carried by the root (and by the admin preview root).
 	 *
 	 * @param array $settings Settings.
@@ -231,7 +240,7 @@ final class Renderer {
 	 */
 	public static function root_style( array $settings ): string {
 		return sprintf(
-			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-accent:%6$s;--hprnb-font-size:%7$dpx;--hprnb-height:%8$dpx;--hprnb-d-lines:%9$d;--hprnb-max:%10$dpx;--hprnb-gutter:%11$dpx;--hprnb-z:%12$d;--hprnb-sep:%13$s;--hprnb-m-bg:%14$s;--hprnb-m-fg:%15$s;--hprnb-m-accent:%16$s;--hprnb-m-label-fg:%17$s;--hprnb-m-font-size:%18$dpx;--hprnb-m-height:%19$dpx;--hprnb-m-lines:%20$d;--hprnb-m-line:%21$dpx;--hprnb-m-pad:%22$dpx;--hprnb-peek:%23$dpx;--hprnb-m-ctrls:%24$d;--hprnb-d-thumb:%25$dpx;--hprnb-m-thumb:%26$dpx;--hprnb-m-card-thumb:%27$dpx;--hprnb-m-card-thumb-h:%28$dpx;--hprnb-m-card-lines:%29$d;--hprnb-m-gap:%30$dpx;--hprnb-u-bg:%31$s;--hprnb-u-fg:%32$s;--hprnb-u-height:%33$dpx;--hprnb-u-m-height:%34$dpx;--hprnb-u-line:%35$dpx;--hprnb-u-pad:%36$dpx;--hprnb-u-lines:%37$d',
+			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-accent:%6$s;--hprnb-font-size:%7$dpx;--hprnb-height:%8$dpx;--hprnb-d-lines:%9$d;--hprnb-max:%10$dpx;--hprnb-gutter:%11$dpx;--hprnb-z:%12$d;--hprnb-sep:%13$s;--hprnb-m-bg:%14$s;--hprnb-m-fg:%15$s;--hprnb-m-accent:%16$s;--hprnb-m-label-fg:%17$s;--hprnb-m-font-size:%18$dpx;--hprnb-m-height:%19$dpx;--hprnb-m-lines:%20$d;--hprnb-m-line:%21$dpx;--hprnb-m-pad:%22$dpx;--hprnb-peek:%23$dpx;--hprnb-m-ctrls:%24$d;--hprnb-d-thumb:%25$dpx;--hprnb-m-thumb:%26$dpx;--hprnb-m-card-thumb:%27$dpx;--hprnb-m-card-thumb-h:%28$dpx;--hprnb-m-card-lines:%29$d;--hprnb-m-gap:%30$dpx;--hprnb-u-bg:%31$s;--hprnb-u-fg:%32$s;--hprnb-u-height:%33$dpx;--hprnb-u-m-height:%34$dpx;--hprnb-u-line:%35$dpx;--hprnb-u-pad:%36$dpx;--hprnb-u-lines:%37$d;--hprnb-u-fs:%38$dpx;--hprnb-u-m-fs:%39$dpx',
 			self::color( $settings['bg_color'], '#1B1C20' ),
 			self::color( $settings['text_color'], '#F5F5F5' ),
 			self::color( $settings['label_bg_color'], '#CE3029' ),
@@ -268,7 +277,9 @@ final class Renderer {
 			self::urgent_height( $settings, 'm' ),
 			self::urgent_metrics( $settings )['line'],
 			self::urgent_metrics( $settings )['pad'],
-			self::urgent_metrics( $settings )['lines']
+			self::urgent_metrics( $settings )['lines'],
+			self::urgent_font( $settings, 'd' ),
+			self::urgent_font( $settings, 'm' )
 		);
 	}
 
@@ -413,6 +424,10 @@ final class Renderer {
 		$devices = Urgent::devices( $settings );
 		if ( $devices['d'] !== $devices['m'] ) {
 			$classes[] = $devices['d'] ? 'hprnb-root--u-no-m' : 'hprnb-root--u-no-d';
+		}
+		if ( 'theme' !== ( $settings['bar_font'] ?? 'news' ) ) {
+			// 2.16: both bars in the news face (the system sans of each platform) unless the site keeps its own.
+			$classes[] = 'hprnb-root--font-news';
 		}
 		if ( 'mobile' === ( $settings['urgent_desktop_layout'] ?? 'line' ) ) {
 			// 2.15: the URGENT bar keeps its phone design from 768px too (two lines, the tab above the corner).
@@ -647,16 +662,18 @@ final class Renderer {
 	/**
 	 * Metrics of the urgent bar on a phone (2.14): the flowing bar's line and padding for the profile's
 	 * font size, at most two lines, never below the mobile bar height — whatever the news bar's design,
-	 * since the urgent bar keeps one shape. 16px / 2 lines / 76px → line 26, pad 12.
+	 * since the urgent bar keeps one shape. 17px / 2 lines / 76px → line 24, pad 14 (2.16).
 	 *
 	 * @param array $settings Settings.
-	 * @return array{line:int,lines:int,height:int,pad:int}
+	 * @return array{font:int,line:int,lines:int,height:int,pad:int}
 	 */
 	public static function urgent_metrics( array $settings ): array {
+		$font   = self::urgent_font( $settings, 'm' );
 		$lines  = max( 1, min( 2, (int) ( $settings['mobile_lines'] ?? 2 ) ) );
-		$line   = (int) round( (int) ( $settings['mobile_font_size'] ?? 16 ) * self::FLOW_LINE );
-		$height = max( (int) ( $settings['mobile_bar_height'] ?? 76 ), $lines * $line + 2 * self::FLOW_PAD );
+		$line   = (int) round( $font * self::URGENT_LINE );
+		$height = max( (int) ( $settings['mobile_bar_height'] ?? 76 ), $lines * $line + 2 * self::URGENT_PAD );
 		return array(
+			'font'   => $font,
 			'line'   => $line,
 			'lines'  => $lines,
 			'height' => $height,
@@ -676,7 +693,21 @@ final class Renderer {
 		if ( 'm' === $p || 'mobile' === ( $settings['urgent_desktop_layout'] ?? 'line' ) ) {
 			return self::urgent_metrics( $settings )['height'];
 		}
-		return max( (int) ( $settings['bar_height'] ?? 40 ), (int) ceil( (int) ( $settings['font_size'] ?? 15 ) * self::LINE_HEIGHT ) + self::BLOCK_PAD );
+		return max( self::URGENT_D_MIN, (int) ( $settings['bar_height'] ?? 40 ), (int) ceil( self::urgent_font( $settings, 'd' ) * self::LINE_HEIGHT ) + 2 * self::URGENT_PAD );
+	}
+
+	/**
+	 * Size of the URGENT headline (2.16): the one-line desktop design, or phones and the phone design.
+	 *
+	 * @param array  $settings Settings.
+	 * @param string $p        'd' (one-line desktop design) or 'm'.
+	 * @return int
+	 */
+	public static function urgent_font( array $settings, string $p ): int {
+		if ( 'd' === $p ) {
+			return max( 14, min( 22, (int) ( $settings['urgent_font_size'] ?? 17 ) ) );
+		}
+		return max( 14, min( 20, (int) ( $settings['urgent_mobile_font_size'] ?? 17 ) ) );
 	}
 
 	/**

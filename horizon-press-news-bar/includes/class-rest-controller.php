@@ -65,20 +65,23 @@ final class Rest_Controller {
 		$settings = Settings::get();
 
 		// The news bar switched off leaves the URGENT bar (2.16): the payload carries no headline then.
-		if ( empty( $settings['enabled'] ) && ! Urgent::enabled( $settings ) ) {
+		if ( ! Visibility::news_enabled( $settings ) && ! Urgent::enabled( $settings ) ) {
 			$payload = Renderer::payload( array(), $settings );
 		} else {
 			$payload = Payload::get( $settings );
 		}
 
 		$body = array(
-			'version'      => HPRNB_VERSION,
-			'generated_at' => (int) $payload['generated_at'],
-			'count'        => (int) $payload['count'],
-			'html'         => (string) $payload['html'],
+			'version'        => HPRNB_VERSION,
+			'generated_at'   => (int) $payload['generated_at'],
+			'count'          => (int) $payload['count'],
+			'html'           => (string) $payload['html'],
 			// Urgent articles (2.14): the bootstrap puts their bar in front of the news bar.
-			'urgent_count' => (int) ( $payload['urgent_count'] ?? 0 ),
-			'urgent_html'  => (string) ( $payload['urgent_html'] ?? '' ),
+			'urgent_count'   => (int) ( $payload['urgent_count'] ?? 0 ),
+			'urgent_html'    => (string) ( $payload['urgent_html'] ?? '' ),
+			// 2.16: the devices the URGENT bar is switched on for. A page served from a full-page cache
+			// may predate that choice; the bootstrap corrects the root with it.
+			'urgent_devices' => Urgent::devices( $settings ),
 		);
 
 		$etag    = self::etag( $body );
@@ -109,7 +112,7 @@ final class Rest_Controller {
 	 * @return string
 	 */
 	public static function etag( array $body ): string {
-		return '"' . md5( implode( '|', array( (string) $body['version'], (string) $body['generated_at'], (string) $body['count'], (string) $body['html'], (string) ( $body['urgent_count'] ?? 0 ), (string) ( $body['urgent_html'] ?? '' ) ) ) ) . '"';
+		return '"' . md5( implode( '|', array( (string) $body['version'], (string) $body['generated_at'], (string) $body['count'], (string) $body['html'], (string) ( $body['urgent_count'] ?? 0 ), (string) ( $body['urgent_html'] ?? '' ), (string) wp_json_encode( $body['urgent_devices'] ?? null ) ) ) ) . '"';
 	}
 
 	/**

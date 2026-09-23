@@ -32,7 +32,7 @@ class Rest_Test extends HPRNB_Test_Case {
 
 		$this->assertSame( 200, $response->get_status() );
 		$data = $response->get_data();
-		$this->assertSame( array( 'version', 'generated_at', 'count', 'html', 'urgent_count', 'urgent_html' ), array_keys( $data ), '2.14: the urgent bar rides in the same body.' );
+		$this->assertSame( array( 'version', 'generated_at', 'count', 'html', 'urgent_count', 'urgent_html', 'urgent_devices' ), array_keys( $data ), '2.14: the urgent bar rides in the same body; 2.16: with its devices.' );
 		$this->assertSame( 0, $data['urgent_count'] );
 		$this->assertSame( '', $data['urgent_html'] );
 		$this->assertSame( HPRNB_VERSION, $data['version'] );
@@ -116,7 +116,17 @@ class Rest_Test extends HPRNB_Test_Case {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 
 		$request = new WP_REST_Request( 'POST', '/hprnb/v1/preview' );
-		$request->set_body_params( array( 'settings' => array( 'label_text' => 'PREVIEW LABEL', 'enabled' => '1', 'window_value' => '24', 'window_unit' => 'hours', 'max_items' => '10' ) ) );
+		$request->set_body_params(
+			array(
+				'settings' => array(
+					'label_text'   => 'PREVIEW LABEL',
+					'enabled'      => '1',
+					'window_value' => '24',
+					'window_unit'  => 'hours',
+					'max_items'    => '10',
+				),
+			)
+		);
 		$response = rest_get_server()->dispatch( $request );
 
 		$this->assertSame( 200, $response->get_status() );
@@ -128,11 +138,27 @@ class Rest_Test extends HPRNB_Test_Case {
 		$this->assertStringContainsString( 'no-store', $response->get_headers()['Cache-Control'] );
 
 		$this->assertSame( 'EN CONTINU', Settings::raw()['label_text'], 'Preview never writes settings.' );
-		$previewed = Settings::sanitize_form( array( 'label_text' => 'PREVIEW LABEL', 'enabled' => '1', 'window_value' => '24', 'window_unit' => 'hours', 'max_items' => '10' ) );
+		$previewed = Settings::sanitize_form(
+			array(
+				'label_text'   => 'PREVIEW LABEL',
+				'enabled'      => '1',
+				'window_value' => '24',
+				'window_unit'  => 'hours',
+				'max_items'    => '10',
+			)
+		);
 		$this->assertFalse( get_transient( Cache::key( $previewed ) ), 'Preview never writes the public cache.' );
 
 		$empty = new WP_REST_Request( 'POST', '/hprnb/v1/preview' );
-		$empty->set_body_params( array( 'settings' => array( 'window_value' => '1', 'window_unit' => 'minutes', 'content_exclude_post_ids' => implode( ',', wp_list_pluck( get_posts( array( 'numberposts' => -1 ) ), 'ID' ) ) ) ) );
+		$empty->set_body_params(
+			array(
+				'settings' => array(
+					'window_value'             => '1',
+					'window_unit'              => 'minutes',
+					'content_exclude_post_ids' => implode( ',', wp_list_pluck( get_posts( array( 'numberposts' => -1 ) ), 'ID' ) ),
+				),
+			)
+		);
 		$data = rest_get_server()->dispatch( $empty )->get_data();
 		$this->assertSame( 0, $data['count'] );
 		$this->assertSame( '', $data['html'] );

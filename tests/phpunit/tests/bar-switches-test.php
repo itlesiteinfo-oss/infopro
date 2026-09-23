@@ -62,16 +62,51 @@ class Bar_Switches_Test extends HPRNB_Test_Case {
 		foreach ( array( 'urgent_enabled', 'urgent_desktop', 'urgent_mobile', 'enabled', 'show_on_desktop', 'show_on_mobile' ) as $key ) {
 			$this->assertTrue( $d[ $key ], $key . ': every bar on every device, as before.' );
 		}
-		$this->assertSame( array( 'd' => true, 'm' => true ), Urgent::devices( $d ) );
-		$this->assertSame( array( 'd' => true, 'm' => false ), Urgent::devices( Settings::sanitize( array( 'urgent_mobile' => false ) ) ) );
-		$this->assertSame( array( 'd' => false, 'm' => false ), Urgent::devices( Settings::sanitize( array( 'urgent_enabled' => false ) ) ), 'Switched off: the device switches play no part.' );
-		$this->assertFalse( Urgent::enabled( Settings::sanitize( array( 'urgent_desktop' => false, 'urgent_mobile' => false ) ) ), 'No device: the same as off.' );
+		$this->assertSame(
+			array(
+				'd' => true,
+				'm' => true,
+			),
+			Urgent::devices( $d )
+		);
+		$this->assertSame(
+			array(
+				'd' => true,
+				'm' => false,
+			),
+			Urgent::devices( Settings::sanitize( array( 'urgent_mobile' => false ) ) )
+		);
+		$this->assertSame(
+			array(
+				'd' => false,
+				'm' => false,
+			),
+			Urgent::devices( Settings::sanitize( array( 'urgent_enabled' => false ) ) ),
+			'Switched off: the device switches play no part.'
+		);
+		$this->assertFalse(
+			Urgent::enabled(
+				Settings::sanitize(
+					array(
+						'urgent_desktop' => false,
+						'urgent_mobile'  => false,
+					)
+				)
+			),
+			'No device: the same as off.'
+		);
 		$this->assertTrue( Urgent::enabled( Settings::sanitize( array( 'urgent_desktop' => false ) ) ) );
 	}
 
 	public function test_schema_9_keeps_a_site_that_was_all_off_all_off() {
 		$this->assertSame( 9, HPRNB_SCHEMA_VERSION );
-		$off = Settings::migrate( array( 'enabled' => false, 'label_text' => 'DIRECT' ), 8 );
+		$off = Settings::migrate(
+			array(
+				'enabled'    => false,
+				'label_text' => 'DIRECT',
+			),
+			8
+		);
 		$this->assertFalse( $off['urgent_enabled'], 'Before 2.16 "enabled" switched every bar off: it still does on that site.' );
 		$on = Settings::migrate( array( 'enabled' => true ), 8 );
 		$this->assertArrayNotHasKey( 'urgent_enabled', $on, 'A site that was on is left alone.' );
@@ -84,7 +119,13 @@ class Bar_Switches_Test extends HPRNB_Test_Case {
 		$cases = array(
 			'on, both devices'  => array( array(), true ),
 			'on, mobile only'   => array( array( 'urgent_desktop' => false ), true ),
-			'on, no device'     => array( array( 'urgent_desktop' => false, 'urgent_mobile' => false ), false ),
+			'on, no device'     => array(
+				array(
+					'urgent_desktop' => false,
+					'urgent_mobile'  => false,
+				),
+				false,
+			),
 			'off, devices on'   => array( array( 'urgent_enabled' => false ), false ),
 			'news bar off only' => array( array( 'enabled' => false ), true ),
 		);
@@ -118,7 +159,12 @@ class Bar_Switches_Test extends HPRNB_Test_Case {
 		$this->assertSame( 1, $data['urgent_count'] );
 
 		// Both bars off: nothing at all, no query, an empty REST body.
-		$this->with_settings( array( 'enabled' => false, 'urgent_enabled' => false ) );
+		$this->with_settings(
+			array(
+				'enabled'        => false,
+				'urgent_enabled' => false,
+			)
+		);
 		$this->post_queries = 0;
 		$this->assertSame( '', $this->front()['footer'] );
 		$this->assertSame( 0, $this->post_queries );
@@ -159,11 +205,21 @@ class Bar_Switches_Test extends HPRNB_Test_Case {
 		$no_front = array_merge( array_fill_keys( Settings::CONTEXT_KEYS, true ), array( 'front_page' => false ) );
 
 		// The news bar keeps off phones on the front page; the URGENT bar is desktop only: nothing to park.
-		$this->with_settings( array( 'mobile_contexts' => $no_front, 'urgent_mobile' => false ) );
+		$this->with_settings(
+			array(
+				'mobile_contexts' => $no_front,
+				'urgent_mobile'   => false,
+			)
+		);
 		$this->assertStringContainsString( 'class="hprnb-root hprnb-hide-mobile ', $this->front()['footer'] );
 
 		// The URGENT bar on phones: the restriction is parked while it is in front.
-		$this->with_settings( array( 'mobile_contexts' => $no_front, 'urgent_desktop' => false ) );
+		$this->with_settings(
+			array(
+				'mobile_contexts' => $no_front,
+				'urgent_desktop'  => false,
+			)
+		);
 		$this->assertStringContainsString( 'class="hprnb-root hprnb-news-hide-mobile ', $this->front()['footer'] );
 
 		// A root for the URGENT bar alone takes the URGENT bar's devices.
@@ -191,14 +247,110 @@ class Bar_Switches_Test extends HPRNB_Test_Case {
 			$this->assertSame( 1, substr_count( $page, 'id="hprnb-field-' . $id . '"' ), $id . ' is rendered once, as a switch.' );
 		}
 		$this->assertStringContainsString( '<label class="hprnb-switch" for="hprnb-field-urgent-enabled"><input type="checkbox" id="hprnb-field-urgent-enabled"', $page );
-		// Sub-choices: hidden while their bar is off, shown while it is on; their value kept either way.
-		$this->assertMatchesRegularExpression( '/<tr class="hprnb-row hprnb-row--switch hprnb-row--sub" data-hprnb-reveal="urgent_enabled" hidden>/', $page );
+		// Sub-choices: the script hides them while their bar is off (at load too); without the script
+		// every row stays in view. Their value is kept either way.
+		$this->assertMatchesRegularExpression( '/<tr class="hprnb-row hprnb-row--switch hprnb-row--sub" data-hprnb-reveal="urgent_enabled">/', $page );
 		$this->assertMatchesRegularExpression( '/<tr class="hprnb-row hprnb-row--switch hprnb-row--sub" data-hprnb-reveal="enabled">/', $page );
+		$this->assertStringNotContainsString( 'data-hprnb-reveal="urgent_enabled" hidden', $page );
+		// Each switch is named by its row title too: "URGENT bar on desktop", not "From 768 px wide." alone.
+		$this->assertStringContainsString( '<th scope="row"><label for="hprnb-field-urgent-desktop">URGENT bar on desktop</label></th>', $page );
+		$this->assertStringContainsString( '<th scope="row"><label for="hprnb-field-show-on-mobile">Initial bar on mobile</label></th>', $page );
 		$this->assertMatchesRegularExpression( '/id="hprnb-field-urgent-desktop" name="hprnb_settings\[urgent_desktop\]" value="1"\s+checked/', $page );
 		// No card carries these switches any more.
 		$this->assertStringNotContainsString( 'data-hprnb-switch="enabled"', $page );
 		$this->assertStringNotContainsString( 'data-hprnb-switch="urgent_enabled"', $page );
 		$this->assertStringNotContainsString( 'data-hprnb-switch="show_on_mobile"', $page );
 		$this->assertStringNotContainsString( 'data-hprnb-switch="show_on_desktop"', $page );
+	}
+
+	public function test_the_news_bar_on_no_device_runs_no_query() {
+		$this->create_post_ago( 60, array( 'post_title' => 'Plain headline' ) );
+		$this->urgent_post( 'Still urgent' );
+		$this->with_settings(
+			array(
+				'show_on_desktop' => false,
+				'show_on_mobile'  => false,
+			)
+		);
+
+		$this->assertFalse( \HorizonPress\NewsBar\Visibility::news_enabled( Settings::get() ) );
+		$this->assertTrue( \HorizonPress\NewsBar\Visibility::news_enabled( Settings::sanitize( array( 'show_on_desktop' => false ) ) ) );
+		$this->assertFalse( \HorizonPress\NewsBar\Visibility::news_enabled( Settings::sanitize( array( 'enabled' => false ) ) ) );
+
+		$this->post_queries = 0;
+		$page               = $this->front();
+		$this->assertSame( 1, $this->post_queries, 'On no device, like off: only the urgent query runs.' );
+		$this->assertStringContainsString( 'Still urgent', $page['footer'] );
+		$this->assertStringNotContainsString( 'Plain headline', $page['footer'] );
+
+		$data = $this->reset_rest_server()->dispatch( new WP_REST_Request( 'GET', '/hprnb/v1/items' ) )->get_data();
+		$this->assertSame( 0, $data['count'], 'No headline shipped for a bar that shows nowhere.' );
+		$this->assertSame( 1, $data['urgent_count'] );
+	}
+
+	public function test_the_rest_body_says_where_the_urgent_bar_shows() {
+		$this->urgent_post();
+		$data = $this->reset_rest_server()->dispatch( new WP_REST_Request( 'GET', '/hprnb/v1/items' ) )->get_data();
+		$this->assertSame(
+			array(
+				'd' => true,
+				'm' => true,
+			),
+			$data['urgent_devices']
+		);
+
+		// A page from a page cache may predate the choice: the bootstrap corrects the root with this.
+		$this->with_settings( array( 'urgent_mobile' => false ) );
+		$response = $this->reset_rest_server()->dispatch( new WP_REST_Request( 'GET', '/hprnb/v1/items' ) );
+		$this->assertSame(
+			array(
+				'd' => true,
+				'm' => false,
+			),
+			$response->get_data()['urgent_devices']
+		);
+		$etag = $response->get_headers()['ETag'];
+		$this->with_settings( array() );
+		$this->assertNotSame( $etag, $this->reset_rest_server()->dispatch( new WP_REST_Request( 'GET', '/hprnb/v1/items' ) )->get_headers()['ETag'], 'The ETag follows the switches.' );
+	}
+
+	public function test_the_preview_shows_a_news_bar_switched_off() {
+		$this->create_post_ago( 60, array( 'post_title' => 'Designed while off' ) );
+		foreach ( array(
+			array( 'enabled' => '0' ),
+			array(
+				'show_on_desktop' => '0',
+				'show_on_mobile'  => '0',
+			),
+		) as $form ) {
+			$request = new WP_REST_Request( 'POST', '/hprnb/v1/preview' );
+			$request->set_body_params( array( 'settings' => $form ) );
+			$data = $this->reset_rest_server()->dispatch( $request )->get_data();
+			$this->assertSame( 1, $data['count'], 'Its design can be prepared before it is switched on.' );
+			$this->assertStringContainsString( 'Designed while off', $data['html'] );
+		}
+	}
+
+	public function test_the_urgent_box_names_the_devices() {
+		$post_id = $this->create_post_ago( 60 );
+		$cases   = array(
+			'on phones and desktops.' => array(),
+			'on phones only.'         => array( 'urgent_desktop' => false ),
+			'on desktops only.'       => array( 'urgent_mobile' => false ),
+		);
+		foreach ( $cases as $end => $settings ) {
+			$this->with_settings( $settings );
+			ob_start();
+			Post_Controls::render_urgent_box( get_post( $post_id ) );
+			$html = (string) ob_get_clean();
+			$this->assertStringContainsString( 'instead of the news bar, ' . $end, $html );
+			$this->assertStringNotContainsString( 'every device', $html );
+		}
+	}
+
+	public function test_the_news_face_is_a_choice() {
+		$this->assertContains( 'hprnb-root--font-news', Renderer::root_classes( Settings::get() ), 'The news face by default, on both bars.' );
+		$this->assertNotContains( 'hprnb-root--font-news', Renderer::root_classes( Settings::sanitize( array( 'bar_font' => 'theme' ) ) ), 'The theme\'s font when chosen.' );
+		$this->assertSame( 'news', Settings::sanitize( array( 'bar_font' => 'comic' ) )['bar_font'] );
 	}
 }

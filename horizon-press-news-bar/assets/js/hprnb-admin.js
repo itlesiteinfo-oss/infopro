@@ -40,7 +40,7 @@
 	};
 	var PX_KEYS = { font_size: true, max_width: true, gutter: true };
 	var MOBILE_VARS = { mobile_bg_color: '--hprnb-m-bg', mobile_text_color: '--hprnb-m-fg', mobile_accent_color: '--hprnb-m-accent', mobile_label_text_color: '--hprnb-m-label-fg', mobile_font_size: '--hprnb-m-font-size' };
-	var VISUAL_ONLY = { urgent_desktop: true, urgent_mobile: true, urgent_desktop_layout: true, urgent_contexts: true, label_position: true, layout_mode: true, z_index: true, bar_height: true, align_container: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_bar_height: true, mobile_peek: true, mobile_deep_collapse: true, mobile_kbd_hide: true, theme_offset: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, desktop_thumb_position: true, desktop_thumb_size: true, mobile_thumb_position: true, mobile_thumb_size: true, mobile_controls_layout: true, mobile_controls_place: true, mobile_show_pause: true, mobile_show_close: true, mobile_collapse_mode: true, mobile_collapse_after: true, accent_edge: true, mobile_label_pulse: true, mobile_peek_thumbnail: true, mobile_label_compact: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_card_thumb: true, mobile_card_float: true, desktop_hide_on_scroll: true, desktop_collapse_mode: true, desktop_collapse_after: true, desktop_placement: true, mobile_placement: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
+	var VISUAL_ONLY = { bar_font: true, urgent_desktop: true, urgent_mobile: true, urgent_desktop_layout: true, urgent_contexts: true, label_position: true, layout_mode: true, z_index: true, bar_height: true, align_container: true, show_separator: true, separator_char: true, separator_after_last: true, mobile_bar_height: true, mobile_peek: true, mobile_deep_collapse: true, mobile_kbd_hide: true, theme_offset: true, desktop_layout: true, desktop_label_style: true, desktop_label_dot: true, desktop_show_counter: true, desktop_lines: true, desktop_show_progress: true, desktop_thumb_position: true, desktop_thumb_size: true, mobile_thumb_position: true, mobile_thumb_size: true, mobile_controls_layout: true, mobile_controls_place: true, mobile_show_pause: true, mobile_show_close: true, mobile_collapse_mode: true, mobile_collapse_after: true, accent_edge: true, mobile_label_pulse: true, mobile_peek_thumbnail: true, mobile_label_compact: true, mobile_layout: true, mobile_label_style: true, mobile_label_dot: true, mobile_show_counter: true, mobile_lines: true, mobile_font_size: true, mobile_show_progress: true, mobile_swipe: true, mobile_hide_on_scroll: true, mobile_show_separator: true, mobile_card_thumb: true, mobile_card_float: true, desktop_hide_on_scroll: true, desktop_collapse_mode: true, desktop_collapse_after: true, desktop_placement: true, mobile_placement: true, mobile_custom_colors: true, mobile_bg_color: true, mobile_text_color: true, mobile_accent_color: true, mobile_label_text_color: true };
 	/* Row height of the stacked label strip, row gap, block padding and title line-height: mirrors Renderer::profile_height(). */
 	var STRIP = 22;
 	var ROW_GAP = 4;
@@ -281,6 +281,8 @@
 		var outside = ! cardDesign && ! tabDesign && valueOf( 'mobile_controls_place' ) === 'outside';
 		var stacked = ! cardDesign && ! tabDesign && valueOf( 'mobile_controls_layout' ) !== 'row';
 		previewRoot.classList.toggle( 'hprnb-root--edge', valueOf( 'accent_edge' ) === '1' );
+		// 2.16: both bars in the news face unless the site keeps its own.
+		previewRoot.classList.toggle( 'hprnb-root--font-news', valueOf( 'bar_font' ) !== 'theme' );
 		// 2.16: the URGENT bar switched off on one device (the feature itself being on).
 		var uOn = valueOf( 'urgent_enabled' ) === '1';
 		var uD = uOn && valueOf( 'urgent_desktop' ) === '1';
@@ -471,6 +473,10 @@
 		} else {
 			previewRoot.innerHTML = data.html;
 		}
+		// The root variables derived on the server (heights, URGENT sizes) follow the form too (2.16).
+		if ( data && typeof data.style === 'string' && data.style !== '' ) {
+			previewRoot.setAttribute( 'style', data.style );
+		}
 		// The Urgent tab previews the red bar (2.14): the root says so, as on the site.
 		previewRoot.classList.toggle( 'hprnb-root--urgent', !! ( data && data.urgent ) );
 		applyVisual();
@@ -625,7 +631,7 @@
 	}
 
 	function updateContrast() {
-		var pairs = { text: [ 'text_color', 'bg_color' ], label: [ 'label_text_color', 'label_bg_color' ], mobile: [ 'mobile_text_color', 'mobile_bg_color' ] };
+		var pairs = { text: [ 'text_color', 'bg_color' ], label: [ 'label_text_color', 'label_bg_color' ], mobile: [ 'mobile_text_color', 'mobile_bg_color' ], urgent: [ 'urgent_text_color', 'urgent_bg_color' ] };
 		Object.keys( pairs ).forEach( function ( id ) {
 			var warning = document.getElementById( 'hprnb-contrast-' + id );
 			if ( ! warning ) {

@@ -74,7 +74,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 		// phone design of the URGENT bar on desktop too (CSS); 2.16: one switch per device for the URGENT bar
 		// (which bar is in front, per device, in the script and the bootstrap).
 		$this->assertLessThanOrEqual( 48 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
-		$this->assertLessThanOrEqual( 4 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bootstrap.min.js' ) );
+		$this->assertLessThanOrEqual( 5 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bootstrap.min.js' ) ); // 2.16: the device switches from REST, the hand-over of a refresh.
 		$this->assertLessThanOrEqual( 28 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
 	}
 
@@ -101,7 +101,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 				if ( preg_match( '/P-colors|P-collapse|P-flow|P-card|P-float|P-ctrl-col|P-ctrl-out|P-ctrl-tab|P-peek-thumb|P-pulse-|P-label-compact|hprnb-bar--collapsed|peek-label/', $selector ) ) {
 					continue; // Mobile-only features (palette, collapse, flow card, strip, stacked or tabbed buttons, pulse).
 				}
-				$declarations = array_filter( array_map( 'trim', explode( ';', $rule[2] ) ) );
+				$declarations     = array_filter( array_map( 'trim', explode( ';', $rule[2] ) ) );
 				$out[ $selector ] = array_values( $declarations );
 			}
 			return $out;
@@ -115,6 +115,36 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 		$this->assertSame( $d, $m );
 	}
 
+	public function test_the_desktop_preview_mirrors_the_urgent_desktop_designs() {
+		// Section 17's desktop blocks are container queries, which the flat Desktop preview is not: the
+		// admin sheet copies them onto the flat root (2.16). Every rule and every declaration, in step.
+		$bar   = (string) file_get_contents( HPRNB_PATH . 'assets/css/hprnb-bar.css' );
+		$admin = (string) file_get_contents( HPRNB_PATH . 'assets/css/hprnb-admin.css' );
+		$bar   = substr( $bar, (int) strpos( $bar, '17. URGENT (2.14)' ) );
+		$open  = '@container hprnb (min-width: 768px) {';
+		$rules = 0;
+		for ( $at = strpos( $bar, $open ); false !== $at; $at = strpos( $bar, $open, $at + 1 ) ) {
+			$depth = 1;
+			$pos   = $at + strlen( $open );
+			for ( $end = $pos; $depth > 0; $end++ ) {
+				$depth += ( '{' === $bar[ $end ] ) - ( '}' === $bar[ $end ] );
+			}
+			preg_match_all( '/^\t([^\t\n\/}][^{]*?)\s*\{\n(.*?)^\t\}/ms', substr( $bar, $pos, $end - $pos ), $found, PREG_SET_ORDER );
+			foreach ( $found as $rule ) {
+				$selectors = array_map(
+					static function ( $selector ) {
+						return preg_replace( array( '/^\.hprnb-root:not\(\.hprnb-root--u-d-flow\) /', '/^\.hprnb-root--u-d-flow /', '/^\.hprnb-root /' ), array( '.hprnb-root.hprnb-root--flat:not(.hprnb-root--u-d-flow) ', '.hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow ', '.hprnb-root.hprnb-root--flat ' ), trim( $selector ), 1 );
+					},
+					explode( ",\n", $rule[1] )
+				);
+				$body = preg_replace( '/^\t/m', '', $rule[2] );
+				$this->assertStringContainsString( implode( ",\n", $selectors ) . " {\n" . $body . '}', $admin, 'Missing in the admin sheet: ' . $rule[1] );
+				++$rules;
+			}
+		}
+		$this->assertGreaterThan( 10, $rules );
+	}
+
 	public function test_no_translation_before_init() {
 		$this->assertSame( 10, has_action( 'init', array( \HorizonPress\NewsBar\Plugin::instance(), 'load_textdomain' ) ) );
 		$this->assertFalse( has_action( 'plugins_loaded', array( \HorizonPress\NewsBar\Plugin::instance(), 'load_textdomain' ) ) );
@@ -123,7 +153,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	public function test_plugin_headers() {
 		$data = get_plugin_data( HPRNB_FILE, false, false );
 		$this->assertSame( 'Horizon Press News Bar', $data['Name'] );
-		$this->assertSame( '2.15.0', $data['Version'] );
+		$this->assertSame( '2.16.0', $data['Version'] );
 		$this->assertSame( '6.6', $data['RequiresWP'] );
 		$this->assertSame( '8.0', $data['RequiresPHP'] );
 		$this->assertSame( 'horizon-press-news-bar', $data['TextDomain'] );

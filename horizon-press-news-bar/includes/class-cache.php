@@ -63,8 +63,10 @@ final class Cache {
 		// The urgent bar rides in the same payload: its switch and its label are markup.
 		'urgent_enabled',
 		'urgent_label',
-		// 2.16: each bar has its own switch, and the URGENT bar one per device (both off = no query).
+		// 2.16: each bar has its own switch and one per device (both off = no query).
 		'enabled',
+		'show_on_desktop',
+		'show_on_mobile',
 		'urgent_desktop',
 		'urgent_mobile',
 	);

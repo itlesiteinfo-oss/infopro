@@ -42,6 +42,9 @@
     "urgent_mobile": true,
     "urgent_minutes": 10,
     "urgent_label": "URGENT",
+    "urgent_font_size": 17,
+    "urgent_mobile_font_size": 17,
+    "bar_font": "news",
     "urgent_bg_color": "#E11D2B",
     "urgent_text_color": "#FFFFFF",
     "urgent_contexts": {

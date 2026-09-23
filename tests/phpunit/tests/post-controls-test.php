@@ -30,8 +30,8 @@ class Post_Controls_Test extends HPRNB_Test_Case {
 	 * @return void
 	 */
 	private function submit( int $post_id, array $ticked ): void {
-		$_POST                          = array();
-		$_POST[ Post_Controls::NONCE ]  = wp_create_nonce( Post_Controls::NONCE );
+		$_POST                         = array();
+		$_POST[ Post_Controls::NONCE ] = wp_create_nonce( Post_Controls::NONCE );
 		foreach ( $ticked as $key ) {
 			$_POST[ $key ] = '1';
 		}
@@ -152,7 +152,10 @@ class Post_Controls_Test extends HPRNB_Test_Case {
 		$this->assertFalse( Post_Controls::flagged( $post, Settings::META_HIDE ) );
 
 		// A wrong nonce is refused just as firmly.
-		$_POST = array( Post_Controls::NONCE => 'not-a-nonce', Settings::META_HIDE => '1' );
+		$_POST = array(
+			Post_Controls::NONCE => 'not-a-nonce',
+			Settings::META_HIDE  => '1',
+		);
 		Post_Controls::save( $post, get_post( $post ) );
 		$_POST = array();
 		$this->assertFalse( Post_Controls::flagged( $post, Settings::META_HIDE ) );
@@ -187,10 +190,15 @@ class Post_Controls_Test extends HPRNB_Test_Case {
 		wp_set_current_user( $this->editor );
 		$this->submit( $post, array( Settings::META_HIDE ) );
 
-		$revision = self::factory()->post->create( array( 'post_type' => 'revision', 'post_parent' => $post ) );
+		$revision = self::factory()->post->create(
+			array(
+				'post_type'   => 'revision',
+				'post_parent' => $post,
+			)
+		);
 		$_POST    = array( Post_Controls::NONCE => wp_create_nonce( Post_Controls::NONCE ) );
 		Post_Controls::save( $revision, get_post( $revision ) );
-		$_POST    = array();
+		$_POST = array();
 
 		$this->assertTrue( Post_Controls::flagged( $post, Settings::META_HIDE ), 'The parent keeps its flag.' );
 	}
@@ -228,7 +236,12 @@ class Post_Controls_Test extends HPRNB_Test_Case {
 				'post_content' => '[hprnb_news_bar]',
 			)
 		);
-		$this->with_settings( array( 'shortcode_enabled' => true, 'auto_display' => false ) );
+		$this->with_settings(
+			array(
+				'shortcode_enabled' => true,
+				'auto_display'      => false,
+			)
+		);
 
 		$this->go_to( get_permalink( $page ) );
 		$this->assertTrue( \HorizonPress\NewsBar\Frontend::shortcode_expected(), 'Normally the space is reserved.' );

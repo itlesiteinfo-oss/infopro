@@ -2576,17 +2576,20 @@ test( 'v2.14: the URGENT bar takes the place of the news bar, each article leave
 		await expect( root ).toHaveAttribute( 'data-hprnb-urgent', '2' );
 		await expect( urgent ).toHaveClass( /hprnb-bar--mode-rotate/ );
 		await expect( urgent.locator( '.hprnb-bar__label-text' ) ).toHaveText( 'URGENT' );
-		await expect( urgent.locator( '.hprnb-bar__label-chevron svg' ) ).toHaveCount( 1 );
+		// 2.16: the label is a plate in the band's two colours swapped, no chevron.
+		await expect( urgent.locator( '.hprnb-bar__label-chevron' ) ).toHaveCount( 0 );
+		expect( await urgent.locator( '.hprnb-bar__label' ).evaluate( ( el ) => [ getComputedStyle( el ).backgroundColor, getComputedStyle( el ).color ] ) ).toEqual( [ 'rgb(255, 255, 255)', 'rgb(225, 29, 43)' ] );
 		await expect( urgent.locator( '.hprnb-bar__item' ) ).toHaveCount( 2 );
 		await expect( urgent.locator( '.hprnb-bar__item' ).first() ).toContainText( 'Urgent B', { useInnerText: false } );
 		await expect( urgent.locator( '.hprnb-bar__item' ).nth( 1 ) ).toBeHidden();
 		await expect( urgent.locator( 'img' ) ).toHaveCount( 0 );
 		await expect( urgent.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden();
 		expect( await urgent.evaluate( ( el ) => [ getComputedStyle( el ).backgroundColor, getComputedStyle( el ).position, Math.round( el.getBoundingClientRect().height ), getComputedStyle( el.querySelector( '.hprnb-bar__title' ) ).fontWeight, getComputedStyle( el.querySelector( '.hprnb-bar__label' ), '::before' ).display ] ) ).toEqual( [ 'rgb(225, 29, 43)', 'fixed', 76, '700', 'block' ] );
-		// The close button in the tab above the end corner, 44px, as on the news bar.
+		// The close button in the tab above the end corner, 44px, as on the news bar; 2.16: it overlaps
+		// the band by 1px, so no seam shows between the two.
 		const tab = await urgent.locator( '.hprnb-bar__controls' ).boundingBox();
 		const box = await urgent.boundingBox();
-		expect( [ Math.round( tab.width ), Math.round( tab.height ), Math.round( tab.x + tab.width ), Math.round( tab.y + tab.height ) ] ).toEqual( [ 44, 44, 390, Math.round( box.y ) ] );
+		expect( [ Math.round( tab.width ), Math.round( tab.height ), Math.round( tab.x + tab.width ), Math.round( tab.y + tab.height ) ] ).toEqual( [ 44, 44, 390, Math.round( box.y ) + 1 ] );
 		expect( await bar.evaluate( ( el ) => [ getComputedStyle( el ).display, el.getAttribute( 'data-hprnb-init' ) ] ) ).toEqual( [ 'none', null ] );
 		expect( await page.evaluate( () => { const cs = getComputedStyle( document.body ); return [ cs.getPropertyValue( '--hprnb-offset' ).trim(), cs.getPropertyValue( '--hprnb-tab' ).trim(), document.body.classList.contains( 'hprnb-m-pending' ) ]; } ) ).toEqual( [ '76px', '44px', false ] );
 
@@ -2620,10 +2623,11 @@ test( 'v2.14: the URGENT bar takes the place of the news bar, each article leave
 		flag( a, t - 5, t + 600 );
 		await page.goto( url );
 		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
-		await expect( urgent ).toHaveClass( /hprnb-bar--mode-marquee/ );
-		expect( await urgent.evaluate( ( el ) => [ Math.round( el.getBoundingClientRect().height ), getComputedStyle( el.querySelector( '.hprnb-bar__inner' ) ).display, getComputedStyle( el.querySelector( '.hprnb-bar__inner' ) ).gridTemplateAreas ] ) ).toEqual( [ 40, 'grid', '"label title ctrl"' ] );
+		// 2.16: one headline at a time, never a marquee; a 48px chyron in bold 17px.
+		await expect( urgent ).toHaveClass( /hprnb-bar--mode-rotate/ );
+		expect( await urgent.evaluate( ( el ) => [ Math.round( el.getBoundingClientRect().height ), getComputedStyle( el.querySelector( '.hprnb-bar__inner' ) ).display, getComputedStyle( el.querySelector( '.hprnb-bar__inner' ) ).gridTemplateAreas, getComputedStyle( el.querySelector( '.hprnb-bar__title' ) ).fontSize ] ) ).toEqual( [ 48, 'grid', '"label title ctrl"', '17px' ] );
 		await expect( urgent.locator( '.hprnb-bar__btn--close' ) ).toBeVisible();
-		expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '40px' );
+		expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '48px' );
 
 		// Closing hands over to the news bar and is remembered for this set — a newer flag opens it again.
 		await page.setViewportSize( { width: 390, height: 844 } );
@@ -2712,7 +2716,7 @@ test( 'v2.15: the URGENT bar on the front page where the news bar stays away, th
 		await page.setViewportSize( { width: 1366, height: 900 } );
 		await page.goto( '/' );
 		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
-		expect( await urgent.evaluate( ( el ) => [ Math.round( el.getBoundingClientRect().height ), getComputedStyle( el.querySelector( '.hprnb-bar__inner' ) ).display ] ) ).toEqual( [ 40, 'grid' ] );
+		expect( await urgent.evaluate( ( el ) => [ Math.round( el.getBoundingClientRect().height ), getComputedStyle( el.querySelector( '.hprnb-bar__inner' ) ).display ] ) ).toEqual( [ 48, 'grid' ] );
 
 		// The second desktop design: the phone design, two lines, the close button in the tab at the screen corner.
 		setDefaultSettings( { display_scope: 'custom', contexts: noFront, urgent_desktop_layout: 'mobile' } );
@@ -2723,15 +2727,17 @@ test( 'v2.15: the URGENT bar on the front page where the news bar stays away, th
 		await expect( urgent.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden();
 		const bar = await urgent.boundingBox();
 		const tab = await urgent.locator( '.hprnb-bar__controls' ).boundingBox();
-		expect( [ Math.round( bar.height ), Math.round( tab.width ), Math.round( tab.height ), Math.round( tab.x + tab.width ), Math.round( tab.y + tab.height ) ] ).toEqual( [ 76, 44, 44, 1366, Math.round( bar.y ) ] );
+		expect( [ Math.round( bar.height ), Math.round( tab.width ), Math.round( tab.height ), Math.round( tab.x + tab.width ), Math.round( tab.y + tab.height ) ] ).toEqual( [ 76, 44, 44, 1366, Math.round( bar.y ) + 1 ] );
 		// A one-line headline sits in the middle: the bar keeps its height, the page keeps exactly that.
 		await expect( urgent ).toHaveClass( /hprnb-bar--u-one/ );
 		const centre = async () => { const t = await urgent.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' ).boundingBox(); return Math.round( Math.abs( ( t.y + t.height / 2 ) - ( bar.y + bar.height / 2 ) ) ) <= 2; };
 		await expect.poll( centre ).toBe( true );
 		const title = await urgent.locator( '.hprnb-bar__item:not([hidden]) .hprnb-bar__title' ).boundingBox();
 		expect( await page.evaluate( () => [ getComputedStyle( document.body ).paddingBottom, getComputedStyle( document.body ).getPropertyValue( '--hprnb-tab' ).trim() ] ) ).toEqual( [ '76px', '44px' ] );
-		// The text keeps to the site's width.
-		expect( Math.round( title.x ) ).toBe( Math.round( ( 1366 - 1230 ) / 2 ) );
+		// The line keeps to the site's width: the plate first, then the headline.
+		const plate = await urgent.locator( '.hprnb-bar__label' ).boundingBox();
+		expect( Math.round( plate.x ) ).toBe( Math.round( ( 1366 - 1230 ) / 2 ) );
+		expect( Math.round( title.x ) ).toBe( Math.round( plate.x ) ); // The headline flows around the plate.
 
 		// The news bar kept to desktop on the front page: the red bar still reaches phones, then the
 		// restriction is back and nothing is left on the phone.
@@ -2801,7 +2807,7 @@ test( 'v2.15: the URGENT bar on the front page where the news bar stays away, th
 	}
 } );
 
-test( 'v2.16: one switch per bar and per device — sub-choices hidden while their bar is off, the URGENT box and bar following them', async ( { page } ) => {
+test( 'v2.16: one switch per bar and per device — sub-choices hidden while their bar is off, the URGENT box and bar following them', async ( { page, browser } ) => {
 	const errors = collectErrors( page );
 	const root = page.locator( '#hprnb-root' );
 	const urgent = page.locator( '.hprnb-bar--urgent' );
@@ -2886,6 +2892,70 @@ test( 'v2.16: one switch per bar and per device — sub-choices hidden while the
 		await page.goto( '/' );
 		await expect( root ).toHaveCount( 0 );
 		stored = null;
+
+		// Closing the news bar where the URGENT bar is off leaves the red bar to the other device.
+		setDefaultSettings( { urgent_mobile: false } );
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( '/' );
+		await expect( news ).toHaveAttribute( 'data-hprnb-init', '1' );
+		for ( const y of [ 400, 1200, 2400, 4000 ] ) {
+			await page.evaluate( ( v ) => window.scrollTo( 0, v ), y );
+			await page.waitForTimeout( 150 );
+		}
+		await expect( news.locator( '.hprnb-bar__btn--close' ) ).toBeVisible();
+		await news.locator( '.hprnb-bar__btn--close' ).click();
+		await expect( news ).toHaveCount( 0 );
+		await expect( root ).toHaveClass( /hprnb-root--urgent/ );
+		await expect( urgent ).toBeHidden();
+		expect( await page.evaluate( () => [ getComputedStyle( document.body ).paddingBottom, getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ] ) ).toEqual( [ '0px', '0px' ] );
+		await page.setViewportSize( { width: 1024, height: 768 } );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( urgent ).toBeVisible();
+		expect( await page.evaluate( () => getComputedStyle( document.body ).paddingBottom ) ).toBe( '48px' );
+		await page.evaluate( () => localStorage.removeItem( 'hprnb_dismissed_until' ) );
+
+		// The URGENT bar off on desktop and no headline for the news bar: nothing on desktop, not even
+		// the space the page keeps for a bar.
+		const tag = wp( [ 'term', 'create', 'post_tag', 'Aucun article ' + Date.now(), '--porcelain' ] );
+		setDefaultSettings( { urgent_desktop: false, tags_include: [ Number( tag ) ] } );
+		await page.setViewportSize( { width: 1366, height: 900 } );
+		await page.goto( '/' );
+		await expect( root ).toHaveAttribute( 'data-hprnb-count', '0' );
+		await expect( urgent ).toBeHidden();
+		expect( await page.evaluate( () => [ getComputedStyle( document.body ).paddingBottom, getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ] ) ).toEqual( [ '0px', '0px' ] );
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( urgent ).toBeVisible();
+		expect( await page.evaluate( () => getComputedStyle( document.body ).paddingBottom ) ).toBe( '76px' );
+		wp( [ 'term', 'delete', 'post_tag', tag ] );
+
+		// A page from a page cache made before the phone was switched off: the REST refresh says so.
+		// (A new browser: this one keeps the REST body of the steps above in its HTTP cache.)
+		setDefaultSettings( { urgent_mobile: false } );
+		const cached = await browser.newPage( { viewport: { width: 390, height: 844 }, baseURL: 'http://127.0.0.1:8080' } );
+		cached.on( 'pageerror', ( e ) => errors.push( e.message ) );
+		await cached.route( ( u ) => u.pathname === '/', async ( route ) => {
+			const response = await route.fetch();
+			const html = ( await response.text() ).replace( ' hprnb-root--u-no-m', '' ).replace( /data-hprnb-generated="\d+"/, 'data-hprnb-generated="' + ( now() - 3600 ) + '"' );
+			await route.fulfill( { response, body: html } );
+		} );
+		await cached.goto( '/' );
+		await expect( cached.locator( '#hprnb-root' ) ).toHaveClass( /hprnb-root--u-no-m/ );
+		await expect( cached.locator( '.hprnb-bar--urgent' ) ).toBeHidden();
+		await expect( cached.locator( '.hprnb-bar:not(.hprnb-bar--urgent)' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await cached.close();
+
+		// The settings preview follows the device switches: off on desktop, a note instead of the bar.
+		setDefaultSettings( { urgent_desktop: false } );
+		await page.setViewportSize( { width: 1400, height: 1000 } );
+		await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar#urgent' );
+		await page.click( '[data-hprnb-tab="urgent"]' );
+		await expect( page.locator( '#hprnb-preview-root .hprnb-bar--urgent' ) ).toHaveCount( 1, { timeout: 10000 } );
+		await expect( page.locator( '#hprnb-preview-root .hprnb-bar--urgent' ) ).toBeHidden();
+		expect( await page.locator( '.hprnb-preview__frame' ).evaluate( ( el ) => getComputedStyle( el, '::after' ).content ) ).toContain( 'switched off on this device' );
+		await page.click( '#hprnb-preview-tab-mobile' );
+		await expect( page.locator( '#hprnb-preview-root .hprnb-bar--urgent' ) ).toBeVisible();
+		expect( await page.locator( '.hprnb-preview__frame' ).evaluate( ( el ) => getComputedStyle( el, '::after' ).content ) ).toBe( 'none' );
 		expect( errors ).toEqual( [] );
 	} finally {
 		wp( [ 'post', 'delete', a, '--force' ] );

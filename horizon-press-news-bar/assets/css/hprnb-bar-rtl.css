@@ -56,10 +56,14 @@
 	/* The urgent bar (2.14): its colours, its height on each device, its line and padding on a phone. */
 	--hprnb-u-bg: #E11D2B;
 	--hprnb-u-fg: #FFFFFF;
-	--hprnb-u-height: 40px;
+	--hprnb-u-height: 48px;
 	--hprnb-u-m-height: 76px;
-	--hprnb-u-line: 26px;
-	--hprnb-u-pad: 12px;
+	--hprnb-u-line: 24px;
+	--hprnb-u-pad: 14px;
+	--hprnb-u-fs: 17px;
+	--hprnb-u-m-fs: 17px;
+	/* The news face (setting bar_font = news): the system sans of each platform, no download. */
+	--hprnb-font: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Noto Sans Arabic UI", "Noto Sans Arabic", Tahoma, sans-serif;
 	--hprnb-u-lines: 2;
 	/* Label row of the stacked layout (Renderer::STRIP_HEIGHT / ROW_GAP / BLOCK_PAD) and the part
 	   of a collapsed bar that stays visible (first line of the flow card: 12 + 26 + 2). */
@@ -241,6 +245,15 @@
 	text-align: start;
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10), 0 -6px 24px rgba(0, 0, 0, .18);
 	-webkit-font-smoothing: antialiased;
+}
+
+/* Both bars in the news face unless the site keeps its own (bar_font = theme). The universal part
+   beats a theme's element rules (p, a) without !important. */
+.hprnb-root--font-news .hprnb-bar,
+.hprnb-root--font-news .hprnb-bar * {
+	font-family: var(--hprnb-font);
+	font-kerning: normal;
+	-moz-osx-font-smoothing: grayscale;
 }
 
 /* Accent edge: a 2px line of the accent colour on the top edge — the bar reads as an alert strip
@@ -783,6 +796,7 @@ html.hprnb-dismissed #hprnb-root {
 }
 
 html.hprnb-dismissed body.hprnb-reserve {
+	--hprnb-offset: 0px;
 	padding-block-end: 0;
 }
 
@@ -1994,31 +2008,45 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 /* ---------------------------------------------------------------------------
  * 17. URGENT (2.14) — the red bar of the urgent articles, in front of the news bar while they last.
  *     One shape whatever the news bar's design: a single line from 768px, two lines on a phone, the
- *     label in bold caps with a live dot and a chevron, the close button in the tab above the end
- *     corner. Its colours come from the root (--hprnb-u-bg / --hprnb-u-fg), its heights too.
+ *     label on a plate in the band's two colours swapped, the close button at the end of the line or
+ *     in the tab above the end corner (2.16). Its colours come from the root (--hprnb-u-bg /
+ *     --hprnb-u-fg), its heights and sizes too.
  *     Kept after section 16: it must beat every design rule, and the root says which bar is in front.
  * ------------------------------------------------------------------------- */
 /* In front on the devices it is switched on for (2.16: one switch per device, the root says which
-   one is off with hprnb-root--u-no-d / -m); on the other one the news bar keeps its place. */
-@container hprnb (min-width: 768px) {
+   one is off with hprnb-root--u-no-d / -m); on the other one the news bar keeps its place. Which
+   device is the screen's, measured like section 13's device classes and the reserved space (media
+   queries); the admin preview, whose frame is the device, has its own rules in the admin sheet. */
+@media (min-width: 768px) {
 	.hprnb-root--urgent:not(.hprnb-root--u-no-d) .hprnb-bar:not(.hprnb-bar--urgent),
-	.hprnb-root--u-no-d .hprnb-bar--urgent {
+	.hprnb-root--u-no-d:not(.hprnb-root--preview) .hprnb-bar--urgent {
 		display: none;
 	}
 
 	html.hprnb-dismissed .hprnb-root--u-no-d .hprnb-bar {
 		display: none;
 	}
+
+	/* Nothing to show here: the URGENT bar is off on this device and the news bar has no headline. */
+	body.hprnb-reserve:has(.hprnb-root--u-no-d[data-hprnb-count="0"]) {
+		--hprnb-offset: 0px;
+		padding-block-end: 0;
+	}
 }
 
-@container hprnb (max-width: 767.98px) {
+@media (max-width: 767.98px) {
 	.hprnb-root--urgent:not(.hprnb-root--u-no-m) .hprnb-bar:not(.hprnb-bar--urgent),
-	.hprnb-root--u-no-m .hprnb-bar--urgent {
+	.hprnb-root--u-no-m:not(.hprnb-root--preview) .hprnb-bar--urgent {
 		display: none;
 	}
 
 	html.hprnb-dismissed .hprnb-root--u-no-m .hprnb-bar {
 		display: none;
+	}
+
+	body.hprnb-reserve:has(.hprnb-root--u-no-m[data-hprnb-count="0"]) {
+		--hprnb-offset: 0px;
+		padding-block-end: 0;
 	}
 }
 
@@ -2029,114 +2057,168 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 
 @media (min-width: 768px) {
 	html.hprnb-dismissed body.hprnb-reserve:has(.hprnb-root--urgent:not(.hprnb-root--u-no-d)) {
+		--hprnb-offset: var(--hprnb-height, 40px);
 		padding-block-end: calc(var(--hprnb-height, 40px) + env(safe-area-inset-bottom, 0px));
 	}
 }
 
 @media (max-width: 767.98px) {
 	html.hprnb-dismissed body.hprnb-reserve:has(.hprnb-root--urgent:not(.hprnb-root--u-no-m)) {
+		--hprnb-offset: var(--hprnb-m-height, var(--hprnb-height, 40px));
 		padding-block-end: calc(var(--hprnb-m-height, var(--hprnb-height, 40px)) + env(safe-area-inset-bottom, 0px));
 	}
 }
 
+/* The skin: one red band with the label as a plate in the band's two colours swapped (always exactly
+   the headline's contrast), a light bevel in the top 12px only (no glyph ever reaches it: the PHP
+   heights keep 12px above the text), a glint, a hairline and an upward lift. */
 .hprnb-root .hprnb-bar--urgent {
 	--hprnb-e-bg: var(--hprnb-u-bg);
 	--hprnb-e-fg: var(--hprnb-u-fg);
 	--hprnb-e-hover: var(--hprnb-u-fg);
 	--hprnb-e-accent: var(--hprnb-u-fg);
-	--hprnb-e-label-display: flex;
-	--hprnb-e-label-align: center;
-	--hprnb-e-label-bs: auto;
-	--hprnb-e-label-bg: transparent;
-	--hprnb-e-label-fg: var(--hprnb-u-fg);
-	--hprnb-e-label-pad: 0;
-	--hprnb-e-label-margin: 0;
-	--hprnb-e-label-radius: 0;
-	--hprnb-e-label-shadow: none;
-	--hprnb-e-label-size: max(12px, .8em);
-	--hprnb-e-label-tracking: .1em;
-	--hprnb-e-label-transform: uppercase;
-	--hprnb-e-label-lh: 1;
-	--hprnb-e-dot: block;
 	--hprnb-e-title-weight: 700;
 	--hprnb-e-thumb-display: none;
-	--hprnb-u-glow: rgba(225, 29, 43, .5);
-	--hprnb-u-glow: color-mix(in srgb, var(--hprnb-u-bg) 55%, transparent);
-	--hprnb-u-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 -10px 32px rgba(0, 0, 0, .26);
+	--hprnb-u-lfs: 13px;
+	--hprnb-u-lpad: 14px;
+	--hprnb-u-wipe: inset(0 100% 0 0);
 	position: fixed;
 	inset-inline: 0;
 	bottom: 0;
 	border-radius: 0;
-	/* The theme red, a shade darker at the start; the end stays the flat red the headline fades into. */
-	background-color: var(--hprnb-u-bg);
-	background-image: linear-gradient(90deg, rgba(0, 0, 0, .16), transparent 42%);
-	box-shadow: var(--hprnb-u-shadow);
+	background: var(--hprnb-u-bg) linear-gradient(rgba(255, 255, 255, .14), rgba(255, 255, 255, 0) 12px);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, .32), 0 -1px 0 rgba(0, 0, 0, .18), 0 -12px 32px rgba(0, 0, 0, .28);
 }
 
+.hprnb-root .hprnb-bar--urgent:dir(rtl) {
+	--hprnb-u-wipe: inset(0 0 0 100%);
+}
+
+/* Every value set here, not through the news bar's tokens: no news-bar design (card, strip label,
+   flow) reaches into the plate. */
 .hprnb-root .hprnb-bar--urgent .hprnb-bar__label {
+	display: flex;
+	align-items: center;
+	align-self: stretch;
+	gap: .55em;
+	block-size: auto;
 	margin: 0;
-	margin-inline-end: 14px;
-	gap: 8px;
+	margin-inline-end: 16px;
+	padding-inline: var(--hprnb-u-lpad);
+	border-radius: 0;
+	border-inline-end: 3px solid rgba(0, 0, 0, .24);
+	background: var(--hprnb-u-fg) padding-box;
+	color: var(--hprnb-u-bg);
+	font-size: var(--hprnb-u-lfs);
+	font-weight: 800;
+	letter-spacing: .08em;
+	line-height: 1;
+	text-transform: uppercase;
 	white-space: nowrap;
 }
 
-/* The news bar's pill halo (the beacon of its appearance) has no place on the red bar: its label is
-   plain capitals, and only its dot pulses. */
 .hprnb-root .hprnb-bar.hprnb-bar--urgent .hprnb-bar__label {
-	animation: none;
+	animation: hprnb-u-take .36s .08s cubic-bezier(.2, .8, .2, 1) backwards;
 	box-shadow: none;
 }
 
-.hprnb-root .hprnb-bar--rtl.hprnb-bar--urgent {
-	background-image: linear-gradient(270deg, rgba(0, 0, 0, .16), transparent 42%);
+@keyframes hprnb-u-take {
+	from { clip-path: var(--hprnb-u-wipe); }
+	to { clip-path: inset(0); }
+}
+
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__viewport {
+	animation: hprnb-appear .24s .26s backwards;
+}
+
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__label::before {
+	display: block;
+	inline-size: .55em;
+	block-size: .55em;
 }
 
 .hprnb-root .hprnb-bar--urgent .hprnb-bar__label-text {
 	overflow: visible;
+	text-box: trim-both cap alphabetic;
 }
 
-/* The chevron after the label: a bold arrow into the headline, mirrored right-to-left. */
-.hprnb-root .hprnb-bar--urgent .hprnb-bar__label-chevron {
-	display: inline-flex;
-	flex: none;
-	margin-inline-start: -4px;
-	opacity: .9;
-}
-
-.hprnb-root .hprnb-bar--urgent .hprnb-bar__label-chevron svg {
-	inline-size: 1.15em;
-	block-size: 1.15em;
-	stroke-width: 3;
-}
-
-.hprnb-root .hprnb-bar--rtl.hprnb-bar--urgent .hprnb-bar__label-chevron svg {
-	transform: scaleX(-1);
-}
-
-.hprnb-root .hprnb-bar--urgent .hprnb-bar__title {
-	font-weight: 700;
-	letter-spacing: -.005em;
-}
-
-.hprnb-root .hprnb-bar--urgent .hprnb-bar__thumb,
-.hprnb-root .hprnb-bar--urgent .hprnb-bar__time,
-.hprnb-root .hprnb-bar--urgent .hprnb-bar__counter {
+.hprnb-root .hprnb-bar--urgent :is(.hprnb-bar__label-chevron, .hprnb-bar__thumb, .hprnb-bar__time, .hprnb-bar__counter) {
 	display: none;
 }
 
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__title {
+	font-size: inherit;
+	font-weight: 700;
+	letter-spacing: -.01em;
+	line-height: inherit;
+	text-wrap-style: pretty;
+}
+
+.hprnb-root .hprnb-bar--urgent:dir(rtl) :is(.hprnb-bar__title, .hprnb-bar__label) {
+	letter-spacing: 0;
+}
+
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__link:is(:hover, :focus-visible) .hprnb-bar__title {
+	text-decoration: underline 2px;
+	text-underline-offset: .2em;
+}
+
+/* The viewport clips on a phone: the keyboard ring goes round the bar instead. */
+@supports selector(:has(a)) {
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__link:focus-visible {
+		outline: 0;
+	}
+
+	.hprnb-root .hprnb-bar--urgent:has(.hprnb-bar__link:focus-visible) {
+		outline: 2px solid var(--hprnb-u-fg);
+		outline-offset: -4px;
+	}
+}
+
+/* The close button (and pause) in a tab of the same red above the end corner, fused into the bar:
+   phones and the phone design; the one-line design puts it back at the end of the bar. */
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__controls {
+	position: absolute;
+	inset-block: auto calc(100% - 1px);
+	inset-inline: auto 0;
+	z-index: 2;
+	flex-direction: row;
+	align-items: stretch;
+	gap: 0;
+	block-size: auto;
+	margin: 0;
+	padding: 0;
+	overflow: clip;
+	border-radius: 0;
+	border-start-start-radius: 6px;
+	background: var(--hprnb-u-bg);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, .32), 0 -6px 14px -6px rgba(0, 0, 0, .35);
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
+}
+
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__btn {
+	position: static;
+	flex: none;
+	inline-size: 44px;
+	min-inline-size: 44px;
+	block-size: 44px;
+	min-block-size: 44px;
+	border-radius: 0;
+	opacity: 1;
+}
+
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__btn:is(:hover, :focus-visible) {
+	background: rgba(0, 0, 0, .18);
+}
+
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__btn svg {
+	stroke-width: 2.5;
+}
+
 .hprnb-root .hprnb-bar--urgent .hprnb-bar__progress {
-	background: rgba(255, 255, 255, .85);
-}
-
-/* The moment it takes the front (the script's init): a ring of its own red spreads over the page
-   once — the dot keeps pulsing afterwards. Never a slide: the bar is there from the first paint. */
-@keyframes hprnb-urgent-flash {
-	0% { box-shadow: var(--hprnb-u-shadow), 0 0 0 0 var(--hprnb-u-glow); }
-	100% { box-shadow: var(--hprnb-u-shadow), 0 0 0 40px transparent; }
-}
-
-.hprnb-root--urgent .hprnb-bar--urgent[data-hprnb-init] {
-	animation: hprnb-urgent-flash 1.3s .25s ease-out;
+	z-index: 1;
+	block-size: 3px;
 }
 
 @container hprnb (min-width: 768px) {
@@ -2147,16 +2229,32 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 		--hprnb-e-areas: 'label title ctrl';
 		--hprnb-e-height: var(--hprnb-u-height);
 		--hprnb-e-lines: 1;
-		--hprnb-e-list-pad: .25em;
+		--hprnb-e-list-pad: 0;
 		--hprnb-e-title-display: block;
 		--hprnb-e-title-ws: nowrap;
 		--hprnb-e-title-max: none;
 		--hprnb-e-item-is: auto;
-		--hprnb-e-font-size: var(--hprnb-font-size);
+		--hprnb-e-font-size: var(--hprnb-u-fs);
 	}
 
 	.hprnb-root .hprnb-bar--urgent .hprnb-bar__inner {
 		padding-block: 0;
+	}
+
+	.hprnb-root:not(.hprnb-root--u-d-flow) .hprnb-bar--urgent .hprnb-bar__controls {
+		position: static;
+		align-self: stretch;
+		margin-inline-start: 16px;
+		border-start-start-radius: 0;
+		border-inline-start: 1px solid color-mix(in srgb, var(--hprnb-u-fg) 22%, transparent);
+		background: rgba(0, 0, 0, .14);
+		box-shadow: none;
+	}
+
+	.hprnb-root:not(.hprnb-root--u-d-flow) .hprnb-bar--urgent .hprnb-bar__btn {
+		inline-size: var(--hprnb-u-height);
+		block-size: auto;
+		min-block-size: 0;
 	}
 }
 
@@ -2164,8 +2262,9 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 	.hprnb-root .hprnb-bar--urgent {
 		--hprnb-e-display: block;
 		--hprnb-e-max: none;
-		--hprnb-e-label-size: 12px;
-		--hprnb-e-font-size: var(--hprnb-m-font-size);
+		--hprnb-e-font-size: var(--hprnb-u-m-fs);
+		--hprnb-u-lfs: 12px;
+		--hprnb-u-lpad: 8px;
 		overflow-x: clip;
 		overflow-y: visible;
 	}
@@ -2183,12 +2282,14 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 		line-height: var(--hprnb-u-line);
 	}
 
-	/* The label floats at the head of the headline, which runs on two lines and passes back under it. */
+	/* The plate floats at the head of the headline, centred on its first line (a margin box of
+	   exactly one line), and the second line passes back under it. */
 	.hprnb-root .hprnb-bar--urgent .hprnb-bar__label {
 		float: inline-start;
-		block-size: var(--hprnb-u-line);
-		margin: 0;
+		block-size: calc(var(--hprnb-u-line) - 4px);
+		margin: 2px 0;
 		margin-inline-end: 10px;
+		border-inline-end-width: 2px;
 	}
 
 	.hprnb-root .hprnb-bar--urgent .hprnb-bar__viewport,
@@ -2237,42 +2338,6 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 	.hprnb-root .hprnb-bar--urgent .hprnb-bar__viewport.is-clipped::after {
 		display: block;
 	}
-
-	/* The buttons in a tab of the same red above the end corner (the news bar's tab), 44px each. */
-	.hprnb-root .hprnb-bar--urgent .hprnb-bar__controls {
-		position: absolute;
-		inset-block: auto 100%;
-		inset-inline: auto 0;
-		display: flex;
-		flex-direction: row;
-		align-items: stretch;
-		gap: 0;
-		block-size: auto;
-		margin: 0;
-		padding: 0;
-		background: var(--hprnb-u-bg);
-		box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3);
-	}
-
-	.hprnb-root .hprnb-bar--urgent .hprnb-bar__btn {
-		position: static;
-		flex: none;
-		inline-size: 44px;
-		min-inline-size: 44px;
-		block-size: 44px;
-		min-block-size: 44px;
-		border-radius: 0;
-		opacity: 1;
-	}
-
-	.hprnb-root .hprnb-bar--urgent .hprnb-bar__btn svg {
-		inline-size: 22px;
-		block-size: 22px;
-	}
-
-	.hprnb-root .hprnb-bar--urgent .hprnb-bar__progress {
-		block-size: 3px;
-	}
 }
 
 /* 2.15 — the phone design from 768px too (setting urgent_desktop_layout = mobile): the label floats at
@@ -2282,8 +2347,9 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 @container hprnb (min-width: 768px) {
 	.hprnb-root--u-d-flow .hprnb-bar--urgent {
 		--hprnb-e-display: block;
-		--hprnb-e-label-size: 12px;
-		--hprnb-e-font-size: var(--hprnb-m-font-size);
+		--hprnb-e-font-size: var(--hprnb-u-m-fs);
+		--hprnb-u-lfs: 12px;
+		--hprnb-u-lpad: 8px;
 		overflow-x: clip;
 		overflow-y: visible;
 	}
@@ -2301,8 +2367,8 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 
 	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__label {
 		float: inline-start;
-		block-size: var(--hprnb-u-line);
-		margin: 0;
+		block-size: calc(var(--hprnb-u-line) - 4px);
+		margin: 2px 0;
 		margin-inline-end: 12px;
 	}
 
@@ -2350,41 +2416,6 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__viewport.is-clipped::after {
 		display: block;
 	}
-
-	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__controls {
-		position: absolute;
-		inset-block: auto 100%;
-		inset-inline: auto 0;
-		display: flex;
-		flex-direction: row;
-		align-items: stretch;
-		gap: 0;
-		block-size: auto;
-		margin: 0;
-		padding: 0;
-		background: var(--hprnb-u-bg);
-		box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3);
-	}
-
-	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__btn {
-		position: static;
-		flex: none;
-		inline-size: 44px;
-		min-inline-size: 44px;
-		block-size: 44px;
-		min-block-size: 44px;
-		border-radius: 0;
-		opacity: 1;
-	}
-
-	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__btn svg {
-		inline-size: 22px;
-		block-size: 22px;
-	}
-
-	.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__progress {
-		block-size: 3px;
-	}
 }
 
 /* One height for the phone design, whatever the headline (2.15): the bar has its full height from the
@@ -2398,8 +2429,9 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 	padding-block: calc(var(--hprnb-u-pad) + (var(--hprnb-u-lines) - 1) * var(--hprnb-u-line) / 2);
 }
 
+/* Reduced motion: no take (section 12 already stops the label and its dot), no headline fade, no glide. */
 @media (prefers-reduced-motion: reduce) {
-	.hprnb-root--urgent .hprnb-bar--urgent[data-hprnb-init] {
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__viewport {
 		animation: none;
 	}
 

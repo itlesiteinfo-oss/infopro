@@ -78,10 +78,22 @@ class Behavior_Test extends HPRNB_Test_Case {
 	 */
 	public function test_continuous_reading_is_the_whole_condition() {
 		$post     = $this->create_post_ago( 60 );
-		$settings = $this->with_settings( array( 'mobile_behavior' => 'reading', 'mobile_reveal_paragraph' => 3 ) );
+		$settings = $this->with_settings(
+			array(
+				'mobile_behavior'         => 'reading',
+				'mobile_reveal_paragraph' => 3,
+			)
+		);
 
 		$reveal = Renderer::reveal_data( $settings );
-		$this->assertSame( array( 'mode' => 'paragraph', 'value' => 400, 'paragraph' => 3 ), $reveal['m'] );
+		$this->assertSame(
+			array(
+				'mode'      => 'paragraph',
+				'value'     => 400,
+				'paragraph' => 3,
+			),
+			$reveal['m']
+		);
 		$this->assertSame( 'immediate', $reveal['d']['mode'], 'Desktop keeps its own behaviour.' );
 
 		$this->go_to( get_permalink( $post ) );
@@ -98,7 +110,12 @@ class Behavior_Test extends HPRNB_Test_Case {
 
 	public function test_the_next_article_flag_needs_a_single_article_and_a_fixed_bar() {
 		$post     = $this->create_post_ago( 60 );
-		$settings = $this->with_settings( array( 'mobile_behavior' => 'reading', 'desktop_behavior' => 'reading' ) );
+		$settings = $this->with_settings(
+			array(
+				'mobile_behavior'  => 'reading',
+				'desktop_behavior' => 'reading',
+			)
+		);
 
 		$this->go_to( home_url( '/' ) );
 		$this->assertArrayNotHasKey( 'next', Renderer::profile_data( $settings, 'm' ), 'A listing of full posts has no "next article".' );
@@ -107,7 +124,12 @@ class Behavior_Test extends HPRNB_Test_Case {
 		$this->assertTrue( Renderer::profile_data( $settings, 'm' )['next'] );
 		$this->assertTrue( Renderer::profile_data( $settings, 'd' )['next'] );
 
-		$inline = $this->with_settings( array( 'mobile_behavior' => 'reading', 'mobile_placement' => 'inline' ) );
+		$inline = $this->with_settings(
+			array(
+				'mobile_behavior'  => 'reading',
+				'mobile_placement' => 'inline',
+			)
+		);
 		$this->go_to( get_permalink( $post ) );
 		$this->assertArrayNotHasKey( 'next', Renderer::profile_data( $inline, 'm' ), 'A bar inside the article scrolls away with it.' );
 
@@ -136,7 +158,14 @@ class Behavior_Test extends HPRNB_Test_Case {
 	 */
 	public function test_schema_6_names_what_a_site_already_has() {
 		// A 2.8 option: the mobile bar with the page, folding while scrolling down.
-		$old = array_merge( Settings::defaults(), array( 'mobile_reveal_mode' => 'immediate', 'mobile_hide_on_scroll' => true, 'mobile_collapse_mode' => 'scroll' ) );
+		$old = array_merge(
+			Settings::defaults(),
+			array(
+				'mobile_reveal_mode'    => 'immediate',
+				'mobile_hide_on_scroll' => true,
+				'mobile_collapse_mode'  => 'scroll',
+			)
+		);
 		unset( $old['desktop_behavior'], $old['mobile_behavior'], $old['desktop_next_hide'], $old['mobile_next_hide'] );
 
 		$upgraded = Settings::migrate( $old, 5 );
@@ -144,11 +173,25 @@ class Behavior_Test extends HPRNB_Test_Case {
 		$this->assertSame( 'always', $upgraded['desktop_behavior'] );
 
 		// The client's 2.8 set-up: paragraph 2, folding while scrolling.
-		$tuned = array_merge( $old, array( 'mobile_reveal_mode' => 'paragraph', 'mobile_reveal_paragraph' => 2, 'mobile_collapse_mode' => 'scroll' ) );
+		$tuned = array_merge(
+			$old,
+			array(
+				'mobile_reveal_mode'      => 'paragraph',
+				'mobile_reveal_paragraph' => 2,
+				'mobile_collapse_mode'    => 'scroll',
+			)
+		);
 		$this->assertSame( 'custom', Settings::migrate( $tuned, 5 )['mobile_behavior'] );
 
 		// Even the full 2.7 recipe stays "custom": naming it "reading" would switch the next-article part on.
-		$recipe = array_merge( $old, array( 'mobile_reveal_mode' => 'paragraph', 'mobile_hide_on_scroll' => true, 'mobile_collapse_mode' => 'article' ) );
+		$recipe = array_merge(
+			$old,
+			array(
+				'mobile_reveal_mode'    => 'paragraph',
+				'mobile_hide_on_scroll' => true,
+				'mobile_collapse_mode'  => 'article',
+			)
+		);
 		$this->assertSame( 'custom', Settings::migrate( $recipe, 5 )['mobile_behavior'] );
 		// Even though the next-article option now defaults to on: a migrated site gets it off.
 		$this->assertFalse( Settings::migrate( $recipe, 5 )['mobile_next_hide'] );
@@ -168,7 +211,16 @@ class Behavior_Test extends HPRNB_Test_Case {
 		$this->assertSame( (string) HPRNB_SCHEMA_VERSION, get_option( Settings::SCHEMA_OPTION ) );
 
 		// An explicit choice is never second-guessed, and an empty option is left alone.
-		$this->assertSame( 'reading', Settings::migrate( array( 'mobile_behavior' => 'reading', 'mobile_next_hide' => true ), 5 )['mobile_behavior'] );
+		$this->assertSame(
+			'reading',
+			Settings::migrate(
+				array(
+					'mobile_behavior'  => 'reading',
+					'mobile_next_hide' => true,
+				),
+				5
+			)['mobile_behavior']
+		);
 		$this->assertSame( array(), Settings::migrate( array(), 5 ) );
 	}
 
@@ -177,9 +229,13 @@ class Behavior_Test extends HPRNB_Test_Case {
 		unset( $settings['desktop_behavior'], $settings['mobile_behavior'], $settings['desktop_next_hide'], $settings['mobile_next_hide'] );
 		$settings['mobile_reveal_mode']   = 'paragraph';
 		$settings['mobile_collapse_mode'] = 'article';
-		$json = wp_json_encode(
+		$json                             = wp_json_encode(
 			array(
-				'_meta'    => array( 'plugin' => 'horizon-press-news-bar', 'schema_version' => 5, 'plugin_version' => '2.8.0' ),
+				'_meta'    => array(
+					'plugin'         => 'horizon-press-news-bar',
+					'schema_version' => 5,
+					'plugin_version' => '2.8.0',
+				),
 				'settings' => $settings,
 			)
 		);
@@ -192,7 +248,7 @@ class Behavior_Test extends HPRNB_Test_Case {
 
 	public function test_the_form_saves_the_choice_over_the_hidden_details() {
 		// The hidden "Custom" blocks still post their inputs: the choice wins over them.
-		$form = array(
+		$form  = array(
 			'mobile_behavior'         => 'reading',
 			'mobile_reveal_mode'      => 'immediate',
 			'mobile_collapse_mode'    => 'scroll',

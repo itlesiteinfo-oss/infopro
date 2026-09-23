@@ -42,12 +42,12 @@ class Import_Export_Test extends HPRNB_Test_Case {
 		$code   = Import_Export::import_json(
 			$this->document(
 				array(
-					'label_text'   => '<script>alert(1)</script>Imported',
-					'max_items'    => 999,
-					'bg_color'     => 'javascript:x',
-					'unknown_key'  => 'ignored',
-					'render_mode'  => 'php',
-					'orderby'      => 'rand',
+					'label_text'  => '<script>alert(1)</script>Imported',
+					'max_items'   => 999,
+					'bg_color'    => 'javascript:x',
+					'unknown_key' => 'ignored',
+					'render_mode' => 'php',
+					'orderby'     => 'rand',
 				)
 			)
 		);
@@ -76,7 +76,20 @@ class Import_Export_Test extends HPRNB_Test_Case {
 		$this->assertSame( 'import_error_schema', Import_Export::import_json( wp_json_encode( array( 'settings' => array() ) ) ) );
 		$this->assertSame( 'import_error_schema', Import_Export::import_json( $this->document( array(), array( 'plugin' => 'other' ) ) ) );
 		$this->assertSame( 'import_error_schema', Import_Export::import_json( $this->document( array(), array( 'schema_version' => 99 ) ) ) );
-		$this->assertSame( 'import_error_schema', Import_Export::import_json( wp_json_encode( array( '_meta' => array( 'plugin' => 'horizon-press-news-bar', 'schema_version' => 1 ), 'settings' => 'x' ) ) ) );
+		$this->assertSame(
+			'import_error_schema',
+			Import_Export::import_json(
+				wp_json_encode(
+					array(
+						'_meta'    => array(
+							'plugin'         => 'horizon-press-news-bar',
+							'schema_version' => 1,
+						),
+						'settings' => 'x',
+					)
+				)
+			)
+		);
 		$this->assertSame( 'import_error_size', Import_Export::import_json( str_repeat( ' ', 262145 ) ) );
 		$this->assertSame( 'import_error_json', Import_Export::import_json( str_repeat( '[', 20 ) . str_repeat( ']', 20 ) ), 'Depth is bounded.' );
 		$this->assertSame( Settings::defaults(), Settings::raw(), 'Nothing was written.' );
@@ -84,12 +97,37 @@ class Import_Export_Test extends HPRNB_Test_Case {
 
 	public function test_import_uploaded_file_checks() {
 		$this->assertSame( 'import_error_upload', Import_Export::import_uploaded_file( array() ) );
-		$this->assertSame( 'import_error_upload', Import_Export::import_uploaded_file( array( 'error' => UPLOAD_ERR_NO_FILE, 'tmp_name' => '', 'name' => 'a.json' ) ) );
-		$this->assertSame( 'import_error_upload', Import_Export::import_uploaded_file( array( 'error' => 0, 'tmp_name' => __FILE__, 'name' => 'a.json', 'size' => 10 ) ), 'Not an uploaded file.' );
+		$this->assertSame(
+			'import_error_upload',
+			Import_Export::import_uploaded_file(
+				array(
+					'error'    => UPLOAD_ERR_NO_FILE,
+					'tmp_name' => '',
+					'name'     => 'a.json',
+				)
+			)
+		);
+		$this->assertSame(
+			'import_error_upload',
+			Import_Export::import_uploaded_file(
+				array(
+					'error'    => 0,
+					'tmp_name' => __FILE__,
+					'name'     => 'a.json',
+					'size'     => 10,
+				)
+			),
+			'Not an uploaded file.'
+		);
 	}
 
 	public function test_reset_restores_defaults() {
-		Settings::update( array( 'max_items' => 2, 'label_text' => 'X' ) );
+		Settings::update(
+			array(
+				'max_items'  => 2,
+				'label_text' => 'X',
+			)
+		);
 		$this->assertSame( 2, Settings::raw()['max_items'] );
 		Settings::reset();
 		$this->assertSame( Settings::defaults(), get_option( Settings::OPTION ) );

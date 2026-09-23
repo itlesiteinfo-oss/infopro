@@ -7,7 +7,7 @@
 
 namespace HorizonPress\NewsBar\Admin;
 
-use HorizonPress\NewsBar\Payload;
+use HorizonPress\NewsBar\Query;
 use HorizonPress\NewsBar\Renderer;
 use HorizonPress\NewsBar\Rest_Controller;
 use HorizonPress\NewsBar\Settings;
@@ -89,7 +89,9 @@ final class Preview {
 				'urgent' => true,
 			);
 		} else {
-			$payload = Payload::build( $settings );
+			// The news bar's design can be prepared while it is switched off (2.16): its preview ignores
+			// the switches, and the URGENT articles, which have a tab of their own.
+			$payload = Renderer::payload( Query::items( $settings ), $settings );
 			$body    = array(
 				'count'  => (int) $payload['count'],
 				'html'   => (string) $payload['html'],

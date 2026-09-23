@@ -12,16 +12,43 @@ use HorizonPress\NewsBar\Time_Window;
 class Time_Window_Test extends HPRNB_Test_Case {
 
 	public function test_intervals_per_unit() {
-		$this->assertSame( 30 * MINUTE_IN_SECONDS, Time_Window::seconds( array( 'window_value' => 30, 'window_unit' => 'minutes' ) ) );
-		$this->assertSame( 24 * HOUR_IN_SECONDS, Time_Window::seconds( array( 'window_value' => 24, 'window_unit' => 'hours' ) ) );
-		$this->assertSame( 3 * DAY_IN_SECONDS, Time_Window::seconds( array( 'window_value' => 3, 'window_unit' => 'days' ) ) );
+		$this->assertSame(
+			30 * MINUTE_IN_SECONDS,
+			Time_Window::seconds(
+				array(
+					'window_value' => 30,
+					'window_unit'  => 'minutes',
+				)
+			)
+		);
+		$this->assertSame(
+			24 * HOUR_IN_SECONDS,
+			Time_Window::seconds(
+				array(
+					'window_value' => 24,
+					'window_unit'  => 'hours',
+				)
+			)
+		);
+		$this->assertSame(
+			3 * DAY_IN_SECONDS,
+			Time_Window::seconds(
+				array(
+					'window_value' => 3,
+					'window_unit'  => 'days',
+				)
+			)
+		);
 		$this->assertSame( 'PT45M', 'PT' . Time_Window::interval( 45, 'minutes' )->i . 'M' );
 		$this->assertSame( 2, Time_Window::interval( 2, 'days' )->d );
 	}
 
 	public function test_cutoff_is_computed_in_utc() {
 		$now      = new DateTimeImmutable( '2026-09-11 16:20:00', new DateTimeZone( 'Europe/Paris' ) );
-		$settings = array( 'window_value' => 24, 'window_unit' => 'hours' );
+		$settings = array(
+			'window_value' => 24,
+			'window_unit'  => 'hours',
+		);
 		$cutoff   = Time_Window::cutoff( $settings, $now );
 
 		$this->assertSame( 'UTC', $cutoff->getTimezone()->getName() );
@@ -32,26 +59,61 @@ class Time_Window_Test extends HPRNB_Test_Case {
 	public function test_dst_transition_does_not_change_the_window_length() {
 		// 2026-03-29 03:30 Europe/Paris is one hour after the spring-forward gap.
 		$now      = new DateTimeImmutable( '2026-03-29 03:30:00', new DateTimeZone( 'Europe/Paris' ) );
-		$settings = array( 'window_value' => 24, 'window_unit' => 'hours' );
+		$settings = array(
+			'window_value' => 24,
+			'window_unit'  => 'hours',
+		);
 		$cutoff   = Time_Window::cutoff( $settings, $now );
 		$this->assertSame( $now->getTimestamp() - DAY_IN_SECONDS, $cutoff->getTimestamp() );
 		$this->assertSame( '2026-03-28 01:30:00', $cutoff->format( 'Y-m-d H:i:s' ) );
 
 		// Autumn: 2026-10-25 02:30 CET (after the fall-back).
 		$now    = new DateTimeImmutable( '2026-10-25 02:30:00 CET' );
-		$cutoff = Time_Window::cutoff( array( 'window_value' => 1, 'window_unit' => 'days' ), $now );
+		$cutoff = Time_Window::cutoff(
+			array(
+				'window_value' => 1,
+				'window_unit'  => 'days',
+			),
+			$now
+		);
 		$this->assertSame( $now->getTimestamp() - DAY_IN_SECONDS, $cutoff->getTimestamp() );
 	}
 
 	public function test_date_query_shape() {
 		$now   = new DateTimeImmutable( '2026-09-11 15:04:05', new DateTimeZone( 'UTC' ) );
-		$query = Time_Window::date_query( array( 'window_value' => 90, 'window_unit' => 'minutes' ), $now );
+		$query = Time_Window::date_query(
+			array(
+				'window_value' => 90,
+				'window_unit'  => 'minutes',
+			),
+			$now
+		);
 
 		$this->assertCount( 1, $query );
 		$this->assertSame( 'post_date_gmt', $query[0]['column'] );
 		$this->assertTrue( $query[0]['inclusive'] );
-		$this->assertSame( array( 'year' => 2026, 'month' => 9, 'day' => 11, 'hour' => 13, 'minute' => 34, 'second' => 5 ), $query[0]['after'] );
-		$this->assertSame( array( 'year' => 2026, 'month' => 9, 'day' => 11, 'hour' => 15, 'minute' => 4, 'second' => 5 ), $query[0]['before'] );
+		$this->assertSame(
+			array(
+				'year'   => 2026,
+				'month'  => 9,
+				'day'    => 11,
+				'hour'   => 13,
+				'minute' => 34,
+				'second' => 5,
+			),
+			$query[0]['after']
+		);
+		$this->assertSame(
+			array(
+				'year'   => 2026,
+				'month'  => 9,
+				'day'    => 11,
+				'hour'   => 15,
+				'minute' => 4,
+				'second' => 5,
+			),
+			$query[0]['before']
+		);
 	}
 
 	public function test_24h_window_boundaries() {
@@ -64,7 +126,12 @@ class Time_Window_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_30_minutes_window() {
-		$settings = $this->with_settings( array( 'window_value' => 30, 'window_unit' => 'minutes' ) );
+		$settings = $this->with_settings(
+			array(
+				'window_value' => 30,
+				'window_unit'  => 'minutes',
+			)
+		);
 		$in       = $this->create_post_ago( 29 * MINUTE_IN_SECONDS );
 		$out      = $this->create_post_ago( 31 * MINUTE_IN_SECONDS );
 
@@ -74,7 +141,12 @@ class Time_Window_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_3_days_window() {
-		$settings = $this->with_settings( array( 'window_value' => 3, 'window_unit' => 'days' ) );
+		$settings = $this->with_settings(
+			array(
+				'window_value' => 3,
+				'window_unit'  => 'days',
+			)
+		);
 		$in       = $this->create_post_ago( 71 * HOUR_IN_SECONDS );
 		$out      = $this->create_post_ago( 73 * HOUR_IN_SECONDS );
 
@@ -85,7 +157,12 @@ class Time_Window_Test extends HPRNB_Test_Case {
 
 	public function test_modified_date_is_ignored() {
 		$old = $this->create_post_ago( 5 * DAY_IN_SECONDS );
-		wp_update_post( array( 'ID' => $old, 'post_content' => 'Updated today' ) );
+		wp_update_post(
+			array(
+				'ID'           => $old,
+				'post_content' => 'Updated today',
+			)
+		);
 		clean_post_cache( $old );
 		$this->assertSame( gmdate( 'Y-m-d' ), substr( get_post( $old )->post_modified_gmt, 0, 10 ) );
 

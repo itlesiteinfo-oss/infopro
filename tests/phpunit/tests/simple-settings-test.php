@@ -99,7 +99,12 @@ class Simple_Settings_Test extends HPRNB_Test_Case {
 		foreach ( array( 'flow_image', 'card' ) as $layout ) {
 			$settings = $this->with_settings( array( 'mobile_layout' => $layout ) );
 			$this->assertContains( 'hprnb-root--m-peek-thumb', Renderer::root_classes( $settings ), $layout );
-			$off = $this->with_settings( array( 'mobile_layout' => $layout, 'mobile_peek_thumbnail' => false ) );
+			$off = $this->with_settings(
+				array(
+					'mobile_layout'         => $layout,
+					'mobile_peek_thumbnail' => false,
+				)
+			);
 			$this->assertNotContains( 'hprnb-root--m-peek-thumb', Renderer::root_classes( $off ), $layout . ' without the option.' );
 		}
 	}

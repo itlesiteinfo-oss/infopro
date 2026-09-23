@@ -29,8 +29,8 @@ class Urgent_Test extends HPRNB_Test_Case {
 	 * @return void
 	 */
 	private function submit( int $post_id, array $fields ): void {
-		$_POST                         = array();
-		$_POST[ Post_Controls::NONCE ] = wp_create_nonce( Post_Controls::NONCE );
+		$_POST                                = array();
+		$_POST[ Post_Controls::NONCE ]        = wp_create_nonce( Post_Controls::NONCE );
 		$_POST[ Post_Controls::URGENT_NONCE ] = wp_create_nonce( Post_Controls::URGENT_NONCE );
 		foreach ( $fields as $key ) {
 			$_POST[ $key ] = '1';
@@ -49,7 +49,13 @@ class Urgent_Test extends HPRNB_Test_Case {
 		$this->assertSame( '#E11D2B', $defaults['urgent_bg_color'] );
 		$this->assertSame( '#FFFFFF', $defaults['urgent_text_color'] );
 
-		$clean = Settings::sanitize( array( 'urgent_minutes' => 5000, 'urgent_label' => '', 'urgent_bg_color' => 'red' ) );
+		$clean = Settings::sanitize(
+			array(
+				'urgent_minutes'  => 5000,
+				'urgent_label'    => '',
+				'urgent_bg_color' => 'red',
+			)
+		);
 		$this->assertSame( 1440, $clean['urgent_minutes'], 'A day at most.' );
 		$this->assertSame( 'URGENT', $clean['urgent_label'], 'An empty label falls back: the red bar always says what it is.' );
 		$this->assertSame( '#E11D2B', $clean['urgent_bg_color'] );
@@ -177,7 +183,12 @@ class Urgent_Test extends HPRNB_Test_Case {
 		$old      = $this->create_post_ago( 7200, array( 'post_title' => 'Old but flagged last' ) );
 		$fresh    = $this->create_post_ago( 60, array( 'post_title' => 'Fresh, flagged first' ) );
 		$gone     = $this->create_post_ago( 120, array( 'post_title' => 'Expired' ) );
-		$draft    = self::factory()->post->create( array( 'post_status' => 'draft', 'post_title' => 'Draft' ) );
+		$draft    = self::factory()->post->create(
+			array(
+				'post_status' => 'draft',
+				'post_title'  => 'Draft',
+			)
+		);
 		$this->create_post_ago( 30, array( 'post_title' => 'Never flagged' ) );
 
 		Urgent::flag( $fresh, $settings, $now - 300 );
@@ -211,9 +222,10 @@ class Urgent_Test extends HPRNB_Test_Case {
 		$payload  = Payload::get( $settings );
 		$this->assertSame( 2, $payload['count'], 'The news bar still lists the urgent article among the headlines.' );
 		$this->assertSame( 1, $payload['urgent_count'] );
-		$this->assertStringStartsWith( '<aside class="hprnb-bar hprnb-bar--label-start hprnb-bar--reserve hprnb-bar--ticker-marquee hprnb-bar--urgent"', $payload['urgent_html'] );
+		$this->assertStringStartsWith( '<aside class="hprnb-bar hprnb-bar--label-start hprnb-bar--reserve hprnb-bar--ticker-rotate hprnb-bar--urgent"', $payload['urgent_html'] );
 		$this->assertStringContainsString( 'aria-label="Breaking news"', $payload['urgent_html'] );
-		$this->assertStringContainsString( '<span class="hprnb-bar__label-text">URGENT</span><span class="hprnb-bar__label-chevron" aria-hidden="true"><svg', $payload['urgent_html'] );
+		$this->assertStringContainsString( '<p class="hprnb-bar__label"><span class="hprnb-bar__label-text">URGENT</span></p>', $payload['urgent_html'], '2.16: a plain plate, no chevron.' );
+		$this->assertStringContainsString( 'data-hprnb-ticker="rotate" data-hprnb-ticker-mobile="rotate"', $payload['urgent_html'], '2.16: one headline at a time, never a marquee.' );
 		$this->assertStringContainsString( 'data-hprnb-since="' . Urgent::since( $urgent ) . '" data-hprnb-until="' . Urgent::until( $urgent ) . '"', $payload['urgent_html'] );
 		$this->assertStringContainsString( 'hprnb-bar__btn--close', $payload['urgent_html'], 'Always closable.' );
 		$this->assertStringContainsString( 'data-hprnb-remember="0"', $payload['urgent_html'], 'Its own memory, not the news bar\'s.' );
@@ -229,7 +241,7 @@ class Urgent_Test extends HPRNB_Test_Case {
 		$this->assertStringNotContainsString( 'hprnb-root--reveal', $root );
 		$this->assertLessThan( strpos( $root, 'Plain headline' ), strpos( $root, 'hprnb-bar--urgent' ), 'The urgent bar comes first, the news bar behind it.' );
 		$this->assertSame( 2, substr_count( $root, '<aside ' ) );
-		$this->assertStringContainsString( '--hprnb-u-bg:#E11D2B;--hprnb-u-fg:#FFFFFF;--hprnb-u-height:40px;--hprnb-u-m-height:76px;--hprnb-u-line:26px;--hprnb-u-pad:12px;--hprnb-u-lines:2', $root );
+		$this->assertStringContainsString( '--hprnb-u-bg:#E11D2B;--hprnb-u-fg:#FFFFFF;--hprnb-u-height:48px;--hprnb-u-m-height:76px;--hprnb-u-line:24px;--hprnb-u-pad:14px;--hprnb-u-lines:2;--hprnb-u-fs:17px;--hprnb-u-m-fs:17px', $root );
 
 		// Without urgent articles: the pending class is back, the attribute says 0, one aside.
 		Urgent::unflag( $urgent );
@@ -243,7 +255,12 @@ class Urgent_Test extends HPRNB_Test_Case {
 
 	public function test_an_urgent_article_alone_still_renders_a_root() {
 		// The news bar is empty (quiet hours: a two-hour window, a five-hour-old article), the red bar is not.
-		$this->with_settings( array( 'window_value' => 2, 'window_unit' => 'hours' ) );
+		$this->with_settings(
+			array(
+				'window_value' => 2,
+				'window_unit'  => 'hours',
+			)
+		);
 		$urgent = $this->create_post_ago( 5 * HOUR_IN_SECONDS, array( 'post_title' => 'Late breaking' ) );
 		Urgent::flag( $urgent, Settings::get() );
 		Payload::flush();
@@ -267,7 +284,7 @@ class Urgent_Test extends HPRNB_Test_Case {
 		$this->assertContains( 'hprnb-reserve', get_body_class() );
 		$this->assertNotContains( 'hprnb-m-pending', get_body_class(), 'No wait while urgent articles are in front.' );
 		$inline = wp_styles()->get_data( 'hprnb-bar', 'after' );
-		$this->assertStringContainsString( '--hprnb-height:40px;--hprnb-m-height:76px', implode( '', (array) $inline ), 'The reserved space is the red bar\'s.' );
+		$this->assertStringContainsString( '--hprnb-height:48px;--hprnb-m-height:76px', implode( '', (array) $inline ), 'The reserved space is the red bar\'s.' );
 	}
 
 	public function test_flagging_and_expiring_invalidate_the_cache() {
@@ -298,7 +315,12 @@ class Urgent_Test extends HPRNB_Test_Case {
 		$this->assertStringContainsString( 'REST urgent', $data['urgent_html'] );
 
 		$request = new WP_REST_Request( 'POST', '/hprnb/v1/preview' );
-		$request->set_body_params( array( 'settings' => array( 'urgent_label' => 'FLASH' ), 'urgent' => true ) );
+		$request->set_body_params(
+			array(
+				'settings' => array( 'urgent_label' => 'FLASH' ),
+				'urgent'   => true,
+			)
+		);
 		$data = $server->dispatch( $request )->get_data();
 		$this->assertTrue( $data['urgent'] );
 		$this->assertSame( 2, $data['count'], 'Two invented breaking stories.' );
@@ -314,7 +336,15 @@ class Urgent_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_render_settings_and_heights() {
-		$settings = Settings::sanitize( array( 'mobile_layout' => 'card', 'mobile_lines' => 3, 'mobile_font_size' => 18, 'close_button' => false, 'show_relative_time' => true ) );
+		$settings = Settings::sanitize(
+			array(
+				'mobile_layout'      => 'card',
+				'mobile_lines'       => 3,
+				'mobile_font_size'   => 18,
+				'close_button'       => false,
+				'show_relative_time' => true,
+			)
+		);
 		$rendered = Urgent::render_settings( $settings );
 		$this->assertSame( 'flow', $rendered['mobile_layout'], 'The flowing shape, never the image bar: no picture on the red bar.' );
 		$this->assertTrue( $rendered['close_button'] );
@@ -323,15 +353,80 @@ class Urgent_Test extends HPRNB_Test_Case {
 		$this->assertSame( 2, $rendered['mobile_lines'], 'Two lines at most on the red bar.' );
 
 		$metrics = Renderer::urgent_metrics( $settings );
-		$this->assertSame( array( 'line' => 29, 'lines' => 2, 'height' => 76, 'pad' => 9 ), $metrics, '18px: line 29, two lines under the 76px floor.' );
+		$this->assertSame(
+			array(
+				'font'   => 17,
+				'line'   => 24,
+				'lines'  => 2,
+				'height' => 76,
+				'pad'    => 14,
+			),
+			$metrics,
+			'2.16: its own 17px headline, whatever the news bar\'s size.'
+		);
+		$big = Settings::sanitize( array( 'urgent_mobile_font_size' => 18 ) );
+		$this->assertSame(
+			array(
+				'font'   => 18,
+				'line'   => 25,
+				'lines'  => 2,
+				'height' => 76,
+				'pad'    => 13,
+			),
+			Renderer::urgent_metrics( $big ),
+			'18px: line 25, two lines under the 76px floor.'
+		);
+		$this->assertSame( 20, Renderer::urgent_metrics( Settings::sanitize( array( 'urgent_mobile_font_size' => 99 ) ) )['font'], 'Clamped to 20px on phones.' );
 		$this->assertSame( 76, Renderer::urgent_height( $settings, 'm' ) );
-		$this->assertSame( 40, Renderer::urgent_height( $settings, 'd' ) );
-		$this->assertSame( 32, Renderer::urgent_height( Settings::sanitize( array( 'font_size' => 15, 'bar_height' => 20 ) ), 'd' ), 'One line of 15px plus padding when the bar height is lower.' );
+		$this->assertSame( 48, Renderer::urgent_height( $settings, 'd' ), '2.16: the one-line chyron is 48px tall.' );
+		$this->assertSame(
+			48,
+			Renderer::urgent_height(
+				Settings::sanitize(
+					array(
+						'font_size'  => 15,
+						'bar_height' => 20,
+					)
+				),
+				'd'
+			),
+			'Never under 48px, whatever the news bar\'s height.'
+		);
+		$this->assertSame( 53, Renderer::urgent_height( Settings::sanitize( array( 'urgent_font_size' => 22 ) ), 'd' ), '22px: ceil(22 x 1.3) + 24.' );
+		$this->assertSame( 56, Renderer::urgent_height( Settings::sanitize( array( 'bar_height' => 56 ) ), 'd' ), 'A taller news bar lends its height.' );
+		$this->assertStringContainsString( '--hprnb-u-fs:17px;--hprnb-u-m-fs:17px', Renderer::root_style( $settings ) );
+		$this->assertStringContainsString(
+			'--hprnb-u-fs:22px;--hprnb-u-m-fs:14px',
+			Renderer::root_style(
+				Settings::sanitize(
+					array(
+						'urgent_font_size'        => 22,
+						'urgent_mobile_font_size' => 14,
+					)
+				)
+			)
+		);
 	}
 
 	public function test_frontend_urgent_count_reads_a_payload() {
 		$this->assertSame( 0, Frontend::urgent_count( array() ) );
-		$this->assertSame( 0, Frontend::urgent_count( array( 'urgent_count' => 2, 'urgent_html' => '' ) ) );
-		$this->assertSame( 2, Frontend::urgent_count( array( 'urgent_count' => 2, 'urgent_html' => '<aside></aside>' ) ) );
+		$this->assertSame(
+			0,
+			Frontend::urgent_count(
+				array(
+					'urgent_count' => 2,
+					'urgent_html'  => '',
+				)
+			)
+		);
+		$this->assertSame(
+			2,
+			Frontend::urgent_count(
+				array(
+					'urgent_count' => 2,
+					'urgent_html'  => '<aside></aside>',
+				)
+			)
+		);
 	}
 }

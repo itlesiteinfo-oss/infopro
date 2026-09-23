@@ -285,6 +285,25 @@ final class Settings {
 				'default'    => 'URGENT',
 				'max_length' => 40,
 			),
+			// 2.16: the URGENT headline sizes (desktop one-line design; phones and the phone design).
+			'urgent_font_size'            => array(
+				'type'    => 'int',
+				'default' => 17,
+				'min'     => 14,
+				'max'     => 22,
+			),
+			'urgent_mobile_font_size'     => array(
+				'type'    => 'int',
+				'default' => 17,
+				'min'     => 14,
+				'max'     => 20,
+			),
+			// 2.16: both bars in the news face (the system sans of each platform) or the theme's.
+			'bar_font'                    => array(
+				'type'    => 'enum',
+				'default' => 'news',
+				'options' => array( 'news', 'theme' ),
+			),
 			'urgent_bg_color'             => array(
 				'type'    => 'color',
 				'default' => '#E11D2B',

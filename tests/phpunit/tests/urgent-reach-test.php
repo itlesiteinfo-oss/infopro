@@ -160,7 +160,14 @@ class Urgent_Reach_Test extends HPRNB_Test_Case {
 		$this->assertContains( 'hprnb-reserve', $page['body'] );
 
 		// PHP render mode without an urgent article: nothing at all on the front page.
-		Urgent::unflag( (int) get_posts( array( 's' => 'Front page breaking', 'fields' => 'ids' ) )[0] );
+		Urgent::unflag(
+			(int) get_posts(
+				array(
+					's'      => 'Front page breaking',
+					'fields' => 'ids',
+				)
+			)[0]
+		);
 		$this->with_settings(
 			array(
 				'render_mode'   => 'php',
@@ -185,7 +192,12 @@ class Urgent_Reach_Test extends HPRNB_Test_Case {
 		$this->assertStringContainsString( 'Only elsewhere', $page['footer'], 'The article is still a headline of the news bar.' );
 
 		// A single article, allowed by the urgent list: the red bar is there.
-		$post = (int) get_posts( array( 's' => 'Only elsewhere too', 'fields' => 'ids' ) )[0];
+		$post = (int) get_posts(
+			array(
+				's'      => 'Only elsewhere too',
+				'fields' => 'ids',
+			)
+		)[0];
 		$this->go_to_front( get_permalink( $post ) );
 		$this->assertTrue( Visibility::urgent_allowed( Settings::get() ) );
 		$this->assertStringContainsString( 'hprnb-root--urgent', $this->render_footer() );
@@ -224,17 +236,36 @@ class Urgent_Reach_Test extends HPRNB_Test_Case {
 
 		$settings = $this->with_settings( array() );
 		$this->assertNotContains( 'hprnb-root--u-d-flow', Renderer::root_classes( $settings ) );
-		$this->assertSame( 40, Renderer::urgent_height( $settings, 'd' ) );
+		$this->assertSame( 48, Renderer::urgent_height( $settings, 'd' ), '2.16: the one-line chyron is 48px tall.' );
 	}
 
 	public function test_the_root_tells_the_bootstrap_what_the_page_may_show() {
-		$settings = $this->with_settings( array( 'urgent_enabled' => false, 'close_button' => false, 'ticker_enabled' => false, 'mobile_ticker_mode' => 'static', 'mobile_behavior' => 'always', 'desktop_behavior' => 'always', 'mobile_kbd_hide' => false ) );
+		$settings = $this->with_settings(
+			array(
+				'urgent_enabled'     => false,
+				'close_button'       => false,
+				'ticker_enabled'     => false,
+				'mobile_ticker_mode' => 'static',
+				'mobile_behavior'    => 'always',
+				'desktop_behavior'   => 'always',
+				'mobile_kbd_hide'    => false,
+			)
+		);
 		$this->assertFalse( Renderer::needs_interactive_js( $settings ) );
-		$root     = Renderer::root( Renderer::payload( array(), $settings ), $settings );
+		$root = Renderer::root( Renderer::payload( array(), $settings ), $settings );
 		$this->assertStringContainsString( 'data-hprnb-urgent="off"', $root, 'Switched off: the bootstrap never asks the server on its account.' );
 		$this->assertStringNotContainsString( 'data-hprnb-js=', $root, 'Nothing needs the script.' );
 
-		$settings = $this->with_settings( array( 'close_button' => false, 'ticker_enabled' => false, 'mobile_ticker_mode' => 'static', 'mobile_behavior' => 'always', 'desktop_behavior' => 'always', 'mobile_kbd_hide' => false ) );
+		$settings = $this->with_settings(
+			array(
+				'close_button'       => false,
+				'ticker_enabled'     => false,
+				'mobile_ticker_mode' => 'static',
+				'mobile_behavior'    => 'always',
+				'desktop_behavior'   => 'always',
+				'mobile_kbd_hide'    => false,
+			)
+		);
 		$root     = Renderer::root( Renderer::payload( array(), $settings ), $settings );
 		$this->assertStringContainsString( 'data-hprnb-urgent="0"', $root );
 		$this->assertStringContainsString( 'data-hprnb-js=', $root, 'An urgent article brought in later needs the script that ends it on time.' );

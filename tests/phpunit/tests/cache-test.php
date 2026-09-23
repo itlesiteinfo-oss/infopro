@@ -61,7 +61,17 @@ class Cache_Test extends HPRNB_Test_Case {
 		$this->assertSame( 'hprnb_bar_' . $epoch . '_' . Cache::hash( $settings ), $key );
 		$this->assertLessThanOrEqual( 172, strlen( $key ) );
 
-		$colors = Settings::sanitize( array_merge( $settings, array( 'bg_color' => '#000000', 'font_size' => 20, 'z_index' => 5, 'bar_height' => 60 ) ) );
+		$colors = Settings::sanitize(
+			array_merge(
+				$settings,
+				array(
+					'bg_color'   => '#000000',
+					'font_size'  => 20,
+					'z_index'    => 5,
+					'bar_height' => 60,
+				)
+			)
+		);
 		$this->assertSame( $key, Cache::key( $colors ), 'Colours, sizes and z-index do not change the payload key.' );
 
 		$label = Settings::sanitize( array_merge( $settings, array( 'label_text' => 'Other' ) ) );
@@ -81,7 +91,30 @@ class Cache_Test extends HPRNB_Test_Case {
 		$this->assertNotSame( $key, Cache::key( $mobile_card ), 'The layout is part of the key: each design has its markup.' );
 		$this->assertTrue( Settings::wants_thumbnails( $settings ), 'The default mobile design carries the article picture.' );
 		$this->assertTrue( Settings::wants_thumbnails( $mobile_card ), 'And so does the card.' );
-		$mobile_rest = Settings::sanitize( array_merge( $settings, array( 'mobile_font_size' => 20, 'mobile_lines' => 4, 'mobile_label_style' => 'hidden', 'mobile_label_dot' => true, 'mobile_show_counter' => false, 'mobile_show_progress' => false, 'mobile_swipe' => false, 'mobile_hide_on_scroll' => false, 'mobile_show_separator' => true, 'mobile_custom_colors' => false, 'mobile_bg_color' => '#000000', 'desktop_layout' => 'stacked', 'desktop_label_style' => 'pill', 'desktop_label_dot' => true, 'desktop_show_counter' => true, 'desktop_lines' => 3, 'desktop_show_progress' => false ) ) );
+		$mobile_rest = Settings::sanitize(
+			array_merge(
+				$settings,
+				array(
+					'mobile_font_size'      => 20,
+					'mobile_lines'          => 4,
+					'mobile_label_style'    => 'hidden',
+					'mobile_label_dot'      => true,
+					'mobile_show_counter'   => false,
+					'mobile_show_progress'  => false,
+					'mobile_swipe'          => false,
+					'mobile_hide_on_scroll' => false,
+					'mobile_show_separator' => true,
+					'mobile_custom_colors'  => false,
+					'mobile_bg_color'       => '#000000',
+					'desktop_layout'        => 'stacked',
+					'desktop_label_style'   => 'pill',
+					'desktop_label_dot'     => true,
+					'desktop_show_counter'  => true,
+					'desktop_lines'         => 3,
+					'desktop_show_progress' => false,
+				)
+			)
+		);
 		$this->assertSame( $key, Cache::key( $mobile_rest ), 'Every other presentation setting lives on the root, outside the cache.' );
 
 		// A single headline drops its separator in CSS, so the count never fragments the cache.
@@ -91,7 +124,16 @@ class Cache_Test extends HPRNB_Test_Case {
 		$this->assertNotContains( 'mobile_card_float', Cache::PAYLOAD_KEYS, 'Floating or flush is a class on the root.' );
 
 		// The separator is a CSS concern on the root: none of its settings may fragment the cache.
-		$separator = Settings::sanitize( array_merge( $settings, array( 'show_separator' => true, 'separator_char' => '|', 'separator_after_last' => false ) ) );
+		$separator = Settings::sanitize(
+			array_merge(
+				$settings,
+				array(
+					'show_separator'       => true,
+					'separator_char'       => '|',
+					'separator_after_last' => false,
+				)
+			)
+		);
 		$this->assertSame( $key, Cache::key( $separator ), 'show_separator / separator_char / separator_after_last never enter the cache key.' );
 		$this->assertNotContains( 'separator_after_last', Cache::PAYLOAD_KEYS );
 		$this->assertNotContains( 'show_separator', Cache::PAYLOAD_KEYS );
@@ -113,11 +155,31 @@ class Cache_Test extends HPRNB_Test_Case {
 
 	public function test_invalid_payloads_are_ignored() {
 		$settings = Settings::get();
-		set_transient( Cache::key( $settings ), array( 'version' => '0.9.0', 'generated_at' => 1, 'count' => 0, 'items' => array(), 'html' => '' ), 60 );
+		set_transient(
+			Cache::key( $settings ),
+			array(
+				'version'      => '0.9.0',
+				'generated_at' => 1,
+				'count'        => 0,
+				'items'        => array(),
+				'html'         => '',
+			),
+			60
+		);
 		$this->assertNull( Cache::get( $settings ) );
 		set_transient( Cache::key( $settings ), 'string', 60 );
 		$this->assertNull( Cache::get( $settings ) );
-		$this->assertFalse( Cache::is_valid( array( 'version' => HPRNB_VERSION, 'generated_at' => '1', 'count' => 0, 'items' => array(), 'html' => '' ) ) );
+		$this->assertFalse(
+			Cache::is_valid(
+				array(
+					'version'      => HPRNB_VERSION,
+					'generated_at' => '1',
+					'count'        => 0,
+					'items'        => array(),
+					'html'         => '',
+				)
+			)
+		);
 	}
 
 	public function test_epoch_is_created_on_demand() {
@@ -152,12 +214,22 @@ class Cache_Test extends HPRNB_Test_Case {
 
 		Invalidation::reset_guard();
 		$before = Cache::epoch();
-		wp_update_post( array( 'ID' => $id, 'post_title' => 'Edited' ) );
+		wp_update_post(
+			array(
+				'ID'         => $id,
+				'post_title' => 'Edited',
+			)
+		);
 		$this->assertNotSame( $before, Cache::epoch(), 'Editing a published post invalidates.' );
 
 		Invalidation::reset_guard();
 		$before = Cache::epoch();
-		wp_update_post( array( 'ID' => $id, 'post_status' => 'draft' ) );
+		wp_update_post(
+			array(
+				'ID'          => $id,
+				'post_status' => 'draft',
+			)
+		);
 		$this->assertNotSame( $before, Cache::epoch(), 'Leaving publish invalidates.' );
 
 		$id2 = $this->create_post_ago( 60 );

@@ -211,13 +211,19 @@ final class Post_Controls {
 				</label>
 				<span class="description">
 				<?php
-				echo esc_html(
-					sprintf(
-						/* translators: %d: number of minutes. */
-						_n( 'For %d minute after you publish or update, the red URGENT bar shows this headline instead of the news bar, on every page and every device.', 'For %d minutes after you publish or update, the red URGENT bar shows this headline instead of the news bar, on every page and every device.', $minutes, 'horizon-press-news-bar' ),
-						$minutes
-					)
-				);
+				// The devices it is switched on for (2.16), in a whole sentence for the translators.
+				$devices = Urgent::devices( $settings );
+				if ( ! $devices['d'] ) {
+					/* translators: %d: number of minutes. */
+					$sentence = _n( 'For %d minute after you publish or update, the red URGENT bar shows this headline instead of the news bar, on phones only.', 'For %d minutes after you publish or update, the red URGENT bar shows this headline instead of the news bar, on phones only.', $minutes, 'horizon-press-news-bar' );
+				} elseif ( ! $devices['m'] ) {
+					/* translators: %d: number of minutes. */
+					$sentence = _n( 'For %d minute after you publish or update, the red URGENT bar shows this headline instead of the news bar, on desktops only.', 'For %d minutes after you publish or update, the red URGENT bar shows this headline instead of the news bar, on desktops only.', $minutes, 'horizon-press-news-bar' );
+				} else {
+					/* translators: %d: number of minutes. */
+					$sentence = _n( 'For %d minute after you publish or update, the red URGENT bar shows this headline instead of the news bar, on phones and desktops.', 'For %d minutes after you publish or update, the red URGENT bar shows this headline instead of the news bar, on phones and desktops.', $minutes, 'horizon-press-news-bar' );
+				}
+				echo esc_html( sprintf( $sentence, $minutes ) );
 				?>
 				</span>
 			</p>

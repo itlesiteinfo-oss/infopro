@@ -52,8 +52,8 @@ final class Payload {
 	 * @return array
 	 */
 	public static function build( array $settings ): array {
-		// Each bar has its own switch (2.16): the news bar's query only runs while it is on.
-		$items = empty( $settings['enabled'] ) ? array() : Query::items( $settings );
+		// Each bar has its own switches (2.16): the news bar's query only runs while it is on somewhere.
+		$items = Visibility::news_enabled( $settings ) ? Query::items( $settings ) : array();
 		return Renderer::payload( $items, $settings, null, Urgent::items( $settings ) );
 	}
 

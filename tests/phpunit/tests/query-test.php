@@ -42,7 +42,7 @@ class Query_Test extends HPRNB_Test_Case {
 				'max_items'                => 4,
 			)
 		);
-		$args = Query::args( $settings );
+		$args     = Query::args( $settings );
 
 		$this->assertSame( array( 3 ), $args['category__in'] );
 		$this->assertSame( array( 4, 5 ), $args['category__not_in'] );
@@ -81,7 +81,12 @@ class Query_Test extends HPRNB_Test_Case {
 		$this->create_post_ago( 60, array( 'post_status' => 'private' ) );
 		$this->create_post_ago( 60, array( 'post_status' => 'pending' ) );
 		$this->create_post_ago( 60, array( 'post_password' => 'secret' ) );
-		self::factory()->post->create( array( 'post_status' => 'future', 'post_date' => gmdate( 'Y-m-d H:i:s', time() + HOUR_IN_SECONDS ) ) );
+		self::factory()->post->create(
+			array(
+				'post_status' => 'future',
+				'post_date'   => gmdate( 'Y-m-d H:i:s', time() + HOUR_IN_SECONDS ),
+			)
+		);
 		$this->create_post_ago( 60, array( 'post_type' => 'page' ) );
 
 		$ids = wp_list_pluck( Query::items( Settings::get() ), 'id' );
@@ -105,7 +110,12 @@ class Query_Test extends HPRNB_Test_Case {
 
 		$this->assertSame( array( $c, $b, $a ), wp_list_pluck( Query::items( Settings::get() ), 'id' ) );
 
-		$settings = $this->with_settings( array( 'orderby' => 'date_asc', 'max_items' => 2 ) );
+		$settings = $this->with_settings(
+			array(
+				'orderby'   => 'date_asc',
+				'max_items' => 2,
+			)
+		);
 		$this->assertSame( array( $a, $b ), wp_list_pluck( Query::items( $settings ), 'id' ) );
 	}
 
@@ -116,7 +126,13 @@ class Query_Test extends HPRNB_Test_Case {
 
 		$p1 = $this->create_post_ago( 100, array( 'post_category' => array( $politics ) ) );
 		$p2 = $this->create_post_ago( 200, array( 'post_category' => array( $sport ) ) );
-		$p3 = $this->create_post_ago( 300, array( 'post_category' => array( $politics, $sport ), 'tags_input' => array( 'Breaking' ) ) );
+		$p3 = $this->create_post_ago(
+			300,
+			array(
+				'post_category' => array( $politics, $sport ),
+				'tags_input'    => array( 'Breaking' ),
+			)
+		);
 		$p4 = $this->create_post_ago( 400 );
 
 		// All categories.
@@ -168,7 +184,12 @@ class Query_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_thumbnails_are_resolved_without_n_plus_one() {
-		$settings = $this->with_settings( array( 'desktop_show_thumbnail' => true, 'thumbnail_size' => 'thumbnail' ) );
+		$settings = $this->with_settings(
+			array(
+				'desktop_show_thumbnail' => true,
+				'thumbnail_size'         => 'thumbnail',
+			)
+		);
 		$file     = DIR_TESTDATA . '/images/canola.jpg';
 
 		$post_ids = array();
@@ -180,12 +201,17 @@ class Query_Test extends HPRNB_Test_Case {
 		}
 
 		// Measure with one post allowed…
-		$one = $this->with_settings( array( 'desktop_show_thumbnail' => true, 'max_items' => 1 ) );
+		$one = $this->with_settings(
+			array(
+				'desktop_show_thumbnail' => true,
+				'max_items'              => 1,
+			)
+		);
 		wp_cache_flush();
 		wp_load_alloptions();
 		get_option( 'permalink_structure' );
-		$before = get_num_queries();
-		$items  = Query::items( $one );
+		$before      = get_num_queries();
+		$items       = Query::items( $one );
 		$queries_one = get_num_queries() - $before;
 		$this->assertCount( 1, $items );
 		$this->assertNotNull( $items[0]['thumb'] );
@@ -194,8 +220,8 @@ class Query_Test extends HPRNB_Test_Case {
 		wp_cache_flush();
 		wp_load_alloptions();
 		get_option( 'permalink_structure' );
-		$before = get_num_queries();
-		$items  = Query::items( $settings );
+		$before      = get_num_queries();
+		$items       = Query::items( $settings );
 		$queries_six = get_num_queries() - $before;
 		$this->assertCount( 6, $items );
 		foreach ( $items as $item ) {

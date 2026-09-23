@@ -278,13 +278,18 @@ final class Settings_Page {
 					),
 					array(
 						'title'       => __( 'Where the URGENT bar shows', 'horizon-press-news-bar' ),
-						'description' => __( 'Its own page types, whatever the news bar does in the Where tab: with the front page ticked, breaking news reaches the front page even where the news bar stays away. On phones and desktops alike. A page switched off in its News Bar box shows neither bar.', 'horizon-press-news-bar' ),
+						'description' => __( 'Its own page types, whatever the news bar does in the Where tab: with the front page ticked, breaking news reaches the front page even where the news bar stays away. Its devices are chosen in Content → Bars shown. A page switched off in its News Bar box shows neither bar.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'urgent_contexts' ),
 					),
 					array(
 						'title'       => __( 'Design on desktop', 'horizon-press-news-bar' ),
 						'description' => __( 'On phones the URGENT bar always has its two-line design with the close button in the tab above the corner. From 768 px, choose between one line and that same design.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'urgent_desktop_layout' ),
+					),
+					array(
+						'title'       => __( 'Headline size of the URGENT bar', 'horizon-press-news-bar' ),
+						'description' => __( 'The white URGENT plate, then the headline in bold, one at a time, like a news channel\'s breaking-news strap. The height the page keeps for the bar follows these sizes.', 'horizon-press-news-bar' ),
+						'keys'        => array( 'urgent_font_size', 'urgent_mobile_font_size' ),
 					),
 					array(
 						'title'       => __( 'Colours of the URGENT bar', 'horizon-press-news-bar' ),
@@ -432,6 +437,10 @@ final class Settings_Page {
 						'description' => __( 'One palette for desktop and mobile. The theme red is only used for the label pill: that is what catches the eye.', 'horizon-press-news-bar' ),
 						'presets'     => true,
 						'keys'        => array( 'bg_color', 'text_color', 'label_bg_color', 'label_text_color', 'accent_color', 'link_hover_color', 'accent_edge' ),
+					),
+					array(
+						'title' => __( 'Font of both bars', 'horizon-press-news-bar' ),
+						'keys'  => array( 'bar_font' ),
 					),
 					array(
 						'title'       => __( 'Dedicated mobile palette', 'horizon-press-news-bar' ),
@@ -1148,6 +1157,33 @@ final class Settings_Page {
 				'desc'    => __( 'In capitals before the headline, with a live dot and a chevron. "URGENT" by default.', 'horizon-press-news-bar' ),
 				'attrs'   => array( 'maxlength' => 40 ),
 			),
+			'urgent_font_size'            => array(
+				'section' => 'urgent',
+				'type'    => 'number',
+				'label'   => __( 'Headline size on desktop (one line)', 'horizon-press-news-bar' ),
+				'desc'    => __( 'From 14 to 22 px, 17 by default. The bar is 48 px tall, a little more for the largest sizes.', 'horizon-press-news-bar' ),
+			),
+			'urgent_mobile_font_size'     => array(
+				'section' => 'urgent',
+				'type'    => 'number',
+				'label'   => __( 'Headline size on phones', 'horizon-press-news-bar' ),
+				'desc'    => __( 'From 14 to 20 px, 17 by default; also used by the phone design on desktop. The bar stays 76 px tall up to 18 px.', 'horizon-press-news-bar' ),
+			),
+			'bar_font'                    => array(
+				'section' => 'appearance',
+				'type'    => 'choice',
+				'label'   => __( 'Font of both bars', 'horizon-press-news-bar' ),
+				'options' => array(
+					'news'  => array(
+						'title' => __( 'News face — recommended', 'horizon-press-news-bar' ),
+						'text'  => __( 'The system sans of each device, as on the big news sites: San Francisco on Apple, Segoe UI on Windows, Roboto on Android. Nothing is downloaded.', 'horizon-press-news-bar' ),
+					),
+					'theme' => array(
+						'title' => __( 'Theme font', 'horizon-press-news-bar' ),
+						'text'  => __( 'The bars use the site\'s own font, as before 2.16.', 'horizon-press-news-bar' ),
+					),
+				),
+			),
 			'urgent_bg_color'             => array(
 				'section' => 'urgent',
 				'type'    => 'color',
@@ -1744,8 +1780,9 @@ final class Settings_Page {
 			$id = 'hprnb-field-' . str_replace( '_', '-', $key );
 			// A sub-choice (2.16) is hidden, not greyed out, while the switch it belongs to is off: it
 			// plays no part then. Its value stays in the form, so switching back on finds it unchanged.
+			// The script hides it (at load too): without the script every row stays in view.
 			$reveal = empty( $field['reveal'] ) ? '' : (string) $field['reveal'];
-			echo '<tr class="hprnb-row hprnb-row--' . esc_attr( $field['type'] ) . ( empty( $field['advanced'] ) ? '' : ' hprnb-row--advanced' ) . ( '' === $reveal ? '' : ' hprnb-row--sub' ) . '"' . ( ! empty( $field['depends'] ) ? ' data-hprnb-depends="' . esc_attr( $field['depends'] ) . '"' : '' ) . ( '' === $reveal ? '' : ' data-hprnb-reveal="' . esc_attr( $reveal ) . '"' . ( empty( $settings[ $reveal ] ) ? ' hidden' : '' ) ) . '>';
+			echo '<tr class="hprnb-row hprnb-row--' . esc_attr( $field['type'] ) . ( empty( $field['advanced'] ) ? '' : ' hprnb-row--advanced' ) . ( '' === $reveal ? '' : ' hprnb-row--sub' ) . '"' . ( ! empty( $field['depends'] ) ? ' data-hprnb-depends="' . esc_attr( $field['depends'] ) . '"' : '' ) . ( '' === $reveal ? '' : ' data-hprnb-reveal="' . esc_attr( $reveal ) . '"' ) . '>';
 			if ( 'choice' === $field['type'] ) {
 				// The boxes carry their own titles: the whole width goes to them, the legend names the group.
 				echo '<td colspan="2">';
@@ -1754,7 +1791,8 @@ final class Settings_Page {
 				continue;
 			}
 			echo '<th scope="row">';
-			if ( in_array( $field['type'], array( 'text', 'number', 'select', 'color', 'ids' ), true ) ) {
+			// A switch is named by its row title too ("URGENT bar on desktop"), not only by its own text.
+			if ( in_array( $field['type'], array( 'text', 'number', 'select', 'color', 'ids', 'switch' ), true ) ) {
 				echo '<label for="' . esc_attr( $id ) . '">' . esc_html( $field['label'] ) . '</label>';
 			} else {
 				echo esc_html( $field['label'] );
@@ -2087,7 +2125,7 @@ final class Settings_Page {
 				<button type="button" role="tab" id="hprnb-preview-tab-mobile" class="hprnb-preview__tab" aria-selected="false" aria-controls="hprnb-preview-stage" data-hprnb-device="mobile"><?php esc_html_e( 'Mobile', 'horizon-press-news-bar' ); ?></button>
 			</div>
 			<div class="hprnb-preview__stage" id="hprnb-preview-stage" data-hprnb-device="desktop">
-				<div class="hprnb-preview__frame">
+				<div class="hprnb-preview__frame" data-hprnb-off="<?php esc_attr_e( 'The URGENT bar is switched off on this device (Content → Bars shown).', 'horizon-press-news-bar' ); ?>">
 				<div id="hprnb-preview-root" class="<?php echo esc_attr( implode( ' ', Renderer::root_classes( $settings, true ) ) ); ?> hprnb-root--preview hprnb-root--flat" style="<?php echo esc_attr( Renderer::root_style( $settings ) ); ?>" data-hprnb-desktop="<?php echo esc_attr( (string) wp_json_encode( Renderer::profile_data( $settings, 'd' ) ) ); ?>" data-hprnb-mobile="<?php echo esc_attr( (string) wp_json_encode( Renderer::profile_data( $settings, 'm' ) ) ); ?>">
 					<?php if ( '' === $html ) : ?>
 					<p class="hprnb-preview__empty" id="hprnb-preview-empty"><?php echo esc_html( self::empty_message() ); ?></p>

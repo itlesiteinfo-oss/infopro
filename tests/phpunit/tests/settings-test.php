@@ -29,7 +29,12 @@ class Settings_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_unknown_keys_are_ignored() {
-		$clean = Settings::sanitize( array( 'evil' => 'x', 'enabled' => false ) );
+		$clean = Settings::sanitize(
+			array(
+				'evil'    => 'x',
+				'enabled' => false,
+			)
+		);
 		$this->assertArrayNotHasKey( 'evil', $clean );
 		$this->assertFalse( $clean['enabled'] );
 		$this->assertSame( array_keys( Settings::defaults() ), array_keys( $clean ) );
@@ -57,16 +62,36 @@ class Settings_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_window_value_is_bounded_by_its_unit() {
-		$clean = Settings::sanitize( array( 'window_unit' => 'minutes', 'window_value' => 2000 ) );
+		$clean = Settings::sanitize(
+			array(
+				'window_unit'  => 'minutes',
+				'window_value' => 2000,
+			)
+		);
 		$this->assertSame( 1440, $clean['window_value'] );
 
-		$clean = Settings::sanitize( array( 'window_unit' => 'days', 'window_value' => 60 ) );
+		$clean = Settings::sanitize(
+			array(
+				'window_unit'  => 'days',
+				'window_value' => 60,
+			)
+		);
 		$this->assertSame( 30, $clean['window_value'] );
 
-		$clean = Settings::sanitize( array( 'window_unit' => 'hours', 'window_value' => 800 ) );
+		$clean = Settings::sanitize(
+			array(
+				'window_unit'  => 'hours',
+				'window_value' => 800,
+			)
+		);
 		$this->assertSame( 720, $clean['window_value'] );
 
-		$clean = Settings::sanitize( array( 'window_unit' => 'weeks', 'window_value' => 3 ) );
+		$clean = Settings::sanitize(
+			array(
+				'window_unit'  => 'weeks',
+				'window_value' => 3,
+			)
+		);
 		$this->assertSame( 'hours', $clean['window_unit'] );
 		$this->assertSame( 3, $clean['window_value'] );
 
@@ -76,7 +101,20 @@ class Settings_Test extends HPRNB_Test_Case {
 
 	public function test_2_7_reveal_paragraph_and_article_collapse_are_sanitised() {
 		// The detailed values only count with the "Custom" behaviour (2.9.0).
-		$clean = Settings::sanitize( array_merge( Settings::defaults(), array( 'mobile_behavior' => 'custom', 'desktop_behavior' => 'custom', 'mobile_reveal_mode' => 'paragraph', 'mobile_reveal_paragraph' => 4, 'desktop_reveal_mode' => 'scroll', 'desktop_collapse_mode' => 'article', 'mobile_collapse_mode' => 'article' ) ) );
+		$clean = Settings::sanitize(
+			array_merge(
+				Settings::defaults(),
+				array(
+					'mobile_behavior'         => 'custom',
+					'desktop_behavior'        => 'custom',
+					'mobile_reveal_mode'      => 'paragraph',
+					'mobile_reveal_paragraph' => 4,
+					'desktop_reveal_mode'     => 'scroll',
+					'desktop_collapse_mode'   => 'article',
+					'mobile_collapse_mode'    => 'article',
+				)
+			)
+		);
 		$this->assertSame( 'paragraph', $clean['mobile_reveal_mode'] );
 		$this->assertSame( 'scroll', $clean['desktop_reveal_mode'], 'Each device keeps its own.' );
 		$this->assertSame( 4, $clean['mobile_reveal_paragraph'] );
@@ -98,7 +136,16 @@ class Settings_Test extends HPRNB_Test_Case {
 	 * keeps exactly that behaviour on both devices, and the mobile design is left alone.
 	 */
 	public function test_schema_5_splits_the_reveal_per_device() {
-		$old = array_merge( Settings::defaults(), array( 'reveal_mode' => 'paragraph', 'reveal_value' => 700, 'reveal_paragraph' => 4, 'mobile_layout' => 'flow', 'mobile_lines' => 2 ) );
+		$old = array_merge(
+			Settings::defaults(),
+			array(
+				'reveal_mode'      => 'paragraph',
+				'reveal_value'     => 700,
+				'reveal_paragraph' => 4,
+				'mobile_layout'    => 'flow',
+				'mobile_lines'     => 2,
+			)
+		);
 		foreach ( array( 'desktop_', 'mobile_' ) as $prefix ) {
 			unset( $old[ $prefix . 'reveal_mode' ], $old[ $prefix . 'reveal_value' ], $old[ $prefix . 'reveal_paragraph' ] );
 		}
@@ -129,7 +176,13 @@ class Settings_Test extends HPRNB_Test_Case {
 		$this->assertSame( 'paragraph', $twice['mobile_reveal_mode'] );
 		$this->assertArrayNotHasKey( 'reveal_paragraph', $twice );
 		// And a site that had already set a device keeps that device's choice.
-		$mixed = Settings::migrate( array( 'reveal_mode' => 'smart', 'mobile_reveal_mode' => 'scroll' ), 4 );
+		$mixed = Settings::migrate(
+			array(
+				'reveal_mode'        => 'smart',
+				'mobile_reveal_mode' => 'scroll',
+			),
+			4
+		);
 		$this->assertSame( 'scroll', $mixed['mobile_reveal_mode'] );
 		$this->assertSame( 'smart', $mixed['desktop_reveal_mode'] );
 		// Nothing to migrate leaves the array untouched.
@@ -142,8 +195,18 @@ class Settings_Test extends HPRNB_Test_Case {
 	 */
 	public function test_import_migrates_an_older_export() {
 		$export = array(
-			'_meta'    => array( 'plugin' => 'horizon-press-news-bar', 'schema_version' => 4, 'plugin_version' => '2.7.0' ),
-			'settings' => array_merge( Settings::defaults(), array( 'reveal_mode' => 'smart', 'reveal_value' => 900 ) ),
+			'_meta'    => array(
+				'plugin'         => 'horizon-press-news-bar',
+				'schema_version' => 4,
+				'plugin_version' => '2.7.0',
+			),
+			'settings' => array_merge(
+				Settings::defaults(),
+				array(
+					'reveal_mode'  => 'smart',
+					'reveal_value' => 900,
+				)
+			),
 		);
 		foreach ( array( 'desktop_', 'mobile_' ) as $prefix ) {
 			unset( $export['settings'][ $prefix . 'reveal_mode' ], $export['settings'][ $prefix . 'reveal_value' ], $export['settings'][ $prefix . 'reveal_paragraph' ] );
@@ -225,7 +288,14 @@ class Settings_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_contexts_map_semantics() {
-		$clean = Settings::sanitize( array( 'contexts' => array( 'search' => '0', 'bogus' => '1' ) ) );
+		$clean = Settings::sanitize(
+			array(
+				'contexts' => array(
+					'search' => '0',
+					'bogus'  => '1',
+				),
+			)
+		);
 		$this->assertFalse( $clean['contexts']['search'] );
 		$this->assertTrue( $clean['contexts']['front_page'] );
 		$this->assertArrayNotHasKey( 'bogus', $clean['contexts'] );
@@ -252,7 +322,13 @@ class Settings_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_sanitize_is_idempotent() {
-		$once  = Settings::sanitize( array( 'max_items' => '7', 'bg_color' => '#abc', 'contexts' => array( 'tag' => 0 ) ) );
+		$once  = Settings::sanitize(
+			array(
+				'max_items' => '7',
+				'bg_color'  => '#abc',
+				'contexts'  => array( 'tag' => 0 ),
+			)
+		);
 		$twice = Settings::sanitize( $once );
 		$this->assertSame( $once, $twice );
 	}
@@ -261,7 +337,7 @@ class Settings_Test extends HPRNB_Test_Case {
 		add_filter(
 			'hprnb_settings',
 			static function ( $settings ) {
-				$settings['max_items'] = 9999;
+				$settings['max_items']  = 9999;
 				$settings['label_text'] = 'Filtered';
 				return $settings;
 			}
@@ -380,8 +456,8 @@ class Settings_Test extends HPRNB_Test_Case {
 		$this->assertSame( (string) HPRNB_SCHEMA_VERSION, get_option( Settings::SCHEMA_OPTION ) );
 
 		// A deliberate partial map is not a symptom of the bug: it stays.
-		$chosen                     = Settings::defaults();
-		$chosen['mobile_contexts']  = array_merge( array_fill_keys( Settings::CONTEXT_KEYS, false ), array( 'single_post' => true ) );
+		$chosen                    = Settings::defaults();
+		$chosen['mobile_contexts'] = array_merge( array_fill_keys( Settings::CONTEXT_KEYS, false ), array( 'single_post' => true ) );
 		update_option( Settings::OPTION, $chosen );
 		update_option( Settings::SCHEMA_OPTION, '3' );
 		Settings::flush();

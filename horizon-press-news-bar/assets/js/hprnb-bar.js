@@ -80,6 +80,20 @@
 	}
 
 	/**
+	 * The device whose switches apply (2.16): the screen's, measured like the device classes and the
+	 * reserved space (media queries, scrollbar included); the admin preview follows its frame.
+	 *
+	 * @param {Element} root The root.
+	 * @return {string} 'd' or 'm'.
+	 */
+	function deviceOf( root ) {
+		if ( root.classList.contains( 'hprnb-root--preview' ) || ! window.matchMedia ) {
+			return isNarrow( root ) ? 'm' : 'd';
+		}
+		return window.matchMedia( '(min-width: 768px)' ).matches ? 'd' : 'm';
+	}
+
+	/**
 	 * Per-bar state: listeners, timers and DOM changes registered here are undone by destroy().
 	 */
 	function createState() {
@@ -1428,18 +1442,28 @@
 				init( root );
 				return;
 			}
-			aside.hidden = true;
-			root.hidden = true;
-			document.body.classList.remove( 'hprnb-reserve' );
-			if ( contract ) {
-				contract.emit();
-			}
 			if ( cfg.remember ) {
 				try {
 					localStorage.setItem( DISMISS_KEY, String( Date.now() + cfg.dismissHours * 3600000 ) );
 				} catch ( e ) {
 					// Storage unavailable: the bar is still closed for this page.
 				}
+			}
+			if ( root.classList.contains( 'hprnb-root--urgent' ) && root.querySelector( '.hprnb-bar--urgent' ) ) {
+				// The URGENT bar, switched off on this device only (2.16), waits in the root for the other
+				// one: the news bar goes, the root stays, and the rules of a remembered dismissal decide
+				// per device (nothing here, the red bar and its space there).
+				document.documentElement.classList.add( 'hprnb-dismissed' );
+				destroyAside( aside );
+				root.removeChild( aside );
+				init( root );
+				return;
+			}
+			aside.hidden = true;
+			root.hidden = true;
+			document.body.classList.remove( 'hprnb-reserve' );
+			if ( contract ) {
+				contract.emit();
 			}
 		} );
 	}
@@ -1753,7 +1777,8 @@
 		// Each device keeps the height of the bar in front there (2.16).
 		var ud = urgent && urgentOn( root, 'd' );
 		var um = urgent && urgentOn( root, 'm' );
-		var d = ( ud && read( '--hprnb-u-height' ) ) || read( '--hprnb-height' );
+		// A screen past 768px whose bar is still under it (the scrollbar's width) shows the phone design.
+		var d = ( ud && read( isNarrow( root ) ? '--hprnb-u-m-height' : '--hprnb-u-height' ) ) || read( '--hprnb-height' );
 		var m = ( um && read( '--hprnb-u-m-height' ) ) || read( '--hprnb-m-height' );
 		if ( d ) {
 			body.style.setProperty( '--hprnb-height', d );
@@ -1772,9 +1797,10 @@
 	 */
 	function retireUrgent( root, aside ) {
 		destroyAside( aside );
-		if ( aside.parentNode ) {
-			aside.parentNode.removeChild( aside );
+		if ( aside.parentNode !== root ) {
+			return; // Markup already replaced (hybrid refresh): the root is no longer this bar's.
 		}
+		root.removeChild( aside );
 		root.classList.remove( 'hprnb-root--urgent' );
 		root.setAttribute( 'data-hprnb-urgent', '0' );
 		parkDevices( root, false );
@@ -1807,6 +1833,10 @@
 
 		function check() {
 			if ( aside.hprnbState !== state ) {
+				return;
+			}
+			if ( aside.parentNode !== root ) {
+				destroyAside( aside ); // Markup replaced (hybrid refresh): the new bars are not this timer's.
 				return;
 			}
 			var before = aside.querySelectorAll( '.hprnb-bar__item' ).length;
@@ -1920,6 +1950,7 @@
 
 		var cfg = readConfig( aside, root );
 		var mobile = isNarrow( root );
+		var device = deviceOf( root );
 		// The URGENT bar in its phone design: always on a phone, and from 768px too when chosen (2.15).
 		var uFlow = !! urgent && ( mobile || root.classList.contains( 'hprnb-root--u-d-flow' ) );
 		state.uFlow = uFlow;
@@ -2030,9 +2061,10 @@
 			} );
 		}
 
-		// Crossing the 768px threshold re-initialises the bar for the other presentation.
+		// Crossing the 768px threshold re-initialises the bar for the other presentation, and for the
+		// other device's switches (the screen may cross it a scrollbar's width before the bar does).
 		observeSize( state, root, function () {
-			if ( aside.hprnbState === state && isNarrow( root ) !== mobile ) {
+			if ( aside.hprnbState === state && ( isNarrow( root ) !== mobile || deviceOf( root ) !== device ) ) {
 				destroy( root );
 				init( root );
 			}
@@ -2074,7 +2106,7 @@
 				if ( ! preview ) {
 					reserveFor( root, true );
 				}
-				if ( urgentOn( root, isNarrow( root ) ? 'm' : 'd' ) ) {
+				if ( urgentOn( root, deviceOf( root ) ) ) {
 					initAside( root, urgent, true );
 					return;
 				}
@@ -2101,10 +2133,10 @@
 	 */
 	function watch( root ) {
 		var state = createState();
-		var mobile = isNarrow( root );
+		var device = deviceOf( root );
 		root.hprnbWatch = state;
 		observeSize( state, root, function () {
-			if ( root.hprnbWatch === state && isNarrow( root ) !== mobile ) {
+			if ( root.hprnbWatch === state && deviceOf( root ) !== device ) {
 				init( root );
 			}
 		} );

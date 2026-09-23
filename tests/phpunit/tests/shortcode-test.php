@@ -29,7 +29,12 @@ class Shortcode_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_php_mode_without_items_returns_nothing_and_hybrid_returns_hidden_root() {
-		$this->with_settings( array( 'render_mode' => 'php', 'auto_display' => false ) );
+		$this->with_settings(
+			array(
+				'render_mode'  => 'php',
+				'auto_display' => false,
+			)
+		);
 		$this->go_to_front( home_url( '/' ) );
 		$this->assertSame( '', do_shortcode( '[hprnb_news_bar]' ) );
 		$this->assertFalse( Frontend::root_claimed(), 'Nothing rendered: the root stays available.' );
@@ -47,7 +52,12 @@ class Shortcode_Test extends HPRNB_Test_Case {
 		$this->go_to_front( home_url( '/' ) );
 		$this->assertSame( '', do_shortcode( '[hprnb_news_bar]' ) );
 
-		$this->with_settings( array( 'show_on_desktop' => false, 'show_on_mobile' => false ) );
+		$this->with_settings(
+			array(
+				'show_on_desktop' => false,
+				'show_on_mobile'  => false,
+			)
+		);
 		$this->go_to_front( home_url( '/' ) );
 		$this->assertSame( '', do_shortcode( '[hprnb_news_bar]' ) );
 
@@ -64,7 +74,12 @@ class Shortcode_Test extends HPRNB_Test_Case {
 	public function test_shortcode_ignores_context_scope_but_not_absolute_exclusions() {
 		$this->create_post_ago( 60 );
 		$contexts = array_fill_keys( \HorizonPress\NewsBar\Settings::CONTEXT_KEYS, false );
-		$this->with_settings( array( 'display_scope' => 'custom', 'contexts' => $contexts ) );
+		$this->with_settings(
+			array(
+				'display_scope' => 'custom',
+				'contexts'      => $contexts,
+			)
+		);
 		$this->go_to_front( home_url( '/' ) );
 		$this->assertFalse( Frontend::is_eligible() );
 		$this->assertStringContainsString( '<aside', do_shortcode( '[hprnb_news_bar]' ) );
