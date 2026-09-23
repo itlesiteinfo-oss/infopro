@@ -82,6 +82,13 @@ final class Settings_Page {
 					$warnings[] = sprintf( __( 'Mobile text / mobile background contrast is %s, below the 4.5:1 recommended by WCAG AA.', 'horizon-press-news-bar' ), self::format_ratio( $ratio ) );
 				}
 			}
+			if ( ! empty( $clean['urgent_enabled'] ) ) {
+				$ratio = self::contrast_ratio( $clean['urgent_text_color'], $clean['urgent_bg_color'] );
+				if ( $ratio < 4.5 ) {
+					/* translators: %s: contrast ratio, e.g. "3.1:1". */
+					$warnings[] = sprintf( __( 'URGENT bar text / background contrast is %s, below the 4.5:1 recommended by WCAG AA.', 'horizon-press-news-bar' ), self::format_ratio( $ratio ) );
+				}
+			}
 
 			if ( ! empty( $warnings ) ) {
 				add_settings_error( Settings::OPTION, 'hprnb_settings_saved', __( 'Settings saved.', 'horizon-press-news-bar' ), 'success' );
@@ -239,6 +246,36 @@ final class Settings_Page {
 						'title'    => __( 'Headline details', 'horizon-press-news-bar' ),
 						'advanced' => true,
 						'keys'     => array( 'show_relative_time', 'relative_time_max_hours', 'show_separator', 'separator_char', 'separator_after_last' ),
+					),
+				),
+			),
+			'urgent'   => array(
+				'title' => __( 'Urgent', 'horizon-press-news-bar' ),
+				'cards' => array(
+					array(
+						'title'       => __( 'The URGENT bar', 'horizon-press-news-bar' ),
+						'switch'      => 'urgent_enabled',
+						'description' => __( 'Tick "Urgent article" in the News Bar box of an article and publish or update it: for the minutes below, a red bar with that headline takes the place of the news bar, on every page where it shows, on phones and desktops alike. Several urgent articles take turns, the newest first; each one leaves the bar when its own time is up, and the news bar comes back by itself once the last one has gone — the page does not need to be reloaded.', 'horizon-press-news-bar' ),
+						'keys'        => array( 'urgent_minutes', 'urgent_label' ),
+						'scenarios'   => array(
+							array(
+								'title' => __( 'One breaking story at 18:00, ten minutes', 'horizon-press-news-bar' ),
+								'body'  => __( 'Tick the box and publish at 18:00: the red bar shows that headline until 18:10, then the news bar is back as before.', 'horizon-press-news-bar' ),
+							),
+							array(
+								'title' => __( 'A second one at 18:05', 'horizon-press-news-bar' ),
+								'body'  => __( 'The two headlines take turns, the newest first. At 18:10 only the second remains; at 18:15 the news bar returns.', 'horizon-press-news-bar' ),
+							),
+							array(
+								'title' => __( 'End it early, or give it the full time again', 'horizon-press-news-bar' ),
+								'body'  => __( 'Untick the box and update the article: over at once. Tick "Start the countdown over from now" and update: the full time again, from that update. A typo fixed in between changes nothing.', 'horizon-press-news-bar' ),
+							),
+						),
+					),
+					array(
+						'title'       => __( 'Colours of the URGENT bar', 'horizon-press-news-bar' ),
+						'description' => __( 'The red of the reference site and white text. The label carries a live dot and a chevron, the headline is bold, and the close button sits in the tab above the corner, as on the news bar. The preview on the right shows it while this tab is open.', 'horizon-press-news-bar' ),
+						'keys'        => array( 'urgent_bg_color', 'urgent_text_color' ),
 					),
 				),
 			),
@@ -1046,6 +1083,36 @@ final class Settings_Page {
 				'section' => 'behavior',
 				'type'    => 'number',
 				'label'   => __( 'Closing duration (hours)', 'horizon-press-news-bar' ),
+			),
+			'urgent_enabled'              => array(
+				'section' => 'urgent',
+				'type'    => 'checkbox',
+				'label'   => __( 'Enable the URGENT bar', 'horizon-press-news-bar' ),
+				'text'    => __( 'Show the "Urgent article" box on the edit screen and the red bar on the site.', 'horizon-press-news-bar' ),
+			),
+			'urgent_minutes'              => array(
+				'section' => 'urgent',
+				'type'    => 'number',
+				'label'   => __( 'Duration (minutes)', 'horizon-press-news-bar' ),
+				'desc'    => __( 'How long the red bar keeps an article after it is published or updated with the box ticked, from 1 minute to 24 hours (1440). Each article has its own countdown.', 'horizon-press-news-bar' ),
+			),
+			'urgent_label'                => array(
+				'section' => 'urgent',
+				'type'    => 'text',
+				'label'   => __( 'Label of the red bar', 'horizon-press-news-bar' ),
+				'desc'    => __( 'In capitals before the headline, with a live dot and a chevron. "URGENT" by default.', 'horizon-press-news-bar' ),
+				'attrs'   => array( 'maxlength' => 40 ),
+			),
+			'urgent_bg_color'             => array(
+				'section' => 'urgent',
+				'type'    => 'color',
+				'label'   => __( 'Background colour of the red bar', 'horizon-press-news-bar' ),
+			),
+			'urgent_text_color'           => array(
+				'section'  => 'urgent',
+				'type'     => 'color',
+				'label'    => __( 'Text colour of the red bar', 'horizon-press-news-bar' ),
+				'contrast' => 'urgent',
 			),
 			'mobile_reveal_mode'          => array(
 				'section' => 'appearance',

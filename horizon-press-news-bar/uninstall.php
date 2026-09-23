@@ -30,6 +30,9 @@ function hprnb_uninstall_site() {
 	delete_option( HorizonPress\NewsBar\Settings::SCHEMA_OPTION );
 	delete_post_meta_by_key( HorizonPress\NewsBar\Settings::META_EXCLUDE );
 	delete_post_meta_by_key( HorizonPress\NewsBar\Settings::META_HIDE );
+	delete_post_meta_by_key( HorizonPress\NewsBar\Urgent::META_UNTIL );
+	delete_post_meta_by_key( HorizonPress\NewsBar\Urgent::META_SINCE );
+	delete_post_meta_by_key( HorizonPress\NewsBar\Urgent::META_ARMED );
 }
 
 if ( is_multisite() ) {

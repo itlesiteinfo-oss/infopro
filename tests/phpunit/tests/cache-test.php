@@ -40,7 +40,7 @@ class Cache_Test extends HPRNB_Test_Case {
 
 		$this->post_queries = 0;
 		Payload::get( $settings );
-		$this->assertSame( 1, $this->post_queries, 'A miss runs exactly one content query.' );
+		$this->assertSame( 2, $this->post_queries, 'A miss runs exactly two content queries: the headlines and the urgent articles (2.14).' );
 
 		Payload::flush();
 		$this->post_queries = 0;

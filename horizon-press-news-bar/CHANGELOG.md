@@ -2,6 +2,16 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.14.0] — 2026-09-23
+
+### Ajouté — le bandeau URGENT
+
+- **Une case « Article urgent » dans le bloc Barre d'actualités de l'écran d'édition** (articles seulement). Cochée à la publication ou à la mise à jour, elle lance un compte à rebours de la durée réglée (10 min par défaut, de 1 min à 24 h) : pendant ce temps, **un bandeau rouge avec ce titre prend la place de la barre d'actualités**, sur toutes les pages où elle s'affiche, sur téléphone comme sur ordinateur. Plusieurs articles urgents défilent tour à tour, le plus récent d'abord ; chacun quitte le bandeau à sa propre échéance et **la barre d'actualités revient d'elle-même quand le dernier est parti, sans recharger la page** (le script retire les titres échus à la seconde près et rend la page à la barre normale, avec son attente d'apparition). Le bloc affiche l'état (« Urgent jusqu'à 18 h 10, encore 7 min »), une case « Repartir de zéro à cette mise à jour » (une coquille corrigée entre-temps ne relance rien), et décocher puis mettre à jour arrête tout de suite. Un article programmé démarre son compte à rebours à sa publication.
+- **Un onglet « Urgent » dans les réglages** (deuxième onglet, visible en mode simple) : interrupteur, durée en minutes, étiquette (« URGENT »), couleur de fond (`#E11D2B`) et couleur du texte, avec l'aperçu en direct du bandeau rouge tant que l'onglet est ouvert.
+- **Le design** : rouge du site de référence avec un léger reflet, étiquette en capitales avec point animé et chevron, titre en gras blanc ; sur téléphone deux lignes qui s'effacent en fondu, le bouton fermer dans l'onglet au-dessus du coin comme la barre normale ; sur ordinateur une seule ligne avec le défilement réglé ; un halo rouge s'étend une fois sur la page à l'arrivée (rien sous « mouvement réduit »). Fermer le bandeau rend la page à la barre normale et reste mémorisé pour ces articles-là ; une urgence plus récente le rouvre. Une fermeture mémorisée de la barre normale ne fait jamais taire une urgence.
+- **Mécanique** : deux métadonnées par article (`_hprnb_urgent_since`, `_hprnb_urgent_until`, horodatages UTC ; `_hprnb_urgent_armed` en attente de publication), une requête bornée par l'échéance dans la même charge utile que la barre (`urgent_count`, `urgent_html`, aussi dans le corps REST et la session du script d'amorçage), l'invalidation à chaque changement de métadonnée, aucune tâche planifiée ni table. Une charge utile manquée compte désormais deux requêtes de contenu (titres puis urgences).
+- Un titre seul trop long sur le bandeau avec l'image s'efface aussi en fondu (le drapeau était posé par la rotation seulement).
+
 ## [2.13.0] — 2026-09-23
 
 ### Modifié — le repli suit simplement le sens du défilement

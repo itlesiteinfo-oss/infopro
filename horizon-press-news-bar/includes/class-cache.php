@@ -60,6 +60,9 @@ final class Cache {
 		'close_button',
 		'remember_dismiss',
 		'dismiss_duration_hours',
+		// The urgent bar rides in the same payload: its switch and its label are markup.
+		'urgent_enabled',
+		'urgent_label',
 	);
 
 	/**
@@ -149,11 +152,14 @@ final class Cache {
 	 */
 	public static function is_valid( $payload ): bool {
 		return is_array( $payload )
-			&& isset( $payload['version'], $payload['generated_at'], $payload['count'], $payload['items'], $payload['html'] )
+			&& isset( $payload['version'], $payload['generated_at'], $payload['count'], $payload['items'], $payload['html'], $payload['urgent_count'], $payload['urgent_items'], $payload['urgent_html'] )
 			&& HPRNB_VERSION === $payload['version']
 			&& is_int( $payload['generated_at'] )
 			&& is_int( $payload['count'] )
 			&& is_array( $payload['items'] )
-			&& is_string( $payload['html'] );
+			&& is_string( $payload['html'] )
+			&& is_int( $payload['urgent_count'] )
+			&& is_array( $payload['urgent_items'] )
+			&& is_string( $payload['urgent_html'] );
 	}
 }

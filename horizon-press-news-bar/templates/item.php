@@ -21,9 +21,12 @@ if ( empty( $hprnb_item['title'] ) || empty( $hprnb_item['url'] ) ) {
 	return;
 }
 
-$hprnb_thumb = ( Settings::wants_thumbnails( $hprnb_settings ) && ! empty( $hprnb_item['thumb']['url'] ) ) ? $hprnb_item['thumb'] : null;
+$hprnb_urgent = ! empty( $context['urgent'] );
+$hprnb_thumb  = ( ! $hprnb_urgent && Settings::wants_thumbnails( $hprnb_settings ) && ! empty( $hprnb_item['thumb']['url'] ) ) ? $hprnb_item['thumb'] : null;
+// An urgent headline carries its flag time and its expiry (2.14): the script ends it on time.
+$hprnb_timing = $hprnb_urgent ? ' data-hprnb-since="' . (int) ( $hprnb_item['since'] ?? 0 ) . '" data-hprnb-until="' . (int) ( $hprnb_item['until'] ?? 0 ) . '"' : '';
 ?>
-<li class="hprnb-bar__item" data-hprnb-id="<?php echo (int) $hprnb_item['id']; ?>">
+<li class="hprnb-bar__item" data-hprnb-id="<?php echo (int) $hprnb_item['id']; ?>"<?php echo $hprnb_timing; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Two integer attributes built below. ?>>
 	<a class="hprnb-bar__link" href="<?php echo esc_url( $hprnb_item['url'] ); ?>">
 		<?php if ( null !== $hprnb_thumb ) : ?>
 		<img class="hprnb-bar__thumb" src="<?php echo esc_url( $hprnb_thumb['url'] ); ?>" width="<?php echo (int) $hprnb_thumb['width']; ?>" height="<?php echo (int) $hprnb_thumb['height']; ?>" loading="lazy" decoding="async" alt="">

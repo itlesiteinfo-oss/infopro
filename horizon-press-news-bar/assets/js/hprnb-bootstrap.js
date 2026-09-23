@@ -27,6 +27,25 @@
 	}
 
 	/**
+	 * Urgent articles (2.14) ride in the same payload, optionally: an older
+	 * body or session entry simply carries none.
+	 *
+	 * @param {Object} p Validated payload.
+	 * @return {number} How many urgent headlines the payload carries.
+	 */
+	function urgentCount(p) {
+		return (Number.isFinite(p.urgent_count) && p.urgent_count > 0 && typeof p.urgent_html === 'string' && p.urgent_html !== '') ? p.urgent_count : 0;
+	}
+
+	/**
+	 * @param {Object} p Validated payload.
+	 * @return {string} The urgent bar markup, '' without one.
+	 */
+	function urgentHtml(p) {
+		return urgentCount(p) ? p.urgent_html : '';
+	}
+
+	/**
 	 * @return {Object|null} The stored payload, or null when absent/invalid/unreadable.
 	 */
 	function readSession() {
@@ -43,13 +62,13 @@
 	}
 
 	/**
-	 * Stores exactly { generated_at, count, html }.
+	 * Stores exactly { generated_at, count, html, urgent_count, urgent_html }.
 	 *
 	 * @param {Object} p Validated payload.
 	 */
 	function saveSession(p) {
 		try {
-			sessionStorage.setItem(SESSION_KEY, JSON.stringify({ generated_at: p.generated_at, count: p.count, html: p.html }));
+			sessionStorage.setItem(SESSION_KEY, JSON.stringify({ generated_at: p.generated_at, count: p.count, html: p.html, urgent_count: urgentCount(p), urgent_html: urgentHtml(p) }));
 		} catch (e) {
 			// Storage unavailable or full: nothing to do.
 		}
@@ -83,16 +102,18 @@
 			if (root.dataset.hprnbLayout !== 'reserve' || !root.querySelector('.hprnb-bar')) {
 				return;
 			}
-			var height = root.style.getPropertyValue('--hprnb-height');
+			// Urgent articles in front (2.14): their bar has one height of its own on each device.
+			var urgent = root.classList.contains('hprnb-root--urgent');
+			var height = root.style.getPropertyValue(urgent ? '--hprnb-u-height' : '--hprnb-height') || root.style.getPropertyValue('--hprnb-height');
 			if (height) {
 				document.body.style.setProperty('--hprnb-height', height);
 			}
-			var mobileHeight = root.style.getPropertyValue('--hprnb-m-height');
+			var mobileHeight = root.style.getPropertyValue(urgent ? '--hprnb-u-m-height' : '--hprnb-m-height') || root.style.getPropertyValue('--hprnb-m-height');
 			if (mobileHeight) {
 				document.body.style.setProperty('--hprnb-m-height', mobileHeight);
 			}
 			var gap = root.style.getPropertyValue('--hprnb-m-gap');
-			document.body.style.setProperty('--hprnb-m-gap', gap || '0px');
+			document.body.style.setProperty('--hprnb-m-gap', (urgent ? '' : gap) || '0px');
 			var peek = root.style.getPropertyValue('--hprnb-peek');
 			if (peek) {
 				document.body.style.setProperty('--hprnb-peek', peek);
@@ -136,20 +157,32 @@
 		 * @param {Object} p Payload that passed isValid().
 		 */
 		function apply(p) {
-			if (p.count === 0 || p.html === '') {
+			var urgent = urgentCount(p);
+			var html = (p.count === 0 || p.html === '') ? '' : p.html;
+			if (html === '' && urgent === 0) {
 				root.innerHTML = '';
 				root.hidden = true;
 				root.dataset.hprnbEmpty = '1';
 				root.dataset.hprnbCount = '0';
+				root.dataset.hprnbUrgent = '0';
+				root.classList.remove('hprnb-root--urgent');
 				document.body.classList.remove('hprnb-reserve');
 				return;
 			}
 			ensureCss();
-			root.innerHTML = p.html;
+			root.innerHTML = urgentHtml(p) + html;
 			root.hidden = false;
 			root.dataset.hprnbEmpty = '0';
-			root.dataset.hprnbCount = String(p.count);
+			root.dataset.hprnbCount = String(html === '' ? 0 : p.count);
+			root.dataset.hprnbUrgent = String(urgent);
 			root.dataset.hprnbGenerated = String(p.generated_at);
+			// Urgent articles wait for nobody: in front at once, whatever the news bar waits for.
+			// The interactive script prunes the expired ones and hands over when none is left.
+			root.classList.toggle('hprnb-root--urgent', urgent > 0);
+			if (urgent > 0) {
+				root.classList.remove('hprnb-root--d-pending', 'hprnb-root--m-pending');
+				document.body.classList.remove('hprnb-d-pending', 'hprnb-m-pending');
+			}
 			ensureLayout();
 			ensureJs();
 		}
@@ -159,7 +192,15 @@
 			ensureLayout();
 			var stored = readSession();
 			if (!stored || stored.generated_at < ssrGen) {
-				saveSession({ generated_at: ssrGen, count: hasAside ? (+root.dataset.hprnbCount || 1) : 0, html: root.innerHTML });
+				var ssrUrgent = root.querySelector('.hprnb-bar--urgent');
+				var ssrBar = root.querySelector('.hprnb-bar:not(.hprnb-bar--urgent)');
+				saveSession({
+					generated_at: ssrGen,
+					count: ssrBar ? (+root.dataset.hprnbCount || 1) : 0,
+					html: ssrBar ? ssrBar.outerHTML : '',
+					urgent_count: ssrUrgent ? (+root.dataset.hprnbUrgent || 1) : 0,
+					urgent_html: ssrUrgent ? ssrUrgent.outerHTML : ''
+				});
 			}
 			return;
 		}

@@ -69,10 +69,11 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_asset_budgets() {
-		// 2.11: two phone designs with their tab and the folding motion.
-		$this->assertLessThanOrEqual( 40 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
-		$this->assertLessThanOrEqual( 3 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bootstrap.min.js' ) );
-		$this->assertLessThanOrEqual( 22 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
+		// 2.11: two phone designs with their tab and the folding motion; 2.14: the urgent bar, its own
+		// shape on both devices (CSS), its timers and hand-over (script), its payload (bootstrap).
+		$this->assertLessThanOrEqual( 46 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
+		$this->assertLessThanOrEqual( 4 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bootstrap.min.js' ) );
+		$this->assertLessThanOrEqual( 26 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
 	}
 
 	/**
@@ -120,7 +121,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	public function test_plugin_headers() {
 		$data = get_plugin_data( HPRNB_FILE, false, false );
 		$this->assertSame( 'Horizon Press News Bar', $data['Name'] );
-		$this->assertSame( '2.13.0', $data['Version'] );
+		$this->assertSame( '2.14.0', $data['Version'] );
 		$this->assertSame( '6.6', $data['RequiresWP'] );
 		$this->assertSame( '8.0', $data['RequiresPHP'] );
 		$this->assertSame( 'horizon-press-news-bar', $data['TextDomain'] );

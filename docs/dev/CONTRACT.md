@@ -889,3 +889,62 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
 - `bin/build-zip.sh` reads the `Version:` header and writes `dist/horizon-press-news-bar-<version>.zip`,
   removing any older `horizon-press-news-bar*.zip` in `dist/`.
 
+
+## 28. The URGENT bar (2.14.0)
+
+- Post meta on `post`: `_hprnb_urgent_since` and `_hprnb_urgent_until` (UTC timestamps as strings),
+  `_hprnb_urgent_armed` (`'1'` on an unpublished article). `Urgent::flag()` writes since = now and
+  until = now + `urgent_minutes` × 60 and drops the armed flag; `arm()` the reverse; `unflag()` drops all
+  three. `Post_Controls::save()` (nonce, `edit_post`, posts only, feature on): unticked → unflag;
+  ticked on a non-`publish` status → arm once; ticked on `publish` → flag when not active or when
+  `hprnb_urgent_restart` is ticked, otherwise untouched. `transition_post_status` (priority 9, before
+  the invalidation) → `publish` from anything else with the armed flag → flag (or unflag when the
+  feature is off).
+- Settings: `urgent_enabled` (bool, true), `urgent_minutes` (int 1–1440, 10), `urgent_label` (text ≤ 40,
+  never empty, `URGENT`), `urgent_bg_color` (`#E11D2B`), `urgent_text_color` (`#FFFFFF`). Cache
+  payload keys add `urgent_enabled` and `urgent_label`. No schema bump: missing keys take their defaults.
+- Selection (`Urgent::args()`): `post_type=post`, `publish`, no password, `meta_query` `_hprnb_urgent_until >
+  now` NUMERIC and `_hprnb_urgent_since` EXISTS, ordered by since DESC then date DESC, `posts_per_page` =
+  min(`max_items`, 10). `Urgent::items()` normalises through `Query::normalize()` under
+  `Urgent::render_settings()` (flowing layout, no pictures, no relative time, close button on, no
+  remembered dismissal, immediate, no fold, no next-article exit, two lines at most), re-checks the
+  expiry, adds `since` and `until`, then `hprnb_urgent_items`. Filters `hprnb_urgent_query_args`,
+  `hprnb_urgent_bar_html`.
+- Payload (`Renderer::payload()`): `urgent_count`, `urgent_items`, `urgent_html` (the `<aside>` from
+  `Renderer::urgent_bar()`); `Cache::is_valid()` requires them. REST body and the bootstrap session
+  carry `urgent_count` / `urgent_html`; the ETag covers them. A cache miss runs two content queries.
+- Markup: `bar.php` with `urgent => true` adds `hprnb-bar--urgent`, `aria-label` "Breaking news", the
+  label from `urgent_label` followed by `<span class="hprnb-bar__label-chevron">` (icon `next`),
+  `data-hprnb-remember="0"`; `item.php` adds `data-hprnb-since` / `data-hprnb-until` and never a
+  picture. `Renderer::root()` prints the urgent aside first, then the news bar's; `hprnb-root--urgent`
+  and `data-hprnb-urgent="N"` when N > 0; no `*-pending` / `hprnb-root--reveal` classes then; the root is
+  empty only when both bars are. `root_style()` adds `--hprnb-u-bg`, `--hprnb-u-fg`, `--hprnb-u-height`
+  (`urgent_height('d')`: max(`bar_height`, ceil(font × 1.3) + 12)), `--hprnb-u-m-height`, `--hprnb-u-line`,
+  `--hprnb-u-pad`, `--hprnb-u-lines` (`urgent_metrics()`: flow line/pad for min(2, `mobile_lines`)).
+- Front end: assets and the interactive script are enqueued whenever the urgent bar is in front; the
+  body reserve uses the urgent heights and no mobile gap; no `hprnb-*-pending` body class; PHP render
+  mode renders the root when either bar has items. The anti-flash script still prints; CSS keeps
+  `#hprnb-root.hprnb-root--urgent` visible under `html.hprnb-dismissed`, with the body padding.
+- Script: `init(root)` prunes the urgent aside's items whose `until` ≤ now (updating
+  `data-hprnb-urgent`), reads `hprnb_urgent_closed` (localStorage, the newest `since` closed) and runs
+  the urgent aside when something is left (`hprnb-root--urgent` on, pending classes off, body heights
+  from `--hprnb-u-*`, profile overridden: no collapse, no next, no deep, fixed, close on, no counter;
+  rotate on a phone), otherwise retires it (removed from the DOM, `hprnb-root--urgent` off,
+  `data-hprnb-urgent="0"`, pending classes and `hprnb-root--reveal` restored from `data-hprnb-reveal`,
+  body heights from the root) and runs the news bar. A timer at the next `until` (+250 ms, also on
+  `visibilitychange`) prunes and re-initialises, or retires and hands over. Closing the urgent bar stores
+  the newest `since`, retires and hands over. `destroy(root)` destroys every aside. Analytics events
+  carry `bar: 'urgent' | 'news'` and the impression reason `urgent`. `flagClip()` sets `is-clipped` on a
+  single-headline flowing viewport (news bar too).
+- Stylesheet section 17: `.hprnb-root--urgent .hprnb-bar:not(.hprnb-bar--urgent)` hidden; the urgent
+  skin on `.hprnb-root .hprnb-bar--urgent` (tokens, red with a sheen, fixed, dot on, chevron mirrored under
+  `.hprnb-bar--rtl`); from 768px a `label title ctrl` grid of `--hprnb-u-height`, one line; under 768px a
+  block flow of `--hprnb-u-lines` × `--hprnb-u-line` with the fade and the 44px tab above the end corner;
+  `hprnb-urgent-flash` once on `[data-hprnb-init]` (none under reduced motion).
+- Admin: tab `urgent` (second), cards "The URGENT bar" (switch `urgent_enabled`, minutes, label) and
+  "Colours of the URGENT bar"; contrast warning for the pair; `POST /hprnb/v1/preview` takes `urgent`
+  (boolean) and answers `Urgent::sample_items()` rendered by `urgent_bar()` with `urgent: true`; the
+  admin script requests it while the Urgent tab is open, toggles `hprnb-root--urgent` on the preview root,
+  maps `urgent_bg_color` / `urgent_text_color` to `--hprnb-u-bg` / `--hprnb-u-fg` and `urgent_label` to
+  the label text live. `assets/css/hprnb-post.css` styles the box on `post.php` / `post-new.php`.
+- Budgets: CSS 46 KB, bootstrap 4 KB, interactive script 26 KB. Uninstall deletes the three meta keys.

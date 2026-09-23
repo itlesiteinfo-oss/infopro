@@ -1,0 +1,25 @@
+/* Horizon Press News Bar — the "News Bar" box on the edit screens (2.14: the urgent section). */
+.hprnb-urgent-box {
+	margin-block-start: 12px;
+	padding-block-start: 10px;
+	border-block-start: 1px solid #dcdcde;
+}
+
+.hprnb-urgent-box__label strong {
+	color: #b32d2e;
+	text-transform: uppercase;
+	letter-spacing: .04em;
+}
+
+.hprnb-urgent-box__state {
+	margin: 6px 0;
+	padding: 6px 10px;
+	border-inline-start: 3px solid #b32d2e;
+	background: #fcf0f1;
+	font-weight: 600;
+}
+
+.hprnb-urgent-box__state .description {
+	display: block;
+	font-weight: 400;
+}

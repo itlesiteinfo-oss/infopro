@@ -120,12 +120,13 @@ final class Frontend {
 		$settings = self::$settings;
 		$payload  = Payload::get( $settings );
 		$count    = (int) $payload['count'];
+		$urgent   = self::urgent_count( $payload );
 
 		if ( 'hybrid' === $settings['render_mode'] ) {
 			Assets::enqueue_bootstrap();
 		}
-		if ( $count > 0 ) {
-			self::enqueue_bar_assets( $settings );
+		if ( $count > 0 || $urgent > 0 ) {
+			self::enqueue_bar_assets( $settings, $urgent > 0 );
 		}
 	}
 
@@ -133,23 +134,35 @@ final class Frontend {
 	 * Enqueues the style (with the body height variable) and, when needed, the interactive script.
 	 *
 	 * @param array $settings Settings.
+	 * @param bool  $urgent   True while urgent articles are in front (2.14): their bar's height is
+	 *                        reserved and the script is needed, since it ends their reign on time.
 	 * @return void
 	 */
-	public static function enqueue_bar_assets( array $settings ): void {
+	public static function enqueue_bar_assets( array $settings, bool $urgent = false ): void {
 		Assets::enqueue_style();
 		wp_add_inline_style(
 			'hprnb-bar',
 			sprintf(
 				'body.hprnb-reserve{--hprnb-height:%1$dpx;--hprnb-m-height:%2$dpx;--hprnb-peek:%3$dpx;--hprnb-m-gap:%4$dpx}',
-				Renderer::profile_height( $settings, 'd' ),
-				Renderer::profile_height( $settings, 'm' ),
+				$urgent ? Renderer::urgent_height( $settings, 'd' ) : Renderer::profile_height( $settings, 'd' ),
+				$urgent ? Renderer::urgent_height( $settings, 'm' ) : Renderer::profile_height( $settings, 'm' ),
 				Renderer::peek_height( $settings ),
-				Renderer::mobile_gap( $settings )
+				$urgent ? 0 : Renderer::mobile_gap( $settings )
 			)
 		);
-		if ( Renderer::needs_interactive_js( $settings ) ) {
+		if ( $urgent || Renderer::needs_interactive_js( $settings ) ) {
 			Assets::enqueue_bar_script();
 		}
+	}
+
+	/**
+	 * Urgent articles in front of the news bar (2.14), from a payload.
+	 *
+	 * @param array $payload Payload.
+	 * @return int
+	 */
+	public static function urgent_count( array $payload ): int {
+		return ( isset( $payload['urgent_count'], $payload['urgent_html'] ) && '' !== $payload['urgent_html'] ) ? max( 0, (int) $payload['urgent_count'] ) : 0;
 	}
 
 	/**
@@ -169,7 +182,7 @@ final class Frontend {
 		}
 
 		$payload = Payload::get( $settings );
-		if ( 'hybrid' === $settings['render_mode'] || (int) $payload['count'] > 0 ) {
+		if ( 'hybrid' === $settings['render_mode'] || (int) $payload['count'] > 0 || self::urgent_count( $payload ) > 0 ) {
 			Assets::print_dismiss_script();
 		}
 	}
@@ -195,13 +208,15 @@ final class Frontend {
 		}
 
 		$payload = Payload::get( $settings );
-		if ( (int) $payload['count'] > 0 && ! in_array( 'hprnb-reserve', $classes, true ) ) {
+		$urgent  = self::urgent_count( $payload ) > 0;
+		if ( ( (int) $payload['count'] > 0 || $urgent ) && ! in_array( 'hprnb-reserve', $classes, true ) ) {
 			$classes[] = 'hprnb-reserve';
 			// No reserved space until the bar is revealed on that device (the script drops the class).
-			if ( 'immediate' !== ( self::$settings['desktop_reveal_mode'] ?? 'immediate' ) ) {
+			// Urgent articles in front wait for nobody: the script restores the wait when it hands over.
+			if ( ! $urgent && 'immediate' !== ( self::$settings['desktop_reveal_mode'] ?? 'immediate' ) ) {
 				$classes[] = 'hprnb-d-pending';
 			}
-			if ( 'immediate' !== ( self::$settings['mobile_reveal_mode'] ?? 'immediate' ) ) {
+			if ( ! $urgent && 'immediate' !== ( self::$settings['mobile_reveal_mode'] ?? 'immediate' ) ) {
 				$classes[] = 'hprnb-m-pending';
 			}
 			if ( ! empty( self::$settings['theme_offset'] ) ) {
@@ -224,7 +239,7 @@ final class Frontend {
 		$settings = self::$settings;
 		$payload  = Payload::get( $settings );
 
-		if ( 'php' === $settings['render_mode'] && (int) $payload['count'] < 1 ) {
+		if ( 'php' === $settings['render_mode'] && (int) $payload['count'] < 1 && self::urgent_count( $payload ) < 1 ) {
 			return;
 		}
 

@@ -20,6 +20,7 @@ foreach ( $context['items'] as $hprnb_item ) {
 		array(
 			'item'     => $hprnb_item,
 			'settings' => $context['settings'],
+			'urgent'   => ! empty( $context['urgent'] ),
 		)
 	);
 }

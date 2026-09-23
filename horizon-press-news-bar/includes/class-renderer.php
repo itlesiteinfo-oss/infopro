@@ -25,10 +25,12 @@ final class Renderer {
 	 * @param array    $items        Normalised items.
 	 * @param array    $settings     Settings.
 	 * @param int|null $generated_at Generation timestamp (defaults to now).
+	 * @param array    $urgent       Urgent items (2.14): shown instead of the bar while they last.
 	 * @return array
 	 */
-	public static function payload( array $items, array $settings, ?int $generated_at = null ): array {
-		$items = array_values( $items );
+	public static function payload( array $items, array $settings, ?int $generated_at = null, array $urgent = array() ): array {
+		$items  = array_values( $items );
+		$urgent = array_values( $urgent );
 
 		return array(
 			'version'      => HPRNB_VERSION,
@@ -36,6 +38,9 @@ final class Renderer {
 			'count'        => count( $items ),
 			'items'        => $items,
 			'html'         => empty( $items ) ? '' : self::bar( $items, $settings ),
+			'urgent_count' => count( $urgent ),
+			'urgent_items' => $urgent,
+			'urgent_html'  => empty( $urgent ) ? '' : self::urgent_bar( $urgent, $settings ),
 		);
 	}
 
@@ -75,6 +80,43 @@ final class Renderer {
 	}
 
 	/**
+	 * The `<aside>` of the urgent articles (2.14): the bar template with the urgent flag, rendered
+	 * under the settings of Urgent::render_settings() — no picture, a close button, no memory.
+	 *
+	 * @param array $items    Urgent items (each with `since` and `until`).
+	 * @param array $settings Settings.
+	 * @return string
+	 */
+	public static function urgent_bar( array $items, array $settings ): string {
+		$items = array_values( $items );
+		if ( empty( $items ) ) {
+			return '';
+		}
+
+		$html = trim(
+			self::render_template(
+				'bar',
+				array(
+					'items'    => $items,
+					'settings' => Urgent::render_settings( $settings ),
+					'urgent'   => true,
+				)
+			)
+		);
+
+		/**
+		 * Filters the complete urgent bar markup before it is cached.
+		 *
+		 * @param string $html     Bar markup (the `<aside>` element).
+		 * @param array  $items    Urgent items.
+		 * @param array  $settings Settings.
+		 */
+		$filtered = apply_filters( 'hprnb_urgent_bar_html', $html, $items, $settings );
+
+		return is_string( $filtered ) ? $filtered : $html;
+	}
+
+	/**
 	 * The `#hprnb-root` wrapper around the payload markup.
 	 *
 	 * @param array $payload  Payload.
@@ -84,17 +126,32 @@ final class Renderer {
 	public static function root( array $payload, array $settings ): string {
 		$html  = isset( $payload['html'] ) && is_string( $payload['html'] ) ? $payload['html'] : '';
 		$count = isset( $payload['count'] ) ? (int) $payload['count'] : 0;
-		$empty = ( $count < 1 || '' === $html );
+		if ( $count < 1 || '' === $html ) {
+			$count = 0;
+			$html  = '';
+		}
+		// The urgent bar (2.14) rides in front of the news bar: the script shows the one that applies
+		// and hands over to the other when the last urgent article expires or the reader closes it.
+		$urgent_html  = isset( $payload['urgent_html'] ) && is_string( $payload['urgent_html'] ) ? $payload['urgent_html'] : '';
+		$urgent_count = isset( $payload['urgent_count'] ) ? (int) $payload['urgent_count'] : 0;
+		if ( $urgent_count < 1 || '' === $urgent_html ) {
+			$urgent_count = 0;
+			$urgent_html  = '';
+		}
+		$urgent = $urgent_count > 0;
+		$empty  = ( $count < 1 && ! $urgent );
 
 		$attributes = array(
 			'id'                   => 'hprnb-root',
-			'class'                => implode( ' ', self::root_classes( $settings ) ),
+			'class'                => implode( ' ', self::root_classes( $settings, false, $urgent ) ),
 			'data-hprnb-generated' => (string) (int) ( $payload['generated_at'] ?? 0 ),
 			'data-hprnb-stale'     => (string) self::stale_threshold( $settings ),
 			'data-hprnb-layout'    => 'overlay' === $settings['layout_mode'] ? 'overlay' : 'reserve',
 			'data-hprnb-empty'     => $empty ? '1' : '0',
 			// Read by the stylesheet (a single headline carries no separator) and by the analytics.
 			'data-hprnb-count'     => (string) $count,
+			// Urgent articles in front of the news bar right now (the script keeps it current).
+			'data-hprnb-urgent'    => (string) $urgent_count,
 			// The article being read, so an impression can be tied to its page. 0 off a singular.
 			'data-hprnb-post'      => (string) self::current_post_id(),
 			'data-hprnb-desktop'   => (string) wp_json_encode( self::profile_data( $settings, 'd' ) ),
@@ -122,7 +179,7 @@ final class Renderer {
 		if ( $empty ) {
 			$out .= ' hidden';
 		}
-		$out .= '>' . ( $empty ? '' : $html ) . '</div>';
+		$out .= '>' . ( $empty ? '' : $urgent_html . $html ) . '</div>';
 
 		return $out;
 	}
@@ -167,7 +224,7 @@ final class Renderer {
 	 */
 	public static function root_style( array $settings ): string {
 		return sprintf(
-			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-accent:%6$s;--hprnb-font-size:%7$dpx;--hprnb-height:%8$dpx;--hprnb-d-lines:%9$d;--hprnb-max:%10$dpx;--hprnb-gutter:%11$dpx;--hprnb-z:%12$d;--hprnb-sep:%13$s;--hprnb-m-bg:%14$s;--hprnb-m-fg:%15$s;--hprnb-m-accent:%16$s;--hprnb-m-label-fg:%17$s;--hprnb-m-font-size:%18$dpx;--hprnb-m-height:%19$dpx;--hprnb-m-lines:%20$d;--hprnb-m-line:%21$dpx;--hprnb-m-pad:%22$dpx;--hprnb-peek:%23$dpx;--hprnb-m-ctrls:%24$d;--hprnb-d-thumb:%25$dpx;--hprnb-m-thumb:%26$dpx;--hprnb-m-card-thumb:%27$dpx;--hprnb-m-card-thumb-h:%28$dpx;--hprnb-m-card-lines:%29$d;--hprnb-m-gap:%30$dpx',
+			'--hprnb-bg:%1$s;--hprnb-fg:%2$s;--hprnb-label-bg:%3$s;--hprnb-label-fg:%4$s;--hprnb-hover:%5$s;--hprnb-accent:%6$s;--hprnb-font-size:%7$dpx;--hprnb-height:%8$dpx;--hprnb-d-lines:%9$d;--hprnb-max:%10$dpx;--hprnb-gutter:%11$dpx;--hprnb-z:%12$d;--hprnb-sep:%13$s;--hprnb-m-bg:%14$s;--hprnb-m-fg:%15$s;--hprnb-m-accent:%16$s;--hprnb-m-label-fg:%17$s;--hprnb-m-font-size:%18$dpx;--hprnb-m-height:%19$dpx;--hprnb-m-lines:%20$d;--hprnb-m-line:%21$dpx;--hprnb-m-pad:%22$dpx;--hprnb-peek:%23$dpx;--hprnb-m-ctrls:%24$d;--hprnb-d-thumb:%25$dpx;--hprnb-m-thumb:%26$dpx;--hprnb-m-card-thumb:%27$dpx;--hprnb-m-card-thumb-h:%28$dpx;--hprnb-m-card-lines:%29$d;--hprnb-m-gap:%30$dpx;--hprnb-u-bg:%31$s;--hprnb-u-fg:%32$s;--hprnb-u-height:%33$dpx;--hprnb-u-m-height:%34$dpx;--hprnb-u-line:%35$dpx;--hprnb-u-pad:%36$dpx;--hprnb-u-lines:%37$d',
 			self::color( $settings['bg_color'], '#1B1C20' ),
 			self::color( $settings['text_color'], '#F5F5F5' ),
 			self::color( $settings['label_bg_color'], '#CE3029' ),
@@ -197,7 +254,14 @@ final class Renderer {
 			self::card_metrics( $settings )['thumb'],
 			self::card_metrics( $settings )['thumb_height'],
 			self::card_metrics( $settings )['lines'],
-			self::mobile_gap( $settings )
+			self::mobile_gap( $settings ),
+			self::color( $settings['urgent_bg_color'] ?? '', '#E11D2B' ),
+			self::color( $settings['urgent_text_color'] ?? '', '#FFFFFF' ),
+			self::urgent_height( $settings, 'd' ),
+			self::urgent_height( $settings, 'm' ),
+			self::urgent_metrics( $settings )['line'],
+			self::urgent_metrics( $settings )['pad'],
+			self::urgent_metrics( $settings )['lines']
 		);
 	}
 
@@ -208,9 +272,10 @@ final class Renderer {
 	 *
 	 * @param array $settings Settings.
 	 * @param bool  $preview  True for the admin preview root, which never carries the pending classes.
+	 * @param bool  $urgent   True while urgent articles are in front (2.14): the root says so and waits for nobody.
 	 * @return string[]
 	 */
-	public static function root_classes( array $settings, bool $preview = false ): array {
+	public static function root_classes( array $settings, bool $preview = false, bool $urgent = false ): array {
 		$classes = array(
 			'hprnb-root',
 			self::device_class( $settings ),
@@ -280,12 +345,12 @@ final class Renderer {
 		foreach ( array( 'd', 'm' ) as $p ) {
 			if ( 'immediate' !== self::reveal_mode( $settings, $p ) ) {
 				$waits = true;
-				if ( ! $preview ) {
+				if ( ! $preview && ! $urgent ) {
 					$classes[] = 'hprnb-root--' . $p . '-pending';
 				}
 			}
 		}
-		if ( $waits && ! $preview ) {
+		if ( $waits && ! $preview && ! $urgent ) {
 			// The entrance carries its own transition: the script removes the pending class, not
 			// this one, so the bar slides in whether or not the profile folds away afterwards.
 			$classes[] = 'hprnb-root--reveal';
@@ -320,6 +385,10 @@ final class Renderer {
 		}
 		$pulse     = (string) ( $settings['mobile_label_pulse'] ?? 'appear' );
 		$classes[] = 'hprnb-root--m-pulse-' . ( in_array( $pulse, array( 'always', 'appear', 'collapsed', 'never' ), true ) ? $pulse : 'appear' );
+		if ( $urgent ) {
+			// Urgent articles in front: the news bar is out of sight until the script hands over.
+			$classes[] = 'hprnb-root--urgent';
+		}
 
 		return $classes;
 	}
@@ -528,6 +597,40 @@ final class Renderer {
 			// Collapsed it is the same strip as the flowing card: the pulsing pill and one line.
 			'peek'         => self::CARD_PAD + $line + self::PEEK_EXTRA,
 		);
+	}
+
+	/**
+	 * Metrics of the urgent bar on a phone (2.14): the flowing bar's line and padding for the profile's
+	 * font size, at most two lines, never below the mobile bar height — whatever the news bar's design,
+	 * since the urgent bar keeps one shape. 16px / 2 lines / 76px → line 26, pad 12.
+	 *
+	 * @param array $settings Settings.
+	 * @return array{line:int,lines:int,height:int,pad:int}
+	 */
+	public static function urgent_metrics( array $settings ): array {
+		$lines  = max( 1, min( 2, (int) ( $settings['mobile_lines'] ?? 2 ) ) );
+		$line   = (int) round( (int) ( $settings['mobile_font_size'] ?? 16 ) * self::FLOW_LINE );
+		$height = max( (int) ( $settings['mobile_bar_height'] ?? 76 ), $lines * $line + 2 * self::FLOW_PAD );
+		return array(
+			'line'   => $line,
+			'lines'  => $lines,
+			'height' => $height,
+			'pad'    => (int) floor( ( $height - $lines * $line ) / 2 ),
+		);
+	}
+
+	/**
+	 * Height of the urgent bar (2.14) on a device: one line on desktop, the metrics above on a phone.
+	 *
+	 * @param array  $settings Settings.
+	 * @param string $p        'd' or 'm'.
+	 * @return int
+	 */
+	public static function urgent_height( array $settings, string $p ): int {
+		if ( 'm' === $p ) {
+			return self::urgent_metrics( $settings )['height'];
+		}
+		return max( (int) ( $settings['bar_height'] ?? 40 ), (int) ceil( (int) ( $settings['font_size'] ?? 15 ) * self::LINE_HEIGHT ) + self::BLOCK_PAD );
 	}
 
 	/**

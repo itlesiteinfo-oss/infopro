@@ -261,6 +261,29 @@ final class Settings {
 				'min'     => 1,
 				'max'     => 720,
 			),
+			'urgent_enabled'              => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
+			'urgent_minutes'              => array(
+				'type'    => 'int',
+				'default' => 10,
+				'min'     => 1,
+				'max'     => 1440,
+			),
+			'urgent_label'                => array(
+				'type'       => 'text',
+				'default'    => 'URGENT',
+				'max_length' => 40,
+			),
+			'urgent_bg_color'             => array(
+				'type'    => 'color',
+				'default' => '#E11D2B',
+			),
+			'urgent_text_color'           => array(
+				'type'    => 'color',
+				'default' => '#FFFFFF',
+			),
 			'desktop_behavior'            => array(
 				'type'    => 'enum',
 				'default' => 'always',

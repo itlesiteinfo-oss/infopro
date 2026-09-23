@@ -75,6 +75,9 @@ final class Rest_Controller {
 			'generated_at' => (int) $payload['generated_at'],
 			'count'        => (int) $payload['count'],
 			'html'         => (string) $payload['html'],
+			// Urgent articles (2.14): the bootstrap puts their bar in front of the news bar.
+			'urgent_count' => (int) ( $payload['urgent_count'] ?? 0 ),
+			'urgent_html'  => (string) ( $payload['urgent_html'] ?? '' ),
 		);
 
 		$etag    = self::etag( $body );
@@ -105,7 +108,7 @@ final class Rest_Controller {
 	 * @return string
 	 */
 	public static function etag( array $body ): string {
-		return '"' . md5( implode( '|', array( (string) $body['version'], (string) $body['generated_at'], (string) $body['count'], (string) $body['html'] ) ) ) . '"';
+		return '"' . md5( implode( '|', array( (string) $body['version'], (string) $body['generated_at'], (string) $body['count'], (string) $body['html'], (string) ( $body['urgent_count'] ?? 0 ), (string) ( $body['urgent_html'] ?? '' ) ) ) ) . '"';
 	}
 
 	/**

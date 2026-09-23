@@ -53,6 +53,14 @@
 	--hprnb-m-ctrls: 1;
 	--hprnb-d-thumb: 32px;
 	--hprnb-m-thumb: 48px;
+	/* The urgent bar (2.14): its colours, its height on each device, its line and padding on a phone. */
+	--hprnb-u-bg: #E11D2B;
+	--hprnb-u-fg: #FFFFFF;
+	--hprnb-u-height: 40px;
+	--hprnb-u-m-height: 76px;
+	--hprnb-u-line: 26px;
+	--hprnb-u-pad: 12px;
+	--hprnb-u-lines: 2;
 	/* Label row of the stacked layout (Renderer::STRIP_HEIGHT / ROW_GAP / BLOCK_PAD) and the part
 	   of a collapsed bar that stays visible (first line of the flow card: 12 + 26 + 2). */
 	--hprnb-strip: 22px;
@@ -1980,5 +1988,261 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 
 	body.hprnb-reserve {
 		padding-block-end: 0;
+	}
+}
+
+/* ---------------------------------------------------------------------------
+ * 17. URGENT (2.14) — the red bar of the urgent articles, in front of the news bar while they last.
+ *     One shape whatever the news bar's design: a single line from 768px, two lines on a phone, the
+ *     label in bold caps with a live dot and a chevron, the close button in the tab above the end
+ *     corner. Its colours come from the root (--hprnb-u-bg / --hprnb-u-fg), its heights too.
+ *     Kept after section 16: it must beat every design rule, and the root says which bar is in front.
+ * ------------------------------------------------------------------------- */
+.hprnb-root--urgent .hprnb-bar:not(.hprnb-bar--urgent) {
+	display: none;
+}
+
+/* A remembered dismissal of the news bar never silences an urgent article. */
+html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
+	display: block;
+}
+
+html.hprnb-dismissed body.hprnb-reserve:has(.hprnb-root--urgent) {
+	padding-block-end: calc(var(--hprnb-height, 40px) + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 767.98px) {
+	html.hprnb-dismissed body.hprnb-reserve:has(.hprnb-root--urgent) {
+		padding-block-end: calc(var(--hprnb-m-height, var(--hprnb-height, 40px)) + env(safe-area-inset-bottom, 0px));
+	}
+}
+
+.hprnb-root .hprnb-bar--urgent {
+	--hprnb-e-bg: var(--hprnb-u-bg);
+	--hprnb-e-fg: var(--hprnb-u-fg);
+	--hprnb-e-hover: var(--hprnb-u-fg);
+	--hprnb-e-accent: var(--hprnb-u-fg);
+	--hprnb-e-label-display: flex;
+	--hprnb-e-label-align: center;
+	--hprnb-e-label-bs: auto;
+	--hprnb-e-label-bg: transparent;
+	--hprnb-e-label-fg: var(--hprnb-u-fg);
+	--hprnb-e-label-pad: 0;
+	--hprnb-e-label-margin: 0;
+	--hprnb-e-label-radius: 0;
+	--hprnb-e-label-shadow: none;
+	--hprnb-e-label-size: max(12px, .8em);
+	--hprnb-e-label-tracking: .1em;
+	--hprnb-e-label-transform: uppercase;
+	--hprnb-e-label-lh: 1;
+	--hprnb-e-dot: block;
+	--hprnb-e-title-weight: 700;
+	--hprnb-e-thumb-display: none;
+	--hprnb-u-glow: rgba(225, 29, 43, .5);
+	--hprnb-u-glow: color-mix(in srgb, var(--hprnb-u-bg) 55%, transparent);
+	--hprnb-u-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 -10px 32px rgba(0, 0, 0, .26);
+	position: fixed;
+	inset-inline: 0;
+	bottom: 0;
+	border-radius: 0;
+	/* The theme red with a faint sheen: darker at the start, a touch of light at the end. */
+	background-color: var(--hprnb-u-bg);
+	background-image: linear-gradient(90deg, rgba(0, 0, 0, .16), transparent 42%, rgba(255, 255, 255, .1));
+	box-shadow: var(--hprnb-u-shadow);
+}
+
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__label {
+	margin: 0;
+	margin-inline-end: 14px;
+	gap: 8px;
+	white-space: nowrap;
+}
+
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__label-text {
+	overflow: visible;
+}
+
+/* The chevron after the label: a bold arrow into the headline, mirrored right-to-left. */
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__label-chevron {
+	display: inline-flex;
+	flex: none;
+	margin-inline-start: -4px;
+	opacity: .9;
+}
+
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__label-chevron svg {
+	inline-size: 1.15em;
+	block-size: 1.15em;
+	stroke-width: 3;
+}
+
+.hprnb-root .hprnb-bar--rtl.hprnb-bar--urgent .hprnb-bar__label-chevron svg {
+	transform: scaleX(-1);
+}
+
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__title {
+	font-weight: 700;
+	letter-spacing: -.005em;
+}
+
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__thumb,
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__time,
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__counter {
+	display: none;
+}
+
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__progress {
+	background: rgba(255, 255, 255, .85);
+}
+
+/* The moment it takes the front (the script's init): a ring of its own red spreads over the page
+   once — the dot keeps pulsing afterwards. Never a slide: the bar is there from the first paint. */
+@keyframes hprnb-urgent-flash {
+	0% { box-shadow: var(--hprnb-u-shadow), 0 0 0 0 var(--hprnb-u-glow); }
+	100% { box-shadow: var(--hprnb-u-shadow), 0 0 0 40px transparent; }
+}
+
+.hprnb-root--urgent .hprnb-bar--urgent[data-hprnb-init] {
+	animation: hprnb-urgent-flash 1.3s .25s ease-out;
+}
+
+@container hprnb (min-width: 768px) {
+	.hprnb-root .hprnb-bar--urgent {
+		--hprnb-e-display: grid;
+		--hprnb-e-cols: auto minmax(0, 1fr) auto;
+		--hprnb-e-rows: minmax(0, 1fr);
+		--hprnb-e-areas: 'label title ctrl';
+		--hprnb-e-height: var(--hprnb-u-height);
+		--hprnb-e-lines: 1;
+		--hprnb-e-list-pad: .25em;
+		--hprnb-e-title-display: block;
+		--hprnb-e-title-ws: nowrap;
+		--hprnb-e-title-max: none;
+		--hprnb-e-item-is: auto;
+		--hprnb-e-font-size: var(--hprnb-font-size);
+	}
+
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__inner {
+		padding-block: 0;
+	}
+}
+
+@container hprnb (max-width: 767.98px) {
+	.hprnb-root .hprnb-bar--urgent {
+		--hprnb-e-display: block;
+		--hprnb-e-max: none;
+		--hprnb-e-label-size: 12px;
+		--hprnb-e-font-size: var(--hprnb-m-font-size);
+		overflow-x: clip;
+		overflow-y: visible;
+	}
+
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__inner {
+		position: relative;
+		display: block;
+		block-size: auto;
+		max-inline-size: none;
+		margin: 0;
+		padding: var(--hprnb-u-pad) var(--hprnb-gutter);
+		overflow-x: clip;
+		overflow-y: visible;
+		line-height: var(--hprnb-u-line);
+	}
+
+	/* The label floats at the head of the headline, which runs on two lines and passes back under it. */
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__label {
+		float: inline-start;
+		block-size: var(--hprnb-u-line);
+		margin: 0;
+		margin-inline-end: 10px;
+	}
+
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__viewport,
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__list,
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__item,
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__link,
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__title {
+		display: block;
+		overflow: visible;
+		inline-size: auto;
+		max-inline-size: none;
+		margin: 0;
+		padding: 0;
+		white-space: normal;
+	}
+
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__item[hidden] {
+		display: none;
+	}
+
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__viewport {
+		position: relative;
+		max-block-size: calc(var(--hprnb-u-lines) * var(--hprnb-u-line));
+		overflow: visible clip;
+		transition: opacity .18s;
+		touch-action: pan-y;
+	}
+
+	/* A headline longer than its lines fades into the red at the end of its last line. */
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__viewport::after {
+		content: "";
+		position: absolute;
+		inset-inline-end: 0;
+		inset-block-end: 0;
+		display: none;
+		inline-size: 64px;
+		block-size: var(--hprnb-u-line);
+		background: linear-gradient(to right, transparent, var(--hprnb-u-bg) 78%);
+		pointer-events: none;
+	}
+
+	.hprnb-root .hprnb-bar--rtl.hprnb-bar--urgent .hprnb-bar__viewport::after {
+		background: linear-gradient(to left, transparent, var(--hprnb-u-bg) 78%);
+	}
+
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__viewport.is-clipped::after {
+		display: block;
+	}
+
+	/* The buttons in a tab of the same red above the end corner (the news bar's tab), 44px each. */
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__controls {
+		position: absolute;
+		inset-block: auto 100%;
+		inset-inline: auto 0;
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+		gap: 0;
+		block-size: auto;
+		margin: 0;
+		padding: 0;
+		background: var(--hprnb-u-bg);
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3);
+	}
+
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__btn {
+		position: static;
+		flex: none;
+		inline-size: 44px;
+		min-inline-size: 44px;
+		block-size: 44px;
+		min-block-size: 44px;
+		border-radius: 0;
+		opacity: 1;
+	}
+
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__btn svg {
+		inline-size: 22px;
+		block-size: 22px;
+	}
+
+	.hprnb-root .hprnb-bar--urgent .hprnb-bar__progress {
+		block-size: 3px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hprnb-root--urgent .hprnb-bar--urgent[data-hprnb-init] {
+		animation: none;
 	}
 }

@@ -49,7 +49,7 @@ export function collectErrors( page ) {
 	page.on( 'console', ( m ) => {
 		// Resource failures caused by the sandbox network (no internet) are not plugin errors.
 		const where = ( m.location() && m.location().url ) || '';
-		if ( m.type() === 'error' && ! /favicon|gravatar\.com/.test( m.text() + ' ' + where ) ) {
+		if ( m.type() === 'error' && ! /favicon|gravatar\.com|s\.w\.org/.test( m.text() + ' ' + where ) ) {
 			errors.push( 'console: ' + m.text() + ' @ ' + where );
 		}
 	} );

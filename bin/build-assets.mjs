@@ -10,6 +10,7 @@ const files = [
   ['css/hprnb-bar.css', 'css'],
   ['css/hprnb-bar-rtl.css', 'css'],
   ['css/hprnb-admin.css', 'css'],
+  ['css/hprnb-post.css', 'css'],
   ['js/hprnb-bootstrap.js', 'js'],
   ['js/hprnb-bar.js', 'js'],
   ['js/hprnb-admin.js', 'js'],

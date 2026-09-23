@@ -2533,3 +2533,143 @@ test( 'v2.12: the bar with the article picture on an existing site, and a design
 		setSettings( { mobile_layout: 'flow', mobile_lines: 2 } );
 	}
 } );
+
+test( 'v2.14: the URGENT bar takes the place of the news bar, each article leaves on time, the news bar returns, closing is remembered until a newer flag', async ( { page } ) => {
+	const errors = collectErrors( page );
+	const root = page.locator( '#hprnb-root' );
+	const urgent = page.locator( '.hprnb-bar--urgent' );
+	const bar = page.locator( '.hprnb-bar:not(.hprnb-bar--urgent)' );
+	const now = () => Math.floor( Date.now() / 1000 );
+	const flag = ( id, since, until ) => {
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_since', String( since ) ] );
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_until', String( until ) ] );
+		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+	};
+	const body = '<p>Paragraphe de lecture, assez long pour donner de la hauteur à la page et laisser la barre attendre son moment.</p>'.repeat( 14 );
+	const a = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Urgent A — le conseil municipal adopte le budget 2027 et lance trois chantiers dans le centre-ville', '--post_content=' + body, '--porcelain' ] );
+	const b = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Urgent B — évacuation de la gare après une alerte', '--post_content=' + body, '--porcelain' ] );
+	const n = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Article normal du jour', '--post_content=' + body, '--porcelain' ] );
+	const url = wp( [ 'post', 'url', n ] );
+	try {
+		setDefaultSettings();
+		let t = now();
+		flag( a, t - 60, t + 40 ); // Flagged first, lasts longer.
+		flag( b, t - 30, t + 9 ); // Flagged last: first in the bar, first to go.
+
+		// Phone: the red bar, in front at once (no wait, no fold), the news bar behind it, out of sight.
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( url );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( root ).toHaveClass( /hprnb-root--urgent/ );
+		await expect( root ).not.toHaveClass( /hprnb-root--m-pending/ );
+		await expect( root ).toHaveAttribute( 'data-hprnb-urgent', '2' );
+		await expect( urgent ).toHaveClass( /hprnb-bar--mode-rotate/ );
+		await expect( urgent.locator( '.hprnb-bar__label-text' ) ).toHaveText( 'URGENT' );
+		await expect( urgent.locator( '.hprnb-bar__label-chevron svg' ) ).toHaveCount( 1 );
+		await expect( urgent.locator( '.hprnb-bar__item' ) ).toHaveCount( 2 );
+		await expect( urgent.locator( '.hprnb-bar__item' ).first() ).toContainText( 'Urgent B', { useInnerText: false } );
+		await expect( urgent.locator( '.hprnb-bar__item' ).nth( 1 ) ).toBeHidden();
+		await expect( urgent.locator( 'img' ) ).toHaveCount( 0 );
+		await expect( urgent.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden();
+		expect( await urgent.evaluate( ( el ) => [ getComputedStyle( el ).backgroundColor, getComputedStyle( el ).position, Math.round( el.getBoundingClientRect().height ), getComputedStyle( el.querySelector( '.hprnb-bar__title' ) ).fontWeight, getComputedStyle( el.querySelector( '.hprnb-bar__label' ), '::before' ).display ] ) ).toEqual( [ 'rgb(225, 29, 43)', 'fixed', 76, '700', 'block' ] );
+		// The close button in the tab above the end corner, 44px, as on the news bar.
+		const tab = await urgent.locator( '.hprnb-bar__controls' ).boundingBox();
+		const box = await urgent.boundingBox();
+		expect( [ Math.round( tab.width ), Math.round( tab.height ), Math.round( tab.x + tab.width ), Math.round( tab.y + tab.height ) ] ).toEqual( [ 44, 44, 390, Math.round( box.y ) ] );
+		expect( await bar.evaluate( ( el ) => [ getComputedStyle( el ).display, el.getAttribute( 'data-hprnb-init' ) ] ) ).toEqual( [ 'none', null ] );
+		expect( await page.evaluate( () => { const cs = getComputedStyle( document.body ); return [ cs.getPropertyValue( '--hprnb-offset' ).trim(), cs.getPropertyValue( '--hprnb-tab' ).trim(), document.body.classList.contains( 'hprnb-m-pending' ) ]; } ) ).toEqual( [ '76px', '44px', false ] );
+
+		// B's time is up: it leaves, A stays, the attribute follows.
+		await expect.poll( () => urgent.locator( '.hprnb-bar__item' ).count(), { timeout: 15000 } ).toBe( 1 );
+		await expect( urgent.locator( '.hprnb-bar__item' ).first() ).toContainText( 'Urgent A' );
+		await expect( root ).toHaveAttribute( 'data-hprnb-urgent', '1' );
+		expect( await urgent.evaluate( ( el ) => getComputedStyle( el.querySelector( '.hprnb-bar__viewport' ), '::after' ).display ) ).toBe( 'block', 'A single long headline fades out at the end of its last line.' );
+
+		// A's time is up: the red bar is gone, the news bar waits for the reader as the server would have it.
+		await expect( urgent ).toHaveCount( 0, { timeout: 40000 } );
+		await expect( root ).not.toHaveClass( /hprnb-root--urgent/ );
+		await expect( root ).toHaveClass( /hprnb-root--m-pending/ );
+		await expect( root ).toHaveClass( /hprnb-root--reveal/ );
+		await expect( root ).toHaveAttribute( 'data-hprnb-urgent', '0' );
+		await expect( bar ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await page.evaluate( () => [ document.body.classList.contains( 'hprnb-m-pending' ), getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ] ) ).toEqual( [ true, '0px' ] );
+		const end = await page.evaluate( () => { const el = document.querySelector( '.entry-content, article' ); return el ? el.getBoundingClientRect().bottom + window.scrollY : document.body.scrollHeight; } );
+		for ( const y of [ 300, 900, end - 700, end - 300 ] ) {
+			await page.evaluate( ( v ) => window.scrollTo( 0, v ), y );
+			await page.waitForTimeout( 200 );
+		}
+		await expect( root ).not.toHaveClass( /hprnb-root--m-pending/ );
+		await expect( bar ).toBeVisible();
+		await expect( bar.locator( '.hprnb-bar__label-text' ) ).toHaveText( 'EN CONTINU' );
+		expect( errors ).toEqual( [] );
+
+		// Desktop: one line, the news bar's own ticker, the buttons at the end.
+		await page.setViewportSize( { width: 1366, height: 900 } );
+		t = now();
+		flag( a, t - 5, t + 600 );
+		await page.goto( url );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( urgent ).toHaveClass( /hprnb-bar--mode-marquee/ );
+		expect( await urgent.evaluate( ( el ) => [ Math.round( el.getBoundingClientRect().height ), getComputedStyle( el.querySelector( '.hprnb-bar__inner' ) ).display, getComputedStyle( el.querySelector( '.hprnb-bar__inner' ) ).gridTemplateAreas ] ) ).toEqual( [ 40, 'grid', '"label title ctrl"' ] );
+		await expect( urgent.locator( '.hprnb-bar__btn--close' ) ).toBeVisible();
+		expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '40px' );
+
+		// Closing hands over to the news bar and is remembered for this set — a newer flag opens it again.
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( url );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await urgent.locator( '.hprnb-bar__btn--close' ).click();
+		await expect( urgent ).toHaveCount( 0 );
+		await expect( root ).toHaveClass( /hprnb-root--m-pending/ );
+		expect( Number( await page.evaluate( () => localStorage.getItem( 'hprnb_urgent_closed' ) ) ) ).toBe( t - 5 );
+		await page.reload();
+		await expect( bar ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( urgent ).toHaveCount( 0 );
+		flag( b, t + 1, t + 600 );
+		await page.reload();
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( urgent.locator( '.hprnb-bar__item' ) ).toHaveCount( 2 );
+		await expect( urgent.locator( '.hprnb-bar__item' ).first() ).toContainText( 'Urgent B' );
+
+		// The REST body carries the red bar too, so a cached page gets it on its next visit.
+		const rest = await page.evaluate( async () => { const r = await fetch( '/wp-json/hprnb/v1/items' ); return r.json(); } );
+		expect( [ rest.urgent_count, rest.urgent_html.startsWith( '<aside class="hprnb-bar' ), rest.urgent_html.includes( 'hprnb-bar--urgent' ) ] ).toEqual( [ 2, true, true ] );
+		expect( errors ).toEqual( [] );
+
+		// The edit screen: the box, its state while it runs, "start over", and the end when unticked.
+		await page.goto( '/wp-login.php' );
+		await page.fill( '#user_login', 'admin' );
+		await page.fill( '#user_pass', 'admin' );
+		await page.click( '#wp-submit' );
+		await page.waitForURL( /wp-admin/ );
+		await page.setViewportSize( { width: 1400, height: 1000 } );
+		await page.goto( '/wp-admin/post.php?post=' + a + '&action=edit' );
+		await expect( page.locator( '#hprnb-urgent' ) ).toBeChecked();
+		await expect( page.locator( '.hprnb-urgent-box__state' ) ).toContainText( 'Urgent until' );
+		await expect( page.locator( '#hprnb-urgent-restart' ) ).toHaveCount( 1 );
+		await expect( page.locator( 'link#hprnb-post-css' ) ).toHaveCount( 1 );
+		await page.goto( '/wp-admin/post.php?post=' + n + '&action=edit' );
+		await expect( page.locator( '#hprnb-urgent' ) ).not.toBeChecked();
+		await expect( page.locator( '#hprnb-urgent-restart' ) ).toHaveCount( 0 );
+		await expect( page.locator( '#hprnb-post-controls' ) ).toContainText( 'For 10 minutes after you publish or update' );
+
+		// The settings page: an Urgent tab whose preview shows the red bar, live label and colours.
+		await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar' );
+		await page.click( '[data-hprnb-tab="urgent"]' );
+		await expect( page.locator( '#hprnb-field-urgent-minutes' ) ).toHaveValue( '10' );
+		await expect( page.locator( '#hprnb-preview-root' ) ).toHaveClass( /hprnb-root--urgent/, { timeout: 10000 } );
+		await expect( page.locator( '#hprnb-preview-root .hprnb-bar--urgent .hprnb-bar__item' ) ).toHaveCount( 2 );
+		await page.fill( '#hprnb-field-urgent-label', 'FLASH' );
+		await expect( page.locator( '#hprnb-preview-root .hprnb-bar__label-text' ) ).toHaveText( 'FLASH' );
+		await page.fill( '#hprnb-field-urgent-bg-color', '#7a0010' );
+		await page.locator( '#hprnb-field-urgent-bg-color' ).dispatchEvent( 'input' );
+		expect( await page.locator( '#hprnb-preview-root .hprnb-bar--urgent' ).evaluate( ( el ) => getComputedStyle( el ).backgroundColor ) ).toBe( 'rgb(122, 0, 16)' );
+		await page.click( '[data-hprnb-tab="content"]' );
+		await expect( page.locator( '#hprnb-preview-root' ) ).not.toHaveClass( /hprnb-root--urgent/, { timeout: 10000 } );
+		await expect( page.locator( '#hprnb-preview-root .hprnb-bar--urgent' ) ).toHaveCount( 0 );
+		expect( errors ).toEqual( [] );
+	} finally {
+		wp( [ 'post', 'delete', a, b, n, '--force' ] );
+		setSettings( {} );
+	}
+} );

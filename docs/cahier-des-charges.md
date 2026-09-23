@@ -2413,6 +2413,13 @@ mode hybrid:
 2. **Les trois points de fin de titre sont remplacés par un fondu** dans la couleur de la barre, ouvert comme replié.
 3. **Le fichier ZIP porte le numéro de version.**
 
+### 15.8.3 quattuordecies — Le bandeau URGENT (2.14.0)
+
+1. **Une case « Article urgent » dans le bloc Barre d'actualités de l'écran d'édition** : cochée à la publication ou à la mise à jour, un bandeau rouge avec ce titre prend la place de la barre pendant la durée réglée (10 min par défaut), sur téléphone et ordinateur.
+2. **Plusieurs articles urgents défilent tour à tour, le plus récent d'abord** ; chacun quitte le bandeau à sa propre échéance ; à la dernière, la barre normale revient d'elle-même, sans recharger.
+3. **Un onglet « Urgent » dans les réglages** : durée en minutes, étiquette, couleurs, aperçu.
+4. **Le design** : rouge, étiquette en capitales avec point animé et chevron, titre en gras, bouton fermer dans l'onglet au-dessus du coin comme la barre normale, sens de lecture de gauche à droite.
+
 ---
 
 # ANNEXE C — CONSIGNE FINALE À CLAUDE CODE

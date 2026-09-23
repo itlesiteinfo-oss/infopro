@@ -20,6 +20,8 @@
 	'use strict';
 
 	var DISMISS_KEY = 'hprnb_dismissed_until';
+	// The newest urgent flag the reader closed (2.14): a later flag opens the red bar again.
+	var URGENT_KEY = 'hprnb_urgent_closed';
 	var NARROW = 768;
 
 	/* ------------------------------------------------------------------ */
@@ -693,7 +695,7 @@
 	/* blocking and never required — the bar shows with or without them.   */
 	/* ------------------------------------------------------------------ */
 
-	function createAnalytics( root, aside, mobile ) {
+	function createAnalytics( root, aside, mobile, kind ) {
 		var sent = {};
 
 		function recommended() {
@@ -703,6 +705,7 @@
 
 		function push( name, extra ) {
 			var detail = {
+				bar: kind || 'news',
 				device: mobile ? 'mobile' : 'desktop',
 				current_article_id: parseInt( root.getAttribute( 'data-hprnb-post' ), 10 ) || 0,
 				recommended_article_id: recommended(),
@@ -816,7 +819,7 @@
 		if ( 'immediate' === mode || ! pending ) {
 			state.revealY = 0; // Visible from the top of the page: the trigger point is the top.
 			if ( analytics ) {
-				analytics.impression( 'legacy_immediate' );
+				analytics.impression( state.urgent ? 'urgent' : 'legacy_immediate' );
 			}
 			return;
 		}
@@ -1342,7 +1345,7 @@
 			// The two phone designs carry their buttons in a tab above the bar: what sits in the
 			// corner (Jannah's "go to top") must clear it too.
 			var controls = aside.querySelector( '.hprnb-bar__controls' );
-			var tabbed = mobile && ( root.classList.contains( 'hprnb-root--m-ctrl-tab' ) || root.classList.contains( 'hprnb-root--m-card' ) );
+			var tabbed = mobile && ( !! state.urgent || root.classList.contains( 'hprnb-root--m-ctrl-tab' ) || root.classList.contains( 'hprnb-root--m-card' ) );
 			var tab = ( hidden || inflow || ! tabbed || ! controls ) ? 0 : controls.offsetHeight;
 			return { mobile: mobile, collapsed: collapsed, height: full, offset: offset, tab: tab };
 		}
@@ -1414,6 +1417,17 @@
 				analytics.close();
 			}
 			moveFocusAway( button );
+			if ( state.urgent ) {
+				// Closed for this set of urgent articles: a newer flag brings the red bar back.
+				try {
+					localStorage.setItem( URGENT_KEY, String( newestUrgent( aside.querySelectorAll( '.hprnb-bar__item' ) ) ) );
+				} catch ( e ) {
+					// Storage unavailable: closed for this page.
+				}
+				retireUrgent( root, aside );
+				init( root );
+				return;
+			}
 			aside.hidden = true;
 			root.hidden = true;
 			document.body.classList.remove( 'hprnb-reserve' );
@@ -1613,20 +1627,228 @@
 		};
 	}
 
+	/* ------------------------------------------------------------------ */
+	/* Urgent articles (2.14): the red bar in front of the news bar        */
+	/* ------------------------------------------------------------------ */
+
+	function nowSeconds() {
+		return Math.floor( Date.now() / 1000 );
+	}
+
 	/**
-	 * Initialises the bar found in `root`. Idempotent per aside; destroy() undoes everything.
+	 * Drops the urgent headlines whose time is up and returns the ones still alive.
 	 *
-	 * @param {Element|null} root The #hprnb-root element (or the admin preview root).
+	 * @param {Element} aside The urgent bar.
+	 * @return {Element[]} The remaining items.
 	 */
-	function init( root ) {
-		if ( ! root ) {
+	function pruneUrgent( aside ) {
+		var alive = [];
+		var t = nowSeconds();
+		forEach( aside.querySelectorAll( '.hprnb-bar__item' ), function ( li ) {
+			if ( ( parseInt( li.getAttribute( 'data-hprnb-until' ), 10 ) || 0 ) > t ) {
+				alive.push( li );
+			} else if ( li.parentNode ) {
+				li.parentNode.removeChild( li );
+			}
+		} );
+		var root = aside.parentNode;
+		if ( root && root.setAttribute ) {
+			root.setAttribute( 'data-hprnb-urgent', String( alive.length ) );
+		}
+		return alive;
+	}
+
+	/** The most recent flag among the headlines: what a closed set is remembered by. */
+	function newestUrgent( items ) {
+		var newest = 0;
+		forEach( items, function ( li ) {
+			newest = Math.max( newest, parseInt( li.getAttribute( 'data-hprnb-since' ), 10 ) || 0 );
+		} );
+		return newest;
+	}
+
+	/**
+	 * Whether the urgent bar still has something to show: at least one headline whose time is not up,
+	 * and a set the reader has not closed (the preview root never expires and is never closed).
+	 *
+	 * @param {Element} root  The root.
+	 * @param {Element} aside The urgent bar.
+	 * @return {boolean}
+	 */
+	function urgentLive( root, aside ) {
+		var items = pruneUrgent( aside );
+		if ( ! items.length ) {
+			return false;
+		}
+		if ( root.classList.contains( 'hprnb-root--preview' ) ) {
+			return true;
+		}
+		var closed = 0;
+		try {
+			closed = parseInt( localStorage.getItem( URGENT_KEY ), 10 ) || 0;
+		} catch ( e ) {
+			closed = 0;
+		}
+		return closed < newestUrgent( items );
+	}
+
+	/** The news bar waits for the reader again, exactly as the server renders it without urgent articles. */
+	function restorePending( root ) {
+		var all = parseJson( root.getAttribute( 'data-hprnb-reveal' ) ) || {};
+		var waits = false;
+		forEach( [ 'd', 'm' ], function ( p ) {
+			if ( 'immediate' !== ( ( all[ p ] && all[ p ].mode ) || 'immediate' ) ) {
+				waits = true;
+				root.classList.add( 'hprnb-root--' + p + '-pending' );
+				document.body.classList.add( 'hprnb-' + p + '-pending' );
+			}
+		} );
+		if ( waits ) {
+			root.classList.add( 'hprnb-root--reveal' );
+		}
+	}
+
+	/**
+	 * The space the page keeps for the bar in front: the urgent bar's own heights, or the news bar's,
+	 * both carried by the root's inline style.
+	 *
+	 * @param {Element} root   The root.
+	 * @param {boolean} urgent Whether the urgent bar is in front.
+	 */
+	function reserveFor( root, urgent ) {
+		var body = document.body;
+		var read = function ( name ) {
+			return root.style.getPropertyValue( name );
+		};
+		var d = ( urgent && read( '--hprnb-u-height' ) ) || read( '--hprnb-height' );
+		var m = ( urgent && read( '--hprnb-u-m-height' ) ) || read( '--hprnb-m-height' );
+		if ( d ) {
+			body.style.setProperty( '--hprnb-height', d );
+		}
+		if ( m ) {
+			body.style.setProperty( '--hprnb-m-height', m );
+		}
+		body.style.setProperty( '--hprnb-m-gap', ( urgent ? '' : read( '--hprnb-m-gap' ) ) || '0px' );
+	}
+
+	/**
+	 * Takes the urgent bar out for good and gives the page back to the news bar — or to nothing.
+	 *
+	 * @param {Element} root  The root.
+	 * @param {Element} aside The urgent bar.
+	 */
+	function retireUrgent( root, aside ) {
+		destroyAside( aside );
+		if ( aside.parentNode ) {
+			aside.parentNode.removeChild( aside );
+		}
+		root.classList.remove( 'hprnb-root--urgent' );
+		root.setAttribute( 'data-hprnb-urgent', '0' );
+		if ( root.classList.contains( 'hprnb-root--preview' ) ) {
 			return;
 		}
-		var aside = root.querySelector( '.hprnb-bar' );
+		if ( ! root.querySelector( '.hprnb-bar' ) ) {
+			root.hidden = true;
+			root.setAttribute( 'data-hprnb-empty', '1' );
+			document.body.classList.remove( 'hprnb-reserve' );
+			return;
+		}
+		restorePending( root );
+		reserveFor( root, false );
+	}
+
+	/**
+	 * Ends every urgent headline on time: at the next expiry the bar is pruned and restarted with what
+	 * is left, and retired when nothing is; a tab coming back to the front checks at once.
+	 *
+	 * @param {Object}  state Teardown registry of the urgent bar.
+	 * @param {Element} root  The root.
+	 * @param {Element} aside The urgent bar.
+	 */
+	function scheduleUrgent( state, root, aside ) {
+		if ( root.classList.contains( 'hprnb-root--preview' ) ) {
+			return;
+		}
+		var timer = null;
+
+		function check() {
+			if ( aside.hprnbState !== state ) {
+				return;
+			}
+			var before = aside.querySelectorAll( '.hprnb-bar__item' ).length;
+			if ( ! urgentLive( root, aside ) ) {
+				retireUrgent( root, aside );
+				init( root );
+				return;
+			}
+			if ( aside.querySelectorAll( '.hprnb-bar__item' ).length !== before ) {
+				destroyAside( aside ); // Fewer headlines: the rotation starts afresh with what is left.
+				init( root );
+				return;
+			}
+			arm();
+		}
+
+		function arm() {
+			var next = 0;
+			var t = nowSeconds();
+			forEach( aside.querySelectorAll( '.hprnb-bar__item' ), function ( li ) {
+				var until = parseInt( li.getAttribute( 'data-hprnb-until' ), 10 ) || 0;
+				if ( until > t && ( ! next || until < next ) ) {
+					next = until;
+				}
+			} );
+			if ( timer !== null ) {
+				clearTimeout( timer );
+			}
+			timer = next ? state.timer( check, Math.min( 2147483647, ( next - t ) * 1000 + 250 ) ) : null;
+		}
+
+		state.on( document, 'visibilitychange', function () {
+			if ( ! document.hidden ) {
+				check();
+			}
+		} );
+		arm();
+	}
+
+	/**
+	 * A headline taller than its clipped viewport fades out at the end of its last line: the flag the
+	 * rotation sets, for a bar with a single headline.
+	 *
+	 * @param {Object}  state Teardown registry of the bar.
+	 * @param {Element} aside The bar.
+	 */
+	function flagClip( state, aside ) {
+		var viewport = aside.querySelector( '.hprnb-bar__viewport' );
+		if ( ! viewport ) {
+			return;
+		}
+		function check() {
+			if ( aside.hprnbState === state ) {
+				viewport.classList.toggle( 'is-clipped', viewport.scrollHeight > viewport.clientHeight + 1 );
+			}
+		}
+		observeSize( state, viewport, check );
+		state.add( function () {
+			viewport.classList.remove( 'is-clipped' );
+		} );
+		check();
+	}
+
+	/**
+	 * Initialises one bar. Idempotent per aside; destroyAside() undoes everything.
+	 *
+	 * @param {Element} root   The #hprnb-root element (or the admin preview root).
+	 * @param {Element} aside  The bar to run.
+	 * @param {boolean} urgent Whether it is the red bar of the urgent articles (2.14).
+	 */
+	function initAside( root, aside, urgent ) {
 		if ( ! aside || aside.hprnbState ) {
 			return;
 		}
 		var state = createState();
+		state.urgent = !! urgent;
 		aside.hprnbState = state;
 		aside.setAttribute( 'data-hprnb-init', '1' );
 		state.add( function () {
@@ -1636,6 +1858,10 @@
 		var cfg = readConfig( aside, root );
 		var mobile = isNarrow( root );
 		var profile = mobile ? cfg.m : cfg.d;
+		if ( urgent ) {
+			// One shape, in front at once, never folding, never leaving for the next article, always closable.
+			profile = merge( merge( {}, profile ), { collapse: false, next: false, deep: false, place: 'fixed', close: true, counter: false } );
+		}
 		relocate( root, mobile );
 		measureBleed( root );
 		state.on( window, 'resize', debounce( function () {
@@ -1648,6 +1874,9 @@
 			root.style.removeProperty( '--hprnb-bleed-w' );
 		} );
 		var mode = mobile ? cfg.tickerMobile : cfg.ticker;
+		if ( urgent && mobile ) {
+			mode = 'rotate'; // The two-line strip shows one headline at a time, whatever the news bar does.
+		}
 		var reduced = prefersReducedMotion();
 		var toggle = aside.querySelector( '.hprnb-bar__btn--toggle' );
 		var prev = aside.querySelector( '.hprnb-bar__btn--prev' );
@@ -1668,7 +1897,7 @@
 		state.hide( aside.querySelector( '.hprnb-bar__btn--close' ), ! wantsClose );
 
 		var contract = setupContract( state, root, aside, profile, mobile );
-		var analytics = root.classList.contains( 'hprnb-root--preview' ) ? null : createAnalytics( root, aside, mobile );
+		var analytics = root.classList.contains( 'hprnb-root--preview' ) ? null : createAnalytics( root, aside, mobile, urgent ? 'urgent' : 'news' );
 		setupReveal( state, root, contract, mobile, analytics );
 		setupClose( state, root, aside, cfg, contract, analytics );
 		if ( analytics ) {
@@ -1696,6 +1925,13 @@
 			}
 		} else if ( mode === 'manual' ) {
 			setupManual( state, aside, reduced );
+		}
+		// A single headline clipped to its lines fades out at the end like a rotated one (2.14).
+		if ( mobile && aside.querySelectorAll( '.hprnb-bar__item' ).length < 2 && ( urgent || profile.layout === 'flow' ) ) {
+			flagClip( state, aside );
+		}
+		if ( urgent ) {
+			scheduleUrgent( state, root, aside );
 		}
 
 		if ( profile.collapse && profile.place !== 'inline' && ! root.classList.contains( 'hprnb-root--preview' ) ) {
@@ -1734,12 +1970,41 @@
 	}
 
 	/**
-	 * Undoes everything init() did on the bar found in `root`.
+	 * Initialises the bar in force in `root`: the red bar of the urgent articles while any of them
+	 * lasts and the reader has not closed that set, the news bar otherwise (2.14).
 	 *
 	 * @param {Element|null} root The #hprnb-root element (or the admin preview root).
 	 */
-	function destroy( root ) {
-		var aside = root ? root.querySelector( '.hprnb-bar' ) : null;
+	function init( root ) {
+		if ( ! root ) {
+			return;
+		}
+		var urgent = root.querySelector( '.hprnb-bar--urgent' );
+		if ( urgent && urgent.hprnbState ) {
+			return; // In front and running.
+		}
+		if ( urgent ) {
+			if ( urgentLive( root, urgent ) ) {
+				root.classList.add( 'hprnb-root--urgent' );
+				root.classList.remove( 'hprnb-root--d-pending', 'hprnb-root--m-pending', 'hprnb-root--reveal' );
+				if ( ! root.classList.contains( 'hprnb-root--preview' ) ) {
+					document.body.classList.remove( 'hprnb-d-pending', 'hprnb-m-pending' );
+					reserveFor( root, true );
+				}
+				initAside( root, urgent, true );
+				return;
+			}
+			retireUrgent( root, urgent );
+		}
+		initAside( root, root.querySelector( '.hprnb-bar:not(.hprnb-bar--urgent)' ), false );
+	}
+
+	/**
+	 * Undoes everything initAside() did on one bar.
+	 *
+	 * @param {Element|null} aside The bar.
+	 */
+	function destroyAside( aside ) {
 		if ( ! aside || ! aside.hprnbState ) {
 			return;
 		}
@@ -1752,6 +2017,18 @@
 				// A failed cleanup must not block the others.
 			}
 		}
+	}
+
+	/**
+	 * Undoes everything init() did on the bars found in `root`.
+	 *
+	 * @param {Element|null} root The #hprnb-root element (or the admin preview root).
+	 */
+	function destroy( root ) {
+		if ( ! root ) {
+			return;
+		}
+		forEach( root.querySelectorAll( '.hprnb-bar' ), destroyAside );
 	}
 
 	var api = { init: init, destroy: destroy, state: null };

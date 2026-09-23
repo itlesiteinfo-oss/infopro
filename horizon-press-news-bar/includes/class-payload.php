@@ -52,7 +52,7 @@ final class Payload {
 	 * @return array
 	 */
 	public static function build( array $settings ): array {
-		return Renderer::payload( Query::items( $settings ), $settings );
+		return Renderer::payload( Query::items( $settings ), $settings, null, Urgent::items( $settings ) );
 	}
 
 	/**

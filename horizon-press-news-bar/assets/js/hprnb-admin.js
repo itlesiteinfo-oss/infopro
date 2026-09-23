@@ -33,7 +33,10 @@
 		font_size: '--hprnb-font-size',
 		max_width: '--hprnb-max',
 		gutter: '--hprnb-gutter',
-		z_index: '--hprnb-z'
+		z_index: '--hprnb-z',
+		// The red bar of the urgent articles (2.14).
+		urgent_bg_color: '--hprnb-u-bg',
+		urgent_text_color: '--hprnb-u-fg'
 	};
 	var PX_KEYS = { font_size: true, max_width: true, gutter: true };
 	var MOBILE_VARS = { mobile_bg_color: '--hprnb-m-bg', mobile_text_color: '--hprnb-m-fg', mobile_accent_color: '--hprnb-m-accent', mobile_label_text_color: '--hprnb-m-label-fg', mobile_font_size: '--hprnb-m-font-size' };
@@ -386,7 +389,8 @@
 
 		var labelText = aside.querySelector( '.hprnb-bar__label-text' );
 		if ( labelText ) {
-			labelText.textContent = valueOf( 'label_text' );
+			// The urgent bar carries its own label (2.14).
+			labelText.textContent = valueOf( aside.classList.contains( 'hprnb-bar--urgent' ) ? 'urgent_label' : 'label_text' );
 		}
 
 	}
@@ -455,7 +459,14 @@
 		} else {
 			previewRoot.innerHTML = data.html;
 		}
+		// The Urgent tab previews the red bar (2.14): the root says so, as on the site.
+		previewRoot.classList.toggle( 'hprnb-root--urgent', !! ( data && data.urgent ) );
 		applyVisual();
+	}
+
+	/** Whether the preview should show the red bar of the urgent articles: while its tab is open. */
+	function wantsUrgentPreview() {
+		return currentTab === 'urgent';
 	}
 
 	function fetchPreview() {
@@ -476,7 +487,7 @@
 			method: 'POST',
 			credentials: 'same-origin',
 			headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': cfg.nonce || '' },
-			body: JSON.stringify( { settings: collect() } ),
+			body: JSON.stringify( { settings: collect(), urgent: wantsUrgentPreview() } ),
 			signal: controller ? controller.signal : undefined
 		} ).then( function ( res ) {
 			if ( ! res.ok ) {
@@ -546,7 +557,7 @@
 		if ( VISUAL_VARS[ key ] || VISUAL_ONLY[ key ] ) {
 			return;
 		}
-		if ( key === 'label_text' && previewRoot && previewRoot.querySelector( '.hprnb-bar__label-text' ) ) {
+		if ( ( key === 'label_text' || key === 'urgent_label' ) && previewRoot && previewRoot.querySelector( '.hprnb-bar__label-text' ) ) {
 			return;
 		}
 		schedulePreview();
@@ -744,7 +755,11 @@
 		if ( ! found ) {
 			key = ( visible[ 0 ] || tabButtons[ 0 ] ).getAttribute( 'data-hprnb-tab' );
 		}
+		var wasUrgent = wantsUrgentPreview();
 		currentTab = key;
+		if ( previewRoot && wasUrgent !== wantsUrgentPreview() && ( previewRoot.classList.contains( 'hprnb-root--urgent' ) !== wantsUrgentPreview() ) ) {
+			fetchPreview();
+		}
 		tabButtons.forEach( function ( b ) {
 			var active = b.getAttribute( 'data-hprnb-tab' ) === key;
 			b.classList.toggle( 'is-active', active );

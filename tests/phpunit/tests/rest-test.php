@@ -32,7 +32,9 @@ class Rest_Test extends HPRNB_Test_Case {
 
 		$this->assertSame( 200, $response->get_status() );
 		$data = $response->get_data();
-		$this->assertSame( array( 'version', 'generated_at', 'count', 'html' ), array_keys( $data ) );
+		$this->assertSame( array( 'version', 'generated_at', 'count', 'html', 'urgent_count', 'urgent_html' ), array_keys( $data ), '2.14: the urgent bar rides in the same body.' );
+		$this->assertSame( 0, $data['urgent_count'] );
+		$this->assertSame( '', $data['urgent_html'] );
 		$this->assertSame( HPRNB_VERSION, $data['version'] );
 		$this->assertIsInt( $data['generated_at'] );
 		$this->assertSame( 1, $data['count'] );
@@ -62,7 +64,7 @@ class Rest_Test extends HPRNB_Test_Case {
 		$this->create_post_ago( 60 );
 		$this->post_queries = 0;
 		$this->items_request();
-		$this->assertSame( 1, $this->post_queries );
+		$this->assertSame( 2, $this->post_queries, 'Headlines and urgent articles (2.14).' );
 		$this->assertNotNull( Cache::get( Settings::get() ) );
 
 		\HorizonPress\NewsBar\Payload::flush();

@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.13.0
+Stable tag: 2.14.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,10 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.14.0 =
+* URGENT bar: tick "Urgent article" on an article and publish or update it; for the configured minutes a red bar with that headline replaces the news bar on phones and desktops, several urgent articles take turns newest first, each leaves on time and the news bar returns by itself without a reload. Closing it is remembered until a newer flag.
+* A new Urgent tab: switch, duration, label, colours, live preview.
 
 = 2.13.0 =
 * New folding mode "up", used by Continuous reading: once the bar has appeared, every scroll down opens it and every scroll up folds it, wherever the reader is.

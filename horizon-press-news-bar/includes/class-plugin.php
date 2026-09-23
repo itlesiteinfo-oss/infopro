@@ -64,6 +64,7 @@ final class Plugin {
 		add_action( 'init', array( $this, 'load_textdomain' ) );
 
 		Invalidation::register();
+		Urgent::register();
 		Assets::register();
 		Frontend::register();
 		Placement::register();

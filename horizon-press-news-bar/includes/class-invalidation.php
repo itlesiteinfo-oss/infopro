@@ -153,7 +153,7 @@ final class Invalidation {
 	 * @return void
 	 */
 	public static function on_post_meta( $meta_id, $object_id, $meta_key ): void {
-		$watched = array( '_thumbnail_id', Settings::META_EXCLUDE, Settings::META_HIDE );
+		$watched = array( '_thumbnail_id', Settings::META_EXCLUDE, Settings::META_HIDE, Urgent::META_UNTIL );
 		if ( ! in_array( (string) $meta_key, $watched, true ) ) {
 			return;
 		}
