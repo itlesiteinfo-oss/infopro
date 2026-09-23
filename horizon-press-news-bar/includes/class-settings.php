@@ -458,7 +458,7 @@ final class Settings {
 			'desktop_collapse_mode'       => array(
 				'type'    => 'enum',
 				'default' => 'scroll',
-				'options' => array( 'scroll', 'threshold', 'immediate', 'article' ),
+				'options' => array( 'scroll', 'threshold', 'immediate', 'article', 'up' ),
 			),
 			'desktop_collapse_after'      => array(
 				'type'    => 'int',
@@ -584,8 +584,8 @@ final class Settings {
 			),
 			'mobile_collapse_mode'        => array(
 				'type'    => 'enum',
-				'default' => 'article',
-				'options' => array( 'scroll', 'threshold', 'immediate', 'article' ),
+				'default' => 'up',
+				'options' => array( 'scroll', 'threshold', 'immediate', 'article', 'up' ),
 			),
 			'mobile_collapse_after'       => array(
 				'type'    => 'int',
@@ -801,8 +801,8 @@ final class Settings {
 	 * the detailed settings and "Custom" starts from whatever the last behaviour had set.
 	 *
 	 * - reading: the bar arrives in full at the chosen paragraph before the end of the article,
-	 *   folds on any scroll back up, opens again when reading on and goes away completely in the
-	 *   next article of a continuous-loading theme;
+	 *   then folds on every scroll up and opens on every scroll down (2.13), and goes away
+	 *   completely in the next article of a continuous-loading theme;
 	 * - fold: visible with the page, out of the way while scrolling down, back on a scroll up;
 	 * - always: visible with the page and never folded.
 	 *
@@ -816,7 +816,7 @@ final class Settings {
 			'reading' => array(
 				'reveal_mode'    => 'paragraph',
 				'hide_on_scroll' => true,
-				'collapse_mode'  => 'article',
+				'collapse_mode'  => 'up',
 				'next_hide'      => true,
 			),
 			'fold'    => array(

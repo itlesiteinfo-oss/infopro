@@ -2182,7 +2182,7 @@ Ne jamais prétendre « 0 SQL total » sans distinguer les transients WordPress 
 
 Claude Code doit fournir sans demander d’étape supplémentaire :
 
-1. `horizon-press-news-bar.zip`
+1. `horizon-press-news-bar-<version>.zip` (le nom porte la version depuis la 2.13.0 ; dossier interne `horizon-press-news-bar/`)
 2. dossier source final ;
 3. `README.md`
 4. `readme.txt`
@@ -2406,6 +2406,12 @@ mode hybrid:
 
 1. **Le bandeau avec l'image de l'article devient le design mobile du site existant** à la mise à jour, tel que livré (deux lignes, pastille avec son point, croix seule dans l'onglet, image gardée repliée) ; comportement, couleurs et contenu inchangés.
 2. **Le choix du design se fait sur un dessin** : chaque design est montré ouvert et replié dans *Mobile → Design* ; un clic le choisit et l'aperçu le montre avec les vrais titres.
+
+### 15.8.3 terdecies — Repli au sens du défilement, fondu, ZIP versionné (2.13.0)
+
+1. **Après son apparition, la barre se déplie à chaque défilement vers le bas et se replie à chaque défilement vers le haut**, où que soit le lecteur ; c'est le mode de « Lecture continue ».
+2. **Les trois points de fin de titre sont remplacés par un fondu** dans la couleur de la barre, ouvert comme replié.
+3. **Le fichier ZIP porte le numéro de version.**
 
 ---
 

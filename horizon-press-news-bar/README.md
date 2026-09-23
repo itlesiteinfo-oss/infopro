@@ -337,6 +337,10 @@ Le nombre de paragraphes, le seuil de repli et l'aspect du bandeau replié reste
 
 *Mobile → Design* : deux cases, chacune avec un dessin du bandeau ouvert et replié (`Settings_Page::design_choices()`, `design_mock()`, classes `hprnb-mock*` de la feuille d'administration). **Schéma 8** : un site existant reçoit une fois `Settings::image_bar_design()` — `mobile_layout = flow_image`, 2 lignes, 16 px, barre de 76 px, image de 48 px, pastille avec point, pause masquée, bande repliée avec la première ligne et l'image.
 
+## 9 septdecies. Le repli au sens du défilement, le fondu, le ZIP versionné (2.13)
+
+`*_collapse_mode = up` (défaut mobile, mode de « Lecture continue ») : après l'apparition, descente → dépliée, remontée → repliée, sans seuil ni zone. Le titre trop long s'efface par un fondu de 64 px (40 px replié) en fin de dernière ligne (`.hprnb-bar__viewport.is-clipped::after`, inversé sous `.hprnb-bar--rtl`). Le ZIP s'appelle `horizon-press-news-bar-<version>.zip`.
+
 ## 10. Ticker (optionnel)
 
 Désactivé par défaut. Trois modes :

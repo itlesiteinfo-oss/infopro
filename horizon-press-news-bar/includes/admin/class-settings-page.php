@@ -472,7 +472,7 @@ final class Settings_Page {
 		return array(
 			'reading' => array(
 				'title' => __( 'Continuous reading — recommended on articles', 'horizon-press-news-bar' ),
-				'text'  => __( 'Hidden at first. Appears in full once the reader reaches the paragraph chosen below, counted from the end of the article. Folds as soon as the reader scrolls back up and opens again when reading on; stays open once the article is over; goes away completely when the reader moves on to the next article.', 'horizon-press-news-bar' ),
+				'text'  => __( 'Hidden at first. Appears in full once the reader reaches the paragraph chosen below, counted from the end of the article. Then every scroll up folds it and every scroll down opens it again; it goes away completely when the reader moves on to the next article.', 'horizon-press-news-bar' ),
 			),
 			'fold'    => array(
 				'title' => __( 'Visible, folds while scrolling', 'horizon-press-news-bar' ),
@@ -891,6 +891,7 @@ final class Settings_Page {
 					'threshold' => __( 'As soon as the threshold is passed, and it stays folded while below it', 'horizon-press-news-bar' ),
 					'immediate' => __( 'Always folded — the reader opens it with a tap', 'horizon-press-news-bar' ),
 					'article'   => __( 'Follows the reading — open when reading on past the point where it appeared, folded on any scroll back up inside the article, never folded once the article is over', 'horizon-press-news-bar' ),
+					'up'        => __( 'Every scroll up folds it, every scroll down opens it — once it has appeared, wherever the reader is', 'horizon-press-news-bar' ),
 				),
 				'depends' => 'mobile_hide_on_scroll',
 			),
@@ -1297,6 +1298,7 @@ final class Settings_Page {
 					'threshold' => __( 'As soon as the threshold is passed, and it stays folded while below it', 'horizon-press-news-bar' ),
 					'immediate' => __( 'Always folded — the reader opens it from the tab', 'horizon-press-news-bar' ),
 					'article'   => __( 'Follows the reading — open when reading on past the point where it appeared, folded on any scroll back up inside the article, never folded once the article is over', 'horizon-press-news-bar' ),
+					'up'        => __( 'Every scroll up folds it, every scroll down opens it — once it has appeared, wherever the reader is', 'horizon-press-news-bar' ),
 				),
 				'depends' => 'desktop_hide_on_scroll',
 			),

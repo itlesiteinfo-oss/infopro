@@ -1,12 +1,16 @@
 #!/bin/bash
-# Builds dist/horizon-press-news-bar.zip from the plugin source folder (production files only).
+# Builds dist/horizon-press-news-bar-<version>.zip from the plugin source folder (production files
+# only). The version comes from the plugin header, so the file name always says what it holds; the
+# folder inside stays horizon-press-news-bar/, which is what WordPress installs.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$ROOT/horizon-press-news-bar"
 DIST="$ROOT/dist"
-ZIP="$DIST/horizon-press-news-bar.zip"
+VERSION="$(sed -n 's/^ \* Version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' "$SRC/horizon-press-news-bar.php" | head -1)"
+[ -n "$VERSION" ] || { echo "Version header not found" >&2; exit 1; }
+ZIP="$DIST/horizon-press-news-bar-$VERSION.zip"
 mkdir -p "$DIST"
-rm -f "$ZIP"
+rm -f "$DIST"/horizon-press-news-bar*.zip
 cd "$ROOT"
 zip -r -X -q "$ZIP" horizon-press-news-bar \
   -x 'horizon-press-news-bar/.*' \

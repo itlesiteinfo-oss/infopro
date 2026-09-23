@@ -69,7 +69,7 @@ class Behavior_Test extends HPRNB_Test_Case {
 		$this->assertSame( 'threshold', $clean['desktop_collapse_mode'] );
 		$this->assertTrue( $clean['desktop_next_hide'] );
 		$this->assertSame( 'paragraph', $clean['mobile_reveal_mode'], 'Mobile follows its own choice.' );
-		$this->assertSame( 'article', $clean['mobile_collapse_mode'] );
+		$this->assertSame( 'up', $clean['mobile_collapse_mode'] );
 	}
 
 	/**
@@ -87,7 +87,7 @@ class Behavior_Test extends HPRNB_Test_Case {
 		$this->go_to( get_permalink( $post ) );
 		$mobile = Renderer::profile_data( $settings, 'm' );
 		$this->assertTrue( $mobile['collapse'] );
-		$this->assertSame( 'article', $mobile['trigger'], 'Folds on a scroll up, opens when reading on.' );
+		$this->assertSame( 'up', $mobile['trigger'], '2.13: every scroll up folds it, every scroll down opens it.' );
 		$this->assertTrue( $mobile['next'], 'Goes away in the next article.' );
 		$this->assertArrayNotHasKey( 'next', Renderer::profile_data( $settings, 'd' ) );
 
@@ -205,7 +205,7 @@ class Behavior_Test extends HPRNB_Test_Case {
 		$this->assertSame( 'reading', $clean['mobile_behavior'] );
 		$this->assertSame( 'paragraph', $clean['mobile_reveal_mode'] );
 		$this->assertTrue( $clean['mobile_hide_on_scroll'], 'An unticked hidden checkbox does not undo the choice.' );
-		$this->assertSame( 'article', $clean['mobile_collapse_mode'] );
+		$this->assertSame( 'up', $clean['mobile_collapse_mode'] );
 		$this->assertTrue( $clean['mobile_next_hide'] );
 		$this->assertSame( 2, $clean['mobile_reveal_paragraph'] );
 		$this->assertFalse( $clean['desktop_hide_on_scroll'] );

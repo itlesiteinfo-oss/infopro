@@ -2,6 +2,20 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.13.0] — 2026-09-23
+
+### Modifié — le repli suit simplement le sens du défilement
+
+- **Nouveau mode de repli `up`** sur chaque appareil, et c'est celui de « Lecture continue » (donc le défaut mobile) : une fois la barre apparue, **chaque défilement vers le bas la déplie et chaque défilement vers le haut la replie**, où que soit le lecteur — plus de zones ni de seuil. Le mode « Suit la lecture » (zones B et C) reste disponible en « Personnalisé ». Un site en Lecture continue passe au nouveau mode à la lecture des réglages, sans migration.
+
+### Modifié — le titre s'efface au lieu des trois points
+
+- Sur le bandeau avec l'image, un titre trop long **se fond dans la couleur de la barre en fin de dernière ligne** (ouvert comme replié) au lieu de finir par « … » : les polices des thèmes plaçaient les points n'importe où sous la ligne. Le fondu est dessiné dans le bon sens sur un site de droite à gauche (classe `hprnb-bar--rtl`).
+
+### Modifié — le ZIP porte son numéro de version
+
+- `bin/build-zip.sh` produit `dist/horizon-press-news-bar-<version>.zip`, la version étant lue dans l'en-tête de l'extension ; le dossier à l'intérieur reste `horizon-press-news-bar/`.
+
 ## [2.12.0] — 2026-09-23
 
 ### Modifié — le bandeau avec l'image de l'article, aussi sur les sites existants

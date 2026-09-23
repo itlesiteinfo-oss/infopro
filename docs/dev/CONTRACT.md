@@ -878,3 +878,14 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   the admin stylesheet with logical properties. The fieldset gets `hprnb-choices--designs` (two columns
   from 900px). Input ids are unchanged (`hprnb-field-mobile-layout-flow_image`, `…-card`).
 
+## 27. The "up" fold, the fade, the versioned ZIP (2.13.0)
+
+- `desktop_collapse_mode` / `mobile_collapse_mode` gain `up`; the `reading` preset and the mobile default
+  use it. Script: after `state.revealY` is set, `y > lastY + 8` opens, `y < lastY - 8` folds; nothing
+  before the reveal; no landing collapse; the 4 s hold after a tap and the short-screen guard apply.
+  `article` keeps its three zones for the custom behaviour.
+- `.hprnb-root--m-flow .hprnb-bar__viewport::after` is now an empty 64px × line box with a gradient to
+  `--hprnb-e-bg` (40px folded); `.hprnb-bar--rtl` flips the gradient. No glyph.
+- `bin/build-zip.sh` reads the `Version:` header and writes `dist/horizon-press-news-bar-<version>.zip`,
+  removing any older `horizon-press-news-bar*.zip` in `dist/`.
+

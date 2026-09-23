@@ -570,7 +570,8 @@ test( 'v2: flow card, collapsed strip, chevron, offset contract, deep collapse, 
 	expect( Math.round( ( await page.locator( '.hprnb-bar__viewport' ).boundingBox() ).height ) ).toBe( 52, 'Two lines, a third one is clipped.' );
 	// A clipped headline ends with an ellipsis; the pill is roomy and its dot blinks.
 	await expect( page.locator( '.hprnb-bar__viewport' ) ).toHaveClass( /is-clipped/ );
-	expect( await page.locator( '.hprnb-bar__viewport' ).evaluate( ( el ) => getComputedStyle( el, '::after' ).display + getComputedStyle( el, '::after' ).content ) ).toBe( 'block"…"' );
+	// 2.13: the end of the last line fades into the bar instead of ending with three dots.
+	expect( await page.locator( '.hprnb-bar__viewport' ).evaluate( ( el ) => { const a = getComputedStyle( el, '::after' ); return a.display + a.content + '|' + a.width + '|' + ( a.backgroundImage.startsWith( 'linear-gradient(to right' ) ); } ) ).toBe( 'block""|64px|true' );
 	expect( await label.evaluate( ( el ) => getComputedStyle( el ).paddingLeft + ' ' + getComputedStyle( el ).paddingRight ) ).toBe( '12px 14px' );
 	expect( await label.evaluate( ( el ) => getComputedStyle( el, '::before' ).animationName ) ).toBe( 'hprnb-pulse' );
 	expect( await page.evaluate( () => getComputedStyle( document.body ).getPropertyValue( '--hprnb-offset' ).trim() ) ).toBe( '76px' );
@@ -2167,19 +2168,19 @@ test( 'v2.9: continuous reading in one choice, and a bar that goes away in the n
 		await page.check( '#hprnb-field-mobile-behavior-reading' );
 		await expect( page.locator( '#hprnb-field-mobile-reveal-paragraph' ) ).toBeVisible();
 		await expect( page.locator( '#hprnb-field-mobile-reveal-mode-paragraph' ) ).toBeChecked();
-		await expect( page.locator( '#hprnb-field-mobile-collapse-mode-article' ) ).toBeChecked();
+		await expect( page.locator( '#hprnb-field-mobile-collapse-mode-up' ) ).toBeChecked( { checked: true }, '2.13: folds on every scroll up, opens on every scroll down.' );
 		await expect( page.locator( '#hprnb-field-mobile-next-hide' ) ).toBeChecked();
 		await page.fill( '#hprnb-field-mobile-reveal-paragraph', '2' );
 		await page.click( '#hprnb-save' );
 		await page.waitForURL( /settings-updated=true/ );
 		const saved = JSON.parse( wp( [ 'option', 'get', 'hprnb_settings', '--format=json' ] ) );
 		expect( [ saved.mobile_behavior, saved.mobile_reveal_mode, saved.mobile_collapse_mode, saved.mobile_hide_on_scroll, saved.mobile_next_hide, saved.mobile_reveal_paragraph ] )
-			.toEqual( [ 'reading', 'paragraph', 'article', true, true, 2 ] );
+			.toEqual( [ 'reading', 'paragraph', 'up', true, true, 2 ] );
 		expect( saved.desktop_behavior ).toBe( 'always', 'The other device keeps its own choice.' );
 		await page.click( '[data-hprnb-tab="mobile"]' );
 		await page.check( '#hprnb-field-mobile-behavior-custom' );
 		await expect( customCards.first() ).toBeVisible();
-		await expect( page.locator( '#hprnb-field-mobile-collapse-mode-article' ) ).toBeChecked( { checked: true }, 'Custom starts from what the last choice was doing.' );
+		await expect( page.locator( '#hprnb-field-mobile-collapse-mode-up' ) ).toBeChecked( { checked: true }, 'Custom starts from what the last choice was doing.' );
 		await page.context().clearCookies();
 
 		// --- Mobile: hidden, then in full at the second-to-last paragraph. ----------------------
@@ -2213,11 +2214,12 @@ test( 'v2.9: continuous reading in one choice, and a bar that goes away in the n
 		await scrollTo( nextTop + 1500 );
 		expect( await has( 'away' ) ).toBe( true, 'Still gone deeper in the next article.' );
 
-		// Back into the first article: it returns, open past the end, folded inside the text.
+		// Back into the first article: it returns — folded, since the reader scrolled up (2.13: every
+		// scroll up folds it, past the end of the article too).
 		await scrollTo( nextTop - 844 );
 		await expect.poll( () => has( 'away' ) ).toBe( false );
 		await expect( page.locator( 'body' ) ).not.toHaveClass( /hprnb-m-away/ );
-		expect( await folded() ).toBe( false );
+		await expect.poll( folded ).toBe( true );
 		expect( await padding() ).toBeGreaterThan( 100 );
 		await scrollTo( B - 150 );
 		await expect.poll( folded ).toBe( true );

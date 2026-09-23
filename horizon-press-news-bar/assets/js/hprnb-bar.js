@@ -1490,6 +1490,10 @@
 			if ( article ) {
 				observeSize( state, document.body, measureEnd );
 			}
+		}
+		// "up" (2.13): once the bar has appeared, every scroll down opens it and every scroll up
+		// folds it, wherever the reader is. No threshold, no zones.
+		if ( 'article' === trigger || 'up' === trigger ) {
 			// The first appearance is always the full bar: that is the whole point of waiting.
 			state.onReveal.push( function () {
 				set( false );
@@ -1503,6 +1507,9 @@
 		if ( 'article' === trigger ) {
 			// A pending bar has nothing to fold yet; a visible one landing inside the body does.
 			landed = landed && state.revealY !== null && ! pastEnd( window.scrollY );
+		}
+		if ( 'up' === trigger ) {
+			landed = false; // It opens with its appearance and folds only on a scroll up.
 		}
 		if ( ( 'immediate' === trigger || landed ) && ! isShortScreen() ) {
 			aside.style.transition = 'none';
@@ -1531,6 +1538,16 @@
 				} else if ( 'threshold' === trigger ) {
 					// Collapse once past the threshold and stay collapsed until the reader taps.
 					set( y > after );
+				} else if ( 'up' === trigger ) {
+					if ( state.revealY === null ) {
+						lastY = y;
+						return; // Still waiting to appear: nothing to fold.
+					}
+					if ( y > lastY + 8 ) {
+						set( false );
+					} else if ( y < lastY - 8 ) {
+						set( true );
+					}
 				} else if ( 'article' === trigger ) {
 					var b = state.revealY;
 					if ( b === null ) {

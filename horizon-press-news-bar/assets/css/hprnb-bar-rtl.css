@@ -1129,19 +1129,23 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		touch-action: pan-y;
 	}
 
-	/* A headline longer than its lines ends with an ellipsis over a short fade (class set by the script);
-	   the collapsed strip shows the same ellipsis at the end of its single line. */
+	/* A headline longer than its lines fades out at the end of its last line (class set by the
+	   script) — a fade, not three dots, which every theme font placed differently; the collapsed
+	   strip fades the end of its single line the same way. */
 	.hprnb-root--m-flow .hprnb-bar__viewport::after {
-		content: "…";
+		content: "";
 		position: absolute;
 		inset-inline-end: 0;
 		inset-block-end: 0;
 		display: none;
-		padding-inline-start: 28px;
-		background: linear-gradient(to right, transparent, var(--hprnb-e-bg) 45%);
-		font-weight: 600;
-		line-height: var(--hprnb-m-line);
+		inline-size: 64px;
+		block-size: var(--hprnb-m-line);
+		background: linear-gradient(to right, transparent, var(--hprnb-e-bg) 78%);
 		pointer-events: none;
+	}
+
+	.hprnb-root--m-flow .hprnb-bar--rtl .hprnb-bar__viewport::after {
+		background: linear-gradient(to left, transparent, var(--hprnb-e-bg) 78%);
 	}
 
 	.hprnb-root--m-flow .hprnb-bar__viewport.is-clipped::after {
@@ -1776,7 +1780,7 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 
 	/* Tighter fade in the strip: every pixel goes to the headline. */
 	.hprnb-root--m-flow .hprnb-bar--collapsed .hprnb-bar__viewport::after {
-		padding-inline-start: 18px;
+		inline-size: 40px;
 	}
 
 	/* Option "pill only" in the strip: the headline fades out while collapsed. */

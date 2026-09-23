@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.12.0
+Stable tag: 2.13.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,11 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.13.0 =
+* New folding mode "up", used by Continuous reading: once the bar has appeared, every scroll down opens it and every scroll up folds it, wherever the reader is.
+* A long headline fades out at the end of its last line instead of ending with three dots.
+* The ZIP file is named after the version.
 
 = 2.12.0 =
 * Existing sites switch once to the bar with the article picture, as delivered (two lines, pill with its dot, cross alone in the tab, picture kept in the folded strip); behaviour, colours and content are kept.

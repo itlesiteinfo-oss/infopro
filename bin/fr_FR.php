@@ -502,4 +502,6 @@ return array(
 	'A label row, then the picture at the left and the headline beside it, the close button in a tab above the corner. Folded: the dot, the first line, a small picture, and the unfold button in the tab.' => 'Une ligne d’étiquette, puis l’image à gauche et le titre à côté, la croix dans un onglet au-dessus du coin. Repliée : le point, la première ligne, une petite image, et le bouton pour déplier dans l’onglet.',
 	'Open' => 'Ouvert',
 	'Folded' => 'Replié',
+	'Hidden at first. Appears in full once the reader reaches the paragraph chosen below, counted from the end of the article. Then every scroll up folds it and every scroll down opens it again; it goes away completely when the reader moves on to the next article.' => 'Masquée au départ. Apparaît en entier dès que le lecteur atteint le paragraphe choisi ci-dessous, compté depuis la fin de l’article. Ensuite, chaque remontée la replie et chaque descente la rouvre ; elle disparaît complètement quand le lecteur passe à l’article suivant.',
+	'Every scroll up folds it, every scroll down opens it — once it has appeared, wherever the reader is' => 'Chaque remontée la replie, chaque descente la rouvre — une fois apparue, où que soit le lecteur',
 );

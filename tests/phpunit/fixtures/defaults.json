@@ -120,7 +120,7 @@
     "mobile_show_thumbnail": false,
     "mobile_thumb_position": "after",
     "mobile_thumb_size": 48,
-    "mobile_collapse_mode": "article",
+    "mobile_collapse_mode": "up",
     "mobile_collapse_after": 120,
     "mobile_next_hide": true,
     "mobile_controls_place": "inside",
