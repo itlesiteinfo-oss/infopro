@@ -65,6 +65,12 @@ A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `h
 
 == Changelog ==
 
+= 2.16.0 =
+* One switch per bar and one per device (Content → Bars shown): enable the URGENT bar, then desktop and mobile; enable the initial (news) bar, then desktop and mobile. Sub-choices are hidden while their bar is off; the URGENT box on the edit screen only appears while the URGENT bar is on for a device.
+* The URGENT bar in a news channel's design: a plate in the band's colours swapped, a bold 17px headline one at a time, 48px on desktop with pause and close at the end, 76px on phones; headline sizes of its own in the Urgent tab.
+* "Font of both bars" (Colours tab): the system news face by default, also for the news bar, or the theme's font as before.
+* Fixes: no empty reserved band where no bar shows, device switches measured like the reserved space, closing the news bar no longer hides the URGENT bar of the other device, hybrid refreshes stop the running bars first and apply the device switches, the settings preview follows the device switches.
+
 = 2.15.0 =
 * The URGENT checkbox has its own box, first at the top of the side column of the edit screen, above Publish, shown by default.
 * The URGENT bar has its own page types (front page included by default), independent of the news bar's: breaking news reaches the front page even where the news bar stays away.
@@ -186,6 +192,9 @@ A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `h
 * Initial release: sliding-window news bar, transient cache, hybrid mode, REST endpoint, shortcode, settings page with live preview, import / export, accessible optional ticker, RTL and i18n.
 
 == Upgrade Notice ==
+
+= 2.16.0 =
+Both bars now use the system news face by default. To keep your theme's font on the news bar, choose "Theme font" in Colours → Font of both bars.
 
 = 1.1.0 =
 Separator rendering moved to CSS; theme template overrides of item.php no longer need a separator element.

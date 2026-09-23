@@ -2,6 +2,32 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.16.0] — 2026-09-23
+
+### Ajouté — un interrupteur par barre, un par appareil
+
+- **Contenu → « Barres affichées »**, première carte du premier onglet : **« Activer le bandeau URGENT »** puis, dessous, « Bandeau URGENT sur ordinateur » (à partir de 768 px) et « Bandeau URGENT sur mobile » (sous 768 px) ; **« Activer la barre initiale (barre d'actualités) »** puis « Barre initiale sur ordinateur » et « Barre initiale sur mobile ». Tant qu'une barre est désactivée, ses deux sous-choix sont **masqués** (pas grisés) et ne jouent aucun rôle ; leur valeur reste enregistrée pour le jour où la barre est réactivée. Sans JavaScript, toutes les lignes restent visibles. Chaque interrupteur est nommé par le titre de sa ligne pour les lecteurs d'écran.
+- **Les deux barres sont indépendantes** : la barre initiale désactivée laisse le bandeau URGENT fonctionner (et sa requête ne tourne plus, ses titres ne sont plus envoyés par REST) ; activée sur aucun appareil, elle compte comme désactivée. Le bandeau URGENT peut ne s'afficher que sur ordinateur ou que sur mobile ; sur l'autre appareil la barre initiale garde sa place, son attente et sa hauteur.
+- **Le bloc URGENT de l'écran d'édition n'apparaît que si le bandeau URGENT est activé sur au moins un appareil**, et sa phrase dit sur lesquels (« sur mobile et sur ordinateur », « sur mobile uniquement », « sur ordinateur uniquement »).
+- Schéma 9 : un site dont l'interrupteur général était coupé (il coupait tout avant la 2.16) garde aussi le bandeau URGENT coupé ; les autres sites ne changent pas.
+
+### Modifié — le bandeau URGENT au design d'une chaîne d'information
+
+- **Une plaque « URGENT »** aux deux couleurs du bandeau inversées (blanche à texte rouge par défaut, donc toujours exactement le contraste du titre), en capitales grasses espacées avec son point, pleine hauteur et fermée par un filet sur ordinateur, posée devant le titre sur mobile ; plus de chevron.
+- **Le titre en gras, 17 px, un seul à la fois** (rotation, jamais de défilement continu), souligné au survol et au clavier ; **48 px de haut sur ordinateur, 76 px sur mobile**, un léger biseau lumineux en haut, un filet de progression de 3 px, l'arrivée en volet (rien sous « mouvement réduit »), un anneau de focus autour du bandeau entier.
+- **Sur ordinateur (une ligne), pause et fermer à la fin du bandeau**, dans deux cases plus sombres ; sur mobile et dans le design téléphone, le bouton fermer reste dans l'onglet au-dessus du coin, désormais fondu dans le bandeau (1 px de recouvrement, sans couture).
+- **Onglet Urgent → « Taille du titre du bandeau URGENT »** : sur ordinateur (14 à 22 px, 17 par défaut) et sur mobile (14 à 20 px, 17 par défaut, aussi pour le design téléphone sur ordinateur). La hauteur réservée par la page suit : 48 px sur ordinateur (un peu plus à partir de 19 px), 76 px sur mobile jusqu'à 18 px.
+- **Onglet Couleurs → « Police des deux barres »** : **« Police info — recommandée »** (défaut : la police sans empattement du système, San Francisco sur Apple, Segoe UI sur Windows, Roboto sur Android, rien n'est téléchargé) ou « Police du thème » (comme avant la 2.16). **Elle s'applique aussi à la barre d'actualités** : sur un thème à empattements comme Jannah, les deux barres passent en sans empattement ; choisir « Police du thème » pour garder l'ancien rendu.
+- Le contraste des couleurs du bandeau URGENT est vérifié en direct dans l'onglet, comme celui de la barre d'actualités.
+
+### Corrigé — revue multi-agents du travail 2.16
+
+- Sur l'appareil où le bandeau URGENT est désactivé et où la barre d'actualités n'a aucun titre, la page ne garde plus de bande vide en bas (ni les boutons de Jannah soulevés pour rien).
+- L'appareil des interrupteurs se décide comme les classes d'appareil et l'espace réservé (requêtes média, barre de défilement comprise) : plus de bande réservée pour rien ni de bandeau qui couvre le contenu entre 768 et ~785 px de large sur Windows.
+- Fermer la barre d'actualités sur l'appareil où le bandeau URGENT est désactivé ne le cache plus sur l'autre appareil (tablette tournée, fenêtre élargie).
+- Mode hybride : un rafraîchissement arrête d'abord les barres en cours (un minuteur de l'ancien bandeau ne peut plus retirer le nouveau), remet l'attente de la barre d'actualités quand l'urgence est finie, et applique les interrupteurs d'appareil reçus par REST (`urgent_devices`, aussi dans l'ETag et la session) à une page servie par un cache de pages plus ancienne que le réglage.
+- L'aperçu des réglages suit les interrupteurs d'appareil (onglet Ordinateur ou Mobile : le bandeau désactivé laisse place à une note) et montre le vrai design une ligne sur ordinateur ; la barre initiale désactivée garde son aperçu (plus de « Aucun article ne correspond »).
+
 ## [2.15.0] — 2026-09-23
 
 ### Modifié — la case URGENT a son propre bloc, en tête de la colonne de droite

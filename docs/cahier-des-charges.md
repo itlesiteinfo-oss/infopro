@@ -2426,6 +2426,13 @@ mode hybrid:
 2. **Le bandeau URGENT peut apparaître sur la page d'accueil (la une)**, même si la barre d'actualités n'y est pas : il a ses propres types de pages.
 3. **Le design téléphone du bandeau URGENT comme deuxième design sur ordinateur.**
 
+### 15.8.3 sexdecies — Un interrupteur par barre et par appareil, un design plus premium (2.16.0)
+
+1. **« Activer Barre Urgent »**, et dessous, visibles seulement quand elle est cochée, **« Barre Urgent Desktop »** et **« Barre Urgent Mobile »** ; décochée, les deux sous-choix sont masqués et sans aucun rôle.
+2. **« Activer Barre Initial »**, et dessous, avec la même règle, **« Barre Initial Desktop »** et **« Barre Initial Mobile »**.
+3. **Si le bandeau URGENT est activé sur ordinateur, sur mobile ou les deux, le bloc s'ajoute à l'écran d'édition** ; sinon, il n'y est pas.
+4. **Un design du bandeau URGENT « plus premium que CNN »** : police, taille du titre et le reste.
+
 ---
 
 # ANNEXE C — CONSIGNE FINALE À CLAUDE CODE

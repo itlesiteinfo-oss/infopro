@@ -984,3 +984,46 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   (`--hprnb-u-lines` − 1) × line / 2 to the block padding, transitioned; the end sheen is gone and the
   start shade mirrors under `.hprnb-bar--rtl`; the news bar's label beacon is cancelled on the red label.
 - Budgets: CSS 48 KB.
+
+## 30. One switch per bar and per device, the news-channel design (2.16.0)
+
+- Settings (schema 9): `urgent_desktop`, `urgent_mobile` (bool, true), `urgent_font_size` (int 14–22,
+  17), `urgent_mobile_font_size` (int 14–20, 17), `bar_font` (`news` | `theme`, `news`). Migration step 9:
+  a stored option older than 9 whose `enabled` is false gets `urgent_enabled = false` (before 2.16 the
+  general switch silenced both bars). `enabled`, `show_on_desktop`, `show_on_mobile`, `urgent_desktop`,
+  `urgent_mobile` are payload keys (cache hash).
+- `Urgent::devices( $s )` = `{d: urgent_enabled && urgent_desktop, m: urgent_enabled && urgent_mobile}`;
+  `Urgent::enabled()` = `d || m` (the edit box, `Urgent::items()`, `urgent_allowed()` all follow it).
+  `Visibility::news_enabled( $s )` = `enabled` && `device_enabled()`: `Payload::build()` runs the news
+  query only then; `GET /items` answers the empty payload only when neither bar is enabled.
+  `urgent_allowed()` no longer requires `enabled`.
+- REST `GET /items` body gains `urgent_devices` `{d, m}` (part of the ETag). The bootstrap destroys the
+  running bars (`hprnbBar.destroy`) before replacing the markup, toggles `hprnb-root--u-no-d|m` from
+  `urgent_devices` (session entries carry it too), and where the URGENT bar was in front and the news bar
+  takes over restores `hprnb-root--{p}-pending` / body `hprnb-{p}-pending` / `hprnb-root--reveal` per the
+  root's `data-hprnb-reveal`.
+- Root: `hprnb-root--u-no-d` / `-m` when exactly one device has the URGENT bar; `hprnb-root--font-news`
+  unless `bar_font = theme`; style adds `--hprnb-u-fs`, `--hprnb-u-m-fs`. Pending classes, parked
+  device classes, reserved heights and gap are decided per device (`Renderer::urgent_front()`). A root for
+  the URGENT bar alone takes `Urgent::devices()` as its device switches.
+- Heights: `urgent_height('d')` = `max(48, bar_height, ceil(urgent_font_size × 1.3) + 24)` for the
+  one-line design; phones and the phone design: `urgent_metrics()` = font, `line = round(font × 1.4)`,
+  `lines` (1–2), `height = max(mobile_bar_height, lines × line + 24)`, `pad = floor((height − lines × line) / 2)`.
+  `Urgent::render_settings()` forces rotation on both devices.
+- Script: `deviceOf(root)` = the media query `(min-width: 768px)` (the preview: its frame, `isNarrow`)
+  chooses the bar; `watch()` and the crossing observer of `initAside()` compare it; `reserveFor()` takes the
+  phone height when the screen is past 768px but the root under it. `setupClose()` of the news bar while an
+  URGENT bar waits in the root for the other device: `html.hprnb-dismissed`, the news aside removed, the
+  root kept, `init()` again. `retireUrgent()` / the expiry check do nothing to a root whose markup was
+  replaced.
+- Stylesheet section 17: the per-device rules are media queries (the preview is excluded and has its own
+  in the admin sheet, by the stage's `data-hprnb-device`, with the note `data-hprnb-off`); body padding and
+  `--hprnb-offset` drop to 0 where the URGENT bar is off and `data-hprnb-count="0"`; a dismissed page's
+  `--hprnb-offset` is 0 except where the URGENT bar shows. The design: plate (colours swapped), bevel,
+  `hprnb-u-take` wipe, controls at the end of the one-line design, tab overlapping 1px. The admin sheet
+  mirrors the section's `@container hprnb (min-width: 768px)` blocks on `.hprnb-root--flat` (static test).
+- Settings page: card "Bars shown" first in Content; `switch` rows get `<label for>` in their `<th>`;
+  sub-rows are hidden by the script only. The preview endpoint renders the news bar with `Query::items()`
+  whatever its switches.
+- Budgets: CSS 48 KB, bootstrap 5 KB, interactive script 28 KB.
+
