@@ -473,7 +473,7 @@ final class Settings {
 			'mobile_layout'               => array(
 				'type'    => 'enum',
 				'default' => 'card',
-				'options' => array( 'card', 'flow', 'stacked', 'inline' ),
+				'options' => array( 'card', 'flow_image', 'flow', 'stacked', 'inline' ),
 			),
 			'mobile_card_thumb'           => array(
 				'type'    => 'int',
@@ -975,10 +975,11 @@ final class Settings {
 	 * @return bool
 	 */
 	public static function wants_thumbnails( array $settings ): bool {
-		// The mobile "card" design is built around its image: it always needs one in the markup.
+		// The mobile "card" and the flowing bar with its picture are built around the image: they
+		// always need one in the markup.
 		return ! empty( $settings['desktop_show_thumbnail'] )
 			|| ! empty( $settings['mobile_show_thumbnail'] )
-			|| 'card' === ( $settings['mobile_layout'] ?? 'flow' );
+			|| in_array( $settings['mobile_layout'] ?? 'flow', array( 'card', 'flow_image' ), true );
 	}
 
 	/**

@@ -296,16 +296,21 @@ final class Renderer {
 			if ( ! empty( $settings['mobile_card_float'] ) ) {
 				$classes[] = 'hprnb-root--m-float';
 			}
+		} elseif ( self::profile( $settings, 'm' )['tab'] ) {
+			// The flowing bar with its picture: the picture takes the buttons' place, the buttons
+			// move to a tab above the end corner — the card's tab.
+			$classes[] = 'hprnb-root--m-ctrl-tab';
 		} elseif ( $outside ) {
 			$classes[] = 'hprnb-root--m-ctrl-out';
 		} elseif ( 'row' !== ( $settings['mobile_controls_layout'] ?? 'column' ) ) {
 			// The floating group is a row of its own: the stacked column never applies to it.
 			$classes[] = 'hprnb-root--m-ctrl-col';
 		}
+		$image_bar = self::profile( $settings, 'm' )['tab'];
+		if ( ( $image_bar || ! empty( $settings['mobile_show_thumbnail'] ) ) && ! empty( $settings['mobile_peek_thumbnail'] ) ) {
+			$classes[] = 'hprnb-root--m-peek-thumb';
+		}
 		if ( ! empty( $settings['mobile_show_thumbnail'] ) ) {
-			if ( ! empty( $settings['mobile_peek_thumbnail'] ) ) {
-				$classes[] = 'hprnb-root--m-peek-thumb';
-			}
 			if ( ! empty( $settings['mobile_label_compact'] ) ) {
 				$classes[] = 'hprnb-root--m-label-compact';
 			}
@@ -321,13 +326,19 @@ final class Renderer {
 	 *
 	 * @param array  $settings Settings.
 	 * @param string $p        'd' (desktop, from 768px) or 'm' (mobile, under 768px).
-	 * @return array{layout:string,label:string,dot:bool,counter:bool,lines:int,progress:bool,mode:string,font_size:int,thumb:bool,thumb_position:string,thumb_size:int,collapse:bool,swipe:bool,next:bool}
+	 * @return array{layout:string,label:string,dot:bool,counter:bool,lines:int,progress:bool,mode:string,font_size:int,thumb:bool,thumb_position:string,thumb_size:int,collapse:bool,swipe:bool,next:bool,tab:bool}
 	 */
 	public static function profile( array $settings, string $p ): array {
 		$mobile = ( 'm' === $p );
 		$prefix = $mobile ? 'mobile_' : 'desktop_';
 		$mode   = $mobile ? self::mobile_ticker( $settings ) : self::desktop_ticker( $settings );
 		$layout = (string) ( $settings[ $prefix . 'layout' ] ?? ( $mobile ? 'flow' : 'inline' ) );
+		// The flowing bar with the article picture: the flowing layout itself, with its picture always
+		// at the end, where the buttons were, and the buttons in a tab above the corner, as on the card.
+		$image_bar = $mobile && 'flow_image' === $layout;
+		if ( $image_bar ) {
+			$layout = 'flow';
+		}
 		$layout = in_array( $layout, $mobile ? array( 'flow', 'stacked', 'inline', 'card' ) : array( 'inline', 'stacked' ), true ) ? $layout : ( $mobile ? 'flow' : 'inline' );
 		if ( in_array( $layout, array( 'flow', 'card' ), true ) && 'rotate' !== $mode ) {
 			$layout = 'stacked'; // The card designs show one headline at a time: any other mode uses the label row.
@@ -353,8 +364,10 @@ final class Renderer {
 				: ! empty( $settings['desktop_hide_on_scroll'] ),
 			'placement'      => 'inline' === ( $settings[ $prefix . 'placement' ] ?? 'fixed' ) ? 'inline' : 'fixed',
 			'swipe'          => $mobile && 'rotate' === $mode && ! empty( $settings['mobile_swipe'] ),
-			'thumb'          => ! empty( $settings[ $prefix . 'show_thumbnail' ] ) || 'card' === $layout,
-			'thumb_position' => 'after' === ( $settings[ $prefix . 'thumb_position' ] ?? ( $mobile ? 'after' : 'before' ) ) ? 'after' : 'before',
+			'thumb'          => ! empty( $settings[ $prefix . 'show_thumbnail' ] ) || 'card' === $layout || $image_bar,
+			'thumb_position' => ( $image_bar || 'after' === ( $settings[ $prefix . 'thumb_position' ] ?? ( $mobile ? 'after' : 'before' ) ) ) ? 'after' : 'before',
+			// Buttons in a tab of the bar's own colour above its end corner (the card has its own rule).
+			'tab'            => $image_bar,
 			'thumb_size'     => (int) ( $settings[ $prefix . 'thumb_size' ] ?? ( $mobile ? 48 : 32 ) ),
 			'peek'           => 'label' === ( $settings['mobile_peek'] ?? 'headline' ) ? 'label' : 'headline',
 			'deep'           => $mobile && $stacked && ! empty( $settings['mobile_deep_collapse'] ),
@@ -652,8 +665,9 @@ final class Renderer {
 	 * @return int
 	 */
 	public static function mobile_controls( array $settings ): int {
-		if ( 'outside' === ( $settings['mobile_controls_place'] ?? 'inside' ) || 'card' === self::profile( $settings, 'm' )['layout'] ) {
-			return 0; // The buttons float above the bar (or the card places its own): the headline takes the whole width.
+		$profile = self::profile( $settings, 'm' );
+		if ( 'outside' === ( $settings['mobile_controls_place'] ?? 'inside' ) || 'card' === $profile['layout'] || $profile['tab'] ) {
+			return 0; // The buttons float above the bar, or sit in a tab above it: the headline takes the whole width.
 		}
 		$mode  = self::mobile_ticker( $settings );
 		$pause = ! empty( $settings['mobile_show_pause'] ) && in_array( $mode, array( 'marquee', 'rotate' ), true );

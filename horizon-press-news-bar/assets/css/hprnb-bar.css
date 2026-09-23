@@ -1307,6 +1307,70 @@ body.hprnb-reserve.hprnb-theme-offset #reading-position-indicator {
 		padding-inline-end: calc(var(--hprnb-gutter) + var(--hprnb-e-peek-thumb-col));
 	}
 
+	/* The flowing bar with the article picture (mobile_layout = flow_image): the picture sits at the
+	   end of the line, where the buttons were, and the buttons move to a tab of the bar's own colour
+	   above its end corner — the card's tab, 44px buttons, no gap. The bar reserves no column for
+	   them (--hprnb-m-ctrls = 0), so the headline runs up to the picture. */
+	.hprnb-root--m-ctrl-tab .hprnb-bar,
+	.hprnb-root--m-ctrl-tab .hprnb-bar__inner {
+		overflow-x: clip;
+		overflow-y: visible;
+	}
+
+	.hprnb-root--m-ctrl-tab .hprnb-bar__controls {
+		position: absolute;
+		inset-block: auto 100%;
+		inset-inline: auto 0;
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+		gap: 0;
+		block-size: auto;
+		margin: 0;
+		padding: 0;
+		background: var(--hprnb-e-bg);
+	}
+
+	.hprnb-root--edge.hprnb-root--m-ctrl-tab .hprnb-bar__controls {
+		box-shadow: inset 0 2px 0 var(--hprnb-e-accent);
+	}
+
+	.hprnb-root--m-ctrl-tab .hprnb-bar__btn {
+		position: static;
+		flex: none;
+		inline-size: 44px;
+		min-inline-size: 44px;
+		block-size: 44px;
+		min-block-size: 44px;
+		border-radius: 0;
+		opacity: 1;
+	}
+
+	.hprnb-root--m-ctrl-tab .hprnb-bar__btn svg {
+		inline-size: 22px;
+		block-size: 22px;
+	}
+
+	/* Collapsed: the tab goes with the rest and the chevron takes the end of the strip, as on the
+	   flowing bar; the picture stays at the end of the line when the strip keeps it. */
+	.hprnb-root--m-ctrl-tab .hprnb-bar--collapsed .hprnb-bar__controls {
+		inset-block: 0 auto;
+		inset-inline-end: calc(var(--hprnb-gutter) - 8px);
+		block-size: var(--hprnb-peek);
+		align-items: flex-start;
+		padding-block-start: var(--hprnb-m-pad);
+		background: transparent;
+		box-shadow: none;
+	}
+
+	.hprnb-root--m-ctrl-tab .hprnb-bar--collapsed .hprnb-bar__btn--expand {
+		display: inline-flex;
+		inline-size: var(--hprnb-btn);
+		min-inline-size: var(--hprnb-btn);
+		block-size: var(--hprnb-m-line);
+		min-block-size: 0;
+	}
+
 	.hprnb-root--m-flow .hprnb-bar__progress {
 		block-size: 3px;
 	}

@@ -317,6 +317,10 @@ Le nombre de paragraphes, le seuil de repli et l'aspect du bandeau replié reste
 
 **Schéma 6** : une installation existante garde son comportement, nommé d'après le choix qu'il reproduit, sinon « Personnalisé ». La migration ne choisit jamais « Lecture continue ».
 
+## 9 quattuordecies. Le bandeau fluide avec l'image de l'article (2.10)
+
+*Mobile → Design → « Bandeau fluide avec l'image de l'article »* (`mobile_layout = flow_image`) : le bandeau fluide — pastille devant le titre, deux lignes, 76 px — avec l'image de l'article (48 px par défaut, carrée) en fin de ligne à la place des boutons, et la croix dans un onglet de 44 × 44 px au-dessus du coin de fin, comme sur la carte. La pause, si elle est active, se place à côté de la croix. Racine : `hprnb-root--m-flow`, `--m-thumb`, `--m-thumb-after`, `--m-ctrl-tab` ; `--hprnb-m-ctrls: 0`.
+
 ## 10. Ticker (optionnel)
 
 Désactivé par défaut. Trois modes :

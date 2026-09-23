@@ -184,6 +184,12 @@
 		var prefix = mobile ? 'mobile_' : 'desktop_';
 		var mode = effectiveMode( p );
 		var layout = valueOf( prefix + 'layout' ) || ( mobile ? 'card' : 'inline' );
+		// The flowing bar with the article picture: the flowing layout, its picture at the end and its
+		// buttons in a tab above the corner (mirrors Renderer::profile()).
+		var imageBar = mobile && layout === 'flow_image';
+		if ( imageBar ) {
+			layout = 'flow';
+		}
 		if ( layout !== 'stacked' && layout !== 'inline' && layout !== 'flow' && layout !== 'card' ) {
 			layout = mobile ? 'card' : 'inline';
 		}
@@ -204,8 +210,9 @@
 			progress: mode === 'rotate' && valueOf( prefix + 'show_progress' ) === '1',
 			mode: mode,
 			fontSize: parseInt( valueOf( mobile ? 'mobile_font_size' : 'font_size' ), 10 ) || ( mobile ? 16 : 14 ),
-			thumb: valueOf( prefix + 'show_thumbnail' ) === '1',
-			thumbAfter: valueOf( prefix + 'thumb_position' ) === 'after',
+			thumb: imageBar || valueOf( prefix + 'show_thumbnail' ) === '1',
+			thumbAfter: imageBar || valueOf( prefix + 'thumb_position' ) === 'after',
+			tab: imageBar,
 			thumbSize: parseInt( valueOf( prefix + 'thumb_size' ), 10 ) || ( mobile ? 48 : 32 ),
 			collapse: mobile
 				? ( layout !== 'inline' && valueOf( 'mobile_hide_on_scroll' ) === '1' )
@@ -267,14 +274,16 @@
 		previewRoot.classList.toggle( 'hprnb-root--align', valueOf( 'align_container' ) === '1' );
 		previewRoot.classList.toggle( 'hprnb-root--peek-label', valueOf( 'mobile_peek' ) === 'label' );
 		var cardDesign = computeProfile( 'm' ).layout === 'card';
-		var outside = ! cardDesign && valueOf( 'mobile_controls_place' ) === 'outside';
-		var stacked = ! cardDesign && valueOf( 'mobile_controls_layout' ) !== 'row';
+		var tabDesign = computeProfile( 'm' ).tab;
+		var outside = ! cardDesign && ! tabDesign && valueOf( 'mobile_controls_place' ) === 'outside';
+		var stacked = ! cardDesign && ! tabDesign && valueOf( 'mobile_controls_layout' ) !== 'row';
 		previewRoot.classList.toggle( 'hprnb-root--edge', valueOf( 'accent_edge' ) === '1' );
 		previewRoot.classList.toggle( 'hprnb-root--m-ctrl-out', outside );
-		var mobileThumb = valueOf( 'mobile_show_thumbnail' ) === '1' || valueOf( 'mobile_layout' ) === 'card';
+		previewRoot.classList.toggle( 'hprnb-root--m-ctrl-tab', tabDesign );
+		var shownThumb = valueOf( 'mobile_show_thumbnail' ) === '1';
 		previewRoot.classList.toggle( 'hprnb-root--m-ctrl-col', stacked && ! outside );
-		previewRoot.classList.toggle( 'hprnb-root--m-peek-thumb', mobileThumb && valueOf( 'mobile_peek_thumbnail' ) === '1' );
-		previewRoot.classList.toggle( 'hprnb-root--m-label-compact', mobileThumb && valueOf( 'mobile_label_compact' ) === '1' );
+		previewRoot.classList.toggle( 'hprnb-root--m-peek-thumb', ( shownThumb || tabDesign ) && valueOf( 'mobile_peek_thumbnail' ) === '1' );
+		previewRoot.classList.toggle( 'hprnb-root--m-label-compact', shownThumb && valueOf( 'mobile_label_compact' ) === '1' );
 		[ 'always', 'appear', 'collapsed', 'never' ].forEach( function ( mode ) {
 			previewRoot.classList.toggle( 'hprnb-root--m-pulse-' + mode, ( valueOf( 'mobile_label_pulse' ) || 'appear' ) === mode );
 		} );
@@ -329,7 +338,7 @@
 				var wantsPause = valueOf( 'mobile_show_pause' ) === '1' && ( profile.mode === 'marquee' || profile.mode === 'rotate' );
 				var ctrls = ( valueOf( 'close_button' ) === '1' && valueOf( 'mobile_show_close' ) === '1' ) ? 1 : 0;
 				ctrls += wantsPause ? 1 : ( profile.mode === 'manual' ? 2 : 0 );
-				previewRoot.style.setProperty( '--hprnb-m-ctrls', String( outside || cardDesign || ! ctrls ? 0 : ( stacked ? 1 : ctrls ) ) );
+				previewRoot.style.setProperty( '--hprnb-m-ctrls', String( outside || cardDesign || tabDesign || ! ctrls ? 0 : ( stacked ? 1 : ctrls ) ) );
 			}
 			previewRoot.style.setProperty( p === 'm' ? '--hprnb-m-height' : '--hprnb-height', height + 'px' );
 			previewRoot.style.setProperty( p === 'm' ? '--hprnb-m-lines' : '--hprnb-d-lines', String( profile.lines ) );
@@ -386,8 +395,14 @@
 	/* Dependent fields (greyed out, never disabled: their value is kept)  */
 	/* ------------------------------------------------------------------ */
 
-	/** "key" follows a checkbox; "key:value" (or "key:a|b") follows the chosen option of a radio or a select. */
+	/**
+	 * "key" follows a checkbox; "key:value" (or "key:a|b") follows the chosen option of a radio or a
+	 * select; several conditions separated by commas are alternatives ("a,b:c" = a, or b set to c).
+	 */
 	function isActive( dependency ) {
+		if ( dependency.indexOf( ',' ) !== -1 ) {
+			return dependency.split( ',' ).some( isActive );
+		}
 		var spec = dependency.split( ':' );
 		var master = form.querySelector( '[name="hprnb_settings[' + spec[ 0 ] + ']"]' );
 		return spec.length > 1

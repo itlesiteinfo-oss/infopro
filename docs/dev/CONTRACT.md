@@ -817,3 +817,21 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   (inactive rows hidden, not greyed). `hprnbAdmin.behaviors` = `behavior_presets()`; changing a
   behaviour writes its values into the hidden detailed fields, exactly as saving would.
 
+## 24. The flowing bar with the article picture (2.10.0)
+
+- `mobile_layout` gains `flow_image` (options `card, flow_image, flow, stacked, inline`; default still
+  `card`). `Renderer::profile( $settings, 'm' )` reads it as `layout = flow` with `thumb = true`,
+  `thumb_position = after` and `tab = true` (`tab` is false everywhere else, and on desktop).
+  `Settings::wants_thumbnails()` counts it; `mobile_layout` is already a payload cache key.
+- `root_classes()`: `hprnb-root--m-ctrl-tab` instead of `--m-ctrl-col` / `--m-ctrl-out` (the card keeps
+  its own rule); `hprnb-root--m-peek-thumb` when `mobile_peek_thumbnail` is on, image switch or not.
+  `mobile_controls()` returns 0.
+- Stylesheet section 14, after the outside group: `.hprnb-root--m-ctrl-tab .hprnb-bar__controls` is
+  absolutely placed at `inset-block: auto 100%; inset-inline: auto 0`, a row of 44px square buttons on
+  `--hprnb-e-bg`, with the accent inset when `hprnb-root--edge`; the bar and its inner clip the inline
+  axis only. Collapsed, the controls move back into the strip (chevron at the end of the first line).
+  The mirror test skips `P-ctrl-tab` like the other mobile-only features.
+- Admin: `depends` accepts alternatives separated by commas (`mobile_show_thumbnail,mobile_layout:flow_image`),
+  evaluated by `isActive()`; `computeProfile()` mirrors `tab`, and `applyVisual()` toggles
+  `hprnb-root--m-ctrl-tab` and zeroes `--hprnb-m-ctrls` for it.
+

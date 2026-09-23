@@ -2388,6 +2388,12 @@ mode hybrid:
 4. **Aucune installation existante ne change de comportement** (schéma 6) : le choix est nommé d'après les réglages déjà en place, sinon « Personnalisé ».
 5. **Correctif** : pendant l'attente, l'onglet du bouton fermer de la carte ne dépasse plus en bas de l'écran.
 
+### 15.8.3 decies — Le bandeau fluide avec l'image de l'article (2.10.0)
+
+1. **Nouveau design mobile** au choix dans *Mobile → Design* : le bandeau fluide (pastille « EN CONTINU » devant le titre sur deux lignes) avec **l'image de l'article à la place des boutons**, en fin de ligne.
+2. **Le bouton fermer sort du bandeau** dans un onglet au-dessus du coin de fin, identique à celui de la carte (44 × 44 px, couleur du bandeau, accolé). La pause, si elle est active, se place à côté ; elle se désactive dans *Boutons (mobile)*.
+3. Replié : pastille, première ligne, petite image, chevron. Miroir complet en RTL. La carte reste le design par défaut ; aucune installation existante ne change.
+
 ---
 
 # ANNEXE C — CONSIGNE FINALE À CLAUDE CODE

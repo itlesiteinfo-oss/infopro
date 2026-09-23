@@ -94,8 +94,8 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 				if ( '.hprnb-root' === $selector ) {
 					continue; // The mobile reset of every token has no desktop counterpart (the root defaults play that role).
 				}
-				if ( preg_match( '/P-colors|P-collapse|P-flow|P-card|P-float|P-ctrl-col|P-ctrl-out|P-peek-thumb|P-pulse-|P-label-compact|hprnb-bar--collapsed|peek-label/', $selector ) ) {
-					continue; // Mobile-only features (palette, collapse, flow card, strip, stacked buttons, pulse).
+				if ( preg_match( '/P-colors|P-collapse|P-flow|P-card|P-float|P-ctrl-col|P-ctrl-out|P-ctrl-tab|P-peek-thumb|P-pulse-|P-label-compact|hprnb-bar--collapsed|peek-label/', $selector ) ) {
+					continue; // Mobile-only features (palette, collapse, flow card, strip, stacked or tabbed buttons, pulse).
 				}
 				$declarations = array_filter( array_map( 'trim', explode( ';', $rule[2] ) ) );
 				$out[ $selector ] = array_values( $declarations );
@@ -119,7 +119,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	public function test_plugin_headers() {
 		$data = get_plugin_data( HPRNB_FILE, false, false );
 		$this->assertSame( 'Horizon Press News Bar', $data['Name'] );
-		$this->assertSame( '2.9.0', $data['Version'] );
+		$this->assertSame( '2.10.0', $data['Version'] );
 		$this->assertSame( '6.6', $data['RequiresWP'] );
 		$this->assertSame( '8.0', $data['RequiresPHP'] );
 		$this->assertSame( 'horizon-press-news-bar', $data['TextDomain'] );

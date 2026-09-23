@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.9.0
+Stable tag: 2.10.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,9 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.10.0 =
+* New mobile design "Flowing bar with the article picture": the label opens the headline on two lines, the article picture sits at the end of the line where the buttons were, and the close button moves to a tab above the corner, as on the card.
 
 = 2.9.0 =
 * One "Behaviour" choice per device at the top of the Mobile and Desktop tabs: Continuous reading, Visible and folds while scrolling, Always visible, or Custom (the detailed blocks only show for Custom).

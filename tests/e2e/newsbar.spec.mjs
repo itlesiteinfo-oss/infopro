@@ -2274,3 +2274,127 @@ test( 'v2.9: continuous reading in one choice, and a bar that goes away in the n
 		setSettings( { mobile_layout: 'flow', mobile_lines: 2 } );
 	}
 } );
+
+test( 'v2.10: the flowing bar with the article picture, its buttons in a tab above the corner', async ( { page } ) => {
+	const errors = collectErrors( page );
+	const ids = [ 1, 2, 3 ].map( ( i ) => wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', `--post_title=Exemple : trafic perturbé sur la ligne B ce soir ${ i }`, '--porcelain' ] ) );
+	const media = ids.map( ( id ) => wp( [ 'media', 'import', 'tests/e2e/fixtures/thumb.png', '--post_id=' + id, '--featured_image', '--porcelain' ] ) );
+	const geo = () => page.evaluate( () => {
+		const box = ( el ) => {
+			const b = el.getBoundingClientRect();
+			return { left: Math.round( b.left ), right: Math.round( b.right ), top: Math.round( b.top ), bottom: Math.round( b.bottom ), width: Math.round( b.width ), height: Math.round( b.height ) };
+		};
+		const item = document.querySelector( '.hprnb-bar__item:not([hidden])' );
+		const close = document.querySelector( '.hprnb-bar__btn--close' );
+		const c = close.getBoundingClientRect();
+		const hit = document.elementFromPoint( c.left + c.width / 2, c.top + c.height / 2 );
+		return {
+			bar: box( document.querySelector( '.hprnb-bar' ) ),
+			label: box( document.querySelector( '.hprnb-bar__label' ) ),
+			title: box( item.querySelector( '.hprnb-bar__title' ) ),
+			thumb: box( item.querySelector( '.hprnb-bar__thumb' ) ),
+			tab: box( document.querySelector( '.hprnb-bar__controls' ) ),
+			close: box( close ),
+			closeHit: !! ( hit && hit.closest( '.hprnb-bar__btn--close' ) ),
+			tabBg: getComputedStyle( document.querySelector( '.hprnb-bar__controls' ) ).backgroundColor,
+			barBg: getComputedStyle( document.querySelector( '.hprnb-bar' ) ).backgroundColor,
+		};
+	} );
+
+	try {
+		setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, rotate_interval: 60000 } );
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( '/' );
+		await expect( page.locator( '.hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( page.locator( '#hprnb-root' ) ).toHaveClass( /hprnb-root--m-flow/ );
+		await expect( page.locator( '#hprnb-root' ) ).toHaveClass( /hprnb-root--m-ctrl-tab/ );
+		const g = await geo();
+		expect( g.bar.height ).toBe( 76 );
+		expect( g.bar.bottom ).toBe( 844 );
+		// The pill opens the headline, which runs on two lines up to the picture.
+		expect( g.label.left ).toBeLessThan( g.title.left + 5 );
+		expect( g.title.height ).toBe( 52 );
+		// The picture takes the buttons' place: at the end of the line, inside the gutter, beside the text.
+		expect( [ g.thumb.width, g.thumb.height ] ).toEqual( [ 48, 48 ] );
+		expect( g.thumb.right ).toBe( 390 - 15 );
+		expect( g.title.right ).toBeLessThanOrEqual( g.thumb.left );
+		expect( g.thumb.top ).toBeGreaterThanOrEqual( g.bar.top );
+		// The buttons left the bar for a tab above its end corner, of its colour, with no gap.
+		expect( g.tab.bottom ).toBe( g.bar.top );
+		expect( g.tab.right ).toBe( 390 );
+		expect( [ g.close.width, g.close.height ] ).toEqual( [ 44, 44 ] );
+		expect( g.close.right ).toBe( 390 );
+		expect( g.tabBg ).toBe( g.barBg );
+		expect( g.closeHit ).toBe( true, 'Painted and clickable.' );
+		expect( await page.locator( '.hprnb-bar__btn--toggle' ).isVisible() ).toBe( true, 'Pause, when on, stands beside the cross.' );
+		expect( await page.evaluate( () => getComputedStyle( document.getElementById( 'hprnb-root' ) ).getPropertyValue( '--hprnb-m-ctrls' ).trim() ) ).toBe( '0' );
+
+		// Pause off: the cross alone in the tab.
+		setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, rotate_interval: 60000, mobile_show_pause: false } );
+		await page.goto( '/' );
+		await expect( page.locator( '.hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( ( await geo() ).tab.width ).toBe( 44 );
+
+		// Folded: the strip keeps the first line, the small picture and the chevron; the tab is gone.
+		await page.evaluate( () => window.scrollTo( 0, 400 ) );
+		await page.evaluate( () => window.scrollTo( 0, 900 ) );
+		await expect.poll( () => page.evaluate( () => document.querySelector( '.hprnb-bar' ).classList.contains( 'hprnb-bar--collapsed' ) ) ).toBe( true );
+		await page.waitForTimeout( 400 );
+		const folded = await page.evaluate( () => {
+			const bar = document.querySelector( '.hprnb-bar' ).getBoundingClientRect();
+			const tab = document.querySelector( '.hprnb-bar__controls' ).getBoundingClientRect();
+			const chevron = document.querySelector( '.hprnb-bar__btn--expand' );
+			const thumb = document.querySelector( '.hprnb-bar__item:not([hidden]) .hprnb-bar__thumb' );
+			return { tabInside: tab.top >= bar.top - 1, chevron: !! chevron && chevron.getBoundingClientRect().width > 0, thumb: getComputedStyle( thumb ).display !== 'none' && thumb.getBoundingClientRect().height <= 26, closeShown: getComputedStyle( document.querySelector( '.hprnb-bar__btn--close' ) ).display !== 'none' };
+		} );
+		expect( folded ).toEqual( { tabInside: true, chevron: true, thumb: true, closeShown: false } );
+
+		// The cross closes the bar.
+		await page.evaluate( () => window.scrollTo( 0, 0 ) );
+		await page.goto( '/' );
+		await expect( page.locator( '.hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await page.locator( '.hprnb-bar__btn--close' ).click();
+		await expect( page.locator( '.hprnb-bar' ) ).toBeHidden();
+		await page.evaluate( () => localStorage.removeItem( 'hprnb_dismissed_until' ) );
+
+		// Right to left (an Arabic label: dir="auto" reads the first strong character): the picture
+		// and the tab move to the left corner.
+		setSettings( { mobile_layout: 'flow_image', mobile_lines: 2, rotate_interval: 60000, label_text: 'آخر الأخبار' } );
+		await page.goto( '/?hprnb_rtl=1' );
+		await expect( page.locator( '.hprnb-bar' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await page.locator( '.hprnb-bar' ).evaluate( ( el ) => getComputedStyle( el ).direction ) ).toBe( 'rtl' );
+		const r = await geo();
+		expect( r.thumb.left ).toBe( 15 );
+		expect( r.tab.left ).toBe( 0 );
+		expect( r.tab.bottom ).toBe( r.bar.top );
+		expect( r.title.left ).toBeGreaterThanOrEqual( r.thumb.right );
+
+		// The admin: one click in Design, the preview follows at once.
+		await page.goto( '/wp-login.php' );
+		await page.fill( '#user_login', 'admin' );
+		await page.fill( '#user_pass', 'admin' );
+		await page.click( '#wp-submit' );
+		await page.waitForURL( /wp-admin/ );
+		setSettings( {} );
+		await page.setViewportSize( { width: 1400, height: 1000 } );
+		await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar' );
+		await page.click( '[data-hprnb-tab="mobile"]' );
+		const sizeRow = page.locator( 'tr[data-hprnb-depends="mobile_show_thumbnail,mobile_layout:flow_image"]' ).first();
+		await expect( sizeRow ).toHaveClass( /hprnb-row--inactive/ );
+		await page.check( '#hprnb-field-mobile-layout-flow_image' );
+		await expect( sizeRow ).not.toHaveClass( /hprnb-row--inactive/, 'Its picture size is reachable without the image switch.' );
+		const preview = page.locator( '#hprnb-preview-root' );
+		await expect( preview ).toHaveClass( /hprnb-root--m-ctrl-tab/ );
+		await expect( preview ).toHaveClass( /hprnb-root--m-flow/ );
+		await expect( preview ).toHaveClass( /hprnb-root--m-thumb-after/ );
+		await expect( preview ).not.toHaveClass( /hprnb-root--m-ctrl-col/ );
+		await page.click( '#hprnb-save' );
+		await page.waitForURL( /settings-updated=true/ );
+		expect( JSON.parse( wp( [ 'option', 'get', 'hprnb_settings', '--format=json' ] ) ).mobile_layout ).toBe( 'flow_image' );
+		expect( errors ).toEqual( [] );
+	} finally {
+		media.forEach( ( id ) => wp( [ 'post', 'delete', id, '--force' ] ) );
+		ids.forEach( ( id ) => wp( [ 'post', 'delete', id, '--force' ] ) );
+		setSettings( { mobile_layout: 'flow', mobile_lines: 2 } );
+	}
+} );

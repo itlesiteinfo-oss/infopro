@@ -2,6 +2,15 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.10.0] — 2026-09-23
+
+### Ajouté — le bandeau fluide avec l'image de l'article
+
+- **Nouveau design mobile `flow_image`** dans *Mobile → Design* : le bandeau fluide (la pastille « EN CONTINU » ouvre le titre, sur deux lignes par défaut, 76 px), avec **l'image de l'article en fin de ligne, à la place des boutons**, et **le bouton fermer sorti du bandeau, dans un onglet au-dessus du coin de fin** — l'onglet de la carte : 44 × 44 px, de la couleur du bandeau, collé à son bord supérieur, avec le liseré d'accent. La pause, si elle est active, se place à côté de la croix ; *Boutons (mobile) → Bouton Pause* la retire.
+- L'image est toujours présente dans ce design, que la case « Image » soit cochée ou non ; sa taille (*Taille de l'image*, 48 px par défaut, carrée, jamais plus haute que le titre) et sa présence dans le bandeau replié restent réglables. Replié : la pastille, la première ligne, la petite image et le chevron.
+- Implémentation : `Renderer::profile()` lit `flow_image` comme le bandeau fluide avec `thumb` forcé, `thumb_position = after` et un nouveau drapeau `tab` ; la racine reçoit `hprnb-root--m-ctrl-tab` au lieu de `--m-ctrl-col` / `--m-ctrl-out`, et `mobile_controls()` vaut 0. Aucune règle nouvelle pour l'image : celles du bandeau fluide servent telles quelles. Miroir RTL par les propriétés logiques. Aucune migration : la valeur s'ajoute à `mobile_layout`, la carte reste le défaut.
+- Administration : une dépendance peut désormais énumérer des alternatives (`a,b:c`) ; la taille de l'image et l'image du bandeau replié restent actives pour ce design sans la case « Image ». L'aperçu en direct suit le design sans rechargement de la page.
+
 ## [2.9.0] — 2026-09-23
 
 ### Ajouté — un seul choix par appareil : « Comportement de la barre »

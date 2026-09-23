@@ -300,7 +300,7 @@ final class Settings_Page {
 					),
 					array(
 						'title'       => __( 'Design', 'horizon-press-news-bar' ),
-						'description' => __( 'Under 768 px. The "Explore More" card is the default: a label row, the picture at the left, the headline on up to three lines and the close button in a tab above the corner. The height shown beside the line count is the height the page reserves.', 'horizon-press-news-bar' ),
+						'description' => __( 'Under 768 px. The "Explore More" card is the default: a label row, the picture at the left, the headline on up to three lines and the close button in a tab above the corner. The flowing bar with the article picture keeps the label in front of the headline, puts the picture where the buttons were and the close button in the same tab. The height shown beside the line count is the height the page reserves.', 'horizon-press-news-bar' ),
 						'switch'      => 'show_on_mobile',
 						'keys'        => array( 'mobile_layout', 'mobile_card_thumb', 'mobile_card_float', 'mobile_lines', 'mobile_font_size', 'mobile_bar_height', 'mobile_label_style', 'mobile_label_dot', 'mobile_label_pulse', 'mobile_label_compact', 'mobile_show_counter', 'mobile_show_progress', 'mobile_show_separator', 'mobile_show_thumbnail', 'mobile_thumb_position', 'mobile_thumb_size', 'mobile_swipe', 'mobile_kbd_hide' ),
 						'scenarios'   => array(
@@ -325,7 +325,7 @@ final class Settings_Page {
 					),
 					array(
 						'title'       => __( 'Buttons (mobile)', 'horizon-press-news-bar' ),
-						'description' => __( 'The pause and close buttons can sit inside the flowing bar or outside it. The card always carries them in its tab above the corner.', 'horizon-press-news-bar' ),
+						'description' => __( 'The pause and close buttons can sit inside the flowing bar or outside it. The card and the flowing bar with the article picture always carry them in their tab above the corner; switch the pause button off to keep the cross alone.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'mobile_controls_place', 'mobile_controls_layout', 'mobile_show_pause', 'mobile_show_close' ),
 					),
 					array(
@@ -711,10 +711,11 @@ final class Settings_Page {
 				'type'    => 'radio',
 				'label'   => __( 'Design', 'horizon-press-news-bar' ),
 				'options' => array(
-					'card'    => __( '"Explore More" card (default) — a label row, then the picture at the left and the headline on up to three lines, the close button in a tab above the corner', 'horizon-press-news-bar' ),
-					'flow'    => __( 'Flowing bar — the label opens the headline, which runs across the width of the screen', 'horizon-press-news-bar' ),
-					'stacked' => __( 'Label row above the headline', 'horizon-press-news-bar' ),
-					'inline'  => __( 'Label in front of the headline, on one line', 'horizon-press-news-bar' ),
+					'card'       => __( '"Explore More" card (default) — a label row, then the picture at the left and the headline on up to three lines, the close button in a tab above the corner', 'horizon-press-news-bar' ),
+					'flow_image' => __( 'Flowing bar with the article picture — the label opens the headline on two lines, the picture of the article at the end of the line, the close button in a tab above the corner', 'horizon-press-news-bar' ),
+					'flow'       => __( 'Flowing bar — the label opens the headline, which runs across the width of the screen', 'horizon-press-news-bar' ),
+					'stacked'    => __( 'Label row above the headline', 'horizon-press-news-bar' ),
+					'inline'     => __( 'Label in front of the headline, on one line', 'horizon-press-news-bar' ),
 				),
 			),
 			'mobile_label_style'          => array(
@@ -833,7 +834,7 @@ final class Settings_Page {
 				'type'    => 'number',
 				'label'   => __( 'Image size (px)', 'horizon-press-news-bar' ),
 				'desc'    => __( '16 to 80 px, square. Never taller than the headline block, so the card keeps its height.', 'horizon-press-news-bar' ),
-				'depends' => 'mobile_show_thumbnail',
+				'depends' => 'mobile_show_thumbnail,mobile_layout:flow_image',
 			),
 			'mobile_collapse_mode'        => array(
 				'section' => 'mobile',
@@ -901,7 +902,7 @@ final class Settings_Page {
 				'type'    => 'checkbox',
 				'label'   => __( 'Image in the collapsed strip', 'horizon-press-news-bar' ),
 				'text'    => __( 'Keep the image at the end of the strip, resized so it never exceeds one line.', 'horizon-press-news-bar' ),
-				'depends' => 'mobile_show_thumbnail',
+				'depends' => 'mobile_show_thumbnail,mobile_layout:flow_image',
 			),
 			'mobile_label_compact'        => array(
 				'section' => 'mobile',
