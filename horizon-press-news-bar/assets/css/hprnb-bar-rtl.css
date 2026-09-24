@@ -2937,9 +2937,11 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 		animation: hprnb-u-bn-in .25s calc(var(--hprnb-u-bn-t, 0ms) + 190ms) var(--hprnb-u-bn-ease) backwards;
 	}
 
+	/* The hairline: drawn evenly (ease-in-out), so it is about three quarters drawn when the X comes in
+	   at 480ms (2.19) — with the band's strong ease-out it would look finished already. */
 	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-opened]) .hprnb-bar__inner::before {
 		transform-origin: var(--hprnb-u-bn-rule-at);
-		animation: hprnb-u-bn-rule .28s calc(var(--hprnb-u-bn-t, 0ms) + 300ms) var(--hprnb-u-bn-ease) backwards;
+		animation: hprnb-u-bn-rule .28s calc(var(--hprnb-u-bn-t, 0ms) + 300ms) ease-in-out backwards;
 	}
 
 	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-opened]) .hprnb-bar__controls {

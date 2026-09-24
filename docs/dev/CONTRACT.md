@@ -1069,14 +1069,14 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   600px (container query); every `li` in grid area 1 / 1, the ones not `.is-current` `visibility:
   hidden`; before the script only the first item not `--here` shows, after the `hprnb-u-bn-wait`
   animation (1.5s, list opacity 0, no-preference only); the pause button is hidden from the first paint
-  with a single item, and under 768px when `data-hprnb-mobile` says `"pause":false`. Highlights
-  `hprnb-u-bn-rest` (transparent), `hprnb-u-bn-trail1` (35%), `hprnb-u-bn-trail2` (70%); span fallback
-  `.hprnb-bar__rest` / `__trail1` / `__trail2`; `.is-leaving` (item or viewport) fades in 220ms.
+  with a single item, and under 768px when `data-hprnb-mobile` says `"pause":false`. Highlight
+  `hprnb-u-bn-rest` (transparent; the 35% / 70% trail highlights and spans were removed in 2.19); span
+  fallback `.hprnb-bar__rest`; `.is-leaving` (item or viewport) fades in 220ms.
 - Engine (`setupBreaking()`, mode `type`, class `hprnb-bar--bn`): `typePlan( text )` — graphemes
   (`Intl.Segmenter`) weighted 1 (space 0.5), words for joined scripts (`JOINED`), duration
-  `clamp(26ms × weight, 450, 2600)`, +70ms after `, ; : . ! ? … ، ؛ ؟ ۔`, trail 2 × 45ms; hold
+  `clamp(26ms × weight, 450, 2600)`, +70ms after `, ; : . ! ? … ، ؛ ؟ ۔` (2.19: no trail); hold
   `max(5000, interval) + min(7000, 40 × max(0, letters − 60))`; fade 220 + gap 90. `createReveal()`
-  paints three ranges without touching the text (or four spans restored by `clear()`). The pause
+  paints one range without touching the text (or two spans restored by `clear()`; 2.19). The pause
   controller's `onChange( paused, st )`: `st.user` / `st.focus` complete a headline being typed,
   `st.hover` lets it finish; the hold keeps its remainder, at least 2s on resume. `prefers-reduced-motion`
   and `forced-colors` are read live (whole headlines, swaps without fade). `aside.hprnbBn` = `{id, done,
@@ -1145,4 +1145,44 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   nor `--hprnb-u-bn-t`, init) — the `#hprnb-preview-replay` button (`updateReplay()`: hidden unless a
   Breaking News urgent bar is previewed on a device tab where it is on) and a newly chosen Breaking News
   design call it.
+
+## 33. The Urgent column of Posts → All Posts, the tighter opening (2.19.0)
+
+- `Admin\Urgent_List` (hooks on admin requests; the route on every request). Only while
+  `Urgent::enabled()`; only the `post` list (`manage_post_posts_columns`, `views_edit-post`,
+  `edit.php` + screen `edit-post` for the assets). Column `hprnb_urgent` after `title`, other columns
+  untouched. Cell `.hprnb-urgent-cell[data-hprnb-post][data-hprnb-state][data-hprnb-left]` (seconds left
+  while active) holding `button.hprnb-urgent-switch[aria-pressed][aria-label][data-hprnb-post]
+  [data-hprnb-state]` — or `span.hprnb-urgent-switch.is-static` with a `.screen-reader-text` state when the
+  user may not `edit_post`, the post is trashed, or `locked_by()` (another user's `_edit_lock` younger than
+  `wp_check_post_lock_window`) — and `.hprnb-urgent-cell__note` ("until H:i", "when published", "being
+  edited"). Row class `hprnb-urgent-row` from `post_class` on `edit-post` or Quick Edit's `inline-save`
+  for `edit-post`, only for `state === 'active'`.
+- `Urgent::state()`: `active` = `is_active()` and published; `armed` = armed, or `is_active()` while
+  unpublished; `off` otherwise. `Urgent::apply( $post, $want, $restart, $settings )` is the one rule of
+  the edit screen's box (`Post_Controls::save_urgent()`) and of the switch: unticked → `unflag()`;
+  unpublished → `arm()` (once); published → `flag()` when `$restart` or not active.
+- Route `hprnb/v1/urgent/(?P<id>\d+)`: `POST` (`urgent` boolean, required) — permission: a `post`, else
+  404 `hprnb_urgent_not_found`; `edit_post`, else 401/403 `hprnb_urgent_forbidden`; callback: 409
+  `hprnb_urgent_off` when the URGENT bar is off, 404 when trashed, 409 `hprnb_urgent_locked` when
+  another user holds the lock, then `Urgent::apply( …, false, … )`. `GET` — permission: a `post`,
+  `edit_posts` and `read_post`. Both answer `{ id, state, until, html (the cell), count }`.
+- View `edit.php?post_type=post&hprnb_urgent=1`: `ticked_ids()` = two id-only `get_posts()` (statuses of
+  the All view, `perm => readable`, at most 500 each): `_hprnb_urgent_until > time()` NUMERIC, and
+  `_hprnb_urgent_armed = 1`. `filter_query()` sets `post__in` (or `[0]`) on the main query of
+  `edit.php`; `keep_view()` prints the hidden `hprnb_urgent` field in the list's form.
+- Script `hprnb-urgent-list.js` (`wp-a11y`), localised `hprnbUrgentList { endpoint, nonce, renew, i18n }`:
+  busy guard (`aria-busy`), `_locale=user`, a 4xx JSON refusal keeps the cell and shows its message, any
+  other failure `GET`s the state and renders it (error message "could not be confirmed" when that fails
+  too), `rest_cookie_invalid_nonce` → `renew` (core `rest-nonce`) and one retry, focus moved only when it
+  was on the cell, a timer per active cell re-reads it `data-hprnb-left` seconds later. Styles
+  `hprnb-urgent-list.css`, colours from `urgent_bg_color` / `urgent_text_color` (inline
+  `--hprnb-ul-red`, `--hprnb-ul-ink` on `.wp-list-table, .hprnb-urgent-view`).
+- Opening (stylesheet 17 quater): aside `hprnb-u-bn-open` .7s (uncovered over 45.71%), label
+  `hprnb-u-bn-in` .25s +190ms, rule `hprnb-u-bn-rule` .28s +300ms `ease-in-out` (about 73% drawn at
+  480ms), controls `hprnb-u-bn-ctrl` .17s
+  +480ms from `scale: .92`. Script: `BN.open` = 700; the first typing frame waits while the opening is
+  `pending` (`openingPending()`), then starts at `now + max(openingLeft(), lead)`; the late-script fade
+  of the controls lasts 170ms and `lead` is 220. Typing: one highlight, `hprnb-u-bn-rest`
+  (`color: transparent`), from the end of the typed part; spans fallback `.hprnb-bar__rest`.
 

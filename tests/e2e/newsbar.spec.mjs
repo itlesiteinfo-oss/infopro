@@ -3759,6 +3759,14 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 		// The buttons last: faded in and scaled from .92, from 480ms.
 		expect( run.frames.filter( ( f ) => f.t < 470 ).every( ( f ) => f.co === 0 ) ).toBe( true );
 		expect( run.frames.some( ( f ) => f.co > 0 && f.co < 1 && parseFloat( f.cs ) >= 0.92 && parseFloat( f.cs ) < 1 ) ).toBe( true );
+		// 2.19: the X comes in while the hairline is about three quarters drawn, not once it looks finished.
+		const drawn = ( f ) => {
+			const m = /^matrix\(([\d.]+), 0, 0, ([\d.]+), 0, 0\)$/.exec( f.rule );
+			return m ? Number( width < 600 ? m[ 1 ] : m[ 2 ] ) : ( 'none' === f.rule ? 1 : 0 );
+		};
+		const xIn = run.frames.find( ( f ) => f.co > 0 );
+		expect( drawn( xIn ) ).toBeGreaterThan( 0.55 );
+		expect( drawn( xIn ) ).toBeLessThan( 0.92 );
 		// Over: no clip, the hairline whole, the buttons whole.
 		const last = run.frames[ run.frames.length - 1 ];
 		expect( [ last.clip, last.rule, last.co, last.lo ] ).toEqual( [ 'none', 'none', 1, 1 ] );

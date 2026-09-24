@@ -65,6 +65,10 @@ A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `h
 
 == Changelog ==
 
+= 2.19.0 =
+* Posts → All Posts gets an "Urgent" column right after the title: a switch per article (a real button with aria-pressed) that puts it in the red URGENT bar, or takes it out, without reloading — the same data as the URGENT box of the edit screen, saved over a private REST route (nonce, edit_post capability). The row of an article in the red bar is tinted with a red edge; a "⚡ Urgent (N)" view lists the ticked articles and works with search, filters, sorting and pages. Third-party columns are left as they are.
+* The opening of the Breaking News bar is tighter (the headline types from 0.7 s) and each typed letter shows straight in white, without a grey trail.
+
 = 2.18.0 =
 * An opening for the Breaking News bar, played once when it appears: the red band, already in place, is uncovered in the reading direction, the cartouche settles, the hairline is drawn, the buttons come in, then the headline types. Mirrored in right-to-left; nothing moves under reduced motion; never replayed by a new headline, a resize or a navigation.
 * The settings preview plays the same opening and has a "Replay the animation" button.
@@ -203,6 +207,9 @@ A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `h
 * Initial release: sliding-window news bar, transient cache, hybrid mode, REST endpoint, shortcode, settings page with live preview, import / export, accessible optional ticker, RTL and i18n.
 
 == Upgrade Notice ==
+
+= 2.19.0 =
+New "Urgent" column and view in Posts → All Posts; a tighter opening of the Breaking News bar. Purge your page cache after updating.
 
 = 2.18.0 =
 The Breaking News bar opens with a short animation. Purge your page cache after updating.

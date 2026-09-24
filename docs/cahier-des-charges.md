@@ -2449,6 +2449,18 @@ mode hybrid:
 3. **Séquence** : rouge (0–450 ms), cartouche de droite à gauche sur ~24 px avec fondu (250–320 ms), filet tracé depuis le cartouche (300–400 ms), bouton fermer en fondu et échelle 0,9 → 1 (150–200 ms), titre 80 à 150 ms après ; le tout se chevauche, ~0,8 s avant le titre.
 4. **RTL** : tout en miroir. **Une seule fois** à l'apparition, jamais sur un changement de titre, un rafraîchissement, un redimensionnement ; rejouée si le bandeau est réellement recréé. **Mouvement réduit** : tout visible tout de suite, aucune frappe. **Accessibilité** : rien d'annoncé lettre par lettre, fermer accessible. **Aperçu** : la même animation et un bouton « Rejouer l'animation ».
 
+### 15.8.3 novodecies — Ouverture resserrée, frappe blanche et colonne « Urgent » de la liste des articles (2.19.0)
+
+1. **Front, design inchangé** : rouge découvert de 0 à 320 ms (`clip-path`, `cubic-bezier(.22, 1, .36, 1)`, le bandeau ne glisse pas), cartouche de 190 à 440 ms (~24 px et fondu), filet de 300 à 580 ms (`scaleX` depuis la gauche, depuis la droite en RTL), bouton fermer de 480 à 650 ms (fondu et échelle 0,92 → 1), titre à ~700 ms ; tout se chevauche ; RTL en miroir ; une seule fois ; mouvement réduit : tout tout de suite, sans frappe ; aucun CLS, aucun débordement, minuteries nettoyées.
+2. **Frappe** : chaque caractère ajouté apparaît directement en blanc (opacité 1), sans passage du gris au blanc ; ne pas mélanger frappe et fondu.
+3. **Aperçu d'administration** fidèle, avec « Rejouer l'animation ».
+4. **Articles → Tous les articles : une colonne « Urgent » compacte** près du titre, distincte de la colonne tierce « VAR ARTICLE » (ni modifiée ni confondue). Un **interrupteur**, pas une case : `<button type="button">` avec `aria-pressed`, libellés « Marquer « Titre » comme actualité urgente » / « Retirer « Titre » des actualités urgentes », inactif « ○ Urgent » gris clair, actif « ⚡ URGENT » au rouge de l'extension, texte blanc semi-gras ; focus visible, clavier, transition de 150 à 200 ms.
+5. **Ligne active** teintée d'un rouge très pâle (type `#fff3f4`) avec un bord rouge de 4 px à gauche, appliqués aux cellules, avec le rouge configurable.
+6. **Comportement** : bascule en AJAX/REST sans rechargement ; état d'attente, pas de double requête, indicateur, largeur de colonne stable ; en cas d'erreur, retour à l'état réel, message clair, **jamais d'interface différente de ce qui est enregistré**.
+7. **Source de vérité unique** : les mêmes données que l'écran d'édition (aucune métadonnée en double). **Sécurité** : nonce, validation de l'identifiant, assainissement, `current_user_can( 'edit_post', $id )`, erreurs structurées, jamais de confiance dans le seul JavaScript. Plusieurs articles urgents possibles ; règles du front conservées (article consulté écarté, rotation, expiration).
+8. **Vue « ⚡ Urgents (N) »** par une requête efficace (jamais tous les articles filtrés en PHP), compatible avec pagination, recherche, filtres date / catégorie / auteur, Yoast et tri ; état calculé côté serveur pour chaque ligne ; responsive ; accessible.
+9. **Tests réels** : front, administration, mobile, RTL, permissions, absence de régression ; **rapport final en 16 points**.
+
 ---
 
 # ANNEXE C — CONSIGNE FINALE À CLAUDE CODE
