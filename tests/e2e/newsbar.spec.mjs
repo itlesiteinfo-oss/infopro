@@ -3628,6 +3628,223 @@ test( 'v2.17 review: analytics of the headline shown, closing mid-typing, no pho
 	}
 } );
 
+test( 'v2.18: Breaking News opening — the band uncovered from the reading start, then the cartouche, the hairline, the buttons and the headline; once; mirrored in RTL; none under reduced motion; carried across a hybrid refresh; replayable in the preview', async ( { browser } ) => {
+	const now = () => Math.floor( Date.now() / 1000 );
+	const flag = ( id, since, until ) => {
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_since', String( since ) ] );
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_until', String( until ) ] );
+		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+	};
+	const OPEN = /^hprnb-u-bn-(open|in|rule|ctrl)$/;
+	const ids = [ 'Séisme au large d’Al Hoceïma', 'Le gouvernement annonce un plan d’urgence de 12 milliards de dirhams pour l’automobile' ].map( ( title ) => wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=' + title, '--porcelain' ] ) );
+	// Every frame from the band's first one: the parts of the opening, the first letter, the band's box.
+	const sampler = () => {
+		window.hprnbOpen = { parts: null, frames: [] };
+		let t0 = null;
+		const tick = () => {
+			const u = document.querySelector( '.hprnb-bar--urgent' );
+			if ( u ) {
+				const all = u.getAnimations( { subtree: true } ).filter( ( a ) => /^hprnb-u-bn-(open|in|rule|ctrl)$/.test( a.animationName ) );
+				const open = all.find( ( a ) => a.animationName === 'hprnb-u-bn-open' );
+				if ( open && t0 === null ) {
+					t0 = document.timeline.currentTime - ( open.effect.getComputedTiming().localTime - open.effect.getTiming().delay );
+					window.hprnbOpen.parts = Object.fromEntries( all.map( ( a ) => [ a.animationName, [ Math.round( a.effect.getTiming().delay - ( open.effect.getTiming().delay ) ), Math.round( a.effect.getTiming().duration ) ] ] ) );
+				}
+				if ( t0 !== null ) {
+					const title = u.querySelector( '.hprnb-bar__item.is-current .hprnb-bar__title' );
+					let typed = -1;
+					for ( const r of ( CSS.highlights.get( 'hprnb-u-bn-rest' ) || [] ) ) {
+						if ( title && title.contains( r.startContainer ) ) {
+							typed = r.startOffset;
+						}
+					}
+					const box = u.getBoundingClientRect();
+					const label = u.querySelector( '.hprnb-bar__label' );
+					const rule = getComputedStyle( u.querySelector( '.hprnb-bar__inner' ), '::before' );
+					window.hprnbOpen.frames.push( { t: document.timeline.currentTime - t0, clip: getComputedStyle( u ).clipPath, lx: getComputedStyle( label ).translate, rule: rule.transform, origin: rule.transformOrigin, typed, h: Math.round( box.height ), top: Math.round( box.top ), lt: Math.round( label.getBoundingClientRect().left ) } );
+				}
+			}
+			if ( ! window.hprnbOpen.frames.length || window.hprnbOpen.frames[ window.hprnbOpen.frames.length - 1 ].t < 1400 ) {
+				requestAnimationFrame( tick );
+			}
+		};
+		requestAnimationFrame( tick );
+	};
+	const cut = ( clip ) => {
+		const m = /inset\(-32px (\S+) 0px (\S+)\)/.exec( clip );
+		return m ? Math.max( parseFloat( m[ 1 ] ), parseFloat( m[ 2 ] ) ) : 0;
+	};
+	const open = async ( width, { init = null, waitUntil = 'load', path = '/', reduced = false } = {} ) => {
+		const context = await browser.newContext( { viewport: { width, height: 900 }, reducedMotion: reduced ? 'reduce' : 'no-preference' } );
+		const page = await context.newPage();
+		const errors = collectErrors( page );
+		await page.addInitScript( sampler );
+		if ( init ) {
+			await init( page );
+		}
+		await page.goto( path, { waitUntil } );
+		return { context, page, errors, urgent: page.locator( '.hprnb-bar--urgent' ) };
+	};
+	const running = ( page ) => page.evaluate( () => document.querySelector( '.hprnb-bar--urgent' ).getAnimations( { subtree: true } ).filter( ( a ) => /^hprnb-u-bn-(open|in|rule|ctrl)$/.test( a.animationName ) ).map( ( a ) => a.animationName ) );
+	const typedNow = ( page ) => page.evaluate( () => {
+		const title = document.querySelector( '.hprnb-bar--urgent .hprnb-bar__item.is-current .hprnb-bar__title' );
+		let typed = -1;
+		for ( const r of ( CSS.highlights.get( 'hprnb-u-bn-rest' ) || [] ) ) {
+			if ( title && title.contains( r.startContainer ) ) {
+				typed = r.startOffset;
+			}
+		}
+		return { id: title && title.closest( 'li' ).getAttribute( 'data-hprnb-id' ), typed };
+	} );
+	try {
+		const t = now();
+		flag( ids[ 0 ], t - 60, t + 900 );
+		flag( ids[ 1 ], t - 30, t + 900 );
+
+		for ( const [ width, rtl ] of [ [ 390, false ], [ 1366, false ], [ 390, true ] ] ) {
+			setDefaultSettings( { urgent_label: rtl ? 'عاجل' : 'DERNIÈRE MINUTE' } );
+			const { context, page, errors, urgent } = await open( width );
+			await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+			await page.waitForTimeout( 1600 );
+			const run = await page.evaluate( () => window.hprnbOpen );
+			// The five steps, overlapping: 0–450, 280–580, 430–760, 620–800ms; the headline from ~860ms.
+			expect( run.parts ).toEqual( { 'hprnb-u-bn-open': [ 0, 450 ], 'hprnb-u-bn-in': [ 280, 300 ], 'hprnb-u-bn-rule': [ 430, 330 ], 'hprnb-u-bn-ctrl': [ 620, 180 ] } );
+			const first = run.frames.find( ( f ) => f.typed > 0 );
+			expect( first.t ).toBeGreaterThanOrEqual( 840 );
+			expect( first.t ).toBeLessThan( 1150 );
+			expect( run.frames.filter( ( f ) => f.t < 840 ).every( ( f ) => f.typed <= 0 ) ).toBe( true );
+			// Nothing moves: the band keeps its box; the reveal only ever uncovers more, from the reading start.
+			expect( [ ...new Set( run.frames.map( ( f ) => f.h ) ) ] ).toHaveLength( 1 );
+			expect( [ ...new Set( run.frames.map( ( f ) => f.top ) ) ] ).toHaveLength( 1 );
+			const early = run.frames.find( ( f ) => f.t > 40 && cut( f.clip ) > 5 );
+			expect( early.clip ).toMatch( rtl ? /^inset\(-32px 0px 0px [\d.]+%\)$/ : /^inset\(-32px [\d.]+% 0px 0px\)$/ );
+			run.frames.slice( 1 ).forEach( ( f, k ) => expect( cut( f.clip ) ).toBeLessThanOrEqual( cut( run.frames[ k ].clip ) + 0.01 ) );
+			expect( run.frames[ run.frames.length - 1 ].clip ).toBe( 'none' );
+			// The cartouche comes from the other side, 24px at most; the hairline is drawn from it (phone) or from its middle (row).
+			const settling = run.frames.find( ( f ) => f.t > 300 && f.t < 450 );
+			expect( parseFloat( settling.lx ) * ( rtl ? -1 : 1 ) ).toBeGreaterThan( 0 );
+			expect( Math.abs( parseFloat( settling.lx ) ) ).toBeLessThanOrEqual( 24 );
+			const drawing = run.frames.find( ( f ) => f.t > 480 && f.t < 700 );
+			expect( drawing.rule ).toMatch( width < 600 ? /^matrix\(0\.\d+, 0, 0, 1, 0, 0\)$/ : /^matrix\(1, 0, 0, 0\.\d+, 0, 0\)$/ );
+			if ( width < 600 ) {
+				expect( drawing.origin.startsWith( '0px' ) ).toBe( ! rtl );
+			}
+			await expect( urgent.locator( '.hprnb-bar__btn--close' ) ).toBeVisible();
+
+			if ( ! rtl && width === 390 ) {
+				// Once: a re-initialisation, a resize across 600 and 768px, the next headline — never the opening again.
+				expect( await running( page ) ).toEqual( [] );
+				await page.evaluate( () => {
+					const root = document.getElementById( 'hprnb-root' );
+					window.hprnbBar.destroy( root );
+					window.hprnbBar.init( root );
+				} );
+				for ( const w of [ 700, 1366, 390 ] ) {
+					await page.setViewportSize( { width: w, height: 900 } );
+					await page.waitForTimeout( 400 );
+					expect( await running( page ) ).toEqual( [] );
+				}
+				const before = ( await typedNow( page ) ).id;
+				await expect.poll( async () => ( await typedNow( page ) ).id, { timeout: 15000 } ).not.toBe( before );
+				expect( await running( page ) ).toEqual( [] );
+				expect( ( await page.evaluate( () => window.hprnbOpen.frames.filter( ( f ) => f.t > 900 ) ) ).every( ( f ) => f.clip === 'none' ) ).toBe( true );
+			}
+			expect( errors ).toEqual( [] );
+			await context.close();
+		}
+
+		// Reduced motion: no opening at all — everything in place at once, the headline whole.
+		setDefaultSettings();
+		{
+			const { context, page, errors, urgent } = await open( 390, { reduced: true } );
+			await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+			expect( await running( page ) ).toEqual( [] );
+			expect( await urgent.evaluate( ( el ) => [ getComputedStyle( el ).clipPath, getComputedStyle( el.querySelector( '.hprnb-bar__label' ) ).opacity, getComputedStyle( el.querySelector( '.hprnb-bar__controls' ) ).opacity, getComputedStyle( el.querySelector( '.hprnb-bar__inner' ), '::before' ).transform ] ) ).toEqual( [ 'none', '1', '1', 'none' ] );
+			expect( ( await typedNow( page ) ).typed ).toBe( -1 );
+			expect( errors ).toEqual( [] );
+			await context.close();
+		}
+
+		// Closed during the opening: gone, nothing left running.
+		{
+			const { context, page, errors, urgent } = await open( 1366, { waitUntil: 'domcontentloaded' } );
+			await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+			await page.evaluate( () => document.querySelector( '.hprnb-bar--urgent .hprnb-bar__btn--close' ).click() );
+			await expect( urgent ).toHaveCount( 0 );
+			await page.waitForTimeout( 1500 );
+			expect( await page.evaluate( () => CSS.highlights.size ) ).toBe( 0 );
+			expect( errors ).toEqual( [] );
+			await context.close();
+		}
+
+		// Hybrid, a page from a page cache with one urgent headline, the refresh bringing two: the new
+		// bar carries on with the opening where the old one was — it never closes and opens again.
+		wp( [ 'post', 'meta', 'delete', ids[ 1 ], '_hprnb_urgent_since' ] );
+		wp( [ 'post', 'meta', 'delete', ids[ 1 ], '_hprnb_urgent_until' ] );
+		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+		const cachedContext = await browser.newContext();
+		const cached = ( await ( await cachedContext.request.get( '/' ) ).text() ).replace( /data-hprnb-generated="\d+"/, 'data-hprnb-generated="' + ( now() - 3600 ) + '"' );
+		await cachedContext.close();
+		flag( ids[ 1 ], t - 30, t + 900 );
+		{
+			const { context, page, errors, urgent } = await open( 1366, { init: ( p ) => p.route( ( url ) => url.pathname === '/', ( route ) => route.fulfill( { status: 200, contentType: 'text/html; charset=UTF-8', body: cached } ) ) } );
+			await expect( urgent.locator( '.hprnb-bar__list > .hprnb-bar__item' ) ).toHaveCount( 2 );
+			expect( await urgent.evaluate( ( el ) => parseFloat( el.style.getPropertyValue( '--hprnb-u-bn-t' ) ) ) ).toBeLessThan( 0 );
+			await page.waitForTimeout( 1600 );
+			const run = await page.evaluate( () => window.hprnbOpen );
+			run.frames.slice( 1 ).forEach( ( f, k ) => expect( cut( f.clip ) ).toBeLessThanOrEqual( cut( run.frames[ k ].clip ) + 0.01 ) );
+			const first = run.frames.find( ( f ) => f.typed > 0 );
+			expect( first.t ).toBeLessThan( 1300 );
+			expect( errors ).toEqual( [] );
+			await context.close();
+		}
+
+		// The settings preview plays the same opening, and replays it on demand; not for the chyron.
+		{
+			const context = await browser.newContext( { viewport: { width: 1366, height: 1000 } } );
+			const page = await context.newPage();
+			const errors = collectErrors( page );
+			await page.goto( '/wp-login.php' );
+			await page.fill( '#user_login', 'admin' );
+			await page.fill( '#user_pass', 'admin' );
+			await page.click( '#wp-submit' );
+			await page.waitForURL( /wp-admin/ );
+			await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar' );
+			await page.click( '[data-hprnb-tab="urgent"]' );
+			const bar = page.locator( '#hprnb-preview-root .hprnb-bar--urgent' );
+			await expect( bar ).toHaveAttribute( 'data-hprnb-init', '1' );
+			const replay = page.locator( '#hprnb-preview-replay' );
+			await expect( replay ).toBeVisible();
+			const previewRunning = () => page.evaluate( () => document.querySelector( '#hprnb-preview-root .hprnb-bar--urgent' ).getAnimations( { subtree: true } ).filter( ( a ) => /^hprnb-u-bn-(open|in|rule|ctrl)$/.test( a.animationName ) ).length );
+			await expect.poll( previewRunning, { timeout: 3000 } ).toBe( 0 );
+			await replay.click();
+			expect( await previewRunning() ).toBe( 4 );
+			const previewTyped = () => page.evaluate( () => {
+				const title = document.querySelector( '#hprnb-preview-root .hprnb-bar--urgent .hprnb-bar__item.is-current .hprnb-bar__title' );
+				let typed = -1;
+				for ( const r of ( CSS.highlights.get( 'hprnb-u-bn-rest' ) || [] ) ) {
+					if ( title && title.contains( r.startContainer ) ) {
+						typed = r.startOffset;
+					}
+				}
+				return typed;
+			} );
+			expect( await previewTyped() ).toBeLessThanOrEqual( 0 );
+			await expect.poll( previewTyped, { intervals: [ 50 ], timeout: 3000 } ).toBeGreaterThan( 0 );
+			await page.check( 'input[name="hprnb_settings[urgent_design]"][value="chyron"]' );
+			await expect( replay ).toBeHidden();
+			await page.check( 'input[name="hprnb_settings[urgent_design]"][value="breaking"]' );
+			await expect( replay ).toBeVisible();
+			expect( await previewRunning() ).toBe( 4 );
+			expect( errors ).toEqual( [] );
+			await context.close();
+		}
+	} finally {
+		wp( [ 'post', 'delete', ...ids, '--force' ] );
+		setSettings( {} );
+	}
+} );
+
 test( 'v2.17: the article being read is left out of the URGENT bar, also after an in-page navigation; with nothing left the bar hides without leaving space', async ( { page } ) => {
 	const errors = collectErrors( page );
 	const root = page.locator( '#hprnb-root' );

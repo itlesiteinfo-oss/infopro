@@ -2165,6 +2165,7 @@ final class Settings_Page {
 			</div>
 			<p class="hprnb-preview__actions">
 				<button type="button" class="button" id="hprnb-preview-refresh"><?php esc_html_e( 'Refresh preview posts', 'horizon-press-news-bar' ); ?></button>
+				<button type="button" class="button" id="hprnb-preview-replay" hidden><?php esc_html_e( 'Replay the animation', 'horizon-press-news-bar' ); ?></button>
 				<span class="hprnb-preview__status" id="hprnb-preview-status" role="status" aria-live="polite"></span>
 			</p>
 			<p class="description"><?php esc_html_e( 'Colours, sizes and label update instantly. Content criteria are applied by "Refresh preview posts" (also triggered automatically shortly after a change). Nothing is saved until you click "Save settings".', 'horizon-press-news-bar' ); ?></p>

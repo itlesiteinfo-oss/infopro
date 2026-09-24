@@ -266,7 +266,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		$this->assertStringContainsString( esc_attr( '{"d":{"mode":"immediate","value":400},"m":{"mode":"paragraph","value":400,"paragraph":2}}' ), $root, 'Desktop shows up with the page, mobile waits for the paragraph.' );
 		$this->assertStringContainsString( 'data-hprnb-endpoint="' . esc_url( rest_url( 'hprnb/v1/items' ) ) . '"', $root );
 		$this->assertStringContainsString( 'data-hprnb-css="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=2.17.0"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.css?ver=2.18.0"', $root );
 		$this->assertStringContainsString( 'data-hprnb-js', $root, 'The default mobile presentation (rotate, flow card) needs the interactive script.' );
 		$this->assertStringContainsString( 'style="--hprnb-bg:#1B1C20;--hprnb-fg:#F5F5F5;--hprnb-label-bg:#CE3029;--hprnb-label-fg:#FFFFFF;--hprnb-hover:#FFFFFF;--hprnb-accent:#CE3029;--hprnb-font-size:15px;--hprnb-height:40px;--hprnb-d-lines:1;--hprnb-max:1230px;--hprnb-gutter:15px;--hprnb-z:99990;--hprnb-sep:&#039;•&#039;;--hprnb-m-bg:#1B1C20;--hprnb-m-fg:#F5F5F5;--hprnb-m-accent:#CE3029;--hprnb-m-label-fg:#FFFFFF;--hprnb-m-font-size:16px;--hprnb-m-height:76px;--hprnb-m-lines:2;--hprnb-m-line:26px;--hprnb-m-pad:12px;--hprnb-peek:40px;--hprnb-m-ctrls:0;--hprnb-d-thumb:32px;--hprnb-m-thumb:48px;--hprnb-m-card-thumb:132px;--hprnb-m-card-thumb-h:74px;--hprnb-m-card-lines:2;--hprnb-m-gap:0px;--hprnb-u-bg:#E11D2B;--hprnb-u-fg:#FFFFFF;--hprnb-u-height:48px;--hprnb-u-m-height:76px;--hprnb-u-line:24px;--hprnb-u-pad:14px;--hprnb-u-lines:2;--hprnb-u-fs:17px;--hprnb-u-m-fs:17px"', $root );
 		$this->assertStringNotContainsString( ' hidden', $root );
@@ -297,7 +297,7 @@ class Renderer_Test extends HPRNB_Test_Case {
 		);
 		$root      = Renderer::root( Renderer::payload( array( $this->item() ), $hybrid_js ), $hybrid_js );
 		$this->assertStringContainsString( 'data-hprnb-js="', $root );
-		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=2.17.0"', $root );
+		$this->assertStringContainsString( 'hprnb-bar.min.js?ver=2.18.0"', $root );
 		$this->assertStringContainsString( 'hprnb-hide-desktop', $root );
 
 		add_filter( 'hprnb_stale_threshold', static fn() => 900 );

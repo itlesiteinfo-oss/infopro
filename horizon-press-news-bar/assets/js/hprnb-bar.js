@@ -2137,9 +2137,11 @@
 	 * breath after punctuation, never under 0.45s nor over 2.6s for a whole headline (the rate rises
 	 * instead); a two-step trail on the last letters in place of a cursor; each headline then stays whole
 	 * 5s at least (or the rotation interval), plus 40ms a letter past 60 (7s more at most); the one
-	 * leaving fades out in 220ms, and the label stays alone 90ms before the next one types in.
+	 * leaving fades out in 220ms, and the label stays alone 90ms before the next one types in. The first
+	 * headline types 860ms after the band's opening starts (2.18), once the cartouche, the hairline and
+	 * the buttons are in place.
 	 */
-	var BN = { unit: 26, min: 450, max: 2600, breath: 70, trail: 45, hold: 5000, from: 60, per: 40, extra: 7000, fade: 220, gap: 90, resume: 2000 };
+	var BN = { unit: 26, min: 450, max: 2600, breath: 70, trail: 45, hold: 5000, from: 60, per: 40, extra: 7000, fade: 220, gap: 90, resume: 2000, open: 860 };
 
 	/** The CSS highlights of the typing: the two steps of the trail, and the part not typed yet. */
 	var BN_MARKS = [ 'hprnb-u-bn-trail2', 'hprnb-u-bn-trail1', 'hprnb-u-bn-rest' ];
@@ -2342,6 +2344,26 @@
 	}
 
 	/**
+	 * How long the band's opening (stylesheet 17 quater, 2.18) still runs before a headline may type:
+	 * its clock is the band's own animation, read where it is (a re-initialisation or a late start
+	 * waits only for what is left); 0 once it is over, under reduced motion, or without it.
+	 *
+	 * @param {Element} aside The URGENT bar.
+	 * @return {number} Milliseconds.
+	 */
+	function openingLeft( aside ) {
+		var left = 0;
+		if ( typeof aside.getAnimations === 'function' ) {
+			forEach( aside.getAnimations(), function ( animation ) {
+				if ( 'hprnb-u-bn-open' === animation.animationName && 'running' === animation.playState ) {
+					left = Math.max( 0, BN.open - ( ( animation.effect.getComputedTiming().localTime || 0 ) - ( animation.effect.getTiming().delay || 0 ) ) );
+				}
+			} );
+		}
+		return left;
+	}
+
+	/**
 	 * Whether the first Breaking News headline is already on screen: the stylesheet keeps it invisible
 	 * 1.5s for the script (hprnb-u-bn-wait), then lets it appear; a script later than that must not
 	 * erase it to type it again. Read before the bar is marked as initialised (that ends the wait).
@@ -2441,7 +2463,7 @@
 				return;
 			}
 			if ( ! start ) {
-				start = now; // The first letter shows on the first frame.
+				start = now + openingLeft( aside ); // The first letter shows on the first frame after the band's opening.
 			}
 			var p = planOf( index );
 			var elapsed = now - start;
@@ -2464,6 +2486,8 @@
 			}
 			if ( shown !== c + ',' + b + ',' + a ) {
 				shown = c + ',' + b + ',' + a;
+				// Letters on screen: a re-initialisation shows this headline whole instead of typing it again.
+				memory.started = memory.id;
 				reveal.set( c ? p.ends[ c - 1 ] : 0, b ? p.ends[ b - 1 ] : 0, a ? p.ends[ a - 1 ] : 0, p.length );
 			}
 			frame = requestAnimationFrame( tick );
@@ -2525,7 +2549,6 @@
 			memory.done = null;
 			memory.started = null;
 			if ( ! whole ) {
-				memory.started = id;
 				// Everything transparent in the same task as the swap: one paint shows the empty headline.
 				reveal.set( 0, 0, 0, p.length );
 				shown = '0,0,0';

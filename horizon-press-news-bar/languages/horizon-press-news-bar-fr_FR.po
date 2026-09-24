@@ -6,10 +6,10 @@ msgstr ""
 "Language-Team: Français\n"
 "Last-Translator: Horizon Press\n"
 "MIME-Version: 1.0\n"
-"PO-Revision-Date: 2026-09-24 13:19+0000\n"
-"POT-Creation-Date: 2026-09-24 13:19+0000\n"
+"PO-Revision-Date: 2026-09-24 14:33+0000\n"
+"POT-Creation-Date: 2026-09-24 14:33+0000\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"Project-Id-Version: Horizon Press News Bar 2.17.0\n"
+"Project-Id-Version: Horizon Press News Bar 2.18.0\n"
 "Report-Msgid-Bugs-To: https://horizonpress.example/news-bar\n"
 "X-Domain: horizon-press-news-bar\n"
 "X-Generator: bin/build-i18n.php\n"
@@ -1894,7 +1894,11 @@ msgstr "Le bandeau URGENT est désactivé sur cet appareil (Contenu → Barres a
 msgid "Refresh preview posts"
 msgstr "Actualiser les articles de l’aperçu"
 
-#: horizon-press-news-bar/includes/admin/class-settings-page.php:2170
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:2168
+msgid "Replay the animation"
+msgstr "Rejouer l’animation"
+
+#: horizon-press-news-bar/includes/admin/class-settings-page.php:2171
 msgid "Colours, sizes and label update instantly. Content criteria are applied by \"Refresh preview posts\" (also triggered automatically shortly after a change). Nothing is saved until you click \"Save settings\"."
 msgstr "Les couleurs, tailles et le label se mettent à jour instantanément. Les critères de contenu sont appliqués par « Actualiser les articles de l’aperçu » (également déclenché automatiquement peu après un changement). Rien n’est enregistré tant que vous ne cliquez pas sur « Enregistrer les réglages »."
 

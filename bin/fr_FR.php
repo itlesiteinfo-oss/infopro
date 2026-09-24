@@ -599,4 +599,5 @@ return array(
 	'Headline size on desktop' => 'Taille du titre sur ordinateur',
 	'From 14 to 22 px, 17 by default. The bar is at least 48 px tall (more from 19 px, or with a taller news bar); Breaking News grows with its longest headline.' => 'De 14 à 22 px, 17 par défaut. Le bandeau mesure au moins 48 px de haut (davantage à partir de 19 px, ou avec une barre d’actualités plus haute) ; Breaking News grandit avec son titre le plus long.',
 	'From 14 to 20 px, 17 by default; also used by the chyron\'s phone design on desktop. Breaking News is as tall as its longest headline (78 px for one line at 17 px); the chyron keeps the height of the mobile news bar (76 px by default) while two lines fit in it.' => 'De 14 à 20 px, 17 par défaut ; sert aussi au design mobile du chyron sur ordinateur. Breaking News a la hauteur de son titre le plus long (78 px pour une ligne à 17 px) ; le chyron garde la hauteur de la barre d’actualités mobile (76 px par défaut) tant que deux lignes y tiennent.',
+	'Replay the animation' => 'Rejouer l’animation',
 );

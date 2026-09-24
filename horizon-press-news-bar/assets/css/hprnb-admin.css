@@ -931,6 +931,8 @@
    two in step); then the chyron's desktop buttons above, which would tie with the design's, undone. */
 .hprnb-root.hprnb-root--flat.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent {
 	--hprnb-u-bn-shift: calc(12px - (var(--hprnb-u-bn-hit) - var(--hprnb-u-bn-plate)) / 2);
+	--hprnb-u-bn-rule-0: scaleX(0);
+	--hprnb-u-bn-rule-at: var(--hprnb-u-bn-start) center;
 }
 
 .hprnb-root.hprnb-root--flat.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__inner {
@@ -977,4 +979,10 @@
 	inline-size: var(--hprnb-u-bn-hit);
 	block-size: var(--hprnb-u-bn-hit);
 	min-block-size: 0;
+}
+
+/* The preview's "Replay the animation" (2.18): only while it shows a Breaking News bar (the script says
+   when); the button styles of WordPress would otherwise show it. */
+#hprnb-preview-replay[hidden] {
+	display: none;
 }

@@ -18,6 +18,7 @@
 	var preview = document.getElementById( 'hprnb-preview' );
 	var status = document.getElementById( 'hprnb-preview-status' );
 	var refreshButton = document.getElementById( 'hprnb-preview-refresh' );
+	var replayButton = document.getElementById( 'hprnb-preview-replay' );
 
 	if ( ! form ) {
 		return;
@@ -72,6 +73,20 @@
 				window.hprnbBar.init( previewRoot );
 			}
 		}, 120 );
+	}
+
+	/**
+	 * Plays the Breaking News bar of the preview from its opening again (2.18): a fresh copy of the bar
+	 * takes its place, so the stylesheet's opening and the typing start over, exactly as on the site.
+	 */
+	function replayPreview() {
+		var aside = previewRoot && previewRoot.querySelector( '.hprnb-bar--urgent' );
+		if ( ! aside || ! window.hprnbBar || typeof window.hprnbBar.destroy !== 'function' ) {
+			return;
+		}
+		window.hprnbBar.destroy( previewRoot );
+		aside.parentNode.replaceChild( aside.cloneNode( true ), aside );
+		window.hprnbBar.init( previewRoot );
 	}
 
 	/** Single-quoted CSS string literal, mirroring Renderer::css_string(). */
@@ -291,7 +306,15 @@
 		previewRoot.classList.toggle( 'hprnb-root--u-no-m', uD && ! uM );
 		// 2.17: the URGENT bar's design (Breaking News unless the chyron is chosen), like Renderer::root_classes().
 		var breaking = valueOf( 'urgent_design' ) !== 'chyron';
+		var chosen = breaking && ! previewRoot.classList.contains( 'hprnb-root--u-bn' );
 		previewRoot.classList.toggle( 'hprnb-root--u-bn', breaking );
+		// Breaking News just chosen: its opening and its typing, from the start (2.18).
+		if ( chosen ) {
+			replayPreview();
+		}
+		if ( replayButton ) {
+			replayButton.hidden = ! ( breaking && previewRoot.classList.contains( 'hprnb-root--urgent' ) && previewRoot.querySelector( '.hprnb-bar--urgent' ) );
+		}
 		// 2.15: the chyron in its phone design from 768px.
 		previewRoot.classList.toggle( 'hprnb-root--u-d-flow', ! breaking && valueOf( 'urgent_desktop_layout' ) === 'mobile' );
 		// 2.16: its sizes and heights, exactly like Renderer::urgent_font() / urgent_metrics() / urgent_height().
@@ -556,6 +579,9 @@
 		}, 800 );
 	}
 
+	if ( replayButton ) {
+		replayButton.addEventListener( 'click', replayPreview );
+	}
 	if ( refreshButton ) {
 		refreshButton.addEventListener( 'click', function () {
 			if ( pending !== null ) {
