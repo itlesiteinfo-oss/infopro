@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { setSettings, setDefaultSettings, wp, collectErrors, countRequests, noHorizontalOverflow, routeStaleDocument, defaults, OLD } from './helpers.mjs';
 
+// 2.17: the tests of the URGENT bar from 2.14 to 2.16 describe the chyron, still selectable (Breaking News is the default).
+const CHYRON = { urgent_design: 'chyron' };
+
 
 const postIds = [];
 
@@ -2563,7 +2566,7 @@ test( 'v2.14: the URGENT bar takes the place of the news bar, each article leave
 	const n = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Article normal du jour', '--post_content=' + body, '--porcelain' ] );
 	const url = wp( [ 'post', 'url', n ] );
 	try {
-		setDefaultSettings();
+		setDefaultSettings( CHYRON );
 		let t = now();
 		flag( a, t - 60, t + 40 ); // Flagged first, lasts longer.
 		flag( b, t - 30, t + 9 ); // Flagged last: first in the bar, first to go.
@@ -2704,7 +2707,7 @@ test( 'v2.15: the URGENT bar on the front page where the news bar stays away, th
 	const a = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Urgent — la une annonce une édition spéciale ce soir', '--porcelain' ] );
 	try {
 		// The news bar kept off the front page ("Everywhere except the home page"); one urgent article.
-		setDefaultSettings( { display_scope: 'custom', contexts: noFront } );
+		setDefaultSettings( { ...CHYRON, display_scope: 'custom', contexts: noFront } );
 		let t = now();
 		flag( a, t - 30, t + 600 );
 		await page.setViewportSize( { width: 390, height: 844 } );
@@ -2720,7 +2723,7 @@ test( 'v2.15: the URGENT bar on the front page where the news bar stays away, th
 		expect( await urgent.evaluate( ( el ) => [ Math.round( el.getBoundingClientRect().height ), getComputedStyle( el.querySelector( '.hprnb-bar__inner' ) ).display ] ) ).toEqual( [ 48, 'grid' ] );
 
 		// The second desktop design: the phone design, two lines, the close button in the tab at the screen corner.
-		setDefaultSettings( { display_scope: 'custom', contexts: noFront, urgent_desktop_layout: 'mobile' } );
+		setDefaultSettings( { ...CHYRON, display_scope: 'custom', contexts: noFront, urgent_desktop_layout: 'mobile' } );
 		await page.goto( '/' );
 		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
 		await expect( root ).toHaveClass( /hprnb-root--u-d-flow/ );
@@ -2742,7 +2745,7 @@ test( 'v2.15: the URGENT bar on the front page where the news bar stays away, th
 
 		// The news bar kept to desktop on the front page: the red bar still reaches phones, then the
 		// restriction is back and nothing is left on the phone.
-		setDefaultSettings( { mobile_contexts: noFront } );
+		setDefaultSettings( { ...CHYRON, mobile_contexts: noFront } );
 		t = now();
 		flag( a, t - 30, t + 6 );
 		await page.setViewportSize( { width: 390, height: 844 } );
@@ -2756,7 +2759,7 @@ test( 'v2.15: the URGENT bar on the front page where the news bar stays away, th
 		expect( await page.evaluate( () => getComputedStyle( document.body ).paddingBottom ) ).toBe( '0px' );
 
 		// A reader who closed the news bar still gets an urgent article.
-		setDefaultSettings();
+		setDefaultSettings( CHYRON );
 		t = now();
 		flag( a, t - 5, t + 600 );
 		await page.setViewportSize( { width: 1366, height: 900 } );
@@ -2822,7 +2825,7 @@ test( 'v2.16: one switch per bar and per device — sub-choices hidden while the
 	};
 	try {
 		// The card, first of the first tab: each bar's devices show only while the bar is on.
-		setDefaultSettings();
+		setDefaultSettings( CHYRON );
 		await page.goto( '/wp-login.php' );
 		await page.fill( '#user_login', 'admin' );
 		await page.fill( '#user_pass', 'admin' );
@@ -2857,16 +2860,16 @@ test( 'v2.16: one switch per bar and per device — sub-choices hidden while the
 		const draft = wp( [ 'post', 'create', '--post_type=post', '--post_status=draft', '--post_title=Brouillon', '--porcelain' ] );
 		await page.goto( '/wp-admin/post.php?post=' + draft + '&action=edit&hprnb_classic=1' );
 		await expect( page.locator( '#hprnb-urgent-postbox' ) ).toHaveCount( 1 );
-		setDefaultSettings( { urgent_desktop: false, urgent_mobile: false } );
+		setDefaultSettings( { ...CHYRON, urgent_desktop: false, urgent_mobile: false } );
 		await page.reload();
 		await expect( page.locator( '#hprnb-urgent-postbox' ) ).toHaveCount( 0 );
-		setDefaultSettings( { urgent_enabled: false } );
+		setDefaultSettings( { ...CHYRON, urgent_enabled: false } );
 		await page.reload();
 		await expect( page.locator( '#hprnb-urgent-postbox' ) ).toHaveCount( 0 );
 		wp( [ 'post', 'delete', draft, '--force' ] );
 
 		// On the site: the URGENT bar on desktop only — the phone keeps the news bar.
-		setDefaultSettings( { urgent_mobile: false } );
+		setDefaultSettings( { ...CHYRON, urgent_mobile: false } );
 		const t = now();
 		flag( t - 30, t + 600 );
 		await page.setViewportSize( { width: 1366, height: 900 } );
@@ -2884,18 +2887,18 @@ test( 'v2.16: one switch per bar and per device — sub-choices hidden while the
 		await expect( urgent ).toBeVisible();
 
 		// The initial bar off, the URGENT bar on: the red bar alone; both off: nothing.
-		setDefaultSettings( { enabled: false } );
+		setDefaultSettings( { ...CHYRON, enabled: false } );
 		await page.setViewportSize( { width: 390, height: 844 } );
 		await page.goto( '/' );
 		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
 		await expect( news ).toHaveCount( 0 );
-		setDefaultSettings( { enabled: false, urgent_enabled: false } );
+		setDefaultSettings( { ...CHYRON, enabled: false, urgent_enabled: false } );
 		await page.goto( '/' );
 		await expect( root ).toHaveCount( 0 );
 		stored = null;
 
 		// Closing the news bar where the URGENT bar is off leaves the red bar to the other device.
-		setDefaultSettings( { urgent_mobile: false } );
+		setDefaultSettings( { ...CHYRON, urgent_mobile: false } );
 		await page.setViewportSize( { width: 390, height: 844 } );
 		await page.goto( '/' );
 		await expect( news ).toHaveAttribute( 'data-hprnb-init', '1' );
@@ -2918,7 +2921,7 @@ test( 'v2.16: one switch per bar and per device — sub-choices hidden while the
 		// The URGENT bar off on desktop and no headline for the news bar: nothing on desktop, not even
 		// the space the page keeps for a bar.
 		const tag = wp( [ 'term', 'create', 'post_tag', 'Aucun article ' + Date.now(), '--porcelain' ] );
-		setDefaultSettings( { urgent_desktop: false, tags_include: [ Number( tag ) ] } );
+		setDefaultSettings( { ...CHYRON, urgent_desktop: false, tags_include: [ Number( tag ) ] } );
 		await page.setViewportSize( { width: 1366, height: 900 } );
 		await page.goto( '/' );
 		await expect( root ).toHaveAttribute( 'data-hprnb-count', '0' );
@@ -2932,7 +2935,7 @@ test( 'v2.16: one switch per bar and per device — sub-choices hidden while the
 
 		// A page from a page cache made before the phone was switched off: the REST refresh says so.
 		// (A new browser: this one keeps the REST body of the steps above in its HTTP cache.)
-		setDefaultSettings( { urgent_mobile: false } );
+		setDefaultSettings( { ...CHYRON, urgent_mobile: false } );
 		const cached = await browser.newPage( { viewport: { width: 390, height: 844 }, baseURL: 'http://127.0.0.1:8080' } );
 		cached.on( 'pageerror', ( e ) => errors.push( e.message ) );
 		await cached.route( ( u ) => u.pathname === '/', async ( route ) => {
@@ -2947,7 +2950,7 @@ test( 'v2.16: one switch per bar and per device — sub-choices hidden while the
 		await cached.close();
 
 		// The settings preview follows the device switches: off on desktop, a note instead of the bar.
-		setDefaultSettings( { urgent_desktop: false } );
+		setDefaultSettings( { ...CHYRON, urgent_desktop: false } );
 		await page.setViewportSize( { width: 1400, height: 1000 } );
 		await page.goto( '/wp-admin/options-general.php?page=horizon-press-news-bar#urgent' );
 		await page.click( '[data-hprnb-tab="urgent"]' );
@@ -3013,7 +3016,7 @@ test( 'v2.16: a refreshed cached page keeps its waits and its running bars, shor
 	try {
 		// 1. Phone, the news bar waiting for the paragraph (Continuous reading). The refresh brings the
 		// same headlines: nothing is swapped and the bar keeps waiting.
-		setDefaultSettings();
+		setDefaultSettings( CHYRON );
 		let p = await cachedPage( 390, 844, false );
 		expect( await p.evaluate( () => window.__swaps ) ).toBe( 0 );
 		await expect( p.locator( '#hprnb-root' ) ).toHaveClass( /hprnb-root--m-pending/ );
@@ -3056,7 +3059,7 @@ test( 'v2.16: a refreshed cached page keeps its waits and its running bars, shor
 		expect( await urgent.evaluate( ( el ) => [ Math.round( el.getBoundingClientRect().height ), getComputedStyle( document.body ).paddingBottom ] ) ).toEqual( [ 44, '44px' ] );
 
 		// 5. The news bar placed inside the article: the fixed red bar still gets its space.
-		setDefaultSettings( { desktop_placement: 'inline' } );
+		setDefaultSettings( { ...CHYRON, desktop_placement: 'inline' } );
 		await page.setViewportSize( { width: 1366, height: 900 } );
 		await page.goto( path );
 		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
@@ -3067,7 +3070,7 @@ test( 'v2.16: a refreshed cached page keeps its waits and its running bars, shor
 		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
 
 		// 6. A remembered close: the hidden news bar does not run, and nothing is lifted for it.
-		setDefaultSettings();
+		setDefaultSettings( CHYRON );
 		await page.goto( path );
 		await page.evaluate( () => localStorage.setItem( 'hprnb_dismissed_until', String( Date.now() + 3600000 ) ) );
 		await page.reload();
@@ -3077,7 +3080,7 @@ test( 'v2.16: a refreshed cached page keeps its waits and its running bars, shor
 		await page.evaluate( () => localStorage.removeItem( 'hprnb_dismissed_until' ) );
 
 		// 7. The settings preview: never hidden by the admin window, and the URGENT heights follow the form.
-		setDefaultSettings( { show_on_desktop: false } );
+		setDefaultSettings( { ...CHYRON, show_on_desktop: false } );
 		await page.goto( '/wp-login.php' );
 		await page.fill( '#user_login', 'admin' );
 		await page.fill( '#user_pass', 'admin' );
@@ -3103,6 +3106,220 @@ test( 'v2.16: a refreshed cached page keeps its waits and its running bars, shor
 		if ( u ) {
 			wp( [ 'post', 'delete', u, '--force' ] );
 		}
+		setSettings( {} );
+	}
+} );
+
+test( 'v2.17: Breaking News — each whole headline typed in, held, then the next; one headline typed once; constant height; keyboard; reduced motion; the chyron still selectable', async ( { page } ) => {
+	const errors = collectErrors( page );
+	const urgent = page.locator( '.hprnb-bar--urgent' );
+	const now = () => Math.floor( Date.now() / 1000 );
+	const flag = ( id, since, until ) => {
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_since', String( since ) ] );
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_until', String( until ) ] );
+		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+	};
+	const titles = [
+		'Premiers résultats à Rabat-Océan : Mehdi Bensaid en tête, Mustapha El Khalfi deuxième',
+		'Le gouvernement annonce un plan d’urgence de 12 milliards de dirhams pour l’automobile et convoque les constructeurs dès lundi matin à Casablanca',
+	];
+	const ids = titles.map( ( title ) => wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=' + title, '--porcelain' ] ) );
+	const urls = Object.fromEntries( ids.map( ( id ) => [ id, wp( [ 'post', 'url', id ] ) ] ) );
+	const state = () => page.evaluate( () => {
+		const u = document.querySelector( '.hprnb-bar--urgent' );
+		const li = u && u.querySelector( '.hprnb-bar__item.is-current' );
+		const title = li && li.querySelector( '.hprnb-bar__title' );
+		const typed = title && title.querySelector( '.hprnb-bar__typed' );
+		return {
+			id: li ? li.getAttribute( 'data-hprnb-id' ) : null,
+			href: li ? li.querySelector( '.hprnb-bar__link' ).href : null,
+			text: title ? title.textContent : null,
+			typed: typed ? typed.textContent.length : -1,
+			h: u ? Math.round( u.getBoundingClientRect().height ) : 0,
+			pad: parseFloat( getComputedStyle( document.body ).paddingBottom ),
+		};
+	} );
+	try {
+		setDefaultSettings();
+		const t = now();
+		flag( ids[ 0 ], t - 60, t + 900 );
+		flag( ids[ 1 ], t - 30, t + 900 ); // Flagged last: typed first.
+
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( '/' );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( urgent ).toHaveClass( /hprnb-bar--bn/ );
+		await expect( urgent ).toHaveClass( /hprnb-bar--mode-type/ );
+		await expect( urgent ).toHaveAttribute( 'aria-live', 'off' );
+		await expect( page.locator( '#hprnb-root' ) ).toHaveClass( /hprnb-root--u-bn/ );
+
+		// Sampled every 250ms over 16s: the title keeps its whole text for screen readers, its link
+		// points to its article, the height never moves and the page keeps exactly that height.
+		const samples = [];
+		for ( let k = 0; k < 64; k++ ) {
+			samples.push( { ...( await state() ), at: Date.now() } );
+			await page.waitForTimeout( 250 );
+		}
+		const heights = [ ...new Set( samples.map( ( s ) => s.h ) ) ];
+		expect( heights.length ).toBe( 1 );
+		expect( samples.every( ( s ) => Math.abs( s.pad - s.h ) <= 1 ) ).toBe( true );
+		for ( const s of samples ) {
+			expect( s.text ).toBe( titles[ ids.indexOf( s.id ) ] );
+			expect( s.href ).toBe( urls[ s.id ] );
+		}
+		expect( samples[ 0 ].id ).toBe( ids[ 1 ] );
+		expect( samples.some( ( s ) => s.typed > 0 && s.typed < titles[ 1 ].length ) ).toBe( true, 'Typed in, letter by letter.' );
+		// The first headline stays whole at least 5s after its typing, then the next is typed in.
+		const whole = samples.find( ( s ) => s.id === ids[ 1 ] && s.typed === -1 );
+		const next = samples.find( ( s ) => s.id === ids[ 0 ] );
+		expect( whole ).toBeTruthy();
+		expect( next ).toBeTruthy();
+		expect( next.at - whole.at ).toBeGreaterThanOrEqual( 5000 );
+		expect( samples.some( ( s ) => s.id === ids[ 0 ] && s.typed > 0 ) ).toBe( true );
+
+		// Keyboard: the link of the headline takes a visible focus, the headline is whole at once and stays.
+		const link = urgent.locator( '.hprnb-bar__item.is-current .hprnb-bar__link' );
+		for ( let k = 0; k < 80; k++ ) {
+			await page.keyboard.press( 'Tab' );
+			if ( await page.evaluate( () => !! document.activeElement.closest( '.hprnb-bar--urgent .hprnb-bar__item.is-current' ) ) ) {
+				break;
+			}
+		}
+		await expect( link ).toBeFocused();
+		const focused = await state();
+		expect( focused.typed ).toBe( -1 );
+		expect( await link.evaluate( ( el ) => getComputedStyle( el.closest( '.hprnb-bar--urgent' ) ).outlineStyle !== 'none' || getComputedStyle( el ).outlineStyle !== 'none' ) ).toBe( true );
+		await page.waitForTimeout( 7000 );
+		expect( ( await state() ).id ).toBe( focused.id );
+		expect( errors ).toEqual( [] );
+
+		// One headline: typed once, then it stays — no pause button, no second typing.
+		flag( ids[ 1 ], t - 30, t - 1 );
+		await page.goto( '/' );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( urgent.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden();
+		await page.waitForTimeout( 3200 );
+		const once = await state();
+		expect( [ once.id, once.typed ] ).toEqual( [ ids[ 0 ], -1 ] );
+		for ( let k = 0; k < 12; k++ ) {
+			await page.waitForTimeout( 500 );
+			expect( ( await state() ).typed ).toBe( -1 );
+		}
+
+		// Reduced motion: the whole headline at once, never typed.
+		flag( ids[ 1 ], t - 30, t + 900 );
+		await page.emulateMedia( { reducedMotion: 'reduce' } );
+		await page.goto( '/' );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		for ( let k = 0; k < 8; k++ ) {
+			expect( ( await state() ).typed ).toBe( -1 );
+			await page.waitForTimeout( 150 );
+		}
+		await page.emulateMedia( { reducedMotion: 'no-preference' } );
+
+		// Desktop, a long headline: whole, clear of the label and of the close button.
+		await page.setViewportSize( { width: 1366, height: 900 } );
+		await page.goto( '/' );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		const box = await urgent.evaluate( ( el ) => {
+			const r = ( s ) => el.querySelector( s ).getBoundingClientRect();
+			const title = el.querySelector( '.hprnb-bar__item.is-current .hprnb-bar__title' );
+			return { label: r( '.hprnb-bar__label' ), title: title.getBoundingClientRect(), close: r( '.hprnb-bar__btn--close' ), fits: title.scrollHeight <= title.clientHeight + 1 && title.scrollWidth <= title.clientWidth + 1 };
+		} );
+		expect( box.fits ).toBe( true );
+		expect( box.title.left ).toBeGreaterThanOrEqual( box.label.right );
+		expect( box.title.right ).toBeLessThanOrEqual( box.close.left );
+
+		// The chyron is still there to choose.
+		setDefaultSettings( { urgent_design: 'chyron' } );
+		await page.goto( '/' );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( urgent ).toHaveClass( /hprnb-bar--mode-rotate/ );
+		await expect( urgent ).not.toHaveClass( /hprnb-bar--bn/ );
+		await expect( page.locator( '#hprnb-root' ) ).not.toHaveClass( /hprnb-root--u-bn/ );
+		expect( errors ).toEqual( [] );
+	} finally {
+		wp( [ 'post', 'delete', ...ids, '--force' ] );
+		setSettings( {} );
+	}
+} );
+
+test( 'v2.17: the article being read is left out of the URGENT bar, also after an in-page navigation; with nothing left the bar hides without leaving space', async ( { page } ) => {
+	const errors = collectErrors( page );
+	const root = page.locator( '#hprnb-root' );
+	const urgent = page.locator( '.hprnb-bar--urgent' );
+	const now = () => Math.floor( Date.now() / 1000 );
+	const flag = ( id, since, until ) => {
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_since', String( since ) ] );
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_until', String( until ) ] );
+		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+	};
+	const body = '<p>Paragraphe de lecture, assez long pour donner de la hauteur à la page.</p>'.repeat( 10 );
+	const a = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Flash A — l’article que l’on lit', '--post_content=' + body, '--porcelain' ] );
+	const b = wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=Flash B — une autre urgence', '--post_content=' + body, '--porcelain' ] );
+	const urlA = wp( [ 'post', 'url', a ] );
+	const urlB = wp( [ 'post', 'url', b ] );
+	const pathA = new URL( urlA ).pathname + new URL( urlA ).search;
+	const listed = () => urgent.evaluate( ( el ) => [ ...el.querySelectorAll( '.hprnb-bar__list > .hprnb-bar__item' ) ].map( ( li ) => li.getAttribute( 'data-hprnb-id' ) ) );
+	try {
+		setDefaultSettings( { mobile_behavior: 'always' } );
+		const t = now();
+		flag( a, t - 60, t + 900 );
+		flag( b, t - 30, t + 900 );
+		await page.setViewportSize( { width: 390, height: 844 } );
+
+		// On article A: only B, before the first paint (server) and in the rotation (script).
+		await page.goto( pathA );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await listed() ).toEqual( [ b ] );
+		await expect( urgent.locator( '.hprnb-bar__item.is-current .hprnb-bar__link' ) ).toHaveAttribute( 'href', urlB );
+		await expect( urgent.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden();
+
+		// Only A urgent: on A the red bar steps aside, the news bar has the page.
+		flag( b, t - 30, t - 1 );
+		await page.goto( pathA );
+		await expect( page.locator( '.hprnb-bar:not(.hprnb-bar--urgent)' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( root ).not.toHaveClass( /hprnb-root--urgent/ );
+		await expect( urgent ).toBeHidden();
+		const newsPad = await page.evaluate( () => getComputedStyle( document.body ).paddingBottom );
+
+		// The theme moves on to another article without reloading (history API): the red bar is back.
+		await page.evaluate( () => history.pushState( {}, '', '/?hprnb-next-article=1' ) );
+		await expect( root ).toHaveClass( /hprnb-root--urgent/ );
+		await expect( urgent ).toBeVisible();
+		await expect( urgent.locator( '.hprnb-bar__item.is-current .hprnb-bar__link' ) ).toHaveAttribute( 'href', urlA );
+		await expect.poll( () => page.evaluate( () => Math.round( parseFloat( getComputedStyle( document.body ).paddingBottom ) - document.querySelector( '.hprnb-bar--urgent' ).getBoundingClientRect().height ) ) ).toBe( 0 );
+		// And back to A (the reader scrolls up): it steps aside again.
+		await page.evaluate( ( url ) => history.pushState( {}, '', url ), urlA );
+		await expect( root ).not.toHaveClass( /hprnb-root--urgent/ );
+		await expect( urgent ).toBeHidden();
+		expect( await page.evaluate( () => getComputedStyle( document.body ).paddingBottom ) ).toBe( newsPad );
+
+		// Nothing else to show at all (news bar off): the root hides and keeps no space.
+		setDefaultSettings( { mobile_behavior: 'always', enabled: false } );
+		await page.goto( pathA );
+		await expect( root ).toBeHidden();
+		expect( await page.evaluate( () => [ document.body.classList.contains( 'hprnb-reserve' ), getComputedStyle( document.body ).paddingBottom ] ) ).toEqual( [ false, '0px' ] );
+		await page.evaluate( () => history.pushState( {}, '', '/?hprnb-next-article=2' ) );
+		await expect( urgent ).toBeVisible();
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect.poll( () => page.evaluate( () => parseFloat( getComputedStyle( document.body ).paddingBottom ) ) ).toBeGreaterThan( 40 );
+
+		// The checkbox off: the article being read is announced like any other.
+		setDefaultSettings( { mobile_behavior: 'always', urgent_exclude_current: false } );
+		await page.goto( pathA );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await listed() ).toEqual( [ a ] );
+
+		// Closing: the red bar goes, remembered for this set of urgent articles.
+		await urgent.locator( '.hprnb-bar__btn--close' ).click();
+		await expect( urgent ).toHaveCount( 0 );
+		await page.reload();
+		await expect( page.locator( '.hprnb-bar:not(.hprnb-bar--urgent)' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( urgent ).toHaveCount( 0 );
+		expect( errors ).toEqual( [] );
+	} finally {
+		wp( [ 'post', 'delete', a, b, '--force' ] );
 		setSettings( {} );
 	}
 } );
