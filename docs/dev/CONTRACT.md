@@ -1096,4 +1096,22 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   The Desktop tab (flat root) shows the design as a bar under 600px: the admin sheet copies 17 ter's
   `@container hprnb (max-width: 599.98px)` block onto `.hprnb-root--flat.hprnb-root--u-bn` (static test)
   and undoes the chyron's desktop buttons.
+- Review fixes: `setupClose()` of the URGENT bar stores the newest flag of the visible items and of
+  `aside.hprnbOut`; `scheduleUrgent()`'s expiry calls `destroyAside()` + `init()` (which parks or retires);
+  `parkUrgent()` hides the root (`data-hprnb-empty="1"`) unless a news bar not `[hidden]` remains, and
+  then calls `restorePending()`; `createAnalytics().recommended()` reads `.is-current`, then
+  `aside.hprnbBn.id`, then `:not([hidden])`; the contract announces a tab for the URGENT bar only in the
+  chyron's phone design; `memory.started` keeps a headline being typed whole across a re-initialisation.
+  `Placement::filter_content()` renders from `Frontend::shown_payload()`, `Shortcode::render()` from
+  `Frontend::without_here( Payload::get() )` (and enqueues the script when parked), `body_class()` likewise;
+  a parked page with `theme_offset` gets `hprnb-theme-offset`. Bootstrap: `ensureLayout( fresh )` leaves
+  the body heights printed by PHP for a Breaking News bar in front on a fresh page and does nothing for a
+  hidden root; `apply()` marks the `li` of `data-hprnb-post` (when `data-hprnb-here="1"`) and does not count
+  it (parked with nothing left, hidden root when there is no news bar); the session payload drops the
+  `--here` class and counts every headline. `Renderer::urgent_height( 'd' )` ignores
+  `urgent_desktop_layout` for Breaking News; `breaking_height( $s, $payload, 's' )` (one row, 45 letters a
+  line) is printed as `@media (max-height:480px) and (max-width:1023.98px){body.hprnb-reserve{--hprnb-m-height:…
+  !important}}`. Stylesheet: the single-headline pause rule ignores `--here` items; the link wraps
+  `overflow-wrap: anywhere`; forced colours give the buttons' focus ring `CanvasText`. The minified
+  scripts are ASCII-only (static test).
 - Budgets: CSS 60 KB, bootstrap 6 KB, interactive script 38 KB.

@@ -21,6 +21,21 @@ Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr
 - **Avant le premier affichage** : le serveur marque son titre (caché d'emblée) et ne le compte plus ; le script le retire de la rotation, qui continue avec les autres. **Après une navigation sans rechargement** (thème qui passe à l'article suivant par l'API History) : le filtre est refait, le titre écarté revient à sa place d'origine quand on quitte l'article.
 - **S'il ne reste rien** : le bandeau URGENT est masqué entièrement, sans espace vide ; la barre d'actualités reprend la page, ou rien ne s'affiche et aucune place n'est réservée. Il revient seul quand le lecteur passe à un autre article.
 
+### Corrigé — revue multi-agents du travail 2.17 (5 angles, chaque signalement vérifié par un contradicteur)
+
+- **Fermer le bandeau sur l'article consulté** ferme tout l'ensemble, y compris ce titre écarté : le bandeau ne revient plus à la page suivante tant qu'aucune urgence plus récente n'arrive.
+- **L'autre titre expire pendant la lecture** : le bandeau est mis de côté (et non supprimé), et revient avec l'article consulté quand le thème passe à l'article suivant sans recharger.
+- **La barre d'actualités garde son attente** (défilement, paragraphe…) quand le bandeau s'efface devant l'article consulté, comme dans le rendu du serveur ; une barre d'actualités fermée par le lecteur ne laisse plus de bande vide réservée.
+- **L'article consulté est aussi écarté** dans la barre placée dans l'article, dans le shortcode et dans le mode hybride derrière un cache de pages (le script d'amorçage le met de côté avant d'afficher : le bandeau rouge n'apparaît plus un instant sur l'article lui-même).
+- **Hauteur réservée** : le script d'amorçage garde l'estimation du serveur pour Breaking News (il la remplaçait par la hauteur du chyron) et ne réserve plus d'espace pour une racine masquée ; téléphone en paysage : estimation propre au lieu des 44 px d'une ligne ; avant le script, le bouton pause d'un titre unique (l'autre étant l'article consulté) ne prend plus de place.
+- **Une réinitialisation** (passage de 768 px, liste rafraîchie, navigation) ne retape plus le titre en cours de frappe.
+- **Statistiques** : clics, fermetures et impressions désignent le titre affiché (et non le premier de la liste).
+- Sur téléphone, aucun « onglet » de 44 px n'est plus annoncé au thème (les boutons de Jannah ne sont plus soulevés pour rien).
+- Un mot plus long que la ligne (mot composé, adresse) passe à la ligne dans la zone du titre au lieu de passer sous les boutons ou d'être coupé.
+- Couleurs forcées (thème de contraste clair de Windows) : l'anneau de focus des boutons est visible.
+- Le réglage caché « Design sur ordinateur = design mobile » du chyron ne rend plus le bandeau Breaking News plus haut sur ordinateur.
+- Les scripts minifiés ne contiennent plus que de l'ASCII (un site dont les pages ne sont pas en UTF-8 perdait tout le script) ; textes d'aide de l'onglet Urgent valables pour les deux designs ; fichiers de traduction marqués 2.17.0.
+
 ## [2.16.0] — 2026-09-23
 
 ### Ajouté — un interrupteur par barre, un par appareil
