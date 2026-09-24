@@ -1119,23 +1119,30 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
 ## 32. The opening of the Breaking News bar (2.18.0)
 
 - Stylesheet 17 quater, under `@media (prefers-reduced-motion: no-preference)`, every selector under
-  `.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent`: the aside `hprnb-u-bn-open` (.45s,
-  `clip-path` from `--hprnb-u-bn-open-0` — `inset(-32px 100% 0 0)`, RTL `inset(-32px 0 0 100%)` — to
-  `inset(-32px 0 0 0)`), `.hprnb-bar__label` `hprnb-u-bn-in` (.3s, +280ms, `translate` from
+  `.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-opened])`: the aside
+  `hprnb-u-bn-open` (.86s linear, the clock of the whole opening: `clip-path` from `--hprnb-u-bn-open-0`
+  — `inset(-32px 100% 0 0)`, RTL `inset(-32px 0 0 100%)` — to `inset(-32px 0 0 0)` over its first 52.33%
+  with `cubic-bezier(.22, 1, .36, 1)`, then held), `.hprnb-bar__label` `hprnb-u-bn-in` (.3s, +280ms, `translate` from
   `--hprnb-u-bn-in` — 24px, RTL −24px — and opacity 0), `.hprnb-bar__inner::before` `hprnb-u-bn-rule`
   (.33s, +430ms, `transform` from `--hprnb-u-bn-rule-0` — `scaleY(0)` from `center`, and under 600px
   `scaleX(0)` from `--hprnb-u-bn-start` —), `.hprnb-bar__controls` `hprnb-u-bn-ctrl` (.18s, +620ms, opacity
   and `scale` .9); easing `--hprnb-u-bn-ease` `cubic-bezier(.22, 1, .36, 1)`, fill `backwards`, every delay
   offset by `--hprnb-u-bn-t` (default 0ms). The variables live in 17 ter's base aside rule, its RTL rule
   and its `@container hprnb (max-width: 599.98px)` block (copied onto the flat preview root).
-- Replays: only a new element or one that goes from `display: none` to shown plays them (a parked bar
-  that comes back, a device where the bar was off); no animation name changes with the layout, so a
-  resize, a container crossing, a re-initialisation or a rotation never replays them.
+- Replays: `setupBreaking()` sets `data-hprnb-opened` on the aside when its `hprnb-u-bn-open` ends, or at
+  once when the opening is over or not played (`still()`, or no opening running on a rendered aside);
+  kept by `destroy()`, so a bar hidden and shown again (device switches, parked, print), a preference
+  change or a moved root never opens again; a new element (and a bar never rendered so far) does. No
+  animation name changes with the layout. `initAside()` does not `relocate()` the root for the URGENT
+  bar. A first init after the buttons' CSS fade ended (script later than 800ms) plays the fade with
+  `animate()` and the first headline waits 260ms more.
 - Script: `BN.open` = 860; `openingLeft( aside )` = `max(0, 860 − (localTime − delay))` of the aside's
   running `hprnb-u-bn-open`, 0 otherwise; the first frame of each typing starts at `now + openingLeft()`.
   `memory.started` is set when letters are painted. Bootstrap `apply()`: when an URGENT bar on screen is
-  replaced, the new one gets `--hprnb-u-bn-t: −<active time of the old opening>ms` (5000 when it was over).
-- Admin: `replayPreview()` (destroy, the urgent aside replaced by a clone, init) — the
-  `#hprnb-preview-replay` button (hidden unless a Breaking News urgent bar is previewed) and a newly
-  chosen Breaking News design call it.
+  replaced by one that stays in front, the new one gets `--hprnb-u-bn-t: −(<active time of the old
+  opening> + 16)ms` (5000 when it was over).
+- Admin: `replayPreview()` (destroy, the urgent aside replaced by a clone without `data-hprnb-opened`
+  nor `--hprnb-u-bn-t`, init) — the `#hprnb-preview-replay` button (`updateReplay()`: hidden unless a
+  Breaking News urgent bar is previewed on a device tab where it is on) and a newly chosen Breaking News
+  design call it.
 

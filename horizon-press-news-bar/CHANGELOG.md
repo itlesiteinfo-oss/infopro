@@ -12,10 +12,18 @@ Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr
   3. **le filet se trace** depuis le cartouche vers le bouton fermer en 330 ms (à partir de 430 ms) ; sur ordinateur, où le filet est le petit trait vertical avant les boutons, il se trace depuis son milieu ;
   4. **les boutons apparaissent** (fondu et échelle de 0,9 à 1, 180 ms, à partir de 620 ms) ; le bouton fermer est utilisable dès le début ;
   5. **le titre commence à s'écrire** à 860 ms, lettre par lettre comme avant.
-- **Jamais rejouée** par un changement de titre, une rotation, une réinitialisation, un redimensionnement ou une navigation sans rechargement ; elle est rejouée quand le bandeau réapparaît réellement (bandeau mis de côté qui revient, nouveau bandeau). En mode hybride, un bandeau remplacé par le rafraîchissement continue l'ouverture là où en était le précédent au lieu de se refermer et se rouvrir.
+- **Jamais rejouée** par un changement de titre, une rotation, une réinitialisation, un redimensionnement, une navigation sans rechargement, un bandeau masqué puis réaffiché ou un changement de préférence ; seul un bandeau nouveau (recréé) l'ouvre de nouveau, et un bandeau qui n'a jamais été montré (mis de côté dès le chargement) s'ouvre à sa première apparition. En mode hybride, un bandeau remplacé par le rafraîchissement continue l'ouverture là où en était le précédent au lieu de se refermer et se rouvrir.
 - **Arabe (droite à gauche)** : toute la chorégraphie en miroir (ouverture de droite à gauche, cartouche venant de la gauche, filet tracé vers la gauche).
 - **« Mouvement réduit »** : aucune animation — le bandeau, le cartouche, le filet, les boutons et le titre entier sont là tout de suite.
 - **Aperçu des réglages** : la même ouverture (mêmes styles, même moteur), jouée quand l'aperçu du bandeau est rechargé ou quand « Breaking News » est choisi, et un bouton **« Rejouer l'animation »**, visible dans l'aperçu seulement.
+
+### Corrigé — revue multi-agents de l'ouverture (4 angles, chaque signalement vérifié par un contradicteur)
+
+- **Une seule horloge pour toute l'ouverture** (860 ms : le rouge se découvre en 450 ms puis reste ouvert jusqu'au titre) : un script arrivé tard ou un rafraîchissement hybride ne sautent plus le tracé du filet ni l'apparition des boutons, et le titre attend toujours la fin de l'ouverture.
+- **Jouée une seule fois, vraiment** : un bandeau ouvert est marqué (`data-hprnb-opened`) ; masqué puis réaffiché (redimensionnement avec le bandeau activé sur un seul appareil, bandeau mis de côté qui revient, impression), ou après un changement de préférence (« mouvement réduit » désactivé), il ne se rouvre plus. Le conteneur n'est plus déplacé dans la page pendant que le bandeau URGENT est devant (cela relançait l'ouverture).
+- **Script arrivé après l'apparition des boutons** : ils apparaissent en fondu à son arrivée au lieu de surgir, puis le titre s'écrit.
+- Mode hybride : l'ouverture reprise d'un bandeau remplacé part avec une image d'avance (plus de micro-recul) et seulement pour un bandeau qui reste devant (un bandeau mis de côté garde son ouverture pour sa première apparition).
+- Aperçu : « Rejouer l'animation » n'apparaît pas sur l'onglet d'un appareil où le bandeau URGENT est désactivé.
 
 ## [2.17.0] — 2026-09-24
 
