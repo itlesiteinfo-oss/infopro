@@ -127,6 +127,49 @@ class Breaking_News_Test extends HPRNB_Test_Case {
 		$this->assertNotContains( 'hprnb-reserve', $page['body'], 'No space kept for a bar out of sight.' );
 	}
 
+	public function test_the_space_kept_before_the_script_is_the_longest_headline() {
+		$settings = Settings::get();
+		$item     = static function ( int $id, string $title ): array {
+			return array(
+				'id'    => $id,
+				'title' => $title,
+			);
+		};
+		$short = $item( 1, 'Séisme au large d’Al Hoceïma' );
+		$long  = $item( 2, str_repeat( 'Le gouvernement annonce un plan ', 4 ) ); // 128 letters.
+
+		// Phone (17px, 22px lines): the 44px label row, the lines, 12px under them.
+		$this->assertSame( 56 + 22, Renderer::breaking_height( $settings, array( 'urgent_items' => array( $short ) ), 'm' ) );
+		$this->assertSame( 56 + 4 * 22, Renderer::breaking_height( $settings, array( 'urgent_items' => array( $short, $long ) ), 'm' ), 'The longest headline decides.' );
+		// Desktop (23px lines): 12px above and under, never under the one-line bar.
+		$this->assertSame( Renderer::urgent_height( $settings, 'd' ), Renderer::breaking_height( $settings, array( 'urgent_items' => array( $short ) ), 'd' ) );
+		$this->assertSame( 24 + 2 * 23, Renderer::breaking_height( $settings, array( 'urgent_items' => array( $short, $long ) ), 'd' ) );
+		// The article being read is out of sight: its headline does not count.
+		$this->assertSame(
+			56 + 22,
+			Renderer::breaking_height(
+				$settings,
+				array(
+					'urgent_items' => array( $short, $long ),
+					'urgent_here'  => 2,
+				),
+				'm'
+			)
+		);
+		// A bigger headline size: fewer letters a line, taller lines.
+		$this->assertSame( 56 + 5 * 26, Renderer::breaking_height( array_merge( $settings, array( 'urgent_mobile_font_size' => 20 ) ), array( 'urgent_items' => array( $long ) ), 'm' ) );
+		// Nothing to measure: the bar's own height.
+		$this->assertSame( Renderer::urgent_height( $settings, 'm' ), Renderer::breaking_height( $settings, array(), 'm' ) );
+
+		// On the page: the reserved space, the chyron's otherwise.
+		$this->urgent_post( $long['title'] );
+		$this->page( home_url( '/' ) );
+		$this->assertStringContainsString( '--hprnb-height:70px;--hprnb-m-height:144px', implode( '', (array) wp_styles()->get_data( 'hprnb-bar', 'after' ) ) );
+		$this->with_settings( array( 'urgent_design' => 'chyron' ) );
+		$this->page( home_url( '/' ) );
+		$this->assertStringContainsString( '--hprnb-height:48px;--hprnb-m-height:76px', implode( '', (array) wp_styles()->get_data( 'hprnb-bar', 'after' ) ) );
+	}
+
 	public function test_the_urgent_bar_markup_marks_only_the_article_given() {
 		$items = array(
 			array(

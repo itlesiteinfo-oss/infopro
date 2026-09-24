@@ -284,7 +284,25 @@ class Urgent_Test extends HPRNB_Test_Case {
 		$this->assertContains( 'hprnb-reserve', get_body_class() );
 		$this->assertNotContains( 'hprnb-m-pending', get_body_class(), 'No wait while urgent articles are in front.' );
 		$inline = wp_styles()->get_data( 'hprnb-bar', 'after' );
-		$this->assertStringContainsString( '--hprnb-height:48px;--hprnb-m-height:76px', implode( '', (array) $inline ), 'The reserved space is the red bar\'s.' );
+		// 2.17: the Breaking News bar (the default): on a phone its label row, one line, 12px under it.
+		$this->assertStringContainsString( '--hprnb-height:48px;--hprnb-m-height:78px', implode( '', (array) $inline ), 'The reserved space is the red bar\'s.' );
+
+		// The chyron: its two-line phone bar.
+		$this->with_settings( array( 'urgent_design' => 'chyron' ) );
+		$this->assertStringContainsString( '--hprnb-height:48px;--hprnb-m-height:76px', $this->reserved_inline() );
+	}
+
+	/**
+	 * The inline style of a fresh front page's assets.
+	 *
+	 * @return string
+	 */
+	private function reserved_inline(): string {
+		$this->go_to_front( home_url( '/' ) );
+		wp_styles()->registered = array();
+		\HorizonPress\NewsBar\Assets::register_front();
+		Frontend::enqueue();
+		return implode( '', (array) wp_styles()->get_data( 'hprnb-bar', 'after' ) );
 	}
 
 	public function test_flagging_and_expiring_invalidate_the_cache() {

@@ -195,7 +195,8 @@ class Bar_Switches_Test extends HPRNB_Test_Case {
 		$this->assertStringContainsString( 'hprnb-root--u-no-d', $page['footer'] );
 		$this->assertStringNotContainsString( 'hprnb-root--m-pending', $page['footer'], 'The red bar waits for nobody on the phone.' );
 		$this->assertNotContains( 'hprnb-m-pending', $page['body'] );
-		$this->assertStringContainsString( '--hprnb-height:' . Renderer::profile_height( Settings::get(), 'd' ) . 'px;--hprnb-m-height:' . Renderer::urgent_height( Settings::get(), 'm' ) . 'px', $page['inline'] );
+		// 2.17: the Breaking News bar (the default) keeps the height of its longest headline.
+		$this->assertStringContainsString( '--hprnb-height:' . Renderer::profile_height( Settings::get(), 'd' ) . 'px;--hprnb-m-height:' . Renderer::breaking_height( Settings::get(), Payload::get( Settings::get() ), 'm' ) . 'px', $page['inline'] );
 		$this->assertStringContainsString( '--hprnb-m-gap:0px', $page['inline'] );
 	}
 

@@ -216,12 +216,13 @@
 	}
 
 	/* ------------------------------------------------------------------ */
-	/* Pause controller (shared by marquee and rotate)                      */
+	/* Pause controller (shared by marquee, rotate and Breaking News)        */
 	/* ------------------------------------------------------------------ */
 
 	/**
 	 * Combines every pause source. A user pause (toggle button) is sticky: hover or
-	 * focus leaving, or the tab becoming visible, never resumes it.
+	 * focus leaving, or the tab becoming visible, never resumes it. onChange gets
+	 * whether the bar is paused, and the sources ({user, hover, focus, hidden}).
 	 */
 	function createPauseController( state, aside, cfg, toggle, region, onChange ) {
 		var st = { user: false, hover: false, focus: false, hidden: !!document.hidden };
@@ -240,7 +241,7 @@
 				}
 			}
 			if ( onChange ) {
-				onChange( p );
+				onChange( p, st );
 			}
 		}
 
@@ -2122,38 +2123,245 @@
 	/* Breaking News (2.17): each whole headline typed in, one after another */
 	/* ------------------------------------------------------------------ */
 
-	/** Scripts whose letters join (Arabic, Hebrew and neighbours): typed word by word, never in broken forms. */
-	var JOINED = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+	/**
+	 * The rhythm of the typing and of the rotation: a letter every 26ms (a space counts half), a short
+	 * breath after punctuation, never under 0.45s nor over 2.6s for a whole headline (the rate rises
+	 * instead); a two-step trail on the last letters in place of a cursor; each headline then stays whole
+	 * 5s at least (or the rotation interval), plus 40ms a letter past 60 (7s more at most); the one
+	 * leaving fades out in 220ms, and the label stays alone 90ms before the next one types in.
+	 */
+	var BN = { unit: 26, min: 450, max: 2600, breath: 70, trail: 45, hold: 5000, from: 60, per: 40, extra: 7000, fade: 220, gap: 90, resume: 2000 };
+
+	/** The CSS highlights of the typing: the two steps of the trail, and the part not typed yet. */
+	var BN_MARKS = [ 'hprnb-u-bn-trail2', 'hprnb-u-bn-trail1', 'hprnb-u-bn-rest' ];
+
+	/** Scripts whose letters join (Arabic and neighbours; Hebrew for its final forms): typed word by word, never in broken forms. */
+	var JOINED = ( function () {
+		try {
+			return new RegExp( '[\\p{Script=Arabic}\\p{Script=Syriac}\\p{Script=Nko}\\p{Script=Mandaic}\\p{Script=Mongolian}\\p{Script=Phags_Pa}\\p{Script=Adlam}\\p{Script=Hebrew}]', 'u' );
+		} catch ( e ) {
+			return /[֐-ࣿ᠀-᢯ꡀ-꡿יִ-﷿ﹰ-﻿]/;
+		}
+	}() );
+
+	var BREATH = /[,;:.!?…،؛؟۔]\s*$/;
 
 	/**
-	 * The steps of the typing: graphemes (an accented letter or an emoji is one step), or words with
-	 * their spaces for a joined script.
+	 * The graphemes of a text: an accented letter or an emoji is one.
 	 *
-	 * @param {string} text The headline.
+	 * @param {string} text The text.
 	 * @return {string[]}
 	 */
-	function typeSteps( text ) {
-		if ( JOINED.test( text ) ) {
-			return text.split( /(\s+)/ ).filter( Boolean );
-		}
+	function graphemes( text ) {
 		if ( typeof Intl === 'object' && typeof Intl.Segmenter === 'function' ) {
-			return Array.from( new Intl.Segmenter( undefined, { granularity: 'grapheme' } ).segment( text ), function ( part ) {
-				return part.segment;
-			} );
+			try {
+				return Array.from( new Intl.Segmenter( undefined, { granularity: 'grapheme' } ).segment( text ), function ( part ) {
+					return part.segment;
+				} );
+			} catch ( e ) {}
 		}
 		return Array.from( text );
 	}
 
 	/**
+	 * The typing of one headline: where each step ends in the string, when it shows (ms after the first
+	 * frame), when the trail is over, and how much longer than the base the whole headline stays.
+	 *
+	 * @param {string} text The headline.
+	 * @return {{ends: number[], times: number[], done: number, extra: number, length: number}}
+	 */
+	function typePlan( text ) {
+		var steps = [];
+		var total = 0;
+		var letters = 0;
+		if ( JOINED.test( text ) ) {
+			// A word with the spaces after it, weighed by its letters: a sentence takes as long as it would letter by letter.
+			var re = /\s*\S+\s*/g;
+			var m;
+			while ( ( m = re.exec( text ) ) !== null ) {
+				var w = graphemes( m[ 0 ].trim() ).length;
+				steps.push( { end: re.lastIndex, w: w, breath: BREATH.test( m[ 0 ] ) } );
+				total += w;
+				letters += w;
+			}
+		} else {
+			var end = 0;
+			forEach( graphemes( text ), function ( g ) {
+				var space = ! g.trim();
+				end += g.length;
+				steps.push( { end: end, w: space ? 0.5 : 1, breath: BREATH.test( g ) } );
+				total += space ? 0.5 : 1;
+				letters += space ? 0 : 1;
+			} );
+		}
+		var per = total ? Math.min( BN.max, Math.max( BN.min, total * BN.unit ) ) / total : 0;
+		var t = 0;
+		var ends = [];
+		var times = [];
+		forEach( steps, function ( step ) {
+			ends.push( step.end );
+			times.push( t );
+			t += step.w * per + ( step.breath ? BN.breath : 0 );
+		} );
+		return {
+			ends: ends,
+			times: times,
+			done: ( times.length ? times[ times.length - 1 ] : 0 ) + 2 * BN.trail,
+			extra: Math.min( BN.extra, Math.max( 0, letters - BN.from ) * BN.per ),
+			length: text.length,
+		};
+	}
+
+	/**
+	 * Paints a title as typed up to three offsets, without ever changing its text: [0, c) whole, [c, b)
+	 * at 70%, [b, a) at 35%, [a, end) laid out but transparent. Through the CSS Custom Highlight API; in
+	 * spans (.hprnb-bar__trail2, __trail1, __rest), put back as they were by clear(), where it is missing.
+	 *
+	 * @return {{attach: function(Element): boolean, set: function(number, number, number, number), clear: function()}}
+	 */
+	function createReveal() {
+		var title = null;
+		if ( typeof CSS !== 'undefined' && CSS.highlights && typeof Highlight === 'function' ) {
+			var ranges = BN_MARKS.map( function () {
+				return document.createRange();
+			} );
+			var nodes = null;
+			var at = function ( offset ) {
+				for ( var i = 0; i < nodes.length; i++ ) {
+					if ( offset <= nodes[ i ].end || i === nodes.length - 1 ) {
+						return [ nodes[ i ].node, Math.max( 0, Math.min( offset - nodes[ i ].start, nodes[ i ].node.length ) ) ];
+					}
+				}
+				return null;
+			};
+			return {
+				attach: function ( el ) {
+					this.clear();
+					nodes = [];
+					var walker = document.createTreeWalker( el, NodeFilter.SHOW_TEXT );
+					var pos = 0;
+					for ( var n = walker.nextNode(); n; n = walker.nextNode() ) {
+						nodes.push( { node: n, start: pos, end: pos + n.length } );
+						pos += n.length;
+					}
+					if ( ! nodes.length ) {
+						nodes = null;
+						return false;
+					}
+					title = el;
+					forEach( BN_MARKS, function ( name, i ) {
+						var mark = CSS.highlights.get( name );
+						if ( ! mark ) {
+							mark = new Highlight();
+							CSS.highlights.set( name, mark );
+						}
+						mark.add( ranges[ i ] );
+					} );
+					return true;
+				},
+				set: function ( c, b, a, length ) {
+					var cuts = [ c, b, a, length ];
+					forEach( ranges, function ( range, i ) {
+						var from = at( cuts[ i ] );
+						var to = at( cuts[ i + 1 ] );
+						range.setStart( from[ 0 ], from[ 1 ] );
+						range.setEnd( to[ 0 ], to[ 1 ] );
+					} );
+				},
+				clear: function () {
+					if ( ! title ) {
+						return;
+					}
+					forEach( BN_MARKS, function ( name, i ) {
+						var mark = CSS.highlights.get( name );
+						if ( mark ) {
+							mark.delete( ranges[ i ] );
+							if ( ! mark.size ) {
+								CSS.highlights.delete( name );
+							}
+						}
+					} );
+					title = null;
+					nodes = null;
+				},
+			};
+		}
+		var saved = null;
+		var parts = null;
+		var text = '';
+		return {
+			attach: function ( el ) {
+				this.clear();
+				title = el;
+				saved = Array.prototype.slice.call( el.childNodes );
+				text = el.textContent;
+				parts = [ '', 'hprnb-bar__trail2', 'hprnb-bar__trail1', 'hprnb-bar__rest' ].map( function ( name ) {
+					var span = document.createElement( 'span' );
+					if ( name ) {
+						span.className = name;
+					}
+					return span;
+				} );
+				el.textContent = '';
+				forEach( parts, function ( span ) {
+					el.appendChild( span );
+				} );
+				return true;
+			},
+			set: function ( c, b, a, length ) {
+				var cuts = [ 0, c, b, a, length ];
+				forEach( parts, function ( span, i ) {
+					var part = text.slice( cuts[ i ], cuts[ i + 1 ] );
+					if ( span.textContent !== part ) {
+						span.textContent = part;
+					}
+				} );
+			},
+			clear: function () {
+				if ( ! title ) {
+					return;
+				}
+				title.textContent = '';
+				forEach( saved, function ( node ) {
+					title.appendChild( node );
+				} );
+				title = null;
+				saved = null;
+				parts = null;
+			},
+		};
+	}
+
+	/**
+	 * Whether the first Breaking News headline is already on screen: the stylesheet keeps it invisible
+	 * 1.5s for the script (hprnb-u-bn-wait), then lets it appear; a script later than that must not
+	 * erase it to type it again. Read before the bar is marked as initialised (that ends the wait).
+	 *
+	 * @param {Element} aside The URGENT bar.
+	 * @return {boolean}
+	 */
+	function breakingLate( aside ) {
+		var list = aside.querySelector( '.hprnb-bar__list' );
+		if ( ! list || typeof list.getAnimations !== 'function' ) {
+			return false;
+		}
+		return ! list.getAnimations().some( function ( animation ) {
+			return 'hprnb-u-bn-wait' === animation.animationName && 'running' === animation.playState;
+		} );
+	}
+
+	/**
 	 * The "Breaking News" design of the URGENT bar: the label stays still, each headline is typed in,
-	 * held long enough to be read (5s at least, more for a long one), then the next follows after a
-	 * short fade; a single headline is typed once and stays. The title keeps its whole text for the
-	 * layout and for screen readers (the bar is aria-live="off"): the typed part is painted, the rest
-	 * is laid out but transparent, so nothing moves while typing. Every headline shares one grid cell,
-	 * so the bar keeps the height of the tallest from the first paint; that height is measured and
-	 * reserved by the page. Hover, focus, the pause button and a hidden tab stop the sequence (a
-	 * headline being typed is completed at once); reduced motion shows every headline whole, without
-	 * fades. A re-initialisation of the same bar resumes on the headline it was showing.
+	 * held long enough to be read, then fades out and the next one types in; a single headline is typed
+	 * once and stays. The title's text never changes (the part not typed yet is laid out but painted
+	 * transparent), so nothing moves while typing and screen readers get the whole headline (the bar is
+	 * aria-live="off"). Every headline shares one grid cell, so the bar keeps the height of the tallest
+	 * from the first paint; that height is measured and reserved by the page. The keyboard on the
+	 * headline or the pause button completes a headline being typed and stops the sequence; the mouse
+	 * over the bar lets it finish, then stops it; a hidden tab stops it too; it goes on with what was
+	 * left of the hold, 2s at least. Reduced motion or forced colours (followed live): every headline
+	 * whole, swapped without a fade. A re-initialisation of the same bar resumes on the headline it was
+	 * showing, without typing it again.
 	 *
 	 * @param {Object}      state    Teardown registry.
 	 * @param {Element}     root     The root.
@@ -2161,9 +2369,8 @@
 	 * @param {Object}      cfg      readConfig().
 	 * @param {Element}     toggle   The pause button, or null.
 	 * @param {Object|null} contract setupContract().
-	 * @param {boolean}     reduced  Reduced motion.
 	 */
-	function setupBreaking( state, root, aside, cfg, toggle, contract, reduced ) {
+	function setupBreaking( state, root, aside, cfg, toggle, contract ) {
 		var items = Array.prototype.slice.call( aside.querySelectorAll( '.hprnb-bar__item' ) );
 		var viewport = aside.querySelector( '.hprnb-bar__viewport' );
 		if ( ! items.length || ! viewport ) {
@@ -2171,12 +2378,20 @@
 		}
 		var preview = root.classList.contains( 'hprnb-root--preview' );
 		var memory = aside.hprnbBn || ( aside.hprnbBn = {} );
+		var reveal = createReveal();
+		var plans = [];
 		var index = 0;
+		var phase = 'idle'; // typing, hold, leaving, still (a single headline, done)
 		var frame = 0;
+		var start = 0;
+		var shown = '';
 		var timer = null;
-		var typing = null;
+		var holdLeft = 0;
+		var holdAt = 0;
 		var ctrl = null;
 		var started = false;
+		var reduce = window.matchMedia ? window.matchMedia( '(prefers-reduced-motion: reduce)' ) : null;
+		var forced = window.matchMedia ? window.matchMedia( '(forced-colors: active)' ) : null;
 		forEach( items, function ( li, k ) {
 			if ( li.getAttribute( 'data-hprnb-id' ) === memory.id ) {
 				index = k;
@@ -2185,47 +2400,16 @@
 		state.hide( toggle, items.length < 2 );
 		state.addClass( aside, 'hprnb-bar--bn' );
 
-		function titleOf( li ) {
-			var title = li.querySelector( '.hprnb-bar__title' );
-			if ( title && undefined === title.hprnbText ) {
-				title.hprnbText = title.textContent;
-			}
-			return title;
+		function still() {
+			return !! ( ( reduce && reduce.matches ) || ( forced && forced.matches ) );
 		}
 
-		/** Paints the typed part of a title, or the whole title (null). */
-		function paint( title, typed ) {
-			if ( null === typed ) {
-				if ( title.firstElementChild ) {
-					title.textContent = title.hprnbText;
-				}
-				return;
+		function planOf( k ) {
+			if ( ! plans[ k ] ) {
+				var title = items[ k ].querySelector( '.hprnb-bar__title' );
+				plans[ k ] = typePlan( title ? title.textContent : '' );
 			}
-			var done = title.querySelector( '.hprnb-bar__typed' );
-			var rest = title.querySelector( '.hprnb-bar__rest' );
-			if ( ! done || ! rest ) {
-				title.textContent = '';
-				done = document.createElement( 'span' );
-				done.className = 'hprnb-bar__typed';
-				rest = document.createElement( 'span' );
-				rest.className = 'hprnb-bar__rest';
-				title.appendChild( done );
-				title.appendChild( rest );
-			}
-			done.textContent = typed;
-			rest.textContent = title.hprnbText.slice( typed.length );
-		}
-
-		function stopTyping() {
-			if ( frame ) {
-				cancelAnimationFrame( frame );
-				frame = 0;
-			}
-			if ( typing ) {
-				paint( typing.title, null );
-				typing = null;
-			}
-			aside.classList.remove( 'hprnb-bar--typing' );
+			return plans[ k ];
 		}
 
 		function clearTimer() {
@@ -2235,106 +2419,161 @@
 			}
 		}
 
-		/** How long a typed headline stays: 5s (or the rotation interval) at least, 40ms more per character past 70. */
-		function holdFor( li ) {
-			var title = titleOf( li );
-			var length = title ? title.hprnbText.length : 0;
-			return Math.max( 5000, cfg.interval || 0 ) + Math.max( 0, length - 70 ) * 40;
-		}
-
-		function schedule() {
-			clearTimer();
-			if ( items.length < 2 || typing || ( ctrl && ctrl.paused() ) ) {
-				return;
+		function stopFrame() {
+			if ( frame ) {
+				cancelAnimationFrame( frame );
+				frame = 0;
 			}
-			timer = setTimeout( leave, holdFor( items[ index ] ) );
-		}
-
-		function typed() {
-			typing = null;
-			aside.classList.remove( 'hprnb-bar--typing' );
-			memory.done = memory.id;
-			schedule();
-		}
-
-		function leave() {
-			timer = null;
-			if ( reduced ) {
-				enter( index + 1 );
-				return;
-			}
-			viewport.classList.add( 'is-leaving' );
-			timer = setTimeout( function () {
-				timer = null;
-				viewport.classList.remove( 'is-leaving' );
-				enter( index + 1 );
-			}, 180 );
 		}
 
 		function tick( now ) {
 			frame = 0;
-			if ( ! typing || aside.hprnbState !== state ) {
+			if ( 'typing' !== phase || aside.hprnbState !== state ) {
 				return;
 			}
-			if ( ! typing.start ) {
-				typing.start = now;
+			if ( ! start ) {
+				start = now; // The first letter shows on the first frame.
 			}
-			var n = Math.floor( ( now - typing.start ) / typing.step ) + 1;
-			if ( n >= typing.steps.length ) {
-				paint( typing.title, null );
+			var p = planOf( index );
+			var elapsed = now - start;
+			var n = p.times.length;
+			var a = 0;
+			while ( a < n && p.times[ a ] <= elapsed ) {
+				a++;
+			}
+			var b = a;
+			while ( b > 0 && elapsed - p.times[ b - 1 ] < BN.trail ) {
+				b--;
+			}
+			var c = b;
+			while ( c > 0 && elapsed - p.times[ c - 1 ] < 2 * BN.trail ) {
+				c--;
+			}
+			if ( c >= n ) {
 				typed();
 				return;
 			}
-			if ( n !== typing.n ) {
-				typing.n = n;
-				paint( typing.title, typing.steps.slice( 0, n ).join( '' ) );
+			if ( shown !== c + ',' + b + ',' + a ) {
+				shown = c + ',' + b + ',' + a;
+				reveal.set( c ? p.ends[ c - 1 ] : 0, b ? p.ends[ b - 1 ] : 0, a ? p.ends[ a - 1 ] : 0, p.length );
 			}
 			frame = requestAnimationFrame( tick );
+		}
+
+		/** The headline is whole: it stays (a single one), or its hold starts. */
+		function typed() {
+			stopFrame();
+			reveal.clear();
+			shown = '';
+			items[ index ].classList.remove( 'is-typing' );
+			aside.classList.remove( 'hprnb-bar--typing' );
+			memory.done = memory.id;
+			if ( items.length < 2 ) {
+				phase = 'still';
+				return;
+			}
+			phase = 'hold';
+			holdLeft = Math.max( BN.hold, cfg.interval || 0 ) + planOf( index ).extra;
+			arm();
+		}
+
+		function arm() {
+			clearTimer();
+			if ( 'hold' !== phase || ( ctrl && ctrl.paused() ) ) {
+				return;
+			}
+			holdAt = Date.now();
+			timer = setTimeout( leave, holdLeft );
+		}
+
+		function leave() {
+			timer = null;
+			if ( still() ) {
+				enter( index + 1 );
+				return;
+			}
+			phase = 'leaving';
+			items[ index ].classList.add( 'is-leaving' );
+			timer = setTimeout( function () {
+				timer = null;
+				enter( index + 1 );
+			}, BN.fade + BN.gap );
 		}
 
 		function enter( i ) {
-			stopTyping();
+			stopFrame();
 			clearTimer();
+			reveal.clear();
 			index = ( i + items.length ) % items.length;
-			forEach( items, function ( li, k ) {
-				li.classList.toggle( 'is-current', k === index );
-			} );
 			var li = items[ index ];
 			var id = li.getAttribute( 'data-hprnb-id' );
-			var title = titleOf( li );
-			// Already typed before a re-initialisation, or nothing to type: whole at once.
-			var whole = ! title || reduced || ( memory.id === id && memory.done === id ) || ( ctrl && ctrl.paused() );
+			var title = li.querySelector( '.hprnb-bar__title' );
+			var p = planOf( index );
+			// Already typed before a re-initialisation, already on screen, or nothing to type: whole at once.
+			var whole = still() || memory.late || ( memory.id === id && memory.done === id ) || ( ctrl && ctrl.paused() ) || ! p.times.length || ! title || ! reveal.attach( title );
+			memory.late = false;
 			memory.id = id;
-			if ( whole ) {
-				if ( title ) {
-					paint( title, null );
-				}
-				typed();
-				return;
-			}
 			memory.done = null;
-			var steps = typeSteps( title.hprnbText );
-			// Fast and even: 28ms a letter (110ms a word), never more than 2.6s for the whole headline.
-			var joined = JOINED.test( title.hprnbText );
-			typing = { title: title, steps: steps, start: 0, n: 0, step: Math.min( joined ? 110 : 28, 2600 / Math.max( 1, steps.length ) ) };
-			aside.classList.add( 'hprnb-bar--typing' );
-			paint( title, '' );
-			frame = requestAnimationFrame( tick );
+			if ( ! whole ) {
+				// Everything transparent in the same task as the swap: one paint shows the empty headline.
+				reveal.set( 0, 0, 0, p.length );
+				shown = '0,0,0';
+				li.classList.add( 'is-typing' );
+				aside.classList.add( 'hprnb-bar--typing' );
+				phase = 'typing';
+				start = 0;
+			}
+			forEach( items, function ( other, k ) {
+				other.classList.remove( 'is-leaving' );
+				other.classList.toggle( 'is-current', k === index );
+			} );
+			if ( whole ) {
+				typed();
+			} else {
+				frame = requestAnimationFrame( tick );
+			}
 		}
 
-		ctrl = createPauseController( state, aside, cfg, toggle, viewport, function ( paused ) {
+		ctrl = createPauseController( state, aside, cfg, toggle, viewport, function ( paused, why ) {
 			if ( ! started ) {
 				return;
 			}
-			if ( paused ) {
-				clearTimer();
-				if ( typing ) {
-					// Hovered, focused or paused while typing: the whole headline at once.
-					stopTyping();
-					memory.done = memory.id;
+			if ( 'typing' === phase ) {
+				// The reader wants this headline now (the keyboard on it, the pause button); the mouse lets it finish.
+				if ( why.user || why.focus ) {
+					typed();
 				}
-			} else {
-				schedule();
+				return;
+			}
+			if ( paused ) {
+				if ( null !== timer && 'hold' === phase ) {
+					clearTimer();
+					holdLeft = Math.max( 0, holdLeft - ( Date.now() - holdAt ) );
+				} else if ( 'leaving' === phase ) {
+					clearTimer();
+					items[ index ].classList.remove( 'is-leaving' );
+					phase = 'hold';
+					holdLeft = 0;
+				}
+			} else if ( 'hold' === phase && null === timer ) {
+				holdLeft = Math.max( holdLeft, BN.resume );
+				arm();
+			}
+		} );
+
+		// Reduced motion or forced colours switched on meanwhile: the headline being typed is whole at once.
+		forEach( [ reduce, forced ], function ( query ) {
+			if ( query && query.addEventListener ) {
+				state.on( query, 'change', function () {
+					if ( ! still() ) {
+						return;
+					}
+					if ( 'typing' === phase ) {
+						typed();
+					} else if ( 'leaving' === phase ) {
+						enter( index + 1 );
+					}
+				} );
 			}
 		} );
 
@@ -2361,11 +2600,13 @@
 
 		state.add( function () {
 			started = false;
-			stopTyping();
+			stopFrame();
 			clearTimer();
-			viewport.classList.remove( 'is-leaving' );
+			reveal.clear();
+			phase = 'idle';
+			aside.classList.remove( 'hprnb-bar--typing' );
 			forEach( items, function ( li ) {
-				li.classList.remove( 'is-current' );
+				li.classList.remove( 'is-current', 'is-leaving', 'is-typing' );
 			} );
 			delete root.hprnbBnH;
 		} );
@@ -2389,6 +2630,10 @@
 		var state = createState();
 		state.urgent = !! urgent;
 		aside.hprnbState = state;
+		if ( urgent && ! aside.hprnbBn && root.classList.contains( 'hprnb-root--u-bn' ) ) {
+			// Read before the bar is marked as running, which ends the stylesheet's wait (2.17).
+			aside.hprnbBn = { late: ! root.classList.contains( 'hprnb-root--preview' ) && breakingLate( aside ) };
+		}
 		aside.setAttribute( 'data-hprnb-init', '1' );
 		state.add( function () {
 			aside.removeAttribute( 'data-hprnb-init' );
@@ -2462,7 +2707,7 @@
 		}
 
 		if ( mode === 'type' ) {
-			setupBreaking( state, root, aside, cfg, toggle, contract, reduced );
+			setupBreaking( state, root, aside, cfg, toggle, contract );
 		} else if ( mode === 'marquee' ) {
 			if ( reduced ) {
 				state.hide( toggle, true );

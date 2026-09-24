@@ -219,7 +219,7 @@ final class Frontend {
 		// back when the theme moves on to another article without a reload.
 		$parked = ! empty( $payload['urgent_here'] ) && $urgent < 1;
 		if ( $count > 0 || $urgent > 0 || $parked ) {
-			self::enqueue_bar_assets( $settings, $urgent > 0 );
+			self::enqueue_bar_assets( $settings, $urgent > 0, $payload );
 		}
 		if ( $parked ) {
 			Assets::enqueue_bar_script();
@@ -232,18 +232,23 @@ final class Frontend {
 	 * @param array $settings Settings.
 	 * @param bool  $urgent   True while urgent articles are in front (2.14): their bar's height is
 	 *                        reserved and the script is needed, since it ends their reign on time.
+	 * @param array $payload  The payload shown (2.17): the Breaking News bar is as tall as its longest
+	 *                        headline.
 	 * @return void
 	 */
-	public static function enqueue_bar_assets( array $settings, bool $urgent = false ): void {
+	public static function enqueue_bar_assets( array $settings, bool $urgent = false, array $payload = array() ): void {
 		Assets::enqueue_style();
 		// Each device keeps the height of the bar in front there (2.16: the URGENT bar may be on one only).
-		$front = Renderer::urgent_front( $settings, $urgent );
+		$front  = Renderer::urgent_front( $settings, $urgent );
+		$height = static function ( string $p ) use ( $settings, $payload ): int {
+			return Renderer::urgent_breaking( $settings ) ? Renderer::breaking_height( $settings, $payload, $p ) : Renderer::urgent_height( $settings, $p );
+		};
 		wp_add_inline_style(
 			'hprnb-bar',
 			sprintf(
 				'body.hprnb-reserve{--hprnb-height:%1$dpx;--hprnb-m-height:%2$dpx;--hprnb-peek:%3$dpx;--hprnb-m-gap:%4$dpx}',
-				$front['d'] ? Renderer::urgent_height( $settings, 'd' ) : Renderer::profile_height( $settings, 'd' ),
-				$front['m'] ? Renderer::urgent_height( $settings, 'm' ) : Renderer::profile_height( $settings, 'm' ),
+				$front['d'] ? $height( 'd' ) : Renderer::profile_height( $settings, 'd' ),
+				$front['m'] ? $height( 'm' ) : Renderer::profile_height( $settings, 'm' ),
 				Renderer::peek_height( $settings ),
 				$front['m'] ? 0 : Renderer::mobile_gap( $settings )
 			)

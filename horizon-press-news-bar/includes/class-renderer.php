@@ -461,6 +461,41 @@ final class Renderer {
 	}
 
 	/**
+	 * First-paint height of the Breaking News bar (2.17) on a device, for the space the page keeps
+	 * before the script measures it: the bar is as tall as its longest headline, whole (they all share
+	 * one cell), estimated from its length for a common screen. Phone: the 44px row of the label, the
+	 * lines, 12px under them. Desktop: 12px above and under the lines, never under the one-line bar.
+	 * The script then keeps the height it measures (only the space under the page may move once).
+	 *
+	 * @param array  $settings Settings.
+	 * @param array  $payload  Payload as the page shows it (urgent_items, urgent_here).
+	 * @param string $p        'd' or 'm'.
+	 * @return int
+	 */
+	public static function breaking_height( array $settings, array $payload, string $p ): int {
+		$phone = 'm' === $p;
+		$font  = self::urgent_font( $settings, $phone ? 'm' : 'd' );
+		$here  = (int) ( $payload['urgent_here'] ?? 0 );
+		// Taller lines in a right-to-left bar, for the marks above and below the letters.
+		$line  = (int) round( $font * ( is_rtl() ? 1.5 : ( $phone ? 1.3 : 1.35 ) ) );
+		$lines = 0;
+		foreach ( (array) ( $payload['urgent_items'] ?? array() ) as $item ) {
+			if ( $here > 0 && (int) ( $item['id'] ?? 0 ) === $here ) {
+				continue;
+			}
+			$title  = html_entity_decode( wp_strip_all_tags( (string) ( $item['title'] ?? '' ) ), ENT_QUOTES, 'UTF-8' );
+			$joined = 1 === preg_match( '/[\x{0590}-\x{08FF}\x{FB1D}-\x{FDFF}\x{FE70}-\x{FEFF}]/u', $title );
+			// Letters a line holds at 17px: 37 on a 390px phone, 95 beside the label on a 1366px screen.
+			$per   = (int) floor( ( $phone ? ( $joined ? 42 : 37 ) : ( $joined ? 125 : 95 ) ) * 17 / $font );
+			$lines = max( $lines, (int) ceil( mb_strlen( $title ) / max( 1, $per ) ) );
+		}
+		if ( $lines < 1 ) {
+			return self::urgent_height( $settings, $p );
+		}
+		return $phone ? 56 + $lines * $line : max( self::urgent_height( $settings, 'd' ), 24 + $lines * $line );
+	}
+
+	/**
 	 * Normalised presentation profile.
 	 *
 	 * @param array  $settings Settings.

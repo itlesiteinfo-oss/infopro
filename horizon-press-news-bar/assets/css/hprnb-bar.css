@@ -2469,7 +2469,7 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 }
 
 /* ---------------------------------------------------------------------------
- * 17 bis. The article being read (2.17) and the Breaking News design of the URGENT bar.
+ * 17 bis. The article being read (2.17): out of the URGENT bar, whatever its design.
  * ------------------------------------------------------------------------- */
 /* The headline of the article being read: out of sight from the first paint (the script then takes it
    out of the rotation), and an URGENT bar parked for that article while the news bar has the page. */
@@ -2478,38 +2478,423 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 	display: none;
 }
 
-/* Every headline in one grid cell: the bar has the height of the tallest from the first paint, and
-   keeps it while typing and from one headline to the next. Only the current one shows (before the
-   script, the first one not set aside). */
-.hprnb-root--u-bn .hprnb-bar--urgent .hprnb-bar__list {
+/* ---------------------------------------------------------------------------
+ * 17 ter. URGENT — « Breaking News » design (2.17), root class hprnb-root--u-bn.
+ *     One flat red band, two zones: a white cartouche (the label in bold red caps; it never moves)
+ *     and the headline in bold white, WHOLE, on as many lines as it needs. Phone held upright
+ *     (container < 600px): the cartouche, a hairline and the close button share a 44px top row, the
+ *     headline runs below on the full width. From 600px: one row on the site's width, cartouche |
+ *     headline | hairline | buttons. Every headline sits in the same grid cell (only the current one
+ *     visible), so the band always has the height of the TALLEST one: nothing moves while a headline
+ *     types in, nor when the next one comes. The script paints the part not typed yet transparent
+ *     (CSS Custom Highlight API; spans where it is missing): the text never changes, so the layout
+ *     and the accessible name are the whole headline from the first frame.
+ *     The article being read and the parked bar: 17 bis.
+ *     Every selector starts with .hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent (0,4,0):
+ *     it beats section 17 by specificity, not by source order, and never reaches the chyron.
+ * ------------------------------------------------------------------------- */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent {
+	--hprnb-u-bn-fs: var(--hprnb-u-fs, 17px);
+	--hprnb-u-bn-lh: 1.35;
+	--hprnb-u-bn-line: calc(var(--hprnb-u-bn-fs) * var(--hprnb-u-bn-lh));
+	--hprnb-u-bn-plate: 26px;
+	--hprnb-u-bn-hit: 44px;
+	--hprnb-u-bn-gap: 16px;
+	/* The icon squares go down onto the cartouche's box when it sits 12px under the top (phone). */
+	--hprnb-u-bn-shift: 0px;
+	/* The cartouche goes down by the difference of cap heights, so its caps sit on a one-line
+	   headline's baseline (the two are centred on the same axis). */
+	--hprnb-u-bn-nudge: 0px;
+	max-inline-size: none;
+	overflow: clip;
+	background: var(--hprnb-u-bg);
+	color: var(--hprnb-u-fg);
+	font-size: var(--hprnb-u-bn-fs);
+	line-height: var(--hprnb-u-bn-line);
+	/* Plain band, crisp edge: a dark hairline against the page and a short, soft lift. */
+	box-shadow: 0 -1px 0 rgba(0, 0, 0, .14), 0 -6px 18px -6px rgba(0, 0, 0, .32);
+}
+
+@supports (line-height: round(nearest, 22.4px, 1px)) {
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent {
+		--hprnb-u-bn-line: round(nearest, calc(var(--hprnb-u-bn-fs) * var(--hprnb-u-bn-lh)), 1px);
+		--hprnb-u-bn-nudge: round(nearest, calc((var(--hprnb-u-bn-fs) - var(--hprnb-u-lfs, 13px)) * .355), 1px);
+	}
+}
+
+/* Arabic, Persian, Hebrew: taller lines for the marks above and below (section 17 drops the tracking). */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:is(:dir(rtl), .hprnb-bar--rtl) {
+	--hprnb-u-bn-lh: 1.5;
+}
+
+/* From 600px: cartouche | headline | hairline | buttons, on the site's width. */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__inner {
 	display: grid;
+	grid-template: 'label title rule ctrl' auto / auto minmax(0, 1fr) auto auto;
+	gap: 0 var(--hprnb-u-bn-gap);
+	align-items: center;
+	box-sizing: border-box;
+	block-size: auto;
+	min-block-size: var(--hprnb-u-height, 48px);
+	max-inline-size: calc(var(--hprnb-max, 1230px) + 2 * var(--hprnb-gutter, 15px));
+	margin: 0 auto;
+	padding: 0 var(--hprnb-gutter, 15px);
+	overflow: visible;
+	line-height: inherit;
+	transition: none;
 }
 
-.hprnb-root--u-bn .hprnb-bar--urgent .hprnb-bar__item {
-	grid-area: 1 / 1;
+/* The hairline between the headline and the buttons (phone: from the cartouche to the close button). */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__inner::before {
+	content: "";
+	grid-area: rule;
+	display: block;
+	inline-size: 1px;
+	block-size: var(--hprnb-u-bn-plate);
+	margin: 0;
+	background: color-mix(in srgb, var(--hprnb-u-fg) 42%, transparent);
+}
+
+/* The cartouche: a white plate, the label in bold red caps (section 17's size, weight and tracking),
+   still (no take, no dot). A longer custom label wraps, balanced, inside a capped width instead of
+   pushing the headline or the close button out. */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__label {
+	grid-area: label;
+	position: relative;
+	inset-block-start: var(--hprnb-u-bn-nudge);
+	align-self: auto;
+	justify-self: start;
+	box-sizing: border-box;
+	block-size: auto;
+	min-block-size: var(--hprnb-u-bn-plate);
+	max-inline-size: clamp(12em, 30cqi, 22em);
+	margin: 0;
+	padding: 6px 10px;
+	border: 0;
+	border-radius: 2px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .16);
+	line-height: 1.2;
+	text-align: center;
+	white-space: normal;
+	animation: none;
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__label::before {
+	display: none;
+}
+
+/* Trimmed to the caps by section 17 (text-box), so they sit dead centre in the plate. */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__label-text {
+	max-inline-size: none;
+	/* The tracking after the last letter would push the caps off centre. */
+	margin-inline-end: -.08em;
+	opacity: 1;
+	white-space: normal;
+	text-wrap: balance;
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:is(:dir(rtl), .hprnb-bar--rtl) .hprnb-bar__label {
+	inset-block-start: 0;
+	padding-block: 0;
+	font-size: calc(var(--hprnb-u-lfs, 13px) + 2px);
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:is(:dir(rtl), .hprnb-bar--rtl) .hprnb-bar__label-text {
+	margin-inline-end: 0;
+	line-height: var(--hprnb-u-bn-plate);
+	text-box: normal;
+}
+
+/* The headline zone: nothing clips it, nothing clamps it. */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__viewport {
+	grid-area: title;
+	display: block;
+	align-self: auto;
 	min-inline-size: 0;
+	max-block-size: none;
+	margin: 0;
+	padding: 12px 0;
+	overflow: visible;
+	-webkit-mask-image: none;
+	mask-image: none;
+	animation: none;
+	transition: opacity .22s ease;
 }
 
-.hprnb-root--u-bn .hprnb-bar--urgent[data-hprnb-init] .hprnb-bar__item:not(.is-current),
-.hprnb-root--u-bn .hprnb-bar--urgent:not([data-hprnb-init]) .hprnb-bar__item:not(:nth-child(1 of :not(.hprnb-bar__item--here))) {
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__viewport::after {
+	display: none;
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__list {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	align-items: center;
+	margin: 0;
+	padding: 0;
+	gap: 0;
+	white-space: normal;
+}
+
+/* Every headline in the same cell: the cell is the tallest one's. The ones not shown keep their size
+   and leave the accessibility tree and the tab order (visibility). */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__item {
+	grid-area: 1 / 1;
+	display: block;
+	inline-size: auto;
+	min-inline-size: 0;
+	max-inline-size: none;
+	margin: 0;
+	padding: 0;
+	opacity: 1;
+	animation: none;
+	transition: opacity .22s ease;
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__item::after {
+	content: none;
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__item[hidden],
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent[data-hprnb-init] .hprnb-bar__item:not(.is-current) {
 	visibility: hidden;
 }
 
-/* The untyped rest of a headline is laid out (the layout never moves) but not painted. */
-.hprnb-root--u-bn .hprnb-bar--urgent .hprnb-bar__rest {
-	color: transparent;
+/* The article being read is out of the set, and takes no room. */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__item.hprnb-bar__item--here {
+	display: none;
 }
 
-.hprnb-root--u-bn .hprnb-bar--urgent .hprnb-bar__viewport {
-	transition: opacity .18s ease;
+/* Before the script: the first headline only (not the article being read). It waits, invisible, so
+   the typing never starts from a headline already shown; without the script it appears after 1.5s. */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-init]) .hprnb-bar__item:not(:first-child) {
+	visibility: hidden;
 }
 
-.hprnb-root--u-bn .hprnb-bar--urgent .hprnb-bar__viewport.is-leaving {
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-init]) .hprnb-bar__item:nth-child(1 of :not(.hprnb-bar__item--here)) {
+	visibility: visible;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-init]) .hprnb-bar__list {
+		animation: hprnb-u-bn-wait 1.5s;
+	}
+}
+
+@keyframes hprnb-u-bn-wait {
+	from, to { opacity: 0; }
+}
+
+/* The discreet change of headline: the one leaving fades out (class on the viewport or the item). */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent :is(.hprnb-bar__viewport, .hprnb-bar__item).is-leaving {
 	opacity: 0;
 }
 
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__link {
+	display: block;
+	inline-size: fit-content;
+	max-inline-size: 100%;
+	margin: 0;
+	padding: 0;
+	border-radius: 2px;
+	color: inherit;
+	text-decoration: none;
+	white-space: normal;
+	text-wrap: pretty;
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__title {
+	display: inline;
+	white-space: normal;
+}
+
+/* No underline under letters still to come (section 17 underlines on hover and focus). */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent.hprnb-bar--typing .hprnb-bar__link .hprnb-bar__title,
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .is-typing .hprnb-bar__link .hprnb-bar__title {
+	text-decoration: none;
+}
+
+/* The typing: the part not typed yet, and a two-step trail on the last letters instead of a cursor. */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__title::highlight(hprnb-u-bn-rest) {
+	color: transparent;
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__title::highlight(hprnb-u-bn-trail1) {
+	color: color-mix(in srgb, var(--hprnb-u-fg) 35%, transparent);
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__title::highlight(hprnb-u-bn-trail2) {
+	color: color-mix(in srgb, var(--hprnb-u-fg) 70%, transparent);
+}
+
+/* Browsers without highlights: the same, in spans. */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__rest {
+	color: transparent;
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__trail1 {
+	color: color-mix(in srgb, currentColor 35%, transparent);
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__trail2 {
+	color: color-mix(in srgb, currentColor 70%, transparent);
+}
+
+/* Keyboard: the ring goes round the headline itself (nothing clips it), not round the band. */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__link:focus-visible {
+	outline: 2px solid var(--hprnb-u-fg);
+	outline-offset: 4px;
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:has(.hprnb-bar__link:focus-visible) {
+	outline: 0;
+}
+
+/* The buttons, inside the band: 44px targets round a square the height of the cartouche, reaching
+   past it into the gaps, so the SQUARE lines up with the site's edge. Above the cartouche's layer. */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__controls {
+	grid-area: ctrl;
+	position: relative;
+	inset: auto;
+	z-index: 1;
+	display: flex;
+	align-self: auto;
+	margin: 0 calc((var(--hprnb-u-bn-plate) - var(--hprnb-u-bn-hit)) / 2);
+	border: 0;
+	background: none;
+	box-shadow: none;
+}
+
+/* Before the script: their place is kept (nothing reflows), not shown. */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-init]) .hprnb-bar__controls {
+	visibility: hidden;
+}
+
+/* A single headline never rotates: no pause button, from the first paint. */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not(:has(.hprnb-bar__item + .hprnb-bar__item)) .hprnb-bar__btn--toggle {
+	display: none;
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__btn {
+	inline-size: var(--hprnb-u-bn-hit);
+	block-size: var(--hprnb-u-bn-hit);
+	background: transparent;
+	outline: 0;
+}
+
+/* The visible square: a hairline frame round a 13px icon. */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__btn svg {
+	inline-size: var(--hprnb-u-bn-plate);
+	block-size: var(--hprnb-u-bn-plate);
+	border-radius: 2px;
+	box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--hprnb-u-fg) 62%, transparent);
+	stroke-width: 2.25;
+	translate: 0 var(--hprnb-u-bn-shift);
+	animation: none;
+	transition: background-color .15s, box-shadow .15s;
+}
+
+/* Pause and play as solid glyphs (outlined bars read as two boxes inside the square). */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__btn :is(.hprnb-bar__icon--pause rect, .hprnb-bar__icon--play polygon) {
+	fill: currentColor;
+	stroke: none;
+	transform-origin: 12px 12px;
+	scale: .8;
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__icon--play polygon {
+	translate: 1px 0;
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__btn:hover svg {
+	background: color-mix(in srgb, var(--hprnb-u-fg) 16%, transparent);
+	box-shadow: inset 0 0 0 1.5px var(--hprnb-u-fg);
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__btn:active svg {
+	background: rgba(0, 0, 0, .2);
+}
+
+/* Keyboard: the square takes the cartouche's colours, with a ring round it. */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__btn:focus-visible svg {
+	background: var(--hprnb-u-fg);
+	box-shadow: none;
+	color: var(--hprnb-u-bg);
+	outline: 2px solid var(--hprnb-u-fg);
+	outline-offset: 2px;
+}
+
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__progress {
+	display: none;
+}
+
+/* The phone profile (under 768px): the phone headline size, tighter leading, a smaller plate. */
+@container hprnb (max-width: 767.98px) {
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent {
+		--hprnb-u-bn-fs: var(--hprnb-u-m-fs, 17px);
+		--hprnb-u-bn-lh: 1.3;
+		--hprnb-u-bn-plate: 24px;
+		--hprnb-u-bn-gap: 12px;
+	}
+
+	/* Pause off on phones (the mobile setting): gone from the first paint, as the script hides it,
+	   so the headline's measure — hence the band's height — does not change when the script runs. */
+	.hprnb-root.hprnb-root--u-bn[data-hprnb-mobile*='"pause":false'] .hprnb-bar.hprnb-bar--urgent .hprnb-bar__btn--toggle {
+		display: none;
+	}
+}
+
+/* A phone held upright (under 600px): a 44px row — cartouche, hairline, close button, 12px under the
+   band's top edge — and the headline below it on the full width, its first letter under the
+   cartouche's edge. The cartouche's column never takes the close button's room. */
+@container hprnb (max-width: 599.98px) {
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent {
+		--hprnb-u-bn-shift: calc(12px - (var(--hprnb-u-bn-hit) - var(--hprnb-u-bn-plate)) / 2);
+	}
+
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__inner {
+		grid-template: 'label rule ctrl' minmax(var(--hprnb-u-bn-hit), auto) 'title title title' auto / minmax(0, max-content) minmax(0, 1fr) auto;
+		align-items: start;
+		min-block-size: 0;
+	}
+
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__label {
+		inset-block-start: 0;
+		max-inline-size: none;
+		margin-block: 12px 8px;
+	}
+
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__inner::before {
+		inline-size: auto;
+		block-size: 1px;
+		margin-block-start: calc(12px + var(--hprnb-u-bn-plate) / 2 - .5px);
+	}
+
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__viewport {
+		padding: 0 0 12px;
+	}
+
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__list {
+		align-items: start;
+	}
+
+	/* The ring keeps 3px clear of the cartouche above it. */
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__link:focus-visible {
+		outline-offset: 3px;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
-	.hprnb-root--u-bn .hprnb-bar--urgent .hprnb-bar__viewport {
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent :is(.hprnb-bar__viewport, .hprnb-bar__item, .hprnb-bar__btn svg) {
 		transition: none;
+	}
+}
+
+/* Forced colours (Windows contrast themes): the fills are gone, so the band, the cartouche and the
+   squares keep a frame (outlines: no size change). The script does not type there. */
+@media (forced-colors: active) {
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent,
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent :is(.hprnb-bar__label, .hprnb-bar__btn svg) {
+		outline: 1px solid CanvasText;
+		outline-offset: -1px;
 	}
 }

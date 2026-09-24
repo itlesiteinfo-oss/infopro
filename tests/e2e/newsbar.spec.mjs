@@ -3129,12 +3129,23 @@ test( 'v2.17: Breaking News — each whole headline typed in, held, then the nex
 		const u = document.querySelector( '.hprnb-bar--urgent' );
 		const li = u && u.querySelector( '.hprnb-bar__item.is-current' );
 		const title = li && li.querySelector( '.hprnb-bar__title' );
-		const typed = title && title.querySelector( '.hprnb-bar__typed' );
+		// How far the typing is: where the part not typed yet starts (CSS highlight, or its span); -1 when whole.
+		let typed = -1;
+		const rest = title && window.CSS && CSS.highlights && CSS.highlights.get( 'hprnb-u-bn-rest' );
+		if ( rest ) {
+			for ( const range of rest ) {
+				if ( title.contains( range.startContainer ) ) {
+					typed = range.startOffset;
+				}
+			}
+		} else if ( title && title.querySelector( '.hprnb-bar__rest' ) ) {
+			typed = title.textContent.length - title.querySelector( '.hprnb-bar__rest' ).textContent.length;
+		}
 		return {
 			id: li ? li.getAttribute( 'data-hprnb-id' ) : null,
 			href: li ? li.querySelector( '.hprnb-bar__link' ).href : null,
 			text: title ? title.textContent : null,
-			typed: typed ? typed.textContent.length : -1,
+			typed,
 			h: u ? Math.round( u.getBoundingClientRect().height ) : 0,
 			pad: parseFloat( getComputedStyle( document.body ).paddingBottom ),
 		};
@@ -3238,6 +3249,133 @@ test( 'v2.17: Breaking News — each whole headline typed in, held, then the nex
 		await expect( urgent ).not.toHaveClass( /hprnb-bar--bn/ );
 		await expect( page.locator( '#hprnb-root' ) ).not.toHaveClass( /hprnb-root--u-bn/ );
 		expect( errors ).toEqual( [] );
+	} finally {
+		wp( [ 'post', 'delete', ...ids, '--force' ] );
+		setSettings( {} );
+	}
+} );
+
+test( 'v2.17: Breaking News engine — the pause button completes the headline, the mouse lets it finish, reduced motion followed live, a late script never types again, spans without CSS highlights, closing clears everything', async ( { browser } ) => {
+	const now = () => Math.floor( Date.now() / 1000 );
+	const flag = ( id, since, until ) => {
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_since', String( since ) ] );
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_until', String( until ) ] );
+		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+	};
+	const titles = [
+		'Séisme au large d’Al Hoceïma : les secours mobilisés dans toute la région du Rif',
+		'Le gouvernement annonce un plan d’urgence de 12 milliards de dirhams pour l’automobile et convoque les constructeurs dès lundi matin à Casablanca',
+	];
+	const ids = titles.map( ( title ) => wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=' + title, '--porcelain' ] ) );
+	const state = ( page ) => page.evaluate( () => {
+		const u = document.querySelector( '.hprnb-bar--urgent' );
+		const li = u && u.querySelector( '.hprnb-bar__item.is-current' );
+		const title = li && li.querySelector( '.hprnb-bar__title' );
+		let typed = -1;
+		const rest = title && window.CSS && CSS.highlights && CSS.highlights.get( 'hprnb-u-bn-rest' );
+		if ( rest ) {
+			for ( const range of rest ) {
+				if ( title.contains( range.startContainer ) ) {
+					typed = range.startOffset;
+				}
+			}
+		}
+		const span = title && title.querySelector( '.hprnb-bar__rest' );
+		if ( span ) {
+			typed = title.textContent.length - span.textContent.length;
+		}
+		return { id: li ? li.getAttribute( 'data-hprnb-id' ) : null, typed, text: title ? title.textContent : null, spans: title ? title.children.length : 0, marks: window.CSS && CSS.highlights ? CSS.highlights.size : -1 };
+	} );
+	const typing = async ( page ) => {
+		await expect.poll( async () => ( await state( page ) ).typed, { intervals: [ 50 ], timeout: 8000 } ).toBeGreaterThan( 0 );
+	};
+	const open = async ( init, waitUntil = 'load' ) => {
+		const context = await browser.newContext( { viewport: { width: 1366, height: 900 } } );
+		const page = await context.newPage();
+		const errors = collectErrors( page );
+		if ( init ) {
+			await init( page );
+		}
+		await page.goto( '/', { waitUntil } );
+		return { context, page, errors, urgent: page.locator( '.hprnb-bar--urgent' ) };
+	};
+	try {
+		setDefaultSettings();
+		const t = now();
+		flag( ids[ 0 ], t - 60, t + 900 );
+		flag( ids[ 1 ], t - 30, t + 900 );
+
+		// The pause button while a headline types: whole at once, then it stays; Play goes on.
+		let { context, page, errors, urgent } = await open();
+		await typing( page );
+		const toggle = urgent.locator( '.hprnb-bar__btn--toggle' );
+		await toggle.click();
+		await page.mouse.move( 5, 5 );
+		const paused = await state( page );
+		expect( paused.typed ).toBe( -1 );
+		expect( paused.marks ).toBe( 0 );
+		await expect( toggle ).toHaveAttribute( 'aria-label', 'Play' );
+		await page.waitForTimeout( 7000 );
+		expect( ( await state( page ) ).id ).toBe( paused.id );
+		await toggle.click();
+		await page.mouse.move( 5, 5 );
+		await expect( toggle ).toHaveAttribute( 'aria-label', 'Pause' );
+		await expect.poll( async () => ( await state( page ) ).id, { timeout: 15000 } ).not.toBe( paused.id );
+
+		// The mouse over the bar lets the headline finish typing, then holds it; leaving goes on.
+		await page.reload();
+		await typing( page );
+		await urgent.locator( '.hprnb-bar__label' ).hover();
+		const hovered = await state( page );
+		await expect.poll( async () => ( await state( page ) ).typed, { timeout: 4000 } ).toBe( -1 );
+		await page.waitForTimeout( 8000 );
+		expect( ( await state( page ) ).id ).toBe( hovered.id );
+		await page.mouse.move( 5, 5 );
+		await expect.poll( async () => ( await state( page ) ).id, { timeout: 15000 } ).not.toBe( hovered.id );
+
+		// Reduced motion switched on while a headline types: whole at once.
+		await expect.poll( async () => ( await state( page ) ).typed, { intervals: [ 50 ], timeout: 15000 } ).toBeGreaterThan( 0 );
+		await page.emulateMedia( { reducedMotion: 'reduce' } );
+		await expect.poll( async () => ( await state( page ) ).typed, { timeout: 1000 } ).toBe( -1 );
+		await page.emulateMedia( { reducedMotion: 'no-preference' } );
+
+		// Closing: no highlight, no timer left behind.
+		await urgent.locator( '.hprnb-bar__btn--close' ).click();
+		await expect( urgent ).toHaveCount( 0 );
+		expect( await page.evaluate( () => CSS.highlights.size ) ).toBe( 0 );
+		await page.waitForTimeout( 6000 );
+		expect( errors ).toEqual( [] );
+		await context.close();
+
+		// A script later than the stylesheet's wait (1.5s): the first headline is already there, whole; never erased to be typed again.
+		( { context, page, errors, urgent } = await open( ( p ) => p.route( '**/hprnb-bar.min.js*', async ( route ) => {
+			await new Promise( ( resolve ) => setTimeout( resolve, 2500 ) );
+			await route.continue();
+		} ), 'commit' ) );
+		await page.waitForTimeout( 2000 );
+		expect( await urgent.evaluate( ( el ) => [ el.hasAttribute( 'data-hprnb-init' ), getComputedStyle( el.querySelector( '.hprnb-bar__list' ) ).opacity, getComputedStyle( el.querySelector( '.hprnb-bar__item' ) ).visibility ] ) ).toEqual( [ false, '1', 'visible' ] );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		const late = await state( page );
+		expect( [ late.id, late.typed ] ).toEqual( [ ids[ 1 ], -1 ] );
+		for ( let k = 0; k < 10; k++ ) {
+			await page.waitForTimeout( 200 );
+			expect( ( await state( page ) ).typed ).toBe( -1 );
+		}
+		expect( errors ).toEqual( [] );
+		await context.close();
+
+		// Without the CSS Custom Highlight API: the same typing in spans, and the title put back after.
+		( { context, page, errors, urgent } = await open( ( p ) => p.addInitScript( () => {
+			window.Highlight = undefined;
+		} ) ) );
+		await typing( page );
+		const split = await state( page );
+		expect( split.spans ).toBe( 4 );
+		expect( split.text ).toBe( titles[ 1 ] );
+		await expect.poll( async () => ( await state( page ) ).typed, { timeout: 5000 } ).toBe( -1 );
+		expect( await state( page ) ).toMatchObject( { spans: 0, text: titles[ 1 ] } );
+		expect( errors ).toEqual( [] );
+		await context.close();
 	} finally {
 		wp( [ 'post', 'delete', ...ids, '--force' ] );
 		setSettings( {} );

@@ -72,10 +72,11 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 		// 2.11: two phone designs with their tab and the folding motion; 2.14: the urgent bar, its own
 		// shape on both devices (CSS), its timers and hand-over (script), its payload (bootstrap); 2.15: the
 		// phone design of the URGENT bar on desktop too (CSS); 2.16: one switch per device for the URGENT bar
-		// (which bar is in front, per device, in the script and the bootstrap).
-		$this->assertLessThanOrEqual( 48 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
+		// (which bar is in front, per device, in the script and the bootstrap); 2.17: the Breaking News
+		// design of the URGENT bar (CSS), its typing engine and the article being read left out (script).
+		$this->assertLessThanOrEqual( 60 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
 		$this->assertLessThanOrEqual( 6 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bootstrap.min.js' ) ); // 2.16: the device switches from REST, an unchanged refresh kept, the waits kept.
-		$this->assertLessThanOrEqual( 28 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
+		$this->assertLessThanOrEqual( 38 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
 	}
 
 	/**
@@ -143,6 +144,28 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 			}
 		}
 		$this->assertGreaterThan( 10, $rules );
+	}
+
+	public function test_the_desktop_preview_shows_breaking_news_as_a_narrow_bar() {
+		// 2.17: the Desktop tab is narrower than 600px; the admin sheet copies 17 ter's upright-phone block
+		// onto the flat root (no query container), with the desktop sizes. Every rule, in step.
+		$bar   = (string) file_get_contents( HPRNB_PATH . 'assets/css/hprnb-bar.css' );
+		$admin = (string) file_get_contents( HPRNB_PATH . 'assets/css/hprnb-admin.css' );
+		$bar   = substr( $bar, (int) strpos( $bar, '17 ter.' ) );
+		$open  = '@container hprnb (max-width: 599.98px) {';
+		$at    = strpos( $bar, $open );
+		$this->assertNotFalse( $at );
+		$depth = 1;
+		$pos   = $at + strlen( $open );
+		for ( $end = $pos; $depth > 0; $end++ ) {
+			$depth += ( '{' === $bar[ $end ] ) - ( '}' === $bar[ $end ] );
+		}
+		preg_match_all( '/^\t([^\t\n\/}][^{]*?)\s*\{\n(.*?)^\t\}/ms', substr( $bar, $pos, $end - $pos ), $found, PREG_SET_ORDER );
+		$this->assertGreaterThan( 5, count( $found ) );
+		foreach ( $found as $rule ) {
+			$selector = str_replace( '.hprnb-root.hprnb-root--u-bn ', '.hprnb-root.hprnb-root--flat.hprnb-root--u-bn ', trim( $rule[1] ) );
+			$this->assertStringContainsString( $selector . " {\n" . preg_replace( '/^\t/m', '', $rule[2] ) . '}', $admin, 'Missing in the admin sheet: ' . $rule[1] );
+		}
 	}
 
 	public function test_no_translation_before_init() {

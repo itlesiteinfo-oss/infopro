@@ -923,3 +923,58 @@
 .hprnb-root.hprnb-root--flat.hprnb-root--u-d-flow .hprnb-bar--urgent .hprnb-bar__viewport.is-clipped::after {
 	display: block;
 }
+
+/* The Breaking News design in the Desktop tab (2.17). The tab is narrower than any desktop screen, so
+   the design shows as it does in a bar under 600px — the label, the hairline and the buttons on top,
+   the headline under them on the full width — with the desktop sizes. The rules of section 17 ter's
+   `@container hprnb (max-width: 599.98px)` block, copied onto the flat root (a static test keeps the
+   two in step); then the chyron's desktop buttons above, which would tie with the design's, undone. */
+.hprnb-root.hprnb-root--flat.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent {
+	--hprnb-u-bn-shift: calc(12px - (var(--hprnb-u-bn-hit) - var(--hprnb-u-bn-plate)) / 2);
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__inner {
+	grid-template: 'label rule ctrl' minmax(var(--hprnb-u-bn-hit), auto) 'title title title' auto / minmax(0, max-content) minmax(0, 1fr) auto;
+	align-items: start;
+	min-block-size: 0;
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__label {
+	inset-block-start: 0;
+	max-inline-size: none;
+	margin-block: 12px 8px;
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__inner::before {
+	inline-size: auto;
+	block-size: 1px;
+	margin-block-start: calc(12px + var(--hprnb-u-bn-plate) / 2 - .5px);
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__viewport {
+	padding: 0 0 12px;
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__list {
+	align-items: start;
+}
+
+/* The ring keeps 3px clear of the cartouche above it. */
+.hprnb-root.hprnb-root--flat.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__link:focus-visible {
+	outline-offset: 3px;
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__controls {
+	position: relative;
+	align-self: auto;
+	margin: 0 calc((var(--hprnb-u-bn-plate) - var(--hprnb-u-bn-hit)) / 2);
+	border: 0;
+	background: none;
+	box-shadow: none;
+}
+
+.hprnb-root.hprnb-root--flat.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__btn {
+	inline-size: var(--hprnb-u-bn-hit);
+	block-size: var(--hprnb-u-bn-hit);
+	min-block-size: 0;
+}
