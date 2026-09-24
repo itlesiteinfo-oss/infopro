@@ -223,7 +223,9 @@ class Urgent_Reach_Test extends HPRNB_Test_Case {
 	}
 
 	public function test_the_phone_design_as_second_desktop_design() {
-		$settings = $this->with_settings( array( 'urgent_desktop_layout' => 'mobile' ) );
+		// 2.17: a design of the chyron (Breaking News, the default, has its own layout on every device).
+		$settings = $this->with_settings( array( 'urgent_design' => 'chyron', 'urgent_desktop_layout' => 'mobile' ) );
+		$this->assertNotContains( 'hprnb-root--u-d-flow', Renderer::root_classes( Settings::sanitize( array( 'urgent_desktop_layout' => 'mobile' ) ) ), 'Not with Breaking News.' );
 		$this->assertSame( 76, Renderer::urgent_height( $settings, 'd' ), 'The phone design is as tall on desktop.' );
 		$this->assertContains( 'hprnb-root--u-d-flow', Renderer::root_classes( $settings ) );
 		$this->assertContains( 'hprnb-root--u-d-flow', Renderer::root_classes( $settings, true ), 'The preview shows it too.' );
@@ -234,7 +236,7 @@ class Urgent_Reach_Test extends HPRNB_Test_Case {
 		$inline = implode( '', (array) wp_styles()->get_data( 'hprnb-bar', 'after' ) );
 		$this->assertStringContainsString( '--hprnb-height:76px;--hprnb-m-height:76px', $inline, 'The page keeps the phone design\'s height on desktop too.' );
 
-		$settings = $this->with_settings( array() );
+		$settings = $this->with_settings( array( 'urgent_design' => 'chyron' ) );
 		$this->assertNotContains( 'hprnb-root--u-d-flow', Renderer::root_classes( $settings ) );
 		$this->assertSame( 48, Renderer::urgent_height( $settings, 'd' ), '2.16: the one-line chyron is 48px tall.' );
 	}

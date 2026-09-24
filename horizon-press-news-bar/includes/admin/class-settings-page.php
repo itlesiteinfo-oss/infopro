@@ -277,14 +277,20 @@ final class Settings_Page {
 						),
 					),
 					array(
+						'title'       => __( 'Design of the URGENT bar', 'horizon-press-news-bar' ),
+						'description' => __( 'The look of the red bar on every device. The preview on the right shows it at once.', 'horizon-press-news-bar' ),
+						'keys'        => array( 'urgent_design' ),
+					),
+					array(
 						'title'       => __( 'Where the URGENT bar shows', 'horizon-press-news-bar' ),
 						'description' => __( 'Its own page types, whatever the news bar does in the Where tab: with the front page ticked, breaking news reaches the front page even where the news bar stays away. Its devices are chosen in Content → Bars shown. A page switched off in its News Bar box shows neither bar.', 'horizon-press-news-bar' ),
-						'keys'        => array( 'urgent_contexts' ),
+						'keys'        => array( 'urgent_contexts', 'urgent_exclude_current' ),
 					),
 					array(
 						'title'       => __( 'Design on desktop', 'horizon-press-news-bar' ),
-						'description' => __( 'On phones the URGENT bar always has its two-line design with the close button in the tab above the corner. From 768 px, choose between one line and that same design.', 'horizon-press-news-bar' ),
+						'description' => __( 'For the chyron design. On phones it always has its two-line design with the close button in the tab above the corner. From 768 px, choose between one line and that same design.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'urgent_desktop_layout' ),
+						'depends'     => 'urgent_design:chyron',
 					),
 					array(
 						'title'       => __( 'Headline size of the URGENT bar', 'horizon-press-news-bar' ),
@@ -1200,6 +1206,28 @@ final class Settings_Page {
 				'type'    => 'contexts',
 				'label'   => __( 'Pages where the red bar shows', 'horizon-press-news-bar' ),
 				'options' => self::context_labels(),
+			),
+			'urgent_design'               => array(
+				'section' => 'urgent',
+				'type'    => 'choice',
+				'label'   => __( 'Design of the URGENT bar', 'horizon-press-news-bar' ),
+				'options' => array(
+					'breaking' => array(
+						'title' => __( 'Breaking News — recommended', 'horizon-press-news-bar' ),
+						'text'  => __( 'A white cartouche with the label, then the whole headline, typed in letter by letter; several headlines follow one another, each shown long enough to be read. The close button sits in the band.', 'horizon-press-news-bar' ),
+					),
+					'chyron'   => array(
+						'title' => __( 'Chyron', 'horizon-press-news-bar' ),
+						'text'  => __( 'The design of 2.16: the plate and one headline at a time, on two lines at most on phones (fading at the end), the close button in the tab above the corner.', 'horizon-press-news-bar' ),
+					),
+				),
+			),
+			'urgent_exclude_current'      => array(
+				'section' => 'urgent',
+				'type'    => 'checkbox',
+				'label'   => __( 'Article being read', 'horizon-press-news-bar' ),
+				'text'    => __( 'Never show the article the reader is on', 'horizon-press-news-bar' ),
+				'desc'    => __( 'Recognised by its ID, or else by its address, also when the theme moves on to the next article without reloading the page. With nothing else left, the red bar stays hidden and the news bar takes its place.', 'horizon-press-news-bar' ),
 			),
 			'urgent_desktop_layout'       => array(
 				'section' => 'urgent',

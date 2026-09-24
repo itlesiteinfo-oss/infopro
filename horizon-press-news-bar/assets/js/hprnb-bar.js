@@ -1352,7 +1352,7 @@
 			var gap = mobile ? ( parseFloat( cs.getPropertyValue( '--hprnb-m-gap' ) ) || 0 ) : 0;
 			if ( state.urgent ) {
 				// The red bar's own height, whatever the device's news bar measures (2.16).
-				full = parseFloat( getComputedStyle( root ).getPropertyValue( state.uFlow ? '--hprnb-u-m-height' : '--hprnb-u-height' ) ) || aside.offsetHeight;
+				full = root.hprnbBnH || parseFloat( getComputedStyle( root ).getPropertyValue( state.uFlow ? '--hprnb-u-m-height' : '--hprnb-u-height' ) ) || aside.offsetHeight;
 				gap = 0;
 			}
 			var hidden = aside.hidden || root.hidden || body.classList.contains( 'hprnb-kbd' ) || root.classList.contains( 'hprnb-root--' + ( mobile ? 'm' : 'd' ) + '-pending' )
@@ -1680,11 +1680,183 @@
 				li.parentNode.removeChild( li );
 			}
 		} );
+		// The headlines set aside for the article being read (2.17) end on time too.
+		aside.hprnbOut = ( aside.hprnbOut || [] ).filter( function ( li ) {
+			return ( parseInt( li.getAttribute( 'data-hprnb-until' ), 10 ) || 0 ) > t;
+		} );
 		var root = aside.parentNode;
 		if ( root && root.setAttribute ) {
 			root.setAttribute( 'data-hprnb-urgent', String( alive.length ) );
 		}
 		return alive;
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* The article being read (2.17, setting urgent_exclude_current)       */
+	/* ------------------------------------------------------------------ */
+
+	var HERE = null;
+
+	/**
+	 * An address reduced to what identifies an article: host without "www.", path without its trailing
+	 * slash, lower case, and the ?p= / ?page_id= of a plain permalink; '' when it cannot be read.
+	 *
+	 * @param {string} href Address.
+	 * @return {string}
+	 */
+	function urlKey( href ) {
+		try {
+			var u = new URL( href, location.href );
+			var path = u.pathname.replace( /\/+$/, '' ) || '/';
+			try {
+				path = decodeURI( path );
+			} catch ( e ) {
+				// Malformed escape: compared as it is.
+			}
+			var q = u.searchParams.get( 'p' ) || u.searchParams.get( 'page_id' );
+			return u.hostname.replace( /^www\./i, '' ).toLowerCase() + path.toLowerCase() + ( q ? '?' + q : '' );
+		} catch ( e ) {
+			return '';
+		}
+	}
+
+	/**
+	 * The article being read: its ID from the server, and its canonical address; after an in-page
+	 * navigation, the new address alone.
+	 *
+	 * @param {Element} root The root.
+	 * @return {{id:number,key:string}}
+	 */
+	function hereOf( root ) {
+		if ( ! HERE ) {
+			var canonical = document.querySelector( 'link[rel="canonical"]' );
+			HERE = { id: parseInt( root.getAttribute( 'data-hprnb-post' ), 10 ) || 0, key: urlKey( canonical && canonical.href ? canonical.href : location.href ) };
+		}
+		return HERE;
+	}
+
+	/**
+	 * Whether a headline announces the article being read.
+	 *
+	 * @param {Element} li   The headline.
+	 * @param {Object}  here hereOf().
+	 * @return {boolean}
+	 */
+	function isHere( li, here ) {
+		var id = parseInt( li.getAttribute( 'data-hprnb-id' ), 10 ) || 0;
+		var link = li.querySelector( '.hprnb-bar__link' );
+		return ( here.id > 0 && id === here.id ) || ( '' !== here.key && !! link && urlKey( link.href ) === here.key );
+	}
+
+	/**
+	 * Takes the headline of the article being read out of the URGENT bar, and puts back the one of the
+	 * article just left, in their first order. Only between two runs of the bar.
+	 *
+	 * @param {Element} root  The root.
+	 * @param {Element} aside The URGENT bar.
+	 * @return {boolean} Whether the set aside changed.
+	 */
+	function hereFilter( root, aside ) {
+		var list = aside.querySelector( '.hprnb-bar__list' );
+		if ( ! list ) {
+			return false;
+		}
+		var out = aside.hprnbOut || [];
+		var n = 0;
+		forEach( list.children, function ( li ) {
+			if ( undefined === li.hprnbOrder ) {
+				li.hprnbOrder = n;
+			}
+			n++;
+		} );
+		var on = '1' === root.getAttribute( 'data-hprnb-here' ) && ! root.classList.contains( 'hprnb-root--preview' );
+		var here = on ? hereOf( root ) : null;
+		var drop = [];
+		Array.prototype.slice.call( list.children ).concat( out ).sort( function ( a, b ) {
+			return a.hprnbOrder - b.hprnbOrder;
+		} ).forEach( function ( li ) {
+			// The server's mark only hides it until the script takes over.
+			li.classList.remove( 'hprnb-bar__item--here' );
+			if ( here && isHere( li, here ) ) {
+				drop.push( li );
+				if ( li.parentNode ) {
+					li.parentNode.removeChild( li );
+				}
+			} else {
+				list.appendChild( li );
+			}
+		} );
+		aside.hprnbOut = drop;
+		return drop.length !== out.length || drop.some( function ( li, i ) {
+			return li !== out[ i ];
+		} );
+	}
+
+	/**
+	 * The URGENT bar steps aside on the page of the only article it announces: out of sight, still in
+	 * the page for the next article; the news bar takes the page as it is.
+	 *
+	 * @param {Element} root The root.
+	 */
+	function parkUrgent( root ) {
+		var was = root.classList.contains( 'hprnb-root--urgent' );
+		root.classList.remove( 'hprnb-root--urgent' );
+		root.setAttribute( 'data-hprnb-urgent', '0' );
+		parkDevices( root, false );
+		if ( root.classList.contains( 'hprnb-root--preview' ) ) {
+			return;
+		}
+		if ( ! root.querySelector( '.hprnb-bar:not(.hprnb-bar--urgent)' ) ) {
+			root.hidden = true;
+			document.body.classList.remove( 'hprnb-reserve' );
+		} else if ( was ) {
+			reserveFor( root, false );
+		}
+	}
+
+	/**
+	 * Follows a theme that moves on to another article without reloading the page (history API):
+	 * the URGENT bar is filtered again for the new address.
+	 */
+	function followLocation() {
+		if ( window.hprnbFollow ) {
+			return;
+		}
+		window.hprnbFollow = true;
+		var check = function () {
+			var key = urlKey( location.href );
+			if ( ! HERE || key === HERE.key ) {
+				return;
+			}
+			HERE = { id: 0, key: key };
+			var root = document.getElementById( 'hprnb-root' );
+			var aside = root && root.querySelector( '.hprnb-bar--urgent' );
+			if ( ! aside || '1' !== root.getAttribute( 'data-hprnb-here' ) ) {
+				return;
+			}
+			var out = aside.hprnbOut || [];
+			var now = Array.prototype.slice.call( aside.querySelectorAll( '.hprnb-bar__item' ) ).concat( out ).filter( function ( li ) {
+				return isHere( li, HERE );
+			} );
+			if ( now.length !== out.length || now.some( function ( li ) {
+				return out.indexOf( li ) === -1;
+			} ) ) {
+				destroy( root );
+				init( root );
+			}
+		};
+		forEach( [ 'pushState', 'replaceState' ], function ( method ) {
+			var original = window.history && window.history[ method ];
+			if ( typeof original !== 'function' ) {
+				return;
+			}
+			window.history[ method ] = function () {
+				var result = original.apply( this, arguments );
+				setTimeout( check, 0 );
+				return result;
+			};
+		} );
+		window.addEventListener( 'popstate', check );
 	}
 
 	/** The most recent flag among the headlines: what a closed set is remembered by. */
@@ -1706,9 +1878,18 @@
 	 */
 	function urgentLive( root, aside ) {
 		var items = pruneUrgent( aside );
-		if ( ! items.length ) {
-			return false;
-		}
+		return items.length > 0 && urgentOpen( root, items );
+	}
+
+	/**
+	 * Whether a set of urgent headlines is still open: never closed by the reader, or closed before its
+	 * newest flag (the preview root is never closed).
+	 *
+	 * @param {Element}         root  The root.
+	 * @param {Array|NodeList}  items The headlines.
+	 * @return {boolean}
+	 */
+	function urgentOpen( root, items ) {
 		if ( root.classList.contains( 'hprnb-root--preview' ) ) {
 			return true;
 		}
@@ -1783,14 +1964,16 @@
 		// Each device keeps the height of the bar in front there (2.16).
 		var ud = urgent && urgentOn( root, 'd' );
 		var um = urgent && urgentOn( root, 'm' );
+		// 2.17: the Breaking News bar has the height it measured (the short-screen 44px does not apply).
+		var bn = urgent && root.hprnbBnH ? root.hprnbBnH + 'px' : '';
 		// A screen past 768px whose bar is still under it (the scrollbar's width) shows the phone design.
-		var d = ( ud && read( isNarrow( root ) ? '--hprnb-u-m-height' : '--hprnb-u-height' ) ) || read( '--hprnb-height' );
-		var m = ( um && read( '--hprnb-u-m-height' ) ) || read( '--hprnb-m-height' );
+		var d = ( ud && ( bn || read( isNarrow( root ) ? '--hprnb-u-m-height' : '--hprnb-u-height' ) ) ) || read( '--hprnb-height' );
+		var m = ( um && ( bn || read( '--hprnb-u-m-height' ) ) ) || read( '--hprnb-m-height' );
 		if ( d ) {
-			body.style.setProperty( '--hprnb-height', d );
+			body.style.setProperty( '--hprnb-height', d, ud && bn ? 'important' : '' );
 		}
 		if ( m ) {
-			body.style.setProperty( '--hprnb-m-height', m );
+			body.style.setProperty( '--hprnb-m-height', m, um && bn ? 'important' : '' );
 		}
 		body.style.setProperty( '--hprnb-m-gap', ( um ? '' : read( '--hprnb-m-gap' ) ) || '0px' );
 	}
@@ -1935,6 +2118,263 @@
 		check();
 	}
 
+	/* ------------------------------------------------------------------ */
+	/* Breaking News (2.17): each whole headline typed in, one after another */
+	/* ------------------------------------------------------------------ */
+
+	/** Scripts whose letters join (Arabic, Hebrew and neighbours): typed word by word, never in broken forms. */
+	var JOINED = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+
+	/**
+	 * The steps of the typing: graphemes (an accented letter or an emoji is one step), or words with
+	 * their spaces for a joined script.
+	 *
+	 * @param {string} text The headline.
+	 * @return {string[]}
+	 */
+	function typeSteps( text ) {
+		if ( JOINED.test( text ) ) {
+			return text.split( /(\s+)/ ).filter( Boolean );
+		}
+		if ( typeof Intl === 'object' && typeof Intl.Segmenter === 'function' ) {
+			return Array.from( new Intl.Segmenter( undefined, { granularity: 'grapheme' } ).segment( text ), function ( part ) {
+				return part.segment;
+			} );
+		}
+		return Array.from( text );
+	}
+
+	/**
+	 * The "Breaking News" design of the URGENT bar: the label stays still, each headline is typed in,
+	 * held long enough to be read (5s at least, more for a long one), then the next follows after a
+	 * short fade; a single headline is typed once and stays. The title keeps its whole text for the
+	 * layout and for screen readers (the bar is aria-live="off"): the typed part is painted, the rest
+	 * is laid out but transparent, so nothing moves while typing. Every headline shares one grid cell,
+	 * so the bar keeps the height of the tallest from the first paint; that height is measured and
+	 * reserved by the page. Hover, focus, the pause button and a hidden tab stop the sequence (a
+	 * headline being typed is completed at once); reduced motion shows every headline whole, without
+	 * fades. A re-initialisation of the same bar resumes on the headline it was showing.
+	 *
+	 * @param {Object}      state    Teardown registry.
+	 * @param {Element}     root     The root.
+	 * @param {Element}     aside    The URGENT bar.
+	 * @param {Object}      cfg      readConfig().
+	 * @param {Element}     toggle   The pause button, or null.
+	 * @param {Object|null} contract setupContract().
+	 * @param {boolean}     reduced  Reduced motion.
+	 */
+	function setupBreaking( state, root, aside, cfg, toggle, contract, reduced ) {
+		var items = Array.prototype.slice.call( aside.querySelectorAll( '.hprnb-bar__item' ) );
+		var viewport = aside.querySelector( '.hprnb-bar__viewport' );
+		if ( ! items.length || ! viewport ) {
+			return;
+		}
+		var preview = root.classList.contains( 'hprnb-root--preview' );
+		var memory = aside.hprnbBn || ( aside.hprnbBn = {} );
+		var index = 0;
+		var frame = 0;
+		var timer = null;
+		var typing = null;
+		var ctrl = null;
+		var started = false;
+		forEach( items, function ( li, k ) {
+			if ( li.getAttribute( 'data-hprnb-id' ) === memory.id ) {
+				index = k;
+			}
+		} );
+		state.hide( toggle, items.length < 2 );
+		state.addClass( aside, 'hprnb-bar--bn' );
+
+		function titleOf( li ) {
+			var title = li.querySelector( '.hprnb-bar__title' );
+			if ( title && undefined === title.hprnbText ) {
+				title.hprnbText = title.textContent;
+			}
+			return title;
+		}
+
+		/** Paints the typed part of a title, or the whole title (null). */
+		function paint( title, typed ) {
+			if ( null === typed ) {
+				if ( title.firstElementChild ) {
+					title.textContent = title.hprnbText;
+				}
+				return;
+			}
+			var done = title.querySelector( '.hprnb-bar__typed' );
+			var rest = title.querySelector( '.hprnb-bar__rest' );
+			if ( ! done || ! rest ) {
+				title.textContent = '';
+				done = document.createElement( 'span' );
+				done.className = 'hprnb-bar__typed';
+				rest = document.createElement( 'span' );
+				rest.className = 'hprnb-bar__rest';
+				title.appendChild( done );
+				title.appendChild( rest );
+			}
+			done.textContent = typed;
+			rest.textContent = title.hprnbText.slice( typed.length );
+		}
+
+		function stopTyping() {
+			if ( frame ) {
+				cancelAnimationFrame( frame );
+				frame = 0;
+			}
+			if ( typing ) {
+				paint( typing.title, null );
+				typing = null;
+			}
+			aside.classList.remove( 'hprnb-bar--typing' );
+		}
+
+		function clearTimer() {
+			if ( null !== timer ) {
+				clearTimeout( timer );
+				timer = null;
+			}
+		}
+
+		/** How long a typed headline stays: 5s (or the rotation interval) at least, 40ms more per character past 70. */
+		function holdFor( li ) {
+			var title = titleOf( li );
+			var length = title ? title.hprnbText.length : 0;
+			return Math.max( 5000, cfg.interval || 0 ) + Math.max( 0, length - 70 ) * 40;
+		}
+
+		function schedule() {
+			clearTimer();
+			if ( items.length < 2 || typing || ( ctrl && ctrl.paused() ) ) {
+				return;
+			}
+			timer = setTimeout( leave, holdFor( items[ index ] ) );
+		}
+
+		function typed() {
+			typing = null;
+			aside.classList.remove( 'hprnb-bar--typing' );
+			memory.done = memory.id;
+			schedule();
+		}
+
+		function leave() {
+			timer = null;
+			if ( reduced ) {
+				enter( index + 1 );
+				return;
+			}
+			viewport.classList.add( 'is-leaving' );
+			timer = setTimeout( function () {
+				timer = null;
+				viewport.classList.remove( 'is-leaving' );
+				enter( index + 1 );
+			}, 180 );
+		}
+
+		function tick( now ) {
+			frame = 0;
+			if ( ! typing || aside.hprnbState !== state ) {
+				return;
+			}
+			if ( ! typing.start ) {
+				typing.start = now;
+			}
+			var n = Math.floor( ( now - typing.start ) / typing.step ) + 1;
+			if ( n >= typing.steps.length ) {
+				paint( typing.title, null );
+				typed();
+				return;
+			}
+			if ( n !== typing.n ) {
+				typing.n = n;
+				paint( typing.title, typing.steps.slice( 0, n ).join( '' ) );
+			}
+			frame = requestAnimationFrame( tick );
+		}
+
+		function enter( i ) {
+			stopTyping();
+			clearTimer();
+			index = ( i + items.length ) % items.length;
+			forEach( items, function ( li, k ) {
+				li.classList.toggle( 'is-current', k === index );
+			} );
+			var li = items[ index ];
+			var id = li.getAttribute( 'data-hprnb-id' );
+			var title = titleOf( li );
+			// Already typed before a re-initialisation, or nothing to type: whole at once.
+			var whole = ! title || reduced || ( memory.id === id && memory.done === id ) || ( ctrl && ctrl.paused() );
+			memory.id = id;
+			if ( whole ) {
+				if ( title ) {
+					paint( title, null );
+				}
+				typed();
+				return;
+			}
+			memory.done = null;
+			var steps = typeSteps( title.hprnbText );
+			// Fast and even: 28ms a letter (110ms a word), never more than 2.6s for the whole headline.
+			var joined = JOINED.test( title.hprnbText );
+			typing = { title: title, steps: steps, start: 0, n: 0, step: Math.min( joined ? 110 : 28, 2600 / Math.max( 1, steps.length ) ) };
+			aside.classList.add( 'hprnb-bar--typing' );
+			paint( title, '' );
+			frame = requestAnimationFrame( tick );
+		}
+
+		ctrl = createPauseController( state, aside, cfg, toggle, viewport, function ( paused ) {
+			if ( ! started ) {
+				return;
+			}
+			if ( paused ) {
+				clearTimer();
+				if ( typing ) {
+					// Hovered, focused or paused while typing: the whole headline at once.
+					stopTyping();
+					memory.done = memory.id;
+				}
+			} else {
+				schedule();
+			}
+		} );
+
+		// The height of the tallest headline, reserved by the page.
+		function measure() {
+			if ( aside.hprnbState !== state ) {
+				return;
+			}
+			var height = Math.ceil( aside.getBoundingClientRect().height - ( parseFloat( getComputedStyle( aside ).paddingBottom ) || 0 ) );
+			if ( height > 0 && height !== root.hprnbBnH ) {
+				root.hprnbBnH = height;
+				if ( ! preview ) {
+					reserveFor( root, true );
+				}
+				if ( contract ) {
+					contract.emit();
+				}
+			}
+		}
+		observeSize( state, aside, measure );
+		if ( document.fonts && document.fonts.ready ) {
+			document.fonts.ready.then( measure );
+		}
+
+		state.add( function () {
+			started = false;
+			stopTyping();
+			clearTimer();
+			viewport.classList.remove( 'is-leaving' );
+			forEach( items, function ( li ) {
+				li.classList.remove( 'is-current' );
+			} );
+			delete root.hprnbBnH;
+		} );
+
+		started = true;
+		enter( index );
+		measure();
+	}
+
 	/**
 	 * Initialises one bar. Idempotent per aside; destroyAside() undoes everything.
 	 *
@@ -1957,8 +2397,11 @@
 		var cfg = readConfig( aside, root );
 		var mobile = isNarrow( root );
 		var device = deviceOf( root );
-		// The URGENT bar in its phone design: always on a phone, and from 768px too when chosen (2.15).
-		var uFlow = !! urgent && ( mobile || root.classList.contains( 'hprnb-root--u-d-flow' ) );
+		// 2.17: the "Breaking News" design types each whole headline in, its close button in the band.
+		var bn = !! urgent && root.classList.contains( 'hprnb-root--u-bn' );
+		state.bn = bn;
+		// The chyron in its phone design: always on a phone, and from 768px too when chosen (2.15).
+		var uFlow = !! urgent && ! bn && ( mobile || root.classList.contains( 'hprnb-root--u-d-flow' ) );
 		state.uFlow = uFlow;
 		var profile = ( mobile || uFlow ) ? cfg.m : cfg.d;
 		if ( urgent ) {
@@ -1980,6 +2423,9 @@
 		if ( uFlow ) {
 			mode = 'rotate'; // The two-line strip shows one headline at a time, whatever the news bar does.
 		}
+		if ( bn ) {
+			mode = 'type';
+		}
 		var reduced = prefersReducedMotion();
 		var toggle = aside.querySelector( '.hprnb-bar__btn--toggle' );
 		var prev = aside.querySelector( '.hprnb-bar__btn--prev' );
@@ -1995,7 +2441,7 @@
 		var phoneLike = mobile || uFlow;
 		var wantsPause = ! phoneLike || profile.pause !== false;
 		var wantsClose = ! phoneLike || profile.close !== false;
-		state.hide( toggle, ( mode !== 'marquee' && mode !== 'rotate' ) || ! wantsPause );
+		state.hide( toggle, ( mode !== 'marquee' && mode !== 'rotate' && mode !== 'type' ) || ! wantsPause );
 		state.hide( prev, mode !== 'manual' );
 		state.hide( next, mode !== 'manual' );
 		state.hide( aside.querySelector( '.hprnb-bar__btn--close' ), ! wantsClose );
@@ -2015,7 +2461,9 @@
 			setupRelativeTime( state, aside, cfg );
 		}
 
-		if ( mode === 'marquee' ) {
+		if ( mode === 'type' ) {
+			setupBreaking( state, root, aside, cfg, toggle, contract, reduced );
+		} else if ( mode === 'marquee' ) {
 			if ( reduced ) {
 				state.hide( toggle, true );
 			} else {
@@ -2031,7 +2479,7 @@
 			setupManual( state, aside, reduced );
 		}
 		// A single headline clipped to its lines fades out at the end like a rotated one (2.14).
-		if ( mobile && aside.querySelectorAll( '.hprnb-bar__item' ).length < 2 && ( urgent || profile.layout === 'flow' ) ) {
+		if ( mobile && ! bn && aside.querySelectorAll( '.hprnb-bar__item' ).length < 2 && ( urgent || profile.layout === 'flow' ) ) {
 			flagClip( state, aside );
 		}
 		if ( urgent ) {
@@ -2093,9 +2541,21 @@
 			return; // In front and running.
 		}
 		if ( urgent ) {
+			hereFilter( root, urgent );
+			if ( '1' === root.getAttribute( 'data-hprnb-here' ) && ! root.classList.contains( 'hprnb-root--preview' ) ) {
+				followLocation();
+			}
 			if ( urgentLive( root, urgent ) ) {
 				var preview = root.classList.contains( 'hprnb-root--preview' );
 				root.classList.add( 'hprnb-root--urgent' );
+				if ( root.hidden && ! preview ) {
+					// Back from a parked state on a page without a news bar (2.17).
+					root.hidden = false;
+					root.setAttribute( 'data-hprnb-empty', '0' );
+					if ( 'reserve' === root.getAttribute( 'data-hprnb-layout' ) ) {
+						document.body.classList.add( 'hprnb-reserve' );
+					}
+				}
 				parkDevices( root, true );
 				// In front, and waiting for nobody, on the devices it is switched on for (2.16).
 				forEach( [ 'd', 'm' ], function ( p ) {
@@ -2125,6 +2585,9 @@
 				}
 				// Switched off on this device: the news bar runs here, the red bar waits (hidden) for the
 				// other device, where crossing 768px re-initialises everything.
+			} else if ( urgent.hprnbOut && urgent.hprnbOut.length && urgentOpen( root, urgent.hprnbOut ) ) {
+				// Only the article being read is urgent: the red bar steps aside for this page (2.17).
+				parkUrgent( root );
 			} else {
 				retireUrgent( root, urgent );
 			}

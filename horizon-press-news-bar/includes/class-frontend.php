@@ -43,6 +43,13 @@ final class Frontend {
 	private static bool $prepared = false;
 
 	/**
+	 * The payload as this page shows it, once built (2.17: it may re-render the URGENT bar).
+	 *
+	 * @var array|null
+	 */
+	private static ?array $shown = null;
+
+	/**
 	 * Whether the single `#hprnb-root` has been rendered (footer or shortcode).
 	 *
 	 * @var bool
@@ -113,6 +120,9 @@ final class Frontend {
 	 */
 	public static function shown_payload(): array {
 		self::prepare();
+		if ( null !== self::$shown ) {
+			return self::$shown;
+		}
 		$payload = Payload::get( self::$settings );
 		if ( ! self::$eligible ) {
 			$payload['count'] = 0;
@@ -126,6 +136,32 @@ final class Frontend {
 			$payload['urgent_html']  = '';
 			$payload['show']         = 'news';
 		}
+		self::$shown = self::without_here( $payload, self::$settings );
+		return self::$shown;
+	}
+
+	/**
+	 * The URGENT bar without the article being read (2.17, setting urgent_exclude_current): its
+	 * headline is marked in the markup (out of sight, and out of the rotation for the script) and no
+	 * longer counts, so a page reading the only urgent article renders as if nothing were urgent —
+	 * the markup stays, parked, for a theme that moves on to another article without a reload.
+	 *
+	 * @param array $payload  Payload as the page may show it.
+	 * @param array $settings Settings.
+	 * @return array
+	 */
+	public static function without_here( array $payload, array $settings ): array {
+		$here = Renderer::current_post_id();
+		if ( $here < 1 || empty( $settings['urgent_exclude_current'] ) || empty( $payload['urgent_items'] ) ) {
+			return $payload;
+		}
+		$ids = array_map( 'intval', wp_list_pluck( $payload['urgent_items'], 'id' ) );
+		if ( ! in_array( $here, $ids, true ) ) {
+			return $payload;
+		}
+		$payload['urgent_count'] = count( $ids ) - 1;
+		$payload['urgent_html']  = Renderer::urgent_bar( $payload['urgent_items'], $settings, $here );
+		$payload['urgent_here']  = $here;
 		return $payload;
 	}
 
@@ -179,8 +215,14 @@ final class Frontend {
 		if ( 'hybrid' === $settings['render_mode'] ) {
 			Assets::enqueue_bootstrap();
 		}
-		if ( $count > 0 || $urgent > 0 ) {
+		// 2.17: an URGENT bar parked on the article it announces still needs the script, which brings it
+		// back when the theme moves on to another article without a reload.
+		$parked = ! empty( $payload['urgent_here'] ) && $urgent < 1;
+		if ( $count > 0 || $urgent > 0 || $parked ) {
 			self::enqueue_bar_assets( $settings, $urgent > 0 );
+		}
+		if ( $parked ) {
+			Assets::enqueue_bar_script();
 		}
 	}
 
@@ -296,7 +338,7 @@ final class Frontend {
 		$settings = self::$settings;
 		$payload  = self::shown_payload();
 
-		if ( 'php' === $settings['render_mode'] && (int) $payload['count'] < 1 && self::urgent_count( $payload ) < 1 ) {
+		if ( 'php' === $settings['render_mode'] && (int) $payload['count'] < 1 && self::urgent_count( $payload ) < 1 && empty( $payload['urgent_here'] ) ) {
 			return;
 		}
 
@@ -345,6 +387,7 @@ final class Frontend {
 		self::$eligible     = false;
 		self::$urgent_ok    = false;
 		self::$prepared     = false;
+		self::$shown        = null;
 		self::$root_claimed = false;
 	}
 }

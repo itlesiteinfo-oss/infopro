@@ -85,9 +85,11 @@ final class Renderer {
 	 *
 	 * @param array $items    Urgent items (each with `since` and `until`).
 	 * @param array $settings Settings.
+	 * @param int   $here     The article being read (2.17): its headline is marked, hidden until the script
+	 *                        knows the reader has moved on to another article.
 	 * @return string
 	 */
-	public static function urgent_bar( array $items, array $settings ): string {
+	public static function urgent_bar( array $items, array $settings, int $here = 0 ): string {
 		$items = array_values( $items );
 		if ( empty( $items ) ) {
 			return '';
@@ -100,6 +102,7 @@ final class Renderer {
 					'items'    => $items,
 					'settings' => Urgent::render_settings( $settings ),
 					'urgent'   => true,
+					'here'     => $here,
 				)
 			)
 		);
@@ -134,7 +137,10 @@ final class Renderer {
 		// and hands over to the other when the last urgent article expires or the reader closes it.
 		$urgent_html  = isset( $payload['urgent_html'] ) && is_string( $payload['urgent_html'] ) ? $payload['urgent_html'] : '';
 		$urgent_count = isset( $payload['urgent_count'] ) ? (int) $payload['urgent_count'] : 0;
-		if ( $urgent_count < 1 || '' === $urgent_html ) {
+		// 2.17: an URGENT bar whose only headlines are the article being read stays in the page, out of
+		// sight: the script brings it back if the reader moves on to another article without a reload.
+		$parked = $urgent_count < 1 && ! empty( $payload['urgent_here'] ) && '' !== $urgent_html;
+		if ( ( $urgent_count < 1 && ! $parked ) || '' === $urgent_html ) {
 			$urgent_count = 0;
 			$urgent_html  = '';
 		}
@@ -155,6 +161,8 @@ final class Renderer {
 			'data-hprnb-urgent'    => Urgent::enabled( $settings ) ? (string) $urgent_count : 'off',
 			// The article being read, so an impression can be tied to its page. 0 off a singular.
 			'data-hprnb-post'      => (string) self::current_post_id(),
+			// 2.17: the URGENT bar leaves out the article being read (the script follows in-page navigation).
+			'data-hprnb-here'      => ! empty( $settings['urgent_exclude_current'] ) ? '1' : '0',
 			'data-hprnb-desktop'   => (string) wp_json_encode( self::profile_data( $settings, 'd' ) ),
 			'data-hprnb-mobile'    => (string) wp_json_encode( self::profile_data( $settings, 'm' ) ),
 			'data-hprnb-reveal'    => (string) wp_json_encode( self::reveal_data( $settings ) ),
@@ -186,7 +194,7 @@ final class Renderer {
 		if ( $empty ) {
 			$out .= ' hidden';
 		}
-		$out .= '>' . ( $empty ? '' : $urgent_html . $html ) . '</div>';
+		$out .= '>' . ( $empty && ! $parked ? '' : $urgent_html . $html ) . '</div>';
 
 		return $out;
 	}
@@ -430,12 +438,26 @@ final class Renderer {
 			// 2.16: both bars in the news face (the system sans of each platform) unless the site keeps its own.
 			$classes[] = 'hprnb-root--font-news';
 		}
-		if ( 'mobile' === ( $settings['urgent_desktop_layout'] ?? 'line' ) ) {
-			// 2.15: the URGENT bar keeps its phone design from 768px too (two lines, the tab above the corner).
+		if ( self::urgent_breaking( $settings ) ) {
+			// 2.17: the "Breaking News" design of the URGENT bar, the default: the whole headline typed in.
+			$classes[] = 'hprnb-root--u-bn';
+		} elseif ( 'mobile' === ( $settings['urgent_desktop_layout'] ?? 'line' ) ) {
+			// 2.15: the chyron keeps its phone design from 768px too (two lines, the tab above the corner).
 			$classes[] = 'hprnb-root--u-d-flow';
 		}
 
 		return $classes;
+	}
+
+	/**
+	 * Whether the URGENT bar has the "Breaking News" design (2.17): the default, and the answer for any
+	 * value that is not the chyron's.
+	 *
+	 * @param array $settings Settings.
+	 * @return bool
+	 */
+	public static function urgent_breaking( array $settings ): bool {
+		return 'chyron' !== ( $settings['urgent_design'] ?? 'breaking' );
 	}
 
 	/**

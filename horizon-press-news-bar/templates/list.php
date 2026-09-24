@@ -2,7 +2,7 @@
 /**
  * List template: the `<ul>` of items.
  *
- * Available: $context['items'], $context['settings'].
+ * Available: $context['items'], $context['settings'], $context['urgent'], $context['here'].
  * Override by copying this file to {theme}/horizon-press-news-bar/list.php.
  *
  * @package HorizonPress\NewsBar
@@ -21,6 +21,7 @@ foreach ( $context['items'] as $hprnb_item ) {
 			'item'     => $hprnb_item,
 			'settings' => $context['settings'],
 			'urgent'   => ! empty( $context['urgent'] ),
+			'here'     => (int) ( $context['here'] ?? 0 ),
 		)
 	);
 }

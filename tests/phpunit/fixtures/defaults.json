@@ -59,6 +59,8 @@
         "not_found": true
     },
     "urgent_desktop_layout": "line",
+    "urgent_design": "breaking",
+    "urgent_exclude_current": true,
     "desktop_behavior": "always",
     "mobile_behavior": "reading",
     "desktop_reveal_mode": "immediate",

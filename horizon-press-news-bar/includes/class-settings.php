@@ -323,6 +323,18 @@ final class Settings {
 				'default' => 'line',
 				'options' => array( 'line', 'mobile' ),
 			),
+			// 2.17: the URGENT bar's design — "Breaking News" (the whole headline typed in, the default,
+			// also for an unknown value) or the 2.16 chyron (plate, one clipped headline at a time).
+			'urgent_design'               => array(
+				'type'    => 'enum',
+				'default' => 'breaking',
+				'options' => array( 'breaking', 'chyron' ),
+			),
+			// 2.17: the article being read never appears in the URGENT bar (its id, else its address).
+			'urgent_exclude_current'      => array(
+				'type'    => 'bool',
+				'default' => true,
+			),
 			'desktop_behavior'            => array(
 				'type'    => 'enum',
 				'default' => 'always',

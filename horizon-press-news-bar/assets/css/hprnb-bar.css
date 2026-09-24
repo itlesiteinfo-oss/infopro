@@ -2467,3 +2467,49 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 		transition: none;
 	}
 }
+
+/* ---------------------------------------------------------------------------
+ * 17 bis. The article being read (2.17) and the Breaking News design of the URGENT bar.
+ * ------------------------------------------------------------------------- */
+/* The headline of the article being read: out of sight from the first paint (the script then takes it
+   out of the rotation), and an URGENT bar parked for that article while the news bar has the page. */
+.hprnb-root .hprnb-bar--urgent .hprnb-bar__item--here,
+.hprnb-root:not(.hprnb-root--urgent) .hprnb-bar--urgent {
+	display: none;
+}
+
+/* Every headline in one grid cell: the bar has the height of the tallest from the first paint, and
+   keeps it while typing and from one headline to the next. Only the current one shows (before the
+   script, the first one not set aside). */
+.hprnb-root--u-bn .hprnb-bar--urgent .hprnb-bar__list {
+	display: grid;
+}
+
+.hprnb-root--u-bn .hprnb-bar--urgent .hprnb-bar__item {
+	grid-area: 1 / 1;
+	min-inline-size: 0;
+}
+
+.hprnb-root--u-bn .hprnb-bar--urgent[data-hprnb-init] .hprnb-bar__item:not(.is-current),
+.hprnb-root--u-bn .hprnb-bar--urgent:not([data-hprnb-init]) .hprnb-bar__item:not(:nth-child(1 of :not(.hprnb-bar__item--here))) {
+	visibility: hidden;
+}
+
+/* The untyped rest of a headline is laid out (the layout never moves) but not painted. */
+.hprnb-root--u-bn .hprnb-bar--urgent .hprnb-bar__rest {
+	color: transparent;
+}
+
+.hprnb-root--u-bn .hprnb-bar--urgent .hprnb-bar__viewport {
+	transition: opacity .18s ease;
+}
+
+.hprnb-root--u-bn .hprnb-bar--urgent .hprnb-bar__viewport.is-leaving {
+	opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hprnb-root--u-bn .hprnb-bar--urgent .hprnb-bar__viewport {
+		transition: none;
+	}
+}
