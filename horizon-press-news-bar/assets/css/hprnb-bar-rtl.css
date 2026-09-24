@@ -2916,9 +2916,9 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
  *     uncovered from the reading start (clip-path: nothing moves, nothing reflows); the cartouche
  *     settles from 24px on the other side while fading in; the hairline is drawn from the cartouche
  *     (a phone held upright) or from its middle (the vertical one of the row); the buttons come in;
- *     then the headline types. They overlap: 0–320ms, 190–440ms, 300–580ms, 480–650ms, the headline
- *     from 700ms (2.19). The band's own animation lasts the whole opening (700ms: uncovered in the
- *     first 320ms, then held open) and
+ *     then the headline types. They overlap: 0–420ms, 190–440ms, 300–580ms, 480–650ms, the headline
+ *     from 730ms, 80ms after the buttons (2.19.1). The band's own animation lasts the whole opening
+ *     (730ms: uncovered in the first 420ms, then held open) and
  *     is its clock: the script types the first headline when it ends, and the hybrid bootstrap reads
  *     it to carry the opening over to a bar that replaces one being opened (--hprnb-u-bn-t, a negative
  *     delay). Once a bar has opened (or showed at once), the script marks it data-hprnb-opened, which
@@ -2930,7 +2930,7 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 @media (prefers-reduced-motion: no-preference) {
 	/* The band: uncovered from the reading start (32px above it for its shadow). */
 	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-opened]) {
-		animation: hprnb-u-bn-open .7s var(--hprnb-u-bn-t, 0ms) linear backwards;
+		animation: hprnb-u-bn-open .73s var(--hprnb-u-bn-t, 0ms) linear backwards;
 	}
 
 	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-opened]) .hprnb-bar__label {
@@ -2949,14 +2949,14 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 	}
 }
 
-/* 320ms of 700ms: the uncovering, eased; then the band stays open until the headline takes over. */
+/* 420ms of 730ms: the uncovering, eased; then the band stays open until the headline takes over. */
 @keyframes hprnb-u-bn-open {
 	0% {
 		clip-path: var(--hprnb-u-bn-open-0);
 		animation-timing-function: cubic-bezier(.22, 1, .36, 1);
 	}
 
-	45.71%,
+	57.53%,
 	100% {
 		clip-path: inset(-32px 0 0 0);
 	}

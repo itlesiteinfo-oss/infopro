@@ -2461,6 +2461,14 @@ mode hybrid:
 8. **Vue « ⚡ Urgents (N) »** par une requête efficace (jamais tous les articles filtrés en PHP), compatible avec pagination, recherche, filtres date / catégorie / auteur, Yoast et tri ; état calculé côté serveur pour chaque ligne ; responsive ; accessible.
 9. **Tests réels** : front, administration, mobile, RTL, permissions, absence de régression ; **rapport final en 16 points**.
 
+### 15.8.3 vicies — Dernier réglage du minutage de l'ouverture (2.19.1)
+
+1. **Rendu visuel validé** : aucun changement de design, de dimensions, de filet, de bouton fermer ni de fonctionnement.
+2. **Rouge découvert plus lentement** : 420 ms (au lieu de 320 ms), même courbe `cubic-bezier(.22, 1, .36, 1)` — la demande initiale de « ~240 ms » aurait accéléré le rouge ; le client a choisi 420 ms.
+3. **Départs conservés** : cartouche à 190 ms (20 à 24 px de droite à gauche en LTR, miroir en RTL, fondu conservé), filet à 300 ms, bouton fermer à 480 ms ; chevauchement conservé.
+4. **Titre** : 60 à 100 ms après l'installation du filet et du bouton fermer (650 ms) — 730 ms.
+5. L'easing n'est pas modifié à ce stade : le client veut d'abord voir le rendu.
+
 ---
 
 # ANNEXE C — CONSIGNE FINALE À CLAUDE CODE

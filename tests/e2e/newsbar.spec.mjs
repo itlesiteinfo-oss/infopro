@@ -3720,25 +3720,27 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 		window.hprnbBar.destroy( root );
 		window.hprnbBar.init( root );
 	} );
-	// The opening as specified: its parts, the headline from ~700ms (2.19), nothing moving, the reading direction.
+	// The opening as specified: its parts, the headline from 730ms (2.19.1), nothing moving, the reading direction.
 	const checkOpening = ( run, width, rtl ) => {
-		// 2.19: 0–320, 190–440, 300–580, 480–650ms, the headline from ~700ms.
-		expect( run.parts ).toEqual( { 'hprnb-u-bn-open': [ 0, 700 ], 'hprnb-u-bn-in': [ 190, 250 ], 'hprnb-u-bn-rule': [ 300, 280 ], 'hprnb-u-bn-ctrl': [ 480, 170 ] } );
-		// The first letter on the first frame after 700ms (seen here a frame or two later at most).
+		// 2.19.1: 0–420, 190–440, 300–580, 480–650ms, the headline from 730ms (80ms after the buttons).
+		expect( run.parts ).toEqual( { 'hprnb-u-bn-open': [ 0, 730 ], 'hprnb-u-bn-in': [ 190, 250 ], 'hprnb-u-bn-rule': [ 300, 280 ], 'hprnb-u-bn-ctrl': [ 480, 170 ] } );
+		// The first letter on the first frame after 730ms (seen here a frame or two later at most).
 		const first = run.frames.find( ( f ) => f.typed > 0 );
-		expect( first.t ).toBeGreaterThanOrEqual( 699 );
-		expect( first.t ).toBeLessThan( 800 );
+		expect( first.t ).toBeGreaterThanOrEqual( 729 );
+		expect( first.t ).toBeLessThan( 830 );
 		// Before it: the headline laid out but not painted (never shown whole meanwhile).
-		expect( run.frames.filter( ( f ) => f.init && f.t < 699 ).every( ( f ) => f.typed === 0 ) ).toBe( true );
+		expect( run.frames.filter( ( f ) => f.init && f.t < 729 ).every( ( f ) => f.typed === 0 ) ).toBe( true );
 		// The letters typed show at once in white: no other highlight than the part not typed yet.
 		expect( run.frames.every( ( f ) => f.marks <= 1 ) ).toBe( true );
-		// Nothing moves: the band keeps its box; it is only ever uncovered further, from the reading start, within 450ms.
+		// Nothing moves: the band keeps its box; it is only ever uncovered further, from the reading start, in 420ms (2.19.1).
 		expect( [ ...new Set( run.frames.map( ( f ) => f.band ) ) ] ).toHaveLength( 1 );
 		run.frames.slice( 1 ).forEach( ( f, k ) => expect( cut( f.clip ) ).toBeLessThanOrEqual( cut( run.frames[ k ].clip ) + 0.01 ) );
 		const uncovering = run.frames.filter( ( f ) => cut( f.clip ) > 0 && cut( f.clip ) < 100 );
 		expect( uncovering.length ).toBeGreaterThan( 0 );
 		uncovering.forEach( ( f ) => expect( f.clip ).toMatch( rtl ? /^inset\(-32px 0px 0px [\d.e-]+%\)$/ : /^inset\(-32px [\d.e-]+% 0px 0px\)$/ ) );
-		expect( Math.max( ...uncovering.map( ( f ) => f.t ) ) ).toBeLessThan( 420 );
+		expect( Math.max( ...uncovering.map( ( f ) => f.t ) ) ).toBeLessThan( 440 );
+		// 2.19.1: still uncovering well after the cartouche has started (the red is seen being uncovered).
+		expect( Math.max( ...uncovering.map( ( f ) => f.t ) ) ).toBeGreaterThan( 250 );
 		// The cartouche: from the other side, 24px at most, fading in, in place before the hairline ends.
 		const settling = run.frames.filter( ( f ) => f.lx !== 'none' && parseFloat( f.lx ) !== 0 );
 		expect( settling.length ).toBeGreaterThan( 0 );

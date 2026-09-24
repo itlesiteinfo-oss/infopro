@@ -6,10 +6,10 @@ msgstr ""
 "Language-Team: Français\n"
 "Last-Translator: Horizon Press\n"
 "MIME-Version: 1.0\n"
-"PO-Revision-Date: 2026-09-24 17:26+0000\n"
-"POT-Creation-Date: 2026-09-24 17:26+0000\n"
+"PO-Revision-Date: 2026-09-24 23:22+0000\n"
+"POT-Creation-Date: 2026-09-24 23:22+0000\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"Project-Id-Version: Horizon Press News Bar 2.19.0\n"
+"Project-Id-Version: Horizon Press News Bar 2.19.1\n"
 "Report-Msgid-Bugs-To: https://horizonpress.example/news-bar\n"
 "X-Domain: horizon-press-news-bar\n"
 "X-Generator: bin/build-i18n.php\n"
@@ -1953,46 +1953,46 @@ msgctxt "view of Posts → All Posts listing the urgent articles"
 msgid "Urgent"
 msgstr "Urgents"
 
-#: horizon-press-news-bar/includes/admin/class-urgent-list.php:449
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:450
 msgid "The Urgent switch could not be saved. Nothing was changed; please try again."
 msgstr "Le bouton Urgent n’a pas pu être enregistré. Rien n’a été modifié ; réessayez."
 
-#: horizon-press-news-bar/includes/admin/class-urgent-list.php:450
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:451
 msgid "The Urgent switch could not be saved; nothing was changed."
 msgstr "Le bouton Urgent n’a pas pu être enregistré ; rien n’a été modifié."
 
-#: horizon-press-news-bar/includes/admin/class-urgent-list.php:451
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:452
 msgid "The Urgent switch could not be confirmed. Reload the page to see what was saved."
 msgstr "Le bouton Urgent n’a pas pu être confirmé. Rechargez la page pour voir ce qui a été enregistré."
 
-#: horizon-press-news-bar/includes/admin/class-urgent-list.php:452
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:453
 msgid "Marked as urgent."
 msgstr "Marqué comme urgent."
 
-#: horizon-press-news-bar/includes/admin/class-urgent-list.php:453
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:454
 msgid "Marked as urgent: the countdown starts when it is published."
 msgstr "Marqué comme urgent : le compte à rebours démarrera à la publication."
 
-#: horizon-press-news-bar/includes/admin/class-urgent-list.php:454
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:455
 msgid "No longer urgent."
 msgstr "N’est plus urgent."
 
-#: horizon-press-news-bar/includes/admin/class-urgent-list.php:455
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:456
 msgid "Saving…"
 msgstr "Enregistrement…"
 
-#: horizon-press-news-bar/includes/admin/class-urgent-list.php:515
-#: horizon-press-news-bar/includes/admin/class-urgent-list.php:532
-#: horizon-press-news-bar/includes/admin/class-urgent-list.php:585
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:516
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:533
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:586
 msgid "No such article."
 msgstr "Article introuvable."
 
-#: horizon-press-news-bar/includes/admin/class-urgent-list.php:518
-#: horizon-press-news-bar/includes/admin/class-urgent-list.php:535
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:519
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:536
 msgid "You may not edit this article."
 msgstr "Vous ne pouvez pas modifier cet article."
 
-#: horizon-press-news-bar/includes/admin/class-urgent-list.php:581
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:582
 msgid "The URGENT bar is switched off in Settings → News Bar."
 msgstr "Le bandeau URGENT est désactivé dans Réglages → Barre d’actualités."
 

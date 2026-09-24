@@ -2138,10 +2138,10 @@
 	 * instead); each letter shows at once in the headline's own colour, no cursor, no fade (2.19); each
 	 * headline then stays whole 5s at least (or the rotation interval), plus 40ms a letter past 60 (7s
 	 * more at most); the one leaving fades out in 220ms, and the label stays alone 90ms before the next
-	 * one types in. The first headline types 700ms after the band's opening starts (2.19), once the
-	 * cartouche, the hairline and the buttons are in place.
+	 * one types in. The first headline types 730ms after the band's opening starts (2.19.1), 80ms after
+	 * the cartouche, the hairline and the buttons are in place.
 	 */
-	var BN = { unit: 26, min: 450, max: 2600, breath: 70, hold: 5000, from: 60, per: 40, extra: 7000, fade: 220, gap: 90, resume: 2000, open: 700 };
+	var BN = { unit: 26, min: 450, max: 2600, breath: 70, hold: 5000, from: 60, per: 40, extra: 7000, fade: 220, gap: 90, resume: 2000, open: 730 };
 
 	/** The CSS highlight of the typing: the part not typed yet. */
 	var BN_REST = 'hprnb-u-bn-rest';
@@ -2349,7 +2349,7 @@
 
 	/**
 	 * How long the band's opening (stylesheet 17 quater, 2.18) still runs before a headline may type:
-	 * its clock is the band's own animation, which lasts the whole opening (700ms), read where it is (a
+	 * its clock is the band's own animation, which lasts the whole opening (730ms), read where it is (a
 	 * re-initialisation or a late start waits only for what is left); 0 once it is over, under reduced
 	 * motion, or without it.
 	 *

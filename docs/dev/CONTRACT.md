@@ -1182,10 +1182,11 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   was on the cell, a timer per active cell re-reads it `data-hprnb-left` seconds later. Styles
   `hprnb-urgent-list.css`, colours from `urgent_bg_color` / `urgent_text_color` (inline
   `--hprnb-ul-red`, `--hprnb-ul-ink` on `.wp-list-table, .hprnb-urgent-view`).
-- Opening (stylesheet 17 quater): aside `hprnb-u-bn-open` .7s (uncovered over 45.71%), label
+- Opening (stylesheet 17 quater): aside `hprnb-u-bn-open` .73s since 2.19.1 (uncovered over 57.53%, i.e.
+  420ms; 2.19.0: .7s and 45.71%), label
   `hprnb-u-bn-in` .25s +190ms, rule `hprnb-u-bn-rule` .28s +300ms `ease-in-out` (about 73% drawn at
   480ms), controls `hprnb-u-bn-ctrl` .17s
-  +480ms from `scale: .92`. Script: `BN.open` = 700; the first typing frame waits while the opening is
+  +480ms from `scale: .92`. Script: `BN.open` = 730 (2.19.0: 700); the first typing frame waits while the opening is
   `pending` (`openingPending()`), then starts at `now + max(openingLeft(), lead)`; the late-script fade
   of the controls lasts 170ms and `lead` is 220. Typing: one highlight, `hprnb-u-bn-rest`
   (`color: transparent`), from the end of the typed part; spans fallback `.hprnb-bar__rest`.

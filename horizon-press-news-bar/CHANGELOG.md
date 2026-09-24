@@ -2,6 +2,15 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.19.1] — 2026-09-24
+
+### Modifié — le rouge du bandeau Breaking News se découvre plus lentement
+
+- **Le rouge se découvre en 420 ms** au lieu de 320 ms, avec la même courbe (`cubic-bezier(.22, 1, .36, 1)`) : on le voit mieux se découvrir.
+- **Les départs ne changent pas** : le cartouche à 190 ms (24 px de droite à gauche, de gauche à droite en arabe, avec son fondu), le filet à 300 ms, le bouton fermer à 480 ms (jusqu'à 650 ms) ; les animations se chevauchent comme avant.
+- **Le titre commence à s'écrire à 730 ms**, 80 ms après l'installation du filet et du bouton fermer (au lieu de 50 ms).
+- Rien d'autre ne change (design, dimensions, filet, bouton fermer, frappe, colonne « Urgent »). La version passe à 2.19.1 pour que les caches servent le nouveau CSS et le nouveau JS : **videz le cache de pages après la mise à jour**.
+
 ## [2.19.0] — 2026-09-24
 
 ### Ajouté — la colonne « Urgent » dans Articles → Tous les articles

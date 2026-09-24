@@ -4,7 +4,7 @@ Tags: news, ticker, breaking news, bar, headlines
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 2.19.0
+Stable tag: 2.19.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,9 @@ Not from the settings page (there is deliberately no free CSS field). Every clas
 A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `hprnb_schema_version`) and short-lived transients. No personal data, no cookie; the remembered dismissal uses `localStorage`.
 
 == Changelog ==
+
+= 2.19.1 =
+* The red of the Breaking News bar is uncovered in 420 ms instead of 320 ms (same curve, same starts for the cartouche, the hairline and the close button); the headline starts typing at 730 ms, 80 ms after the close button is in place.
 
 = 2.19.0 =
 * Posts → All Posts gets an "Urgent" column right after the title: a switch per article (a real button with aria-pressed) that puts it in the red URGENT bar, or takes it out, without reloading — the same data as the URGENT box of the edit screen, saved over a private REST route (nonce, edit_post capability). The row of an article in the red bar is tinted with a red edge; a "⚡ Urgent (N)" view lists the ticked articles and works with search, filters, sorting and pages. Third-party columns are left as they are.
@@ -207,6 +210,9 @@ A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `h
 * Initial release: sliding-window news bar, transient cache, hybrid mode, REST endpoint, shortcode, settings page with live preview, import / export, accessible optional ticker, RTL and i18n.
 
 == Upgrade Notice ==
+
+= 2.19.1 =
+A slower uncovering of the Breaking News bar. Purge your page cache after updating.
 
 = 2.19.0 =
 New "Urgent" column and view in Posts → All Posts; a tighter opening of the Breaking News bar. Purge your page cache after updating.

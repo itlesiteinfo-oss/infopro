@@ -185,7 +185,7 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 	public function test_plugin_headers() {
 		$data = get_plugin_data( HPRNB_FILE, false, false );
 		$this->assertSame( 'Horizon Press News Bar', $data['Name'] );
-		$this->assertSame( '2.19.0', $data['Version'] );
+		$this->assertSame( '2.19.1', $data['Version'] );
 		$this->assertSame( '6.6', $data['RequiresWP'] );
 		$this->assertSame( '8.0', $data['RequiresPHP'] );
 		$this->assertSame( 'horizon-press-news-bar', $data['TextDomain'] );
