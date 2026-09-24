@@ -2728,30 +2728,15 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 	text-decoration: none;
 }
 
-/* The typing: the part not typed yet, and a two-step trail on the last letters instead of a cursor. */
+/* The typing: the part not typed yet is laid out but not painted; each letter typed shows at once in
+   the headline's own colour — no cursor, no fade (2.19). */
 .hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__title::highlight(hprnb-u-bn-rest) {
 	color: transparent;
 }
 
-.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__title::highlight(hprnb-u-bn-trail1) {
-	color: color-mix(in srgb, var(--hprnb-u-fg) 35%, transparent);
-}
-
-.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__title::highlight(hprnb-u-bn-trail2) {
-	color: color-mix(in srgb, var(--hprnb-u-fg) 70%, transparent);
-}
-
-/* Browsers without highlights: the same, in spans. */
+/* Browsers without highlights: the same, in a span. */
 .hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__rest {
 	color: transparent;
-}
-
-.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__trail1 {
-	color: color-mix(in srgb, currentColor 35%, transparent);
-}
-
-.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__trail2 {
-	color: color-mix(in srgb, currentColor 70%, transparent);
 }
 
 /* Keyboard: the ring goes round the headline itself (nothing clips it), not round the band. */
@@ -2931,8 +2916,9 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
  *     uncovered from the reading start (clip-path: nothing moves, nothing reflows); the cartouche
  *     settles from 24px on the other side while fading in; the hairline is drawn from the cartouche
  *     (a phone held upright) or from its middle (the vertical one of the row); the buttons come in;
- *     then the headline types. They overlap: 0–450ms, 280–580ms, 430–760ms, 620–800ms. The band's
- *     own animation lasts the whole opening (860ms: uncovered in the first 450ms, then held open) and
+ *     then the headline types. They overlap: 0–320ms, 190–440ms, 300–580ms, 480–650ms, the headline
+ *     from 700ms (2.19). The band's own animation lasts the whole opening (700ms: uncovered in the
+ *     first 320ms, then held open) and
  *     is its clock: the script types the first headline when it ends, and the hybrid bootstrap reads
  *     it to carry the opening over to a bar that replaces one being opened (--hprnb-u-bn-t, a negative
  *     delay). Once a bar has opened (or showed at once), the script marks it data-hprnb-opened, which
@@ -2944,31 +2930,31 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 @media (prefers-reduced-motion: no-preference) {
 	/* The band: uncovered from the reading start (32px above it for its shadow). */
 	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-opened]) {
-		animation: hprnb-u-bn-open .86s var(--hprnb-u-bn-t, 0ms) linear backwards;
+		animation: hprnb-u-bn-open .7s var(--hprnb-u-bn-t, 0ms) linear backwards;
 	}
 
 	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-opened]) .hprnb-bar__label {
-		animation: hprnb-u-bn-in .3s calc(var(--hprnb-u-bn-t, 0ms) + 280ms) var(--hprnb-u-bn-ease) backwards;
+		animation: hprnb-u-bn-in .25s calc(var(--hprnb-u-bn-t, 0ms) + 190ms) var(--hprnb-u-bn-ease) backwards;
 	}
 
 	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-opened]) .hprnb-bar__inner::before {
 		transform-origin: var(--hprnb-u-bn-rule-at);
-		animation: hprnb-u-bn-rule .33s calc(var(--hprnb-u-bn-t, 0ms) + 430ms) var(--hprnb-u-bn-ease) backwards;
+		animation: hprnb-u-bn-rule .28s calc(var(--hprnb-u-bn-t, 0ms) + 300ms) var(--hprnb-u-bn-ease) backwards;
 	}
 
 	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-opened]) .hprnb-bar__controls {
-		animation: hprnb-u-bn-ctrl .18s calc(var(--hprnb-u-bn-t, 0ms) + 620ms) ease-out backwards;
+		animation: hprnb-u-bn-ctrl .17s calc(var(--hprnb-u-bn-t, 0ms) + 480ms) ease-out backwards;
 	}
 }
 
-/* 450ms of 860ms: the uncovering, eased; then the band stays open until the headline takes over. */
+/* 320ms of 700ms: the uncovering, eased; then the band stays open until the headline takes over. */
 @keyframes hprnb-u-bn-open {
 	0% {
 		clip-path: var(--hprnb-u-bn-open-0);
 		animation-timing-function: cubic-bezier(.22, 1, .36, 1);
 	}
 
-	52.33%,
+	45.71%,
 	100% {
 		clip-path: inset(-32px 0 0 0);
 	}
@@ -2990,6 +2976,6 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 @keyframes hprnb-u-bn-ctrl {
 	from {
 		opacity: 0;
-		scale: .9;
+		scale: .92;
 	}
 }

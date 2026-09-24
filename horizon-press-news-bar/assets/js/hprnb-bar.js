@@ -2135,16 +2135,16 @@
 	/**
 	 * The rhythm of the typing and of the rotation: a letter every 26ms (a space counts half), a short
 	 * breath after punctuation, never under 0.45s nor over 2.6s for a whole headline (the rate rises
-	 * instead); a two-step trail on the last letters in place of a cursor; each headline then stays whole
-	 * 5s at least (or the rotation interval), plus 40ms a letter past 60 (7s more at most); the one
-	 * leaving fades out in 220ms, and the label stays alone 90ms before the next one types in. The first
-	 * headline types 860ms after the band's opening starts (2.18), once the cartouche, the hairline and
-	 * the buttons are in place.
+	 * instead); each letter shows at once in the headline's own colour, no cursor, no fade (2.19); each
+	 * headline then stays whole 5s at least (or the rotation interval), plus 40ms a letter past 60 (7s
+	 * more at most); the one leaving fades out in 220ms, and the label stays alone 90ms before the next
+	 * one types in. The first headline types 700ms after the band's opening starts (2.19), once the
+	 * cartouche, the hairline and the buttons are in place.
 	 */
-	var BN = { unit: 26, min: 450, max: 2600, breath: 70, trail: 45, hold: 5000, from: 60, per: 40, extra: 7000, fade: 220, gap: 90, resume: 2000, open: 860 };
+	var BN = { unit: 26, min: 450, max: 2600, breath: 70, hold: 5000, from: 60, per: 40, extra: 7000, fade: 220, gap: 90, resume: 2000, open: 700 };
 
-	/** The CSS highlights of the typing: the two steps of the trail, and the part not typed yet. */
-	var BN_MARKS = [ 'hprnb-u-bn-trail2', 'hprnb-u-bn-trail1', 'hprnb-u-bn-rest' ];
+	/** The CSS highlight of the typing: the part not typed yet. */
+	var BN_REST = 'hprnb-u-bn-rest';
 
 	/** Scripts whose letters join (Arabic and neighbours; Hebrew for its final forms): typed word by word, never in broken forms. */
 	var JOINED = ( function () {
@@ -2176,7 +2176,7 @@
 
 	/**
 	 * The typing of one headline: where each step ends in the string, when it shows (ms after the first
-	 * frame), when the trail is over, and how much longer than the base the whole headline stays.
+	 * frame), when the last one shows, and how much longer than the base the whole headline stays.
 	 *
 	 * @param {string} text The headline.
 	 * @return {{ends: number[], times: number[], done: number, extra: number, length: number}}
@@ -2217,25 +2217,24 @@
 		return {
 			ends: ends,
 			times: times,
-			done: ( times.length ? times[ times.length - 1 ] : 0 ) + 2 * BN.trail,
+			done: times.length ? times[ times.length - 1 ] : 0,
 			extra: Math.min( BN.extra, Math.max( 0, letters - BN.from ) * BN.per ),
 			length: text.length,
 		};
 	}
 
 	/**
-	 * Paints a title as typed up to three offsets, without ever changing its text: [0, c) whole, [c, b)
-	 * at 70%, [b, a) at 35%, [a, end) laid out but transparent. Through the CSS Custom Highlight API; in
-	 * spans (.hprnb-bar__trail2, __trail1, __rest), put back as they were by clear(), where it is missing.
+	 * Paints a title as typed up to an offset, without ever changing its text: [0, a) as it is (the
+	 * letters typed show whole at once), [a, end) laid out but transparent. Through the CSS Custom
+	 * Highlight API; in two spans (the second .hprnb-bar__rest), put back as they were by clear(), where
+	 * it is missing.
 	 *
-	 * @return {{attach: function(Element): boolean, set: function(number, number, number, number), clear: function()}}
+	 * @return {{attach: function(Element): boolean, set: function(number, number), clear: function()}}
 	 */
 	function createReveal() {
 		var title = null;
 		if ( typeof CSS !== 'undefined' && CSS.highlights && typeof Highlight === 'function' ) {
-			var ranges = BN_MARKS.map( function () {
-				return document.createRange();
-			} );
+			var range = document.createRange();
 			var nodes = null;
 			var at = function ( offset ) {
 				for ( var i = 0; i < nodes.length; i++ ) {
@@ -2260,38 +2259,31 @@
 						return false;
 					}
 					title = el;
-					forEach( BN_MARKS, function ( name, i ) {
-						var mark = CSS.highlights.get( name );
-						if ( ! mark ) {
-							mark = new Highlight();
-							CSS.highlights.set( name, mark );
-						}
-						mark.add( ranges[ i ] );
-					} );
+					var mark = CSS.highlights.get( BN_REST );
+					if ( ! mark ) {
+						mark = new Highlight();
+						CSS.highlights.set( BN_REST, mark );
+					}
+					mark.add( range );
 					return true;
 				},
-				set: function ( c, b, a, length ) {
-					var cuts = [ c, b, a, length ];
-					forEach( ranges, function ( range, i ) {
-						var from = at( cuts[ i ] );
-						var to = at( cuts[ i + 1 ] );
-						range.setStart( from[ 0 ], from[ 1 ] );
-						range.setEnd( to[ 0 ], to[ 1 ] );
-					} );
+				set: function ( a, length ) {
+					var from = at( a );
+					var to = at( length );
+					range.setStart( from[ 0 ], from[ 1 ] );
+					range.setEnd( to[ 0 ], to[ 1 ] );
 				},
 				clear: function () {
 					if ( ! title ) {
 						return;
 					}
-					forEach( BN_MARKS, function ( name, i ) {
-						var mark = CSS.highlights.get( name );
-						if ( mark ) {
-							mark.delete( ranges[ i ] );
-							if ( ! mark.size ) {
-								CSS.highlights.delete( name );
-							}
+					var mark = CSS.highlights.get( BN_REST );
+					if ( mark ) {
+						mark.delete( range );
+						if ( ! mark.size ) {
+							CSS.highlights.delete( BN_REST );
 						}
-					} );
+					}
 					title = null;
 					nodes = null;
 				},
@@ -2306,7 +2298,7 @@
 				title = el;
 				saved = Array.prototype.slice.call( el.childNodes );
 				text = el.textContent;
-				parts = [ '', 'hprnb-bar__trail2', 'hprnb-bar__trail1', 'hprnb-bar__rest' ].map( function ( name ) {
+				parts = [ '', 'hprnb-bar__rest' ].map( function ( name ) {
 					var span = document.createElement( 'span' );
 					if ( name ) {
 						span.className = name;
@@ -2319,8 +2311,8 @@
 				} );
 				return true;
 			},
-			set: function ( c, b, a, length ) {
-				var cuts = [ 0, c, b, a, length ];
+			set: function ( a, length ) {
+				var cuts = [ 0, a, length ];
 				forEach( parts, function ( span, i ) {
 					var part = text.slice( cuts[ i ], cuts[ i + 1 ] );
 					if ( span.textContent !== part ) {
@@ -2345,7 +2337,7 @@
 
 	/**
 	 * How long the band's opening (stylesheet 17 quater, 2.18) still runs before a headline may type:
-	 * its clock is the band's own animation, which lasts the whole opening (860ms), read where it is (a
+	 * its clock is the band's own animation, which lasts the whole opening (700ms), read where it is (a
 	 * re-initialisation or a late start waits only for what is left); 0 once it is over, under reduced
 	 * motion, or without it.
 	 *
@@ -2416,7 +2408,7 @@
 		var phase = 'idle'; // typing, hold, leaving, still (a single headline, done)
 		var frame = 0;
 		var start = 0;
-		var shown = '';
+		var shown = -1;
 		var timer = null;
 		var holdLeft = 0;
 		var holdAt = 0;
@@ -2476,23 +2468,15 @@
 			while ( a < n && p.times[ a ] <= elapsed ) {
 				a++;
 			}
-			var b = a;
-			while ( b > 0 && elapsed - p.times[ b - 1 ] < BN.trail ) {
-				b--;
-			}
-			var c = b;
-			while ( c > 0 && elapsed - p.times[ c - 1 ] < 2 * BN.trail ) {
-				c--;
-			}
-			if ( c >= n ) {
+			if ( a >= n ) {
 				typed();
 				return;
 			}
-			if ( shown !== c + ',' + b + ',' + a ) {
-				shown = c + ',' + b + ',' + a;
+			if ( shown !== a ) {
+				shown = a;
 				// Letters on screen: a re-initialisation shows this headline whole instead of typing it again.
 				memory.started = memory.id;
-				reveal.set( c ? p.ends[ c - 1 ] : 0, b ? p.ends[ b - 1 ] : 0, a ? p.ends[ a - 1 ] : 0, p.length );
+				reveal.set( a ? p.ends[ a - 1 ] : 0, p.length );
 			}
 			frame = requestAnimationFrame( tick );
 		}
@@ -2501,7 +2485,7 @@
 		function typed() {
 			stopFrame();
 			reveal.clear();
-			shown = '';
+			shown = -1;
 			items[ index ].classList.remove( 'is-typing' );
 			aside.classList.remove( 'hprnb-bar--typing' );
 			memory.done = memory.id;
@@ -2554,8 +2538,8 @@
 			memory.started = null;
 			if ( ! whole ) {
 				// Everything transparent in the same task as the swap: one paint shows the empty headline.
-				reveal.set( 0, 0, 0, p.length );
-				shown = '0,0,0';
+				reveal.set( 0, p.length );
+				shown = 0;
 				li.classList.add( 'is-typing' );
 				aside.classList.add( 'hprnb-bar--typing' );
 				phase = 'typing';
@@ -2611,8 +2595,8 @@
 			return 'hprnb-u-bn-ctrl' === animation.animationName;
 		} ) ) {
 			// The script came after the buttons' fade, which ran out of sight (they wait for it): they fade in now.
-			controls.animate( [ { opacity: 0, scale: '.9' }, { opacity: 1, scale: '1' } ], { duration: 180, easing: 'ease-out' } );
-			lead = 260;
+			controls.animate( [ { opacity: 0, scale: '.92' }, { opacity: 1, scale: '1' } ], { duration: 170, easing: 'ease-out' } );
+			lead = 220;
 		}
 		memory.shown = true;
 		if ( still() || ( ! opening && aside.getClientRects().length ) ) {

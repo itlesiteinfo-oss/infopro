@@ -3401,7 +3401,7 @@ test( 'v2.17: Breaking News engine — the pause button completes the headline, 
 		} ) ) );
 		await typing( page );
 		const split = await state( page );
-		expect( split.spans ).toBe( 4 );
+		expect( split.spans ).toBe( 2 ); // The letters typed, and the rest (2.19: no trail).
 		expect( split.text ).toBe( titles[ 1 ] );
 		await expect.poll( async () => ( await state( page ) ).typed, { timeout: 5000 } ).toBe( -1 );
 		expect( await state( page ) ).toMatchObject( { spans: 0, text: titles[ 1 ] } );
@@ -3676,7 +3676,7 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 					const label = u.querySelector( '.hprnb-bar__label' );
 					const controls = u.querySelector( '.hprnb-bar__controls' );
 					const rule = getComputedStyle( u.querySelector( '.hprnb-bar__inner' ), '::before' );
-					window.hprnbOpen.frames.push( { t: document.timeline.currentTime - t0, init: u.hasAttribute( 'data-hprnb-init' ), clip: getComputedStyle( u ).clipPath, lx: getComputedStyle( label ).translate, lo: +getComputedStyle( label ).opacity, rule: rule.transform, origin: rule.transformOrigin, co: +getComputedStyle( controls ).opacity, cs: getComputedStyle( controls ).scale, cv: getComputedStyle( controls ).visibility, typed, band: [ Math.round( box.left ), Math.round( box.top ), Math.round( box.width ), Math.round( box.height ) ].join( ',' ) } );
+					window.hprnbOpen.frames.push( { t: document.timeline.currentTime - t0, marks: CSS.highlights.size, init: u.hasAttribute( 'data-hprnb-init' ), clip: getComputedStyle( u ).clipPath, lx: getComputedStyle( label ).translate, lo: +getComputedStyle( label ).opacity, rule: rule.transform, origin: rule.transformOrigin, co: +getComputedStyle( controls ).opacity, cs: getComputedStyle( controls ).scale, cv: getComputedStyle( controls ).visibility, typed, band: [ Math.round( box.left ), Math.round( box.top ), Math.round( box.width ), Math.round( box.height ) ].join( ',' ) } );
 				}
 			}
 			if ( ! window.hprnbOpen.frames.length || window.hprnbOpen.frames[ window.hprnbOpen.frames.length - 1 ].t < 1500 ) {
@@ -3716,21 +3716,24 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 		window.hprnbBar.destroy( root );
 		window.hprnbBar.init( root );
 	} );
-	// The opening as specified: its parts, the headline from ~860ms, nothing moving, the reading direction.
+	// The opening as specified: its parts, the headline from ~700ms (2.19), nothing moving, the reading direction.
 	const checkOpening = ( run, width, rtl ) => {
-		expect( run.parts ).toEqual( { 'hprnb-u-bn-open': [ 0, 860 ], 'hprnb-u-bn-in': [ 280, 300 ], 'hprnb-u-bn-rule': [ 430, 330 ], 'hprnb-u-bn-ctrl': [ 620, 180 ] } );
+		// 2.19: 0–320, 190–440, 300–580, 480–650ms, the headline from ~700ms.
+		expect( run.parts ).toEqual( { 'hprnb-u-bn-open': [ 0, 700 ], 'hprnb-u-bn-in': [ 190, 250 ], 'hprnb-u-bn-rule': [ 300, 280 ], 'hprnb-u-bn-ctrl': [ 480, 170 ] } );
 		const first = run.frames.find( ( f ) => f.typed > 0 );
-		expect( first.t ).toBeGreaterThanOrEqual( 840 );
-		expect( first.t ).toBeLessThan( 1300 );
+		expect( first.t ).toBeGreaterThanOrEqual( 680 );
+		expect( first.t ).toBeLessThan( 1100 );
 		// Before it: the headline laid out but not painted (never shown whole meanwhile).
-		expect( run.frames.filter( ( f ) => f.init && f.t < 840 ).every( ( f ) => f.typed === 0 ) ).toBe( true );
+		expect( run.frames.filter( ( f ) => f.init && f.t < 680 ).every( ( f ) => f.typed === 0 ) ).toBe( true );
+		// The letters typed show at once in white: no other highlight than the part not typed yet.
+		expect( run.frames.every( ( f ) => f.marks <= 1 ) ).toBe( true );
 		// Nothing moves: the band keeps its box; it is only ever uncovered further, from the reading start, within 450ms.
 		expect( [ ...new Set( run.frames.map( ( f ) => f.band ) ) ] ).toHaveLength( 1 );
 		run.frames.slice( 1 ).forEach( ( f, k ) => expect( cut( f.clip ) ).toBeLessThanOrEqual( cut( run.frames[ k ].clip ) + 0.01 ) );
 		const uncovering = run.frames.filter( ( f ) => cut( f.clip ) > 0 && cut( f.clip ) < 100 );
 		expect( uncovering.length ).toBeGreaterThan( 0 );
 		uncovering.forEach( ( f ) => expect( f.clip ).toMatch( rtl ? /^inset\(-32px 0px 0px [\d.e-]+%\)$/ : /^inset\(-32px [\d.e-]+% 0px 0px\)$/ ) );
-		expect( Math.max( ...uncovering.map( ( f ) => f.t ) ) ).toBeLessThan( 560 );
+		expect( Math.max( ...uncovering.map( ( f ) => f.t ) ) ).toBeLessThan( 420 );
 		// The cartouche: from the other side, 24px at most, fading in, in place before the hairline ends.
 		const settling = run.frames.filter( ( f ) => f.lx !== 'none' && parseFloat( f.lx ) !== 0 );
 		expect( settling.length ).toBeGreaterThan( 0 );
@@ -3739,18 +3742,18 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 			expect( Math.abs( parseFloat( f.lx ) ) ).toBeLessThanOrEqual( 24 );
 		} );
 		expect( run.frames.some( ( f ) => f.lo > 0 && f.lo < 1 ) ).toBe( true );
-		expect( run.frames.filter( ( f ) => f.t < 250 ).every( ( f ) => f.lo === 0 ) ).toBe( true );
-		expect( Math.max( ...settling.filter( ( f ) => Math.abs( parseFloat( f.lx ) ) > 0.5 ).map( ( f ) => f.t ) ) ).toBeLessThan( 700 );
+		expect( run.frames.filter( ( f ) => f.t < 170 ).every( ( f ) => f.lo === 0 ) ).toBe( true );
+		expect( Math.max( ...settling.filter( ( f ) => Math.abs( parseFloat( f.lx ) ) > 0.5 ).map( ( f ) => f.t ) ) ).toBeLessThan( 520 );
 		// The hairline, drawn along its length after the cartouche: from it on a phone, from its middle in the row.
 		const partly = run.frames.filter( ( f ) => ( width < 600 ? /^matrix\(0\.\d+, 0, 0, 1, 0, 0\)$/ : /^matrix\(1, 0, 0, 0\.\d+, 0, 0\)$/ ).test( f.rule ) );
 		expect( partly.length ).toBeGreaterThan( 0 );
-		partly.forEach( ( f ) => expect( f.t ).toBeGreaterThan( 400 ) );
+		partly.forEach( ( f ) => expect( f.t ).toBeGreaterThan( 280 ) );
 		if ( width < 600 ) {
 			expect( partly[ 0 ].origin.startsWith( '0px' ) ).toBe( ! rtl );
 		}
-		// The buttons last: faded in and scaled from .9, from 600ms.
-		expect( run.frames.filter( ( f ) => f.t < 600 ).every( ( f ) => f.co === 0 ) ).toBe( true );
-		expect( run.frames.some( ( f ) => f.co > 0 && f.co < 1 && parseFloat( f.cs ) > 0.9 && parseFloat( f.cs ) < 1 ) ).toBe( true );
+		// The buttons last: faded in and scaled from .92, from 480ms.
+		expect( run.frames.filter( ( f ) => f.t < 470 ).every( ( f ) => f.co === 0 ) ).toBe( true );
+		expect( run.frames.some( ( f ) => f.co > 0 && f.co < 1 && parseFloat( f.cs ) >= 0.92 && parseFloat( f.cs ) < 1 ) ).toBe( true );
 		// Over: no clip, the hairline whole, the buttons whole.
 		const last = run.frames[ run.frames.length - 1 ];
 		expect( [ last.clip, last.rule, last.co, last.lo ] ).toEqual( [ 'none', 'none', 1, 1 ] );
@@ -3795,7 +3798,7 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 			await page.waitForTimeout( 1500 );
 			const run = await page.evaluate( () => window.hprnbOpen );
 			expect( run.starts[ 'hprnb-u-bn-open' ] ).toBe( 1 );
-			expect( run.frames.find( ( f ) => f.typed > 0 ).t ).toBeGreaterThanOrEqual( 840 );
+			expect( run.frames.find( ( f ) => f.typed > 0 ).t ).toBeGreaterThanOrEqual( 680 );
 			run.frames.slice( 1 ).forEach( ( f, k ) => expect( cut( f.clip ) ).toBeLessThanOrEqual( cut( run.frames[ k ].clip ) + 0.01 ) );
 			expect( errors ).toEqual( [] );
 			await context.close();
@@ -3907,7 +3910,7 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 				// The buttons never jump: at most one fade step per frame.
 				expect( f.co - run.frames[ k ].co ).toBeLessThan( 0.6 );
 			} );
-			expect( run.frames.find( ( f ) => f.typed > 0 ).t ).toBeGreaterThanOrEqual( 840 );
+			expect( run.frames.find( ( f ) => f.typed > 0 ).t ).toBeGreaterThanOrEqual( 680 );
 			expect( errors ).toEqual( [] );
 			await context.close();
 		}
