@@ -65,6 +65,11 @@ A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `h
 
 == Changelog ==
 
+= 2.17.0 =
+* A new design for the URGENT bar, "Breaking News", now the default (Urgent tab → Design of the URGENT bar; the 2.16 design stays available as "Chyron"): a flat red band, a still white cartouche with the label in bold red, the whole headline in bold white, the close button in the band.
+* Each headline is revealed letter by letter without a cursor, stays at least 5 seconds (longer for a long one), then the next one types in; a single headline is typed once and stays. The bar keeps the height of the longest headline from the first paint; screen readers get the whole headline; reduced motion shows it at once.
+* New checkbox "Never show the article the reader is on" (on by default): the article being read is left out of the URGENT bar, also after an in-page navigation; with nothing left the bar hides without keeping any space.
+
 = 2.16.0 =
 * One switch per bar and one per device (Content → Bars shown): enable the URGENT bar, then desktop and mobile; enable the initial (news) bar, then desktop and mobile. Sub-choices are hidden while their bar is off; the URGENT box on the edit screen only appears while the URGENT bar is on for a device.
 * The URGENT bar in a news channel's design: a plate in the band's colours swapped, a bold 17px headline one at a time, 48px on desktop with pause and close at the end, 76px on phones; headline sizes of its own in the Urgent tab.
@@ -194,6 +199,9 @@ A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `h
 * Initial release: sliding-window news bar, transient cache, hybrid mode, REST endpoint, shortcode, settings page with live preview, import / export, accessible optional ticker, RTL and i18n.
 
 == Upgrade Notice ==
+
+= 2.17.0 =
+The URGENT bar switches to the new "Breaking News" design. To keep the previous one, choose "Chyron" in Urgent → Design of the URGENT bar. Purge your page cache after updating.
 
 = 2.16.0 =
 Both bars now use the system news face by default. To keep your theme's font on the news bar, choose "Theme font" in Colours → Font of both bars. Purge your page cache after updating: pages cached before 2.16 keep the previous font and URGENT bar height until they are regenerated.

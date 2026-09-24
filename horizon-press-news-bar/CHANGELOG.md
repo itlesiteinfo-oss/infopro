@@ -2,6 +2,25 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.17.0] — 2026-09-24
+
+### Ajouté — le design « Breaking News » du bandeau URGENT, par défaut
+
+- **Onglet Urgent → « Design du bandeau URGENT »** : **« Breaking News — recommandé »** (nouveau, par défaut) ou **« Chyron »** (le design de la 2.16, inchangé, toujours au choix, avec ses deux designs sur ordinateur). Un site mis à jour depuis la 2.16 passe en Breaking News ; une valeur inconnue revient à Breaking News. Les autres réglages (articles urgents, bouton fermer, fermeture mémorisée, couleurs, libellé, tailles) sont conservés.
+- **Le bandeau** : un rouge plein et plat, deux zones — un **cartouche blanc** avec le libellé (« DERNIÈRE MINUTE », « URGENT »…) en capitales grasses rouges, qui ne bouge jamais, puis **le titre entier en blanc gras** sur le rouge, sur autant de lignes qu'il lui faut (jamais tronqué ni coupé par un fondu), coins très légèrement arrondis, ombre discrète. Téléphone tenu droit : cartouche, filet et bouton fermer sur une rangée de 44 px, le titre dessous sur toute la largeur ; à partir de 600 px : une seule rangée, cartouche | titre | filet | pause et fermer. Un long libellé passe à la ligne dans le cartouche au lieu de pousser le titre ; le titre ne chevauche jamais le cartouche ni les boutons. Arabe et hébreu : tout en miroir, lignes plus hautes.
+- **L'animation** : seul le titre apparaît, **lettre après lettre** (26 ms par lettre, une courte respiration après la ponctuation, jamais plus de 2,6 s, mot après mot pour l'arabe afin de ne jamais montrer une lettre mal liée), sans curseur : les deux dernières lettres arrivent en deux temps. Le texte n'est jamais modifié — la partie pas encore tapée est déjà en place mais transparente (API CSS Custom Highlight ; des `span` sur les navigateurs qui ne l'ont pas) : **la hauteur ne bouge pas**, et **les lecteurs d'écran ont le titre entier**, jamais lettre par lettre (le bandeau reste `aria-live="off"`).
+- **Plusieurs titres** : chacun reste entier **au moins 5 s** (ou l'intervalle de rotation s'il est plus long), **plus 40 ms par lettre au-delà de 60** (7 s de plus au maximum), puis s'efface en 220 ms, le cartouche reste seul 90 ms et le suivant se tape ; en boucle. **Un seul titre** : tapé une fois, puis il reste. Chaque titre garde son propre lien du début à la fin.
+- **Hauteur réservée** : tous les titres occupent la même case, le bandeau a donc dès le premier affichage la hauteur du plus long ; la page réserve une estimation calculée par le serveur à partir de ce titre, puis la hauteur exacte mesurée par le script, qui ne change plus ensuite.
+- **Pause** : le bouton pause (sur ordinateur, et sur mobile si le réglage l'affiche) ou le clavier sur le titre font apparaître aussitôt le titre entier et arrêtent la rotation ; la souris sur le bandeau laisse finir la frappe puis retient le titre ; un onglet caché l'arrête aussi ; la rotation reprend avec le temps qui restait, au moins 2 s. Une mise à jour de la page (passage de 768 px, liste rafraîchie, navigation) ne recommence pas la frappe du titre affiché ; un script arrivé après l'attente de 1,5 s de la feuille de style ne l'efface pas pour le retaper.
+- **« Mouvement réduit »** et **couleurs forcées** (suivis en direct) : chaque titre entier tout de suite, changement sans fondu.
+- **Focus clavier** visible autour du titre et des boutons ; boutons de 44 px ; styles limités à la classe `hprnb-root--u-bn` (le chyron n'est pas touché).
+
+### Ajouté — l'article consulté n'est jamais annoncé dans le bandeau URGENT
+
+- **Onglet Urgent → « Où s'affiche le bandeau URGENT » → « Article consulté » : « Ne jamais afficher l'article que le lecteur consulte »** (cochée par défaut). L'article est reconnu par son identifiant, à défaut par son adresse canonique normalisée (hôte sans `www.`, chemin sans barre finale, `?p=` et `page_id`).
+- **Avant le premier affichage** : le serveur marque son titre (caché d'emblée) et ne le compte plus ; le script le retire de la rotation, qui continue avec les autres. **Après une navigation sans rechargement** (thème qui passe à l'article suivant par l'API History) : le filtre est refait, le titre écarté revient à sa place d'origine quand on quitte l'article.
+- **S'il ne reste rien** : le bandeau URGENT est masqué entièrement, sans espace vide ; la barre d'actualités reprend la page, ou rien ne s'affiche et aucune place n'est réservée. Il revient seul quand le lecteur passe à un autre article.
+
 ## [2.16.0] — 2026-09-23
 
 ### Ajouté — un interrupteur par barre, un par appareil

@@ -1041,3 +1041,59 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   on the preview root.
 - Budgets: CSS 48 KB, bootstrap 6 KB, interactive script 28 KB.
 
+
+## 31. The "Breaking News" design of the URGENT bar, the article being read left out (2.17.0)
+
+- Settings (schema unchanged, 9): `urgent_design` (`breaking` | `chyron`, default `breaking`; any other
+  value, and a stored option without the key, gives `breaking`), `urgent_exclude_current` (bool, true).
+  `Renderer::urgent_breaking( $s )` = `'chyron' !== urgent_design`. Root class `hprnb-root--u-bn` (then
+  never `hprnb-root--u-d-flow`, the chyron's second desktop design); root attribute `data-hprnb-here`
+  (`1` / `0`).
+- The article being read: `Frontend::without_here()` (after `shown_payload()`'s eligibility, memoised
+  in `Frontend::$shown`): when `urgent_exclude_current` and `Renderer::current_post_id()` is one of
+  `urgent_items`, `urgent_count` − 1, `urgent_html` re-rendered with `Renderer::urgent_bar( $items, $s,
+  $here )` (its `<li>` gets `hprnb-bar__item--here`, hidden by 17 bis), `urgent_here` = the ID. With
+  nothing left the bar is parked: `Renderer::root()` keeps its markup (root not `--urgent`,
+  `data-hprnb-urgent="0"`, hidden when there is no news bar either, no `hprnb-reserve` then) and
+  `enqueue()` still loads the script.
+- Script: `hereFilter( root, aside )` moves the items matching `hereOf()` (the root's `data-hprnb-post`,
+  else `<link rel=canonical>`, else `location`, compared by `urlKey()`: host without `www.`, path
+  without trailing slash, lower case, `?p=` / `page_id=`) into `aside.hprnbOut`, and puts back the ones
+  that no longer match in their original order (`li.hprnbOrder`); `followLocation()` wraps
+  `history.pushState` / `replaceState` and listens to `popstate` (once per page): when the matching set
+  changes, `destroy( root )` + `init( root )`. `init()`: a live URGENT bar un-hides a hidden root (and
+  adds `hprnb-reserve` for the reserve layout); an URGENT bar whose only items are set aside is parked
+  (`parkUrgent()`), else retired.
+- Design (stylesheet 17 ter, every selector `.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent`,
+  specificity (0,4,0) and more): grid `label title rule ctrl` from 600px, `label rule ctrl / title` under
+  600px (container query); every `li` in grid area 1 / 1, the ones not `.is-current` `visibility:
+  hidden`; before the script only the first item not `--here` shows, after the `hprnb-u-bn-wait`
+  animation (1.5s, list opacity 0, no-preference only); the pause button is hidden from the first paint
+  with a single item, and under 768px when `data-hprnb-mobile` says `"pause":false`. Highlights
+  `hprnb-u-bn-rest` (transparent), `hprnb-u-bn-trail1` (35%), `hprnb-u-bn-trail2` (70%); span fallback
+  `.hprnb-bar__rest` / `__trail1` / `__trail2`; `.is-leaving` (item or viewport) fades in 220ms.
+- Engine (`setupBreaking()`, mode `type`, class `hprnb-bar--bn`): `typePlan( text )` — graphemes
+  (`Intl.Segmenter`) weighted 1 (space 0.5), words for joined scripts (`JOINED`), duration
+  `clamp(26ms × weight, 450, 2600)`, +70ms after `, ; : . ! ? … ، ؛ ؟ ۔`, trail 2 × 45ms; hold
+  `max(5000, interval) + min(7000, 40 × max(0, letters − 60))`; fade 220 + gap 90. `createReveal()`
+  paints three ranges without touching the text (or four spans restored by `clear()`). The pause
+  controller's `onChange( paused, st )`: `st.user` / `st.focus` complete a headline being typed,
+  `st.hover` lets it finish; the hold keeps its remainder, at least 2s on resume. `prefers-reduced-motion`
+  and `forced-colors` are read live (whole headlines, swaps without fade). `aside.hprnbBn` = `{id, done,
+  late}`: a re-initialised bar resumes on its headline without typing it again; `late` (read by
+  `breakingLate()` before `data-hprnb-init`, false in the preview) shows the first headline whole when
+  the wait animation is already over.
+- Heights: `measure()` stores the bar's height (minus its safe-area padding) in `root.hprnbBnH`;
+  `reserveFor()` writes it on the body with `important` priority (it beats the short-screen 44px), and
+  the contract announces it. Before the script, `Frontend::enqueue_bar_assets( $s, $urgent, $payload )`
+  reserves `Renderer::breaking_height( $s, $payload, $p )`: for the longest headline not being read,
+  lines = ceil(letters / (37 phone, 95 desktop; 42 / 125 for joined scripts) × 17 / font size), line =
+  round(font × 1.3 phone, 1.35 desktop, 1.5 RTL); phone `56 + lines × line`, desktop `max(urgent_height('d'),
+  24 + lines × line)`; without headline `urgent_height()`.
+- Settings page (Urgent tab): card "Design of the URGENT bar" (`urgent_design`, choice) after "The
+  URGENT bar"; `urgent_exclude_current` in "Where the URGENT bar shows"; "Design on desktop" depends on
+  `urgent_design:chyron`. The admin script toggles `hprnb-root--u-bn` on the preview root (visual only).
+  The Desktop tab (flat root) shows the design as a bar under 600px: the admin sheet copies 17 ter's
+  `@container hprnb (max-width: 599.98px)` block onto `.hprnb-root--flat.hprnb-root--u-bn` (static test)
+  and undoes the chyron's desktop buttons.
+- Budgets: CSS 60 KB, bootstrap 6 KB, interactive script 38 KB.

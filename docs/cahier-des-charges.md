@@ -2433,6 +2433,15 @@ mode hybrid:
 3. **Si le bandeau URGENT est activé sur ordinateur, sur mobile ou les deux, le bloc s'ajoute à l'écran d'édition** ; sinon, il n'y est pas.
 4. **Un design du bandeau URGENT « plus premium que CNN »** : police, taille du titre et le reste.
 
+### 15.8.3 septdecies — Le design « Breaking News » du bandeau DERNIÈRE MINUTE, l'article consulté écarté (2.17.0)
+
+1. **Un nouveau design complet « Breaking News »**, **par défaut** (nouvelles configurations, sites mis à jour, valeur invalide) ; les designs existants restent sélectionnables dans les réglages ; les autres réglages (articles choisis, comportement du bouton fermer) sont conservés.
+2. **Direction visuelle** : rouge dominant, fond plat, contrastes francs ; deux zones — un **cartouche blanc** avec « DERNIÈRE MINUTE » en rouge gras, puis le **titre en blanc sur rouge** ; typographie affirmée, arrondis très légers, ombre discrète ; bouton fermer intégré et facile à toucher ; fixé en bas, compact, adaptatif ; titres longs lisibles, jamais sur le cartouche ni sur le bouton fermer. Inspiré des grandes chaînes d'information sans les copier.
+3. **Animation** : le cartouche reste fixe ; seul le titre se révèle **lettre par lettre**, vite et sans à-coups, **sans curseur** ; au moins 5 s affiché, plus pour un titre long ; plusieurs articles en boucle avec une transition discrète et la frappe à chaque fois ; un seul article tapé une fois puis fixe ; l'espace du titre complet réservé (aucun changement de hauteur) ; pas de redémarrage sur une simple mise à jour.
+4. **Filtrage, par une case à cocher** : ne jamais afficher l'article consulté (par identifiant, à défaut par l'adresse canonique normalisée), avant le premier affichage et à chaque changement de page, y compris sans rechargement ; la rotation continue avec les autres ; s'il ne reste rien, le bandeau est masqué entièrement sans espace vide ; chaque titre mène au bon article pendant toute son animation.
+5. **Accessibilité et fiabilité** : bouton fermer et sa mémorisation conservés ; clavier avec focus visible ; « mouvement réduit » : titre entier tout de suite, sans transition animée ; lecteurs d'écran : le titre entier, jamais lettre par lettre ; minuteurs nettoyés à la fermeture ; styles limités à la variante.
+6. **Vérifications** : design par défaut actif et anciens sélectionnables ; aucun article ; un article (consulté ou non) ; plusieurs (avec ou sans celui consulté) ; navigation et changement de liste ; fermeture ; titres longs sur mobile et ordinateur ; clavier ; mouvement réduit.
+
 ---
 
 # ANNEXE C — CONSIGNE FINALE À CLAUDE CODE

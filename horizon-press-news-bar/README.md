@@ -355,6 +355,12 @@ Contenu → **Barres affichées** (première carte) : `urgent_enabled` puis `urg
 
 Design du bandeau URGENT : plaque aux couleurs inversées, titre gras un à la fois (rotation), `urgent_font_size` (ordinateur, 14–22, 17) et `urgent_mobile_font_size` (mobile et design téléphone, 14–20, 17) → `--hprnb-u-fs` / `--hprnb-u-m-fs` ; hauteurs `Renderer::urgent_height()` : ordinateur `max(48, bar_height, ceil(fs × 1,3) + 24)`, mobile `max(mobile_bar_height, lignes × round(fs × 1,4) + 24)`. `bar_font` = `news` (défaut, classe racine `hprnb-root--font-news`, pile système `--hprnb-font`, pour les deux barres) ou `theme`. L'aperçu « Ordinateur » (racine `hprnb-root--flat`, sans conteneur) reçoit une copie des blocs `@container hprnb (min-width: 768px)` de la section 17 dans `hprnb-admin.css`, tenue à jour par un test statique.
 
+## 9 unvicies. Le design « Breaking News » et l'article consulté (2.17)
+
+Onglet Urgent → **Design du bandeau URGENT** : `urgent_design` = `breaking` (défaut, « Breaking News ») ou `chyron` (le design 2.16 et ses deux designs sur ordinateur). Classe racine `hprnb-root--u-bn` ; styles de la section 17 ter de `hprnb-bar.css`, tous préfixés `.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent`. Cartouche blanc fixe, titre entier en blanc gras ; sous 600 px de large, cartouche, filet et fermer en haut puis le titre dessous ; à partir de 600 px, une rangée. Tous les titres dans la même case : le bandeau a la hauteur du plus long. Le script (`setupBreaking()`, mode `type`) révèle chaque titre lettre par lettre sans toucher au texte (API CSS Custom Highlight, `span` sinon), le garde au moins 5 s (+40 ms par lettre au-delà de 60), l'efface en 220 ms et passe au suivant ; un titre seul reste après sa frappe ; mouvement réduit et couleurs forcées : titres entiers. La page réserve d'abord `Renderer::breaking_height()` (estimation d'après le plus long titre) puis la hauteur mesurée.
+
+**Article consulté** (`urgent_exclude_current`, coché par défaut, carte « Où s'affiche le bandeau URGENT ») : `Frontend::without_here()` marque son titre `hprnb-bar__item--here` et ne le compte plus (bandeau « garé », sans espace réservé, s'il ne reste rien) ; le script le retire de la rotation avant le premier affichage (`hereFilter()`, par identifiant `data-hprnb-post` ou adresse canonique normalisée) et refait le filtre après une navigation par l'API History (`followLocation()`).
+
 ## 10. Ticker (optionnel)
 
 Désactivé par défaut. Trois modes :
