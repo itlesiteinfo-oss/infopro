@@ -116,6 +116,68 @@ class Urgent_List_Test extends HPRNB_Test_Case {
 		$this->assertSame( 'off', $this->toggle( $post, false )->get_data()['state'] );
 	}
 
+	public function test_an_article_taken_off_the_site_while_urgent_waits_for_its_next_publication() {
+		$this->editor();
+		$post = self::factory()->post->create();
+		Urgent::flag( $post, Settings::get() );
+		// Quick Edit or Bulk Edit to Draft: no box sent, the transition keeps the data consistent.
+		wp_update_post(
+			array(
+				'ID'          => $post,
+				'post_status' => 'draft',
+			)
+		);
+		$this->assertTrue( Urgent::is_armed( $post ) );
+		$this->assertSame( 0, Urgent::until( $post ) );
+		$this->assertSame( 'armed', Urgent::state( $post ) );
+		// Published again: a fresh countdown.
+		wp_publish_post( $post );
+		$this->assertSame( 'active', Urgent::state( $post ) );
+		$this->assertGreaterThan( time() + 500, Urgent::until( $post ) );
+		// Trashed: no longer urgent at all, and restored it stays so.
+		wp_trash_post( $post );
+		$this->assertSame( 'off', Urgent::state( $post ) );
+		wp_untrash_post( $post );
+		$this->assertSame( 'off', Urgent::state( $post ) );
+		// An article never in the red bar is not armed by leaving publish.
+		$plain = self::factory()->post->create();
+		wp_update_post(
+			array(
+				'ID'          => $plain,
+				'post_status' => 'draft',
+			)
+		);
+		$this->assertSame( 'off', Urgent::state( $plain ) );
+	}
+
+	public function test_a_page_past_the_end_of_the_view_falls_back_on_its_last_one() {
+		$this->editor();
+		$ids = self::factory()->post->create_many( 3 );
+		foreach ( $ids as $id ) {
+			Urgent::flag( $id, Settings::get() );
+		}
+		self::factory()->post->create_many( 5 );
+		Urgent_List::reset();
+		$_GET['hprnb_urgent'] = '1';
+		$GLOBALS['pagenow']   = 'edit.php';
+		set_current_screen( 'edit-post' );
+		foreach ( array(
+			3 => 2,
+			2 => 2,
+			1 => 1,
+		) as $asked => $given ) {
+			$query                          = new WP_Query();
+			$query->query_vars['post_type'] = 'post';
+			$query->query_vars['posts_per_page'] = 2;
+			$query->query_vars['paged']          = $asked;
+			$GLOBALS['wp_the_query']             = $query;
+			Urgent_List::filter_query( $query );
+			$this->assertSame( $given, (int) $query->get( 'paged' ), "Page $asked of a 2-page view." );
+		}
+		unset( $_GET['hprnb_urgent'] );
+		set_current_screen( 'front' );
+	}
+
 	public function test_an_article_open_in_someone_elses_editor_is_left_to_them() {
 		$other = self::factory()->user->create( array( 'role' => 'editor' ) );
 		$me    = $this->editor();

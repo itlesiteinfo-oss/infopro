@@ -392,6 +392,13 @@ final class Urgent_List {
 		}
 		$ids = self::ticked_ids();
 		$query->set( 'post__in', $ids ? $ids : array( 0 ) );
+		// A page past the view's last one (rows gone meanwhile) falls back on it, so core redirects there
+		// instead of paging by the size of the whole list.
+		$per  = max( 1, (int) $query->get( 'posts_per_page' ) );
+		$last = max( 1, (int) ceil( count( $ids ) / $per ) );
+		if ( (int) $query->get( 'paged' ) > $last ) {
+			$query->set( 'paged', $last );
+		}
 	}
 
 	/**

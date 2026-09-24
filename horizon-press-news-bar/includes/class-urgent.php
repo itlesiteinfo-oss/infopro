@@ -213,7 +213,8 @@ final class Urgent {
 
 	/**
 	 * A scheduled (or otherwise unpublished) article with the box ticked reaches `publish`: the
-	 * countdown starts now, whoever or whatever published it.
+	 * countdown starts now, whoever or whatever published it. An article in the red bar that leaves
+	 * `publish` waits for its next publication (or, trashed, is unticked).
 	 *
 	 * @param mixed $new_status New status.
 	 * @param mixed $old_status Old status.
@@ -222,6 +223,17 @@ final class Urgent {
 	 */
 	public static function on_transition_post_status( $new_status, $old_status, $post ): void {
 		if ( ! $post instanceof WP_Post || 'post' !== $post->post_type ) {
+			return;
+		}
+		// 2.19: an article taken off the site while in the red bar (draft, scheduled, private — Quick Edit
+		// and Bulk Edit included) waits for its next publication, as if ticked unpublished; trashed, it
+		// is no longer urgent at all.
+		if ( 'publish' === $old_status && 'publish' !== $new_status && self::is_active( (int) $post->ID ) ) {
+			if ( 'trash' === $new_status ) {
+				self::unflag( (int) $post->ID );
+			} else {
+				self::arm( (int) $post->ID );
+			}
 			return;
 		}
 		if ( 'publish' !== $new_status || 'publish' === $old_status ) {
