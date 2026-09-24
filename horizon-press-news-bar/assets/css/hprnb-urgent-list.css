@@ -7,7 +7,8 @@
  * its cells and a red edge on its first one (a shadow: no width changes). Everything is scoped to the
  * column and to the rows the plugin marks.
  */
-.wp-list-table {
+.wp-list-table,
+.hprnb-urgent-view {
 	--hprnb-ul-red: #e11d2b;
 	--hprnb-ul-ink: #fff;
 	--hprnb-ul-tint: color-mix(in srgb, var(--hprnb-ul-red) 6%, #fff);
@@ -101,6 +102,13 @@
 	color: #b32d2e;
 	font-size: 11px;
 	line-height: 1.3;
+}
+
+/* The view "⚡ Urgent (N)" above the list: the switch's own lightning, in the red of the bar. */
+.hprnb-urgent-view svg {
+	margin-inline-end: 3px;
+	color: var(--hprnb-ul-red);
+	vertical-align: -1px;
 }
 
 /* The row of an article in the red bar. WordPress paints the rows' cells (striped), so the tint goes on them. */

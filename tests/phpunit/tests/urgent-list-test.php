@@ -200,7 +200,21 @@ class Urgent_List_Test extends HPRNB_Test_Case {
 		$views = Urgent_List::views( array( 'all' => '<a href="edit.php" class="current" aria-current="page">All</a>' ) );
 		$this->assertStringContainsString( 'hprnb_urgent=1', $views['hprnb_urgent'] );
 		$this->assertStringContainsString( '<span class="hprnb-urgent-count">2</span>', $views['hprnb_urgent'] );
-		$this->assertStringNotContainsString( 'current', $views['hprnb_urgent'] );
+		$this->assertStringContainsString( 'class="hprnb-urgent-view"', $views['hprnb_urgent'] );
+		$this->assertStringNotContainsString( 'aria-current', $views['hprnb_urgent'] );
+		$this->assertStringContainsString( '<svg ', $views['hprnb_urgent'], 'An inline lightning, not an emoji.' );
+
+		// Counted as the list shows them: someone who may not read a private article does not count it.
+		$private = self::factory()->post->create( array( 'post_status' => 'private' ) );
+		Urgent::flag( $private, Settings::get() );
+		Urgent_List::reset();
+		$this->assertContains( $private, Urgent_List::ticked_ids() );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'author' ) ) );
+		Urgent_List::reset();
+		$this->assertNotContains( $private, Urgent_List::ticked_ids() );
+		$this->editor();
+		Urgent::unflag( $private );
+		Urgent_List::reset();
 
 		// The view shown: current, the others not; the list's main query keeps only these IDs.
 		$_GET['hprnb_urgent'] = '1';
@@ -243,5 +257,25 @@ class Urgent_List_Test extends HPRNB_Test_Case {
 		$this->assertNotContains( 'hprnb-urgent-row', Urgent_List::row_class( array( 'type-post' ), '', $armed ), 'Waiting for its publication: not in the red bar yet.' );
 		set_current_screen( 'front' );
 		$this->assertNotContains( 'hprnb-urgent-row', Urgent_List::row_class( array( 'type-post' ), '', $active ), 'Only on the posts list.' );
+	}
+
+	public function test_quick_edit_renders_the_row_again_with_its_tint() {
+		$active = self::factory()->post->create();
+		Urgent::flag( $active, Settings::get() );
+		// admin-ajax sets no current screen; Quick Edit names the list's.
+		set_current_screen( 'dashboard' );
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		$_POST = array(
+			'action' => 'inline-save',
+			'screen' => 'edit-post',
+		);
+		$this->assertContains( 'hprnb-urgent-row', Urgent_List::row_class( array( 'type-post' ), '', $active ) );
+		$_POST['screen'] = 'edit-page';
+		$this->assertNotContains( 'hprnb-urgent-row', Urgent_List::row_class( array( 'type-post' ), '', $active ), 'Another list.' );
+		$_POST = array( 'action' => 'heartbeat' );
+		$this->assertNotContains( 'hprnb-urgent-row', Urgent_List::row_class( array( 'type-post' ), '', $active ), 'Another request.' );
+		$_POST = array();
+		remove_filter( 'wp_doing_ajax', '__return_true' );
+		set_current_screen( 'front' );
 	}
 }

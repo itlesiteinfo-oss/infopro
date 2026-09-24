@@ -606,7 +606,7 @@ return array(
 	'when published' => 'dès la publication',
 	'URGENT' => 'URGENT',
 	'(no title)' => '(sans titre)',
-	'⚡ Urgent' => '⚡ Urgents',
+	"view of Posts → All Posts listing the urgent articles\x04Urgent" => 'Urgents',
 	'The Urgent switch could not be saved. Nothing was changed; please try again.' => 'Le bouton Urgent n’a pas pu être enregistré. Rien n’a été modifié ; réessayez.',
 	'Marked as urgent.' => 'Marqué comme urgent.',
 	'Marked as urgent: the countdown starts when it is published.' => 'Marqué comme urgent : le compte à rebours démarrera à la publication.',

@@ -4054,3 +4054,345 @@ test( 'v2.17: the article being read is left out of the URGENT bar, also after a
 		setSettings( {} );
 	}
 } );
+
+test( 'v2.19: the Urgent column of Posts → All Posts — a switch per article over REST, the row tinted, busy, errors, permissions, drafts and scheduled articles, the ⚡ Urgent view with search, filters, sorting and pages, the edit screen and the front agreeing, beside a third-party column', async ( { page, browser } ) => {
+	test.setTimeout( 300000 );
+	const errors = collectErrors( page );
+	const now = () => Math.floor( Date.now() / 1000 );
+	const row = ( id ) => page.locator( '#post-' + id );
+	const sw = ( id ) => page.locator( '#post-' + id + ' .hprnb-urgent-switch' );
+	const count = async () => Number( await page.locator( '.hprnb-urgent-count' ).first().textContent() );
+	const meta = ( id, key ) => wp( [ 'post', 'meta', 'list', id, '--keys=' + key, '--format=json' ] );
+	const until = ( id ) => ( JSON.parse( meta( id, '_hprnb_urgent_until' ) )[ 0 ] || {} ).meta_value;
+	const armed = ( id ) => ( JSON.parse( meta( id, '_hprnb_urgent_armed' ) )[ 0 ] || {} ).meta_value;
+	// A computed colour as [r, g, b], whether the browser serialises color-mix() as rgb() or color(srgb …).
+	const rgb = ( s ) => {
+		const m = s.match( /color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)/ );
+		return m ? m.slice( 1, 4 ).map( ( v ) => Math.round( Number( v ) * 255 ) ) : ( s.match( /[\d.]+/g ) || [] ).slice( 0, 3 ).map( ( v ) => Math.round( Number( v ) ) );
+	};
+	const look = ( id ) => page.evaluate( ( pid ) => {
+		const tr = document.getElementById( 'post-' + pid );
+		const button = tr.querySelector( '.hprnb-urgent-switch' );
+		const note = tr.querySelector( '.hprnb-urgent-cell__note' );
+		return {
+			pressed: button.getAttribute( 'aria-pressed' ),
+			state: button.getAttribute( 'data-hprnb-state' ),
+			text: button.textContent.trim(),
+			label: button.getAttribute( 'aria-label' ),
+			note: note ? note.textContent : null,
+			tinted: tr.classList.contains( 'hprnb-urgent-row' ),
+		};
+	}, id );
+	const make = ( title, status = 'publish', extra = [] ) => wp( [ 'post', 'create', '--post_type=post', '--post_status=' + status, '--post_author=1', '--post_title=' + title, '--porcelain', ...extra ] );
+	const cat = wp( [ 'term', 'create', 'category', 'E2E Urgences ' + Date.now(), '--porcelain' ] );
+	const a = make( 'Liste A — séisme au large d’Al Hoceïma', 'publish', [ '--post_category=' + cat ] );
+	const b = make( 'Liste B — la gare évacuée' );
+	const c = make( 'Liste C — coupure d’eau dans le centre' );
+	const d = make( 'Liste D — brouillon du soir', 'draft' );
+	const f = make( 'Liste F — conférence planifiée', 'future', [ '--post_date=2031-06-01 10:00:00' ] );
+	const user = wp( [ 'user', 'create', 'e2e-contrib', 'e2e-contrib@example.test', '--role=contributor', '--user_pass=e2e-contrib-pass', '--porcelain' ] );
+	const own = wp( [ 'post', 'create', '--post_type=post', '--post_status=draft', '--post_author=' + user, '--post_title=Liste G — brouillon du contributeur', '--porcelain' ] );
+	const REST = /\/hprnb\/v1\/urgent\/\d+/;
+	try {
+		setDefaultSettings();
+		wp( [ 'option', 'update', 'hprnb_e2e_var_column', '1' ] );
+		await page.goto( '/wp-login.php' );
+		await page.fill( '#user_login', 'admin' );
+		await page.fill( '#user_pass', 'admin' );
+		await page.click( '#wp-submit' );
+		await page.waitForURL( /wp-admin/ );
+		await page.setViewportSize( { width: 1400, height: 1000 } );
+		await page.goto( '/wp-admin/edit.php' );
+
+		// The column right after the title, its own, the third-party VAR ARTICLE column left as it is beside it.
+		const heads = await page.$$eval( '.wp-list-table thead th, .wp-list-table thead td', ( cells ) => cells.map( ( cell ) => cell.id ) );
+		expect( heads.slice( heads.indexOf( 'title' ), heads.indexOf( 'title' ) + 3 ) ).toEqual( [ 'title', 'hprnb_urgent', 'var_article' ] );
+		await expect( page.locator( 'th#hprnb_urgent' ) ).toHaveText( 'Urgent' );
+		await expect( page.locator( 'th#var_article' ) ).toHaveText( 'VAR ARTICLE' );
+		await expect( row( a ).locator( 'td.column-var_article' ) ).toHaveText( 'VAR-' + a );
+		await expect( row( a ).locator( 'td.column-hprnb_urgent .e2e-var-article' ) ).toHaveCount( 0 );
+		await expect( page.locator( 'link#hprnb-urgent-list-css' ) ).toHaveCount( 1 );
+		await expect( page.locator( 'script#hprnb-urgent-list-js' ) ).toHaveCount( 1 );
+		const base = await count();
+
+		// Off: a real button, a pale grey pill "○ Urgent", its label naming the article.
+		expect( await look( a ) ).toEqual( { pressed: 'false', state: 'off', text: 'Urgent', label: 'Mark “Liste A — séisme au large d’Al Hoceïma” as urgent news', note: null, tinted: false } );
+		expect( await sw( a ).evaluate( ( el ) => [ el.tagName, el.type, getComputedStyle( el ).backgroundColor, getComputedStyle( el ).fontWeight, getComputedStyle( el ).transitionDuration.split( ', ' )[ 0 ] ] ) ).toEqual( [ 'BUTTON', 'button', 'rgb(246, 247, 247)', '500', '0.15s' ] );
+		const width = await row( a ).locator( 'td.column-hprnb_urgent' ).evaluate( ( el ) => el.getBoundingClientRect().width );
+
+		// On, over REST, the reply slowed down: busy meanwhile, a double click sends one request, the column keeps its width.
+		const hits = countRequests( page, REST );
+		await page.route( REST, async ( route ) => {
+			await new Promise( ( resolve ) => setTimeout( resolve, 700 ) );
+			await route.continue();
+		} );
+		await sw( a ).dblclick();
+		await expect( sw( a ) ).toHaveAttribute( 'aria-busy', 'true' );
+		await expect( sw( a ) ).toHaveClass( /is-busy/ );
+		await sw( a ).click();
+		expect( await row( a ).locator( 'td.column-hprnb_urgent' ).evaluate( ( el ) => el.getBoundingClientRect().width ) ).toBeCloseTo( width, 1 );
+		await expect( sw( a ) ).toHaveAttribute( 'aria-pressed', 'true' );
+		await page.unroute( REST );
+		expect( hits.length ).toBe( 1 );
+		expect( hits[ 0 ] ).toContain( '_locale=user' );
+		const on = await look( a );
+		expect( [ on.pressed, on.state, on.text, on.label, on.tinted ] ).toEqual( [ 'true', 'active', 'URGENT', 'Remove “Liste A — séisme au large d’Al Hoceïma” from urgent news', true ] );
+		expect( on.note ).toMatch( /^until \d{1,2}:\d{2}/ );
+		await expect( sw( a ) ).toBeFocused();
+		await expect( sw( a ) ).not.toHaveAttribute( 'aria-busy', 'true' );
+		await expect( page.locator( '#a11y-speak-polite' ) ).toContainText( 'Marked as urgent.' );
+		expect( await row( a ).locator( 'td.column-hprnb_urgent' ).evaluate( ( el ) => el.getBoundingClientRect().width ) ).toBeCloseTo( width, 1 );
+		expect( await sw( a ).evaluate( ( el ) => { const cell = el.closest( 'td' ).getBoundingClientRect(); const box = el.getBoundingClientRect(); return box.left >= cell.left && box.right <= cell.right; } ) ).toBe( true );
+		// The red of the URGENT bar, white and semi-bold (the pointer away: hovered, it darkens); the row a very pale red with a 4px red edge.
+		await page.mouse.move( 5, 5 );
+		await expect.poll( () => sw( a ).evaluate( ( el ) => [ getComputedStyle( el ).backgroundColor, getComputedStyle( el ).color, getComputedStyle( el ).fontWeight ] ) ).toEqual( [ 'rgb(225, 29, 43)', 'rgb(255, 255, 255)', '600' ] );
+		const tint = rgb( await row( a ).locator( 'td.column-hprnb_urgent' ).evaluate( ( el ) => getComputedStyle( el ).backgroundColor ) );
+		[ 253, 241, 242 ].forEach( ( v, i ) => expect( Math.abs( tint[ i ] - v ) ).toBeLessThanOrEqual( 2 ) );
+		expect( await row( a ).evaluate( ( el ) => getComputedStyle( el.firstElementChild ).boxShadow ) ).toBe( 'rgb(225, 29, 43) 4px 0px 0px 0px inset' );
+		expect( Number( until( a ) ) ).toBeGreaterThan( now() + 540 );
+		expect( Number( until( a ) ) ).toBeLessThanOrEqual( now() + 601 );
+		expect( await count() ).toBe( base + 1 );
+		await expect( row( a ).locator( 'td.column-var_article' ) ).toHaveText( 'VAR-' + a );
+
+		// Several at once.
+		await sw( c ).click();
+		await expect( sw( c ) ).toHaveAttribute( 'data-hprnb-state', 'active' );
+		expect( await count() ).toBe( base + 2 );
+		await expect( row( a ) ).toHaveClass( /hprnb-urgent-row/ );
+		await expect( row( c ) ).toHaveClass( /hprnb-urgent-row/ );
+
+		// A draft and a scheduled article: ticked, waiting for their publication, the row not tinted yet.
+		for ( const id of [ d, f ] ) {
+			await sw( id ).click();
+			await expect( sw( id ) ).toHaveAttribute( 'data-hprnb-state', 'armed' );
+			expect( await look( id ) ).toMatchObject( { pressed: 'true', text: 'URGENT', note: 'when published', tinted: false } );
+			expect( [ armed( id ), until( id ) ] ).toEqual( [ '1', undefined ] );
+		}
+		await page.mouse.move( 5, 5 );
+		await expect.poll( () => sw( d ).evaluate( ( el ) => [ getComputedStyle( el ).backgroundColor, getComputedStyle( el ).color ] ) ).toEqual( [ 'rgb(255, 255, 255)', 'rgb(225, 29, 43)' ] );
+		expect( await count() ).toBe( base + 4 );
+
+		// Off again: the meta gone, the row back to normal.
+		await sw( c ).click();
+		await expect( sw( c ) ).toHaveAttribute( 'aria-pressed', 'false' );
+		expect( await look( c ) ).toMatchObject( { state: 'off', text: 'Urgent', note: null, tinted: false } );
+		expect( [ until( c ), armed( c ) ] ).toEqual( [ undefined, undefined ] );
+		await expect( page.locator( '#a11y-speak-polite' ) ).toContainText( 'No longer urgent.' );
+		expect( await count() ).toBe( base + 3 );
+
+		// A network failure: nothing changes on the page nor on the server, an error says so; the next click works.
+		await page.route( REST, ( route ) => route.abort( 'failed' ) );
+		await sw( b ).click();
+		await expect( row( b ).locator( '.hprnb-urgent-cell__error' ) ).toHaveText( 'The Urgent switch could not be saved. Nothing was changed; please try again.' );
+		await expect( row( b ).locator( '.hprnb-urgent-cell__error' ) ).toHaveAttribute( 'role', 'alert' );
+		expect( await look( b ) ).toMatchObject( { pressed: 'false', state: 'off', tinted: false } );
+		await expect( sw( b ) ).not.toHaveAttribute( 'aria-busy', 'true' );
+		await expect( sw( b ) ).not.toHaveClass( /is-busy/ );
+		await expect( sw( b ) ).toBeFocused();
+		expect( until( b ) ).toBeUndefined();
+		expect( await count() ).toBe( base + 3 );
+		await page.unroute( REST );
+		// A refusal from the server (the URGENT bar switched off meanwhile): its reason is shown too.
+		setDefaultSettings( { urgent_enabled: false } );
+		await sw( b ).click();
+		await expect( row( b ).locator( '.hprnb-urgent-cell__error' ) ).toContainText( 'switched off in Settings' );
+		expect( await look( b ) ).toMatchObject( { pressed: 'false', state: 'off' } );
+		expect( until( b ) ).toBeUndefined();
+		setDefaultSettings();
+		// Keyboard: Enter and Space, the focus visible and kept on the switch the server sent back.
+		await sw( b ).focus();
+		await page.keyboard.press( 'Shift+Tab' );
+		await page.keyboard.press( 'Tab' );
+		await expect( sw( b ) ).toBeFocused();
+		expect( await sw( b ).evaluate( ( el ) => [ el.matches( ':focus-visible' ), getComputedStyle( el ).outlineStyle, getComputedStyle( el ).outlineWidth ] ) ).toEqual( [ true, 'solid', '2px' ] );
+		await page.keyboard.press( 'Enter' );
+		await expect( sw( b ) ).toHaveAttribute( 'aria-pressed', 'true' );
+		await expect( row( b ).locator( '.hprnb-urgent-cell__error' ) ).toHaveCount( 0 );
+		await expect( sw( b ) ).toBeFocused();
+		await page.keyboard.press( 'Space' );
+		await expect( sw( b ) ).toHaveAttribute( 'aria-pressed', 'false' );
+		expect( until( b ) ).toBeUndefined();
+
+		// The scheduled article published: its countdown starts, the list shows it in the red bar.
+		wp( [ 'eval', 'wp_publish_post( ' + f + ' );' ] );
+		await page.reload();
+		expect( await look( f ) ).toMatchObject( { pressed: 'true', state: 'active', tinted: true } );
+		expect( armed( f ) ).toBeUndefined();
+		expect( Number( until( f ) ) ).toBeGreaterThan( now() + 540 );
+
+		// Quick Edit re-renders the row: the switch and the tint come back with it, and still work.
+		await row( a ).hover();
+		await row( a ).locator( 'button.editinline' ).click();
+		await page.locator( '#edit-' + a + ' input[name="post_title"]' ).fill( 'Liste A — séisme au large d’Al Hoceïma (mis à jour)' );
+		await page.locator( '#edit-' + a + ' button.save' ).click();
+		await expect( row( a ).locator( '.row-title' ) ).toContainText( '(mis à jour)' );
+		expect( await look( a ) ).toMatchObject( { pressed: 'true', state: 'active', tinted: true, label: 'Remove “Liste A — séisme au large d’Al Hoceïma (mis à jour)” from urgent news' } );
+
+		// The edit screen reads the same data: A ticked there, and unticked there, the list follows.
+		await page.goto( '/wp-admin/post.php?post=' + a + '&action=edit&hprnb_classic=1' );
+		await expect( page.locator( '#hprnb-urgent' ) ).toBeChecked();
+		await expect( page.locator( '.hprnb-urgent-box__state' ) ).toContainText( 'Urgent until' );
+		await page.goto( '/wp-admin/post.php?post=' + d + '&action=edit&hprnb_classic=1' );
+		await expect( page.locator( '#hprnb-urgent' ) ).toBeChecked();
+		await expect( page.locator( '.hprnb-urgent-box__state' ) ).toContainText( 'The countdown starts when the article is published.' );
+		await page.goto( '/wp-admin/post.php?post=' + c + '&action=edit&hprnb_classic=1' );
+		await expect( page.locator( '#hprnb-urgent' ) ).not.toBeChecked();
+		await page.check( '#hprnb-urgent' );
+		await page.click( '#publish' );
+		await expect( page.locator( '.hprnb-urgent-box__state' ) ).toContainText( 'Urgent until' );
+		await page.goto( '/wp-admin/edit.php' );
+		expect( await look( c ) ).toMatchObject( { pressed: 'true', state: 'active', tinted: true } );
+		expect( await count() ).toBe( base + 4 ); // a, c, d, f
+
+		// The front: the articles switched on in the list are in the red bar (of another article).
+		const front = await browser.newContext( { viewport: { width: 1366, height: 900 } } );
+		const reader = await front.newPage();
+		const readerErrors = collectErrors( reader );
+		await reader.goto( wp( [ 'post', 'url', b ] ) );
+		const bar = reader.locator( '.hprnb-bar--urgent' );
+		await expect( bar ).toHaveAttribute( 'data-hprnb-init', '1' );
+		const titles = await bar.locator( '.hprnb-bar__item' ).evaluateAll( ( items ) => items.map( ( item ) => item.textContent.replace( /\s+/g, ' ' ).trim() ) );
+		for ( const title of [ 'Liste A — séisme', 'Liste C — coupure', 'Liste F — conférence' ] ) {
+			expect( titles.some( ( t ) => t.includes( title ) ), title ).toBe( true );
+		}
+		expect( titles.some( ( t ) => t.includes( 'Liste D' ) ) ).toBe( false ); // A draft stays out until published.
+		expect( readerErrors ).toEqual( [] );
+		await front.close();
+
+		// The ⚡ Urgent view: only the articles ticked, current, with every other filter still applying.
+		await page.click( '.subsubsub .hprnb-urgent-view' );
+		await page.waitForURL( /hprnb_urgent=1/ );
+		await expect( page.locator( '.subsubsub .current' ) ).toHaveCount( 1 );
+		await expect( page.locator( '.subsubsub .hprnb-urgent-view' ) ).toHaveClass( /current/ );
+		await expect( page.locator( '.subsubsub .hprnb-urgent-view' ) ).toHaveAttribute( 'aria-current', 'page' );
+		// Its lightning is the switch's inline one, never an emoji WordPress would turn into a remote picture.
+		await expect( page.locator( '.hprnb-urgent-view svg[aria-hidden="true"]' ) ).toHaveCount( 1 );
+		await expect( page.locator( '.hprnb-urgent-view img' ) ).toHaveCount( 0 );
+		expect( await page.locator( '.hprnb-urgent-view svg' ).evaluate( ( el ) => getComputedStyle( el ).color ) ).toBe( 'rgb(225, 29, 43)' );
+		const listed = async () => page.$$eval( '#the-list tr[id^="post-"]', ( rows ) => rows.map( ( r ) => Number( r.id.replace( 'post-', '' ) ) ) );
+		let ids = await listed();
+		expect( ids.length ).toBe( base + 4 );
+		for ( const id of [ a, c, d, f ] ) {
+			expect( ids ).toContain( Number( id ) );
+		}
+		for ( const id of [ b, own ] ) {
+			expect( ids ).not.toContain( Number( id ) );
+		}
+		// Search, from the list's own form.
+		await page.fill( '#post-search-input', 'séisme' );
+		await page.click( '#search-submit' );
+		await page.waitForURL( /s=/ );
+		expect( page.url() ).toContain( 'hprnb_urgent=1' );
+		expect( await listed() ).toEqual( [ Number( a ) ] );
+		await expect( page.locator( '.subsubsub .hprnb-urgent-view' ) ).toHaveClass( /current/ );
+		// A category, from the list's Filter button.
+		await page.goto( '/wp-admin/edit.php?post_type=post&hprnb_urgent=1' );
+		await page.selectOption( '#cat', String( cat ) );
+		await page.click( '#post-query-submit' );
+		await page.waitForURL( /cat=/ );
+		expect( page.url() ).toContain( 'hprnb_urgent=1' );
+		expect( await listed() ).toEqual( [ Number( a ) ] );
+		// A status, an author, a month, sorting.
+		await page.goto( '/wp-admin/edit.php?post_type=post&hprnb_urgent=1&post_status=draft' );
+		expect( await listed() ).toEqual( [ Number( d ) ] );
+		await page.goto( '/wp-admin/edit.php?post_type=post&hprnb_urgent=1&author=' + user );
+		expect( await listed() ).toEqual( [] );
+		await expect( page.locator( '#the-list .no-items' ) ).toHaveCount( 1 );
+		await page.goto( '/wp-admin/edit.php?post_type=post&hprnb_urgent=1&m=203106' );
+		expect( await listed() ).toEqual( [ Number( f ) ] );
+		await page.goto( '/wp-admin/edit.php?post_type=post&hprnb_urgent=1&orderby=title&order=asc&s=Liste' );
+		expect( await listed() ).toEqual( [ a, c, d, f ].map( Number ) );
+		await page.goto( '/wp-admin/edit.php?post_type=post&hprnb_urgent=1&orderby=title&order=desc&s=Liste' );
+		expect( await listed() ).toEqual( [ f, d, c, a ].map( Number ) );
+		// Pages: two per page, the view kept on the next one.
+		wp( [ 'user', 'meta', 'update', '1', 'edit_post_per_page', '2' ] );
+		await page.goto( '/wp-admin/edit.php?post_type=post&hprnb_urgent=1&orderby=title&order=asc&s=Liste' );
+		expect( await listed() ).toEqual( [ a, c ].map( Number ) );
+		const next = await page.locator( '.tablenav.top .next-page' ).getAttribute( 'href' );
+		expect( next ).toContain( 'hprnb_urgent=1' );
+		await page.goto( next );
+		expect( await listed() ).toEqual( [ d, f ].map( Number ) );
+		await expect( page.locator( '.subsubsub .hprnb-urgent-view' ) ).toHaveClass( /current/ );
+		// Switching one off inside the view: the count follows at once.
+		const inView = await count();
+		await sw( d ).click();
+		await expect( sw( d ) ).toHaveAttribute( 'aria-pressed', 'false' );
+		expect( await count() ).toBe( inView - 1 );
+		wp( [ 'user', 'meta', 'delete', '1', 'edit_post_per_page' ] );
+
+		// Phone width: the column folds into the row's details as the others do, the switch still works, nothing overflows.
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( '/wp-admin/edit.php' );
+		await row( b ).locator( '.toggle-row' ).click();
+		await expect( sw( b ) ).toBeVisible();
+		await expect( row( b ).locator( 'td.column-hprnb_urgent' ) ).toHaveAttribute( 'data-colname', 'Urgent' );
+		await sw( b ).click();
+		await expect( sw( b ) ).toHaveAttribute( 'aria-pressed', 'true' );
+		expect( await sw( b ).evaluate( ( el ) => el.getBoundingClientRect().right <= window.innerWidth ) ).toBe( true );
+		expect( await noHorizontalOverflow( page ) ).toBe( true );
+		await sw( b ).click();
+		await expect( sw( b ) ).toHaveAttribute( 'aria-pressed', 'false' );
+
+		// RTL: the red edge on the start side, the right.
+		await page.setViewportSize( { width: 1400, height: 1000 } );
+		await page.goto( '/wp-admin/edit.php?hprnb_rtl=1' );
+		expect( await page.evaluate( () => document.documentElement.dir ) ).toBe( 'rtl' );
+		expect( await row( a ).evaluate( ( el ) => getComputedStyle( el.firstElementChild ).boxShadow ) ).toBe( 'rgb(225, 29, 43) -4px 0px 0px 0px inset' );
+		expect( await noHorizontalOverflow( page ) ).toBe( true );
+
+		// The URGENT bar off on both devices: no column, no view, no script.
+		setDefaultSettings( { urgent_enabled: false } );
+		await page.goto( '/wp-admin/edit.php' );
+		await expect( page.locator( 'th#hprnb_urgent' ) ).toHaveCount( 0 );
+		await expect( page.locator( '.hprnb-urgent-view' ) ).toHaveCount( 0 );
+		await expect( page.locator( 'script#hprnb-urgent-list-js' ) ).toHaveCount( 0 );
+		await expect( page.locator( 'th#var_article' ) ).toHaveCount( 1 );
+		setDefaultSettings();
+		// Only the two failures provoked above, as the browser logs them.
+		expect( errors.map( ( e ) => e.replace( /\/urgent\/\d+/, '/urgent/ID' ).replace( /^.*(ERR_FAILED|status of \d+).* @ http:\/\/127\.0\.0\.1:8080/, '$1 ' ) ) ).toEqual( [ 'ERR_FAILED /wp-json/hprnb/v1/urgent/ID?_locale=user', 'status of 409 /wp-json/hprnb/v1/urgent/ID?_locale=user' ] );
+
+		// A contributor: a badge on the articles of others (and the route refuses them anyway), a switch on their own.
+		const contrib = await browser.newContext( { viewport: { width: 1400, height: 1000 } } );
+		const cp = await contrib.newPage();
+		const contribErrors = collectErrors( cp );
+		await cp.goto( '/wp-login.php' );
+		await cp.fill( '#user_login', 'e2e-contrib' );
+		await cp.fill( '#user_pass', 'e2e-contrib-pass' );
+		await cp.click( '#wp-submit' );
+		await cp.waitForURL( /wp-admin/ );
+		await cp.goto( '/wp-admin/edit.php?all_posts=1' );
+		await expect( cp.locator( '#post-' + a + ' .hprnb-urgent-switch.is-static' ) ).toHaveCount( 1 );
+		await expect( cp.locator( '#post-' + a + ' button.hprnb-urgent-switch' ) ).toHaveCount( 0 );
+		await expect( cp.locator( '#post-' + a + ' .hprnb-urgent-switch' ) ).toHaveText( 'URGENT' );
+		await expect( cp.locator( '#post-' + own + ' button.hprnb-urgent-switch' ) ).toHaveCount( 1 );
+		const refused = await cp.evaluate( async ( id ) => {
+			const r = await fetch( window.hprnbUrgentList.endpoint + id, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': window.hprnbUrgentList.nonce }, body: JSON.stringify( { urgent: false } ) } );
+			return [ r.status, ( await r.json() ).code ];
+		}, a );
+		expect( refused ).toEqual( [ 403, 'hprnb_urgent_forbidden' ] );
+		expect( Number( until( a ) ) ).toBeGreaterThan( now() );
+		// Without the REST nonce, even on their own draft.
+		const nonceless = await cp.evaluate( async ( id ) => {
+			const r = await fetch( window.hprnbUrgentList.endpoint + id, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify( { urgent: true } ) } );
+			return r.status;
+		}, own );
+		expect( nonceless ).toBe( 401 );
+		expect( armed( own ) ).toBeUndefined();
+		await cp.locator( '#post-' + own + ' .hprnb-urgent-switch' ).click();
+		await expect( cp.locator( '#post-' + own + ' .hprnb-urgent-switch' ) ).toHaveAttribute( 'data-hprnb-state', 'armed' );
+		expect( armed( own ) ).toBe( '1' );
+		expect( contribErrors.map( ( e ) => e.replace( /\/urgent\/\d+/, '/urgent/ID' ).replace( /^.*(status of \d+).* @ http:\/\/127\.0\.0\.1:8080/, '$1 ' ) ) ).toEqual( [ 'status of 403 /wp-json/hprnb/v1/urgent/ID', 'status of 401 /wp-json/hprnb/v1/urgent/ID' ] );
+		await contrib.close();
+	} finally {
+		try {
+			wp( [ 'user', 'meta', 'delete', '1', 'edit_post_per_page' ] );
+		} catch ( e ) {
+			// Already gone.
+		}
+		wp( [ 'option', 'delete', 'hprnb_e2e_var_column' ] );
+		wp( [ 'post', 'delete', a, b, c, d, f, own, '--force' ] );
+		wp( [ 'user', 'delete', user, '--yes' ] );
+		wp( [ 'term', 'delete', 'category', cat ] );
+		setSettings( {} );
+	}
+} );

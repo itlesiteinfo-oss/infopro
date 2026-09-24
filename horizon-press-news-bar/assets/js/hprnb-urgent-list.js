@@ -19,8 +19,8 @@
 		}
 	}
 
-	/** Shows an error under the switch until the next click. */
-	function fail(cell, button) {
+	/** Shows an error under the switch until the next click, with the server's reason when it gave one. */
+	function fail(cell, button, detail) {
 		var old = cell.querySelector('.hprnb-urgent-cell__error');
 		if (!old) {
 			old = document.createElement('span');
@@ -28,7 +28,7 @@
 			old.setAttribute('role', 'alert');
 			cell.appendChild(old);
 		}
-		old.textContent = i18n.error || 'Error';
+		old.textContent = (i18n.error || 'Error') + (detail ? ' ' + detail : '');
 		button.focus();
 	}
 
@@ -63,7 +63,9 @@
 		}).then(function (response) {
 			return response.json().then(function (data) {
 				if (!response.ok || !data || typeof data.html !== 'string') {
-					throw new Error((data && data.message) || String(response.status));
+					var refused = new Error('hprnb-urgent');
+					refused.detail = data && typeof data.message === 'string' ? data.message : '';
+					throw refused;
 				}
 				return data;
 			});
@@ -86,12 +88,14 @@
 				count.textContent = String(data.count);
 			});
 			speak(data.state === 'active' ? i18n.on : (data.state === 'armed' ? i18n.armed : i18n.off));
-		}).catch(function () {
+		}).catch(function (reason) {
+			// A network failure, a page that is not JSON, or a refusal: the cell was never touched.
+			var detail = reason && typeof reason.detail === 'string' ? reason.detail : '';
 			button.removeAttribute('aria-busy');
 			button.classList.remove('is-busy');
 			cell.classList.remove('is-busy');
-			fail(cell, button);
-			speak(i18n.error, 'assertive');
+			fail(cell, button, detail);
+			speak((i18n.error || '') + (detail ? ' ' + detail : ''), 'assertive');
 		});
 	}
 

@@ -53,6 +53,16 @@ final class Urgent_List {
 	const MAX = 500;
 
 	/**
+	 * The lightning of a ticked article (inline: no emoji, which WordPress may turn into a remote picture).
+	 */
+	const ICON_ON = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false"><path d="M9.5 1 3 9h4.2L6.5 15 13 7H8.8L9.5 1Z" fill="currentColor"/></svg>';
+
+	/**
+	 * The ring of an article not ticked.
+	 */
+	const ICON_OFF = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.25" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+
+	/**
 	 * IDs of the articles ticked, per request.
 	 *
 	 * @var int[]|null
@@ -157,9 +167,7 @@ final class Urgent_List {
 		} elseif ( 'armed' === $state ) {
 			$note = __( 'when published', 'horizon-press-news-bar' );
 		}
-		$icon = $on
-			? '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false"><path d="M9.5 1 3 9h4.2L6.5 15 13 7H8.8L9.5 1Z" fill="currentColor"/></svg>'
-			: '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.25" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+		$icon = $on ? self::ICON_ON : self::ICON_OFF;
 		$text = $on ? __( 'URGENT', 'horizon-press-news-bar' ) : __( 'Urgent', 'horizon-press-news-bar' );
 
 		$html = '<div class="hprnb-urgent-cell" data-hprnb-state="' . esc_attr( $state ) . '">';
@@ -202,11 +210,19 @@ final class Urgent_List {
 	}
 
 	/**
-	 * Whether the current screen is Posts → All Posts.
+	 * Whether the current screen is Posts → All Posts — or Quick Edit rendering one of its rows again
+	 * over admin-ajax, which sets no current screen but names the list's.
 	 *
 	 * @return bool
 	 */
 	private static function list_screen(): bool {
+		if ( wp_doing_ajax() ) {
+			// phpcs:disable WordPress.Security.NonceVerification.Missing -- Core checked Quick Edit's nonce before rendering the row; this only picks a class.
+			return isset( $_POST['action'], $_POST['screen'] )
+				&& 'inline-save' === sanitize_key( wp_unslash( $_POST['action'] ) )
+				&& 'edit-post' === sanitize_key( wp_unslash( $_POST['screen'] ) );
+			// phpcs:enable WordPress.Security.NonceVerification.Missing
+		}
 		if ( ! function_exists( 'get_current_screen' ) ) {
 			return false;
 		}
@@ -215,8 +231,9 @@ final class Urgent_List {
 	}
 
 	/**
-	 * IDs of the articles ticked: in the red bar now, or waiting for their publication. Two lookups on
-	 * one meta key each (indexed), never the whole table.
+	 * IDs of the articles ticked that the current user may read (as the list itself): in the red bar
+	 * now, or waiting for their publication. Two lookups on one meta key each (indexed), never the
+	 * whole table.
 	 *
 	 * @return int[]
 	 */
@@ -226,7 +243,9 @@ final class Urgent_List {
 		}
 		$base      = array(
 			'post_type'              => 'post',
-			'post_status'            => 'any',
+			// The statuses of the list's "All" view, private ones only when readable (as 'any' would not do).
+			'post_status'            => array_values( get_post_stati( array( 'show_in_admin_all_list' => true ) ) ),
+			'perm'                   => 'readable',
 			'fields'                 => 'ids',
 			'posts_per_page'         => self::MAX,
 			'no_found_rows'          => true,
@@ -302,12 +321,12 @@ final class Urgent_List {
 		);
 		$count                 = count( self::ticked_ids() );
 		$views[ self::COLUMN ] = sprintf(
-			'<a href="%1$s" class="hprnb-urgent-view%2$s"%3$s>%4$s <span class="count">(<span class="hprnb-urgent-count">%5$s</span>)</span></a>',
+			'<a href="%1$s" class="hprnb-urgent-view%2$s"%3$s>%4$s%5$s <span class="count">(<span class="hprnb-urgent-count">%6$s</span>)</span></a>',
 			esc_url( $url ),
 			$current ? ' current' : '',
 			$current ? ' aria-current="page"' : '',
-			/* translators: the view of Posts → All Posts listing the urgent articles. */
-			esc_html__( '⚡ Urgent', 'horizon-press-news-bar' ),
+			self::ICON_ON,
+			esc_html_x( 'Urgent', 'view of Posts → All Posts listing the urgent articles', 'horizon-press-news-bar' ),
 			esc_html( number_format_i18n( $count ) )
 		);
 		return $views;
@@ -359,7 +378,7 @@ final class Urgent_List {
 		wp_add_inline_style(
 			'hprnb-urgent-list',
 			sprintf(
-				'.wp-list-table{--hprnb-ul-red:%1$s;--hprnb-ul-ink:%2$s}',
+				'.wp-list-table,.hprnb-urgent-view{--hprnb-ul-red:%1$s;--hprnb-ul-ink:%2$s}',
 				esc_html( (string) $settings['urgent_bg_color'] ),
 				esc_html( (string) $settings['urgent_text_color'] )
 			)
