@@ -465,15 +465,17 @@ final class Renderer {
 	 * before the script measures it: the bar is as tall as its longest headline, whole (they all share
 	 * one cell), estimated from its length for a common screen. Phone: the 44px row of the label, the
 	 * lines, 12px under them. Desktop: 12px above and under the lines, never under the one-line bar.
+	 * Short screen ('s', a phone in landscape): one row, the phone's size, a wider line.
 	 * The script then keeps the height it measures (only the space under the page may move once).
 	 *
 	 * @param array  $settings Settings.
 	 * @param array  $payload  Payload as the page shows it (urgent_items, urgent_here).
-	 * @param string $p        'd' or 'm'.
+	 * @param string $p        'd', 'm' or 's'.
 	 * @return int
 	 */
 	public static function breaking_height( array $settings, array $payload, string $p ): int {
-		$phone = 'm' === $p;
+		$phone = 'd' !== $p;
+		$row   = 'm' !== $p;
 		$font  = self::urgent_font( $settings, $phone ? 'm' : 'd' );
 		$here  = (int) ( $payload['urgent_here'] ?? 0 );
 		// Taller lines in a right-to-left bar, for the marks above and below the letters.
@@ -485,14 +487,15 @@ final class Renderer {
 			}
 			$title  = html_entity_decode( wp_strip_all_tags( (string) ( $item['title'] ?? '' ) ), ENT_QUOTES, 'UTF-8' );
 			$joined = 1 === preg_match( '/[\x{0590}-\x{08FF}\x{FB1D}-\x{FDFF}\x{FE70}-\x{FEFF}]/u', $title );
-			// Letters a line holds at 17px: 37 on a 390px phone, 95 beside the label on a 1366px screen.
-			$per   = (int) floor( ( $phone ? ( $joined ? 42 : 37 ) : ( $joined ? 125 : 95 ) ) * 17 / $font );
+			// Letters a line holds at 17px: 37 on a 390px phone, 45 beside the label on a phone in
+			// landscape, 95 beside the label on a 1366px screen.
+			$per   = (int) floor( ( 'm' === $p ? ( $joined ? 42 : 37 ) : ( 's' === $p ? ( $joined ? 52 : 45 ) : ( $joined ? 125 : 95 ) ) ) * 17 / $font );
 			$lines = max( $lines, (int) ceil( mb_strlen( $title ) / max( 1, $per ) ) );
 		}
 		if ( $lines < 1 ) {
-			return self::urgent_height( $settings, $p );
+			return self::urgent_height( $settings, $row ? 'd' : 'm' );
 		}
-		return $phone ? 56 + $lines * $line : max( self::urgent_height( $settings, 'd' ), 24 + $lines * $line );
+		return $row ? max( self::urgent_height( $settings, 'd' ), 24 + $lines * $line ) : 56 + $lines * $line;
 	}
 
 	/**
@@ -748,7 +751,8 @@ final class Renderer {
 	 * @return int
 	 */
 	public static function urgent_height( array $settings, string $p ): int {
-		if ( 'm' === $p || 'mobile' === ( $settings['urgent_desktop_layout'] ?? 'line' ) ) {
+		// The chyron's phone design on desktop (2.15) is not the Breaking News design's (2.17).
+		if ( 'm' === $p || ( ! self::urgent_breaking( $settings ) && 'mobile' === ( $settings['urgent_desktop_layout'] ?? 'line' ) ) ) {
 			return self::urgent_metrics( $settings )['height'];
 		}
 		return max( self::URGENT_D_MIN, (int) ( $settings['bar_height'] ?? 40 ), (int) ceil( self::urgent_font( $settings, 'd' ) * self::LINE_HEIGHT ) + 2 * self::URGENT_PAD );

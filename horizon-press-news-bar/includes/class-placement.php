@@ -122,7 +122,9 @@ final class Placement {
 			return $content;
 		}
 
-		$payload = Payload::get( $settings );
+		// As the page shows it, like the body classes and the reserved heights: without the article being
+		// read in the URGENT bar (2.17).
+		$payload = Frontend::shown_payload();
 		if ( 'php' === $settings['render_mode'] && (int) $payload['count'] < 1 ) {
 			return $content;
 		}

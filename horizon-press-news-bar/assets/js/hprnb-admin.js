@@ -303,7 +303,7 @@
 		var uLines = clampInt( 'mobile_lines', 1, 2, 2 );
 		var uLine = Math.round( uFsM * 1.4 );
 		var uHm = Math.max( parseInt( valueOf( 'mobile_bar_height' ), 10 ) || 76, uLines * uLine + 24 );
-		var uHd = valueOf( 'urgent_desktop_layout' ) === 'mobile' ? uHm : Math.max( 48, minHeight, Math.ceil( uFsD * LINE_HEIGHT ) + 24 );
+		var uHd = ( ! breaking && valueOf( 'urgent_desktop_layout' ) === 'mobile' ) ? uHm : Math.max( 48, minHeight, Math.ceil( uFsD * LINE_HEIGHT ) + 24 );
 		[ [ '--hprnb-u-fs', uFsD + 'px' ], [ '--hprnb-u-m-fs', uFsM + 'px' ], [ '--hprnb-u-line', uLine + 'px' ], [ '--hprnb-u-lines', String( uLines ) ], [ '--hprnb-u-pad', Math.floor( ( uHm - uLines * uLine ) / 2 ) + 'px' ], [ '--hprnb-u-height', uHd + 'px' ], [ '--hprnb-u-m-height', uHm + 'px' ] ].forEach( function ( pair ) {
 			previewRoot.style.setProperty( pair[ 0 ], pair[ 1 ] );
 		} );

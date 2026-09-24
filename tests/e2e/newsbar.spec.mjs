@@ -3188,14 +3188,17 @@ test( 'v2.17: Breaking News — each whole headline typed in, held, then the nex
 		expect( next.at - whole.at ).toBeGreaterThanOrEqual( 5000 );
 		expect( samples.some( ( s ) => s.id === ids[ 0 ] && s.typed > 0 ) ).toBe( true );
 
-		// Keyboard: the link of the headline takes a visible focus, the headline is whole at once and stays.
+		// Keyboard: the link of the headline takes a visible focus; while it types, the headline is whole at once, and stays.
 		const link = urgent.locator( '.hprnb-bar__item.is-current .hprnb-bar__link' );
 		for ( let k = 0; k < 80; k++ ) {
 			await page.keyboard.press( 'Tab' );
-			if ( await page.evaluate( () => !! document.activeElement.closest( '.hprnb-bar--urgent .hprnb-bar__item.is-current' ) ) ) {
+			if ( await page.evaluate( () => !! document.activeElement.closest( '.hprnb-bar--urgent .hprnb-bar__viewport' ) ) ) {
 				break;
 			}
 		}
+		await page.keyboard.press( 'Shift+Tab' );
+		await expect.poll( async () => ( await state() ).typed, { intervals: [ 30 ], timeout: 15000 } ).toBeGreaterThan( 0 );
+		await page.keyboard.press( 'Tab' );
 		await expect( link ).toBeFocused();
 		const focused = await state();
 		expect( focused.typed ).toBe( -1 );
@@ -3204,8 +3207,14 @@ test( 'v2.17: Breaking News — each whole headline typed in, held, then the nex
 		expect( ( await state() ).id ).toBe( focused.id );
 		expect( errors ).toEqual( [] );
 
-		// One headline: typed once, then it stays — no pause button, no second typing.
+		// One headline: typed once, then it stays — no pause button (on desktop too, where it shows
+		// with several), no second typing.
 		flag( ids[ 1 ], t - 30, t - 1 );
+		await page.setViewportSize( { width: 1366, height: 900 } );
+		await page.goto( '/' );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( urgent.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden();
+		await page.setViewportSize( { width: 390, height: 844 } );
 		await page.goto( '/' );
 		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
 		await expect( urgent.locator( '.hprnb-bar__btn--toggle' ) ).toBeHidden();
@@ -3217,29 +3226,46 @@ test( 'v2.17: Breaking News — each whole headline typed in, held, then the nex
 			expect( ( await state() ).typed ).toBe( -1 );
 		}
 
-		// Reduced motion: the whole headline at once, never typed.
+		// Reduced motion, then forced colours: every headline whole at once, the next one too, without a fade.
 		flag( ids[ 1 ], t - 30, t + 900 );
-		await page.emulateMedia( { reducedMotion: 'reduce' } );
-		await page.goto( '/' );
-		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
-		for ( let k = 0; k < 8; k++ ) {
-			expect( ( await state() ).typed ).toBe( -1 );
-			await page.waitForTimeout( 150 );
+		for ( const media of [ { reducedMotion: 'reduce' }, { forcedColors: 'active' } ] ) {
+			await page.emulateMedia( media );
+			await page.goto( '/' );
+			await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+			const first = ( await state() ).id;
+			let second = false;
+			for ( let k = 0; k < 90 && ! second; k++ ) {
+				const now = await state();
+				expect( now.typed ).toBe( -1 );
+				expect( await urgent.evaluate( ( el ) => el.querySelectorAll( '.is-leaving' ).length ) ).toBe( 0 );
+				second = now.id !== first;
+				await page.waitForTimeout( 150 );
+			}
+			expect( second ).toBe( true );
+			await page.emulateMedia( { reducedMotion: 'no-preference', forcedColors: 'none' } );
 		}
-		await page.emulateMedia( { reducedMotion: 'no-preference' } );
 
-		// Desktop, a long headline: whole, clear of the label and of the close button.
+		// The long headline, on desktop and on a phone: whole inside the band, clear of the label and of the buttons.
+		for ( const width of [ 1366, 390 ] ) {
+			await page.setViewportSize( { width, height: 900 } );
+			await page.goto( '/' );
+			await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+			const box = await urgent.evaluate( ( el, id ) => {
+				const r = ( s ) => el.querySelector( s ).getBoundingClientRect();
+				const lines = [ ...el.querySelector( '.hprnb-bar__item[data-hprnb-id="' + id + '"] .hprnb-bar__title' ).getClientRects() ];
+				return { band: el.getBoundingClientRect(), label: r( '.hprnb-bar__label' ), close: r( '.hprnb-bar__btn--close' ), left: Math.min( ...lines.map( ( l ) => l.left ) ), right: Math.max( ...lines.map( ( l ) => l.right ) ), top: Math.min( ...lines.map( ( l ) => l.top ) ), bottom: Math.max( ...lines.map( ( l ) => l.bottom ) ), lines: lines.length };
+			}, ids[ 1 ] );
+			expect( box.lines ).toBeGreaterThan( 1 );
+			expect( box.bottom ).toBeLessThanOrEqual( box.band.bottom );
+			expect( box.right ).toBeLessThanOrEqual( box.band.right );
+			if ( width > 600 ) {
+				expect( box.left ).toBeGreaterThanOrEqual( box.label.right );
+				expect( box.right ).toBeLessThanOrEqual( box.close.left );
+			} else {
+				expect( box.top ).toBeGreaterThanOrEqual( Math.max( box.label.bottom, box.close.bottom ) - 1 );
+			}
+		}
 		await page.setViewportSize( { width: 1366, height: 900 } );
-		await page.goto( '/' );
-		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
-		const box = await urgent.evaluate( ( el ) => {
-			const r = ( s ) => el.querySelector( s ).getBoundingClientRect();
-			const title = el.querySelector( '.hprnb-bar__item.is-current .hprnb-bar__title' );
-			return { label: r( '.hprnb-bar__label' ), title: title.getBoundingClientRect(), close: r( '.hprnb-bar__btn--close' ), fits: title.scrollHeight <= title.clientHeight + 1 && title.scrollWidth <= title.clientWidth + 1 };
-		} );
-		expect( box.fits ).toBe( true );
-		expect( box.title.left ).toBeGreaterThanOrEqual( box.label.right );
-		expect( box.title.right ).toBeLessThanOrEqual( box.close.left );
 
 		// The chyron is still there to choose.
 		setDefaultSettings( { urgent_design: 'chyron' } );
@@ -3327,6 +3353,10 @@ test( 'v2.17: Breaking News engine — the pause button completes the headline, 
 		await typing( page );
 		await urgent.locator( '.hprnb-bar__label' ).hover();
 		const hovered = await state( page );
+		expect( hovered.typed ).toBeGreaterThan( 0 );
+		await page.waitForTimeout( 150 );
+		const later = await state( page );
+		expect( later.typed ).toBeGreaterThan( hovered.typed ); // Still typing under the mouse (the headline takes 2.6s).
 		await expect.poll( async () => ( await state( page ) ).typed, { timeout: 4000 } ).toBe( -1 );
 		await page.waitForTimeout( 8000 );
 		expect( ( await state( page ) ).id ).toBe( hovered.id );
@@ -3376,6 +3406,222 @@ test( 'v2.17: Breaking News engine — the pause button completes the headline, 
 		expect( await state( page ) ).toMatchObject( { spans: 0, text: titles[ 1 ] } );
 		expect( errors ).toEqual( [] );
 		await context.close();
+	} finally {
+		wp( [ 'post', 'delete', ...ids, '--force' ] );
+		setSettings( {} );
+	}
+} );
+
+test( 'v2.17 review: analytics of the headline shown, closing mid-typing, no phone tab, re-init keeps the headline, the article being read closed and expiring, the news bar waiting and closed, first paint, long words, hybrid estimate', async ( { browser } ) => {
+	const now = () => Math.floor( Date.now() / 1000 );
+	const flag = ( id, since, until ) => {
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_since', String( since ) ] );
+		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_until', String( until ) ] );
+		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+	};
+	const body = '<p>Paragraphe de lecture, assez long pour donner de la hauteur à la page.</p>'.repeat( 12 );
+	const post = ( title ) => wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=' + title, '--post_content=' + body, '--porcelain' ] );
+	const ids = [];
+	const state = ( page ) => page.evaluate( () => {
+		const u = document.querySelector( '.hprnb-bar--urgent' );
+		const li = u && u.querySelector( '.hprnb-bar__item.is-current' );
+		const title = li && li.querySelector( '.hprnb-bar__title' );
+		let typed = -1;
+		const rest = title && CSS.highlights && CSS.highlights.get( 'hprnb-u-bn-rest' );
+		for ( const range of rest || [] ) {
+			if ( title.contains( range.startContainer ) ) {
+				typed = range.startOffset;
+			}
+		}
+		return { id: li ? li.getAttribute( 'data-hprnb-id' ) : null, typed, marks: CSS.highlights ? CSS.highlights.size : -1 };
+	} );
+	const open = async ( width, path = '/', init = null, waitUntil = 'load' ) => {
+		const context = await browser.newContext( { viewport: { width, height: 900 } } );
+		const page = await context.newPage();
+		const errors = collectErrors( page );
+		await page.addInitScript( () => {
+			window.dataLayer = [];
+		} );
+		if ( init ) {
+			await init( page );
+		}
+		await page.goto( path, { waitUntil } );
+		return { context, page, errors, urgent: page.locator( '.hprnb-bar--urgent' ), root: page.locator( '#hprnb-root' ) };
+	};
+	const jsClick = ( page, selector ) => page.evaluate( ( sel ) => document.querySelector( sel ).click(), selector );
+	try {
+		setDefaultSettings();
+		const x = post( 'Flash X — le premier' );
+		const y = post( 'Flash Y — le second' );
+		ids.push( x, y );
+		let t = now();
+		flag( x, t - 60, t + 900 );
+		flag( y, t - 30, t + 900 );
+
+		// Analytics name the headline on screen; closing while it types leaves no highlight, no timer.
+		let { context, page, errors, urgent } = await open( 1366 );
+		await expect.poll( async () => ( await state( page ) ).id, { timeout: 15000 } ).toBe( x );
+		await expect.poll( async () => ( await state( page ) ).typed, { intervals: [ 30 ], timeout: 3000 } ).toBeGreaterThan( 0 );
+		await jsClick( page, '.hprnb-bar--urgent .hprnb-bar__btn--close' );
+		await expect( urgent ).toHaveCount( 0 );
+		expect( await page.evaluate( () => CSS.highlights.size ) ).toBe( 0 );
+		const closed = await page.evaluate( () => window.dataLayer.filter( ( r ) => r.event === 'hprnb_close' ).map( ( r ) => String( r.recommended_article_id ) ) );
+		expect( closed ).toEqual( [ x ] );
+		await page.waitForTimeout( 6000 );
+		expect( await page.evaluate( () => CSS.highlights.size ) ).toBe( 0 );
+		expect( errors ).toEqual( [] );
+		await context.close();
+
+		// A re-initialisation (a resize across 768px, a list refreshed, a navigation) never types the headline again.
+		( { context, page, errors, urgent } = await open( 1366 ) );
+		await expect.poll( async () => ( await state( page ) ).typed, { intervals: [ 30 ], timeout: 5000 } ).toBeGreaterThan( 0 );
+		const typing = await state( page );
+		await page.evaluate( () => {
+			const root = document.getElementById( 'hprnb-root' );
+			window.hprnbBar.destroy( root );
+			window.hprnbBar.init( root );
+		} );
+		expect( await state( page ) ).toMatchObject( { id: typing.id, typed: -1 } );
+		await page.waitForTimeout( 1000 );
+		await page.evaluate( () => {
+			const root = document.getElementById( 'hprnb-root' );
+			window.hprnbBar.destroy( root );
+			window.hprnbBar.init( root );
+		} );
+		for ( let k = 0; k < 6; k++ ) {
+			expect( await state( page ) ).toMatchObject( { id: typing.id, typed: -1 } );
+			await page.waitForTimeout( 200 );
+		}
+		expect( errors ).toEqual( [] );
+		await context.close();
+
+		// A phone: the buttons are in the band, so no tab is announced to the theme.
+		( { context, page, errors, urgent } = await open( 390 ) );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		expect( await page.evaluate( () => [ window.hprnbBar.state().tab, getComputedStyle( document.body ).getPropertyValue( '--hprnb-tab' ).trim() ] ) ).toEqual( [ 0, '0px' ] );
+		await context.close();
+
+		// Hybrid, the server's markup kept: until the bar script measures, the page keeps the height the
+		// server estimated for Breaking News (not the chyron's).
+		( { context, page, errors, urgent } = await open( 390, '/', ( p ) => p.route( '**/hprnb-bar.min.js*', async ( route ) => {
+			await new Promise( ( resolve ) => setTimeout( resolve, 2500 ) );
+			await route.continue();
+		} ), 'commit' ) );
+		await page.waitForFunction( () => document.readyState !== 'loading' && document.body.classList.contains( 'hprnb-reserve' ) );
+		await page.waitForTimeout( 300 );
+		const early = await page.evaluate( () => ( { init: !! document.querySelector( '.hprnb-bar--urgent[data-hprnb-init]' ), inline: document.body.style.getPropertyValue( '--hprnb-m-height' ), pad: getComputedStyle( document.body ).paddingBottom, css: [ ...document.querySelectorAll( 'style' ) ].map( ( el ) => el.textContent ).join( '' ).match( /--hprnb-m-height:(\d+)px/ )[ 1 ] } ) );
+		expect( early ).toMatchObject( { init: false, inline: '', pad: early.css + 'px' } );
+		await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect.poll( () => page.evaluate( () => Math.round( parseFloat( getComputedStyle( document.body ).paddingBottom ) - document.querySelector( '.hprnb-bar--urgent' ).getBoundingClientRect().height ) ) ).toBe( 0 );
+		expect( errors ).toEqual( [] );
+		await context.close();
+
+		// The article being read with the newest flag: closing the bar there closes the whole set.
+		const pathY = new URL( wp( [ 'post', 'url', y ] ) ).pathname;
+		( { context, page, errors, urgent } = await open( 1366, pathY ) );
+		await expect( urgent.locator( '.hprnb-bar__item.is-current' ) ).toHaveAttribute( 'data-hprnb-id', x );
+		await jsClick( page, '.hprnb-bar--urgent .hprnb-bar__btn--close' );
+		await expect( urgent ).toHaveCount( 0 );
+		await page.goto( '/' );
+		await expect( page.locator( '.hprnb-bar:not(.hprnb-bar--urgent)' ) ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await expect( urgent ).toHaveCount( 0 );
+		expect( errors ).toEqual( [] );
+		await context.close();
+
+		// Before the script, on Y's page with X left: no slot kept for the pause button (one headline).
+		( { context, page, errors, urgent } = await open( 1000, pathY, ( p ) => p.route( '**/hprnb-bar.min.js*', async ( route ) => {
+			await new Promise( ( resolve ) => setTimeout( resolve, 2000 ) );
+			await route.continue();
+		} ), 'commit' ) );
+		await page.waitForSelector( '.hprnb-bar--urgent .hprnb-bar__btn--toggle', { state: 'attached' } );
+		expect( await page.evaluate( () => [ !! document.querySelector( '.hprnb-bar--urgent[data-hprnb-init]' ), getComputedStyle( document.querySelector( '.hprnb-bar--urgent .hprnb-bar__btn--toggle' ) ).display ] ) ).toEqual( [ false, 'none' ] );
+		await context.close();
+
+		// The other headline expires while the reader is on Y: the bar is parked, not removed, and comes
+		// back with Y when the theme moves on without a reload; the news bar keeps its wait meanwhile.
+		setDefaultSettings( { desktop_reveal_mode: 'scroll', desktop_reveal_value: 400 } );
+		t = now();
+		flag( x, t - 60, t + 7 );
+		flag( y, t - 30, t + 900 );
+		( { context, page, errors, urgent } = await open( 1366, pathY ) );
+		const root = page.locator( '#hprnb-root' );
+		await expect( root ).toHaveClass( /hprnb-root--urgent/ );
+		await expect( root ).not.toHaveClass( /hprnb-root--urgent/, { timeout: 15000 } );
+		await expect( urgent ).toHaveCount( 1 );
+		await expect( root ).toHaveClass( /hprnb-root--d-pending/ );
+		await page.evaluate( () => history.pushState( {}, '', '/?hprnb-next-article=4' ) );
+		await expect( root ).toHaveClass( /hprnb-root--urgent/ );
+		await expect( urgent.locator( '.hprnb-bar__item.is-current' ) ).toHaveAttribute( 'data-hprnb-id', y );
+		expect( errors ).toEqual( [] );
+		await context.close();
+
+		// Y the only urgent article, the news bar shown on its page, then closed: back on Y after another
+		// article, nothing shows and no space is kept.
+		setDefaultSettings();
+		flag( x, t - 60, t - 1 );
+		( { context, page, errors, urgent } = await open( 1366, pathY ) );
+		const news = page.locator( '.hprnb-bar:not(.hprnb-bar--urgent)' );
+		await expect( news ).toHaveAttribute( 'data-hprnb-init', '1' );
+		await news.locator( '.hprnb-bar__btn--close' ).click();
+		await page.evaluate( () => history.pushState( {}, '', '/?hprnb-next-article=5' ) );
+		await expect( page.locator( '#hprnb-root' ) ).toHaveClass( /hprnb-root--urgent/ );
+		await page.evaluate( ( path ) => history.pushState( {}, '', path ), pathY );
+		await expect( page.locator( '#hprnb-root' ) ).toBeHidden();
+		expect( await page.evaluate( () => [ document.body.classList.contains( 'hprnb-reserve' ), getComputedStyle( document.body ).paddingBottom ] ) ).toEqual( [ false, '0px' ] );
+		expect( errors ).toEqual( [] );
+		await context.close();
+
+		// Hybrid, Y's page from a page cache made before Y was flagged: the refreshed payload names Y, the
+		// bootstrap sets it aside before painting — the red bar never shows on Y itself.
+		wp( [ 'post', 'meta', 'delete', y, '_hprnb_urgent_since' ] );
+		wp( [ 'post', 'meta', 'delete', y, '_hprnb_urgent_until' ] );
+		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+		const cached = ( await ( await browser.newContext() ).request.get( pathY ) ).text();
+		// Cached without the bar script: the bootstrap injects it, and paints before it arrives.
+		const stale = ( await cached ).replace( /data-hprnb-generated="\d+"/, 'data-hprnb-generated="' + ( now() - 3600 ) + '"' ).replace( /<script[^>]*id="hprnb-bar-js"[^>]*><\/script>/, '' );
+		expect( stale ).not.toContain( 'hprnb-bar--urgent' );
+		expect( stale ).not.toContain( 'hprnb-bar-js' );
+		t = now();
+		flag( y, t - 30, t + 900 );
+		( { context, page, errors, urgent } = await open( 1366, pathY, async ( p ) => {
+			await p.addInitScript( () => {
+				new MutationObserver( () => {
+					const r = document.getElementById( 'hprnb-root' );
+					if ( r && r.classList.contains( 'hprnb-root--urgent' ) ) {
+						window.hprnbSawUrgent = true;
+					}
+				} ).observe( document, { subtree: true, childList: true, attributes: true } );
+			} );
+			await p.route( ( url ) => url.pathname === pathY, ( route ) => route.fulfill( { status: 200, contentType: 'text/html; charset=UTF-8', body: stale } ) );
+		} ) );
+		await expect( urgent ).toHaveCount( 1 );
+		await page.waitForTimeout( 1500 );
+		expect( await page.evaluate( () => [ !! window.hprnbSawUrgent, document.getElementById( 'hprnb-root' ).getAttribute( 'data-hprnb-urgent' ) ] ) ).toEqual( [ false, '0' ] );
+		await page.evaluate( () => history.pushState( {}, '', '/?hprnb-next-article=6' ) );
+		await expect( page.locator( '#hprnb-root' ) ).toHaveClass( /hprnb-root--urgent/ );
+		await expect( urgent.locator( '.hprnb-bar__item.is-current' ) ).toHaveAttribute( 'data-hprnb-id', y );
+		expect( errors ).toEqual( [] );
+		await context.close();
+
+		// A word longer than the line (a compound, an address): broken inside the headline's zone.
+		const z = post( 'Bundesverfassungsgerichtsentscheidungsbegründungsveröffentlichung https://example.org/un/tres/long/chemin/sans/aucun/espace' );
+		ids.push( z );
+		t = now();
+		flag( z, t - 10, t + 900 );
+		for ( const width of [ 390, 700 ] ) {
+			( { context, page, errors, urgent } = await open( width ) );
+			await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+			const fit = await urgent.evaluate( ( el, id ) => {
+				const li = el.querySelector( '.hprnb-bar__item[data-hprnb-id="' + id + '"]' );
+				const lines = [ ...li.querySelector( '.hprnb-bar__title' ).getClientRects() ];
+				const band = el.getBoundingClientRect();
+				const ctrl = el.querySelector( '.hprnb-bar__controls' ).getBoundingClientRect();
+				const right = Math.max( ...lines.map( ( r ) => r.right ) );
+				return { inBand: right <= band.right - 10 && Math.max( ...lines.map( ( r ) => r.bottom ) ) <= band.bottom, clearOfButtons: right <= ctrl.left || Math.min( ...lines.map( ( r ) => r.top ) ) >= ctrl.bottom };
+			}, z );
+			expect( fit ).toEqual( { inBand: true, clearOfButtons: true } );
+			await context.close();
+		}
 	} finally {
 		wp( [ 'post', 'delete', ...ids, '--force' ] );
 		setSettings( {} );

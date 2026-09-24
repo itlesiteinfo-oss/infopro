@@ -11,6 +11,7 @@ use HorizonPress\NewsBar\Assets;
 use HorizonPress\NewsBar\Frontend;
 use HorizonPress\NewsBar\Invalidation;
 use HorizonPress\NewsBar\Payload;
+use HorizonPress\NewsBar\Shortcode;
 use HorizonPress\NewsBar\Renderer;
 use HorizonPress\NewsBar\Settings;
 use HorizonPress\NewsBar\Urgent;
@@ -168,6 +169,77 @@ class Breaking_News_Test extends HPRNB_Test_Case {
 		$this->with_settings( array( 'urgent_design' => 'chyron' ) );
 		$this->page( home_url( '/' ) );
 		$this->assertStringContainsString( '--hprnb-height:48px;--hprnb-m-height:76px', implode( '', (array) wp_styles()->get_data( 'hprnb-bar', 'after' ) ) );
+	}
+
+	public function test_the_chyron_desktop_design_and_short_screens_leave_breaking_news_its_own_height() {
+		// The chyron's phone design on desktop (a setting hidden with Breaking News) no longer makes its band taller.
+		$settings = array_merge( Settings::get(), array( 'urgent_desktop_layout' => 'mobile' ) );
+		$this->assertSame( 48, Renderer::urgent_height( $settings, 'd' ) );
+		$this->assertSame( Renderer::urgent_height( $settings, 'm' ), Renderer::urgent_height( array_merge( $settings, array( 'urgent_design' => 'chyron' ) ), 'd' ), 'The chyron keeps it.' );
+
+		// A phone in landscape: one row, 45 letters a line at 17px.
+		$long = array(
+			'id'    => 1,
+			'title' => str_repeat( 'Le gouvernement annonce un plan ', 4 ),
+		);
+		$this->assertSame( 24 + 3 * 22, Renderer::breaking_height( Settings::get(), array( 'urgent_items' => array( $long ) ), 's' ) );
+		$this->urgent_post( $long['title'] );
+		$this->page( home_url( '/' ) );
+		$this->assertStringContainsString( '@media (max-height:480px) and (max-width:1023.98px){body.hprnb-reserve{--hprnb-m-height:90px !important}}', implode( '', (array) wp_styles()->get_data( 'hprnb-bar', 'after' ) ) );
+		$this->with_settings( array( 'urgent_design' => 'chyron' ) );
+		$this->page( home_url( '/' ) );
+		$this->assertStringNotContainsString( '@media (max-height:480px)', implode( '', (array) wp_styles()->get_data( 'hprnb-bar', 'after' ) ), 'The chyron keeps the short-screen 44px.' );
+	}
+
+	public function test_the_article_placement_and_the_shortcode_leave_out_the_article_being_read() {
+		$paragraphs = str_repeat( '<p>Un paragraphe de lecture.</p>', 6 );
+		$this->create_post_ago( 60, array( 'post_title' => 'Une actualité du jour' ) );
+		$only = $this->create_post_ago( 120, array( 'post_title' => 'Seul flash', 'post_content' => $paragraphs ) );
+		Invalidation::reset_guard();
+		Urgent::flag( $only, Settings::get() );
+		Payload::flush();
+		Invalidation::reset_guard();
+
+		// Inside the article: the same parked bar as in the footer, whose headline is marked.
+		$this->with_settings(
+			array(
+				'desktop_placement' => 'inline',
+				'mobile_placement'  => 'inline',
+			)
+		);
+		\HorizonPress\NewsBar\Placement::reset();
+		$this->go_to_front( get_permalink( $only ) );
+		the_post();
+		$html = apply_filters( 'the_content', get_the_content() );
+		$this->assertStringContainsString( 'id="hprnb-root"', $html );
+		$this->assertStringContainsString( 'data-hprnb-urgent="0"', $html );
+		$this->assertStringNotContainsString( 'hprnb-root--urgent', $html );
+		$this->assertStringContainsString( 'hprnb-bar__item--here', $html );
+		\HorizonPress\NewsBar\Placement::reset();
+
+		// The shortcode likewise, with the script that brings the bar back.
+		$this->with_settings( array( 'shortcode_enabled' => true ) );
+		$this->go_to_front( get_permalink( $only ) );
+		wp_scripts()->queue = array();
+		$html = do_shortcode( '[' . Shortcode::TAG . ']' );
+		$this->assertStringContainsString( 'data-hprnb-urgent="0"', $html );
+		$this->assertStringContainsString( 'hprnb-bar__item--here', $html );
+		$this->assertTrue( wp_script_is( 'hprnb-bar', 'enqueued' ) );
+	}
+
+	public function test_a_parked_bar_gets_the_theme_offset_for_when_it_comes_back() {
+		$only = $this->urgent_post( 'Seul flash' );
+		$this->with_settings( array( 'enabled' => false ) );
+		$page = $this->page( get_permalink( $only ) );
+		$this->assertContains( 'hprnb-theme-offset', $page['body'], 'Harmless without hprnb-reserve, which the script adds when the bar comes back.' );
+		$this->assertNotContains( 'hprnb-reserve', $page['body'] );
+		$this->with_settings(
+			array(
+				'enabled'      => false,
+				'theme_offset' => false,
+			)
+		);
+		$this->assertNotContains( 'hprnb-theme-offset', $this->page( get_permalink( $only ) )['body'] );
 	}
 
 	public function test_the_urgent_bar_markup_marks_only_the_article_given() {

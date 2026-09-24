@@ -101,10 +101,13 @@
 		/**
 		 * Reserve layout: copy the root's inline --hprnb-height onto <body>
 		 * (the body rule consumes it), then add body.hprnb-reserve — only when
-		 * a bar is actually present.
+		 * a bar is actually present (not a hidden root holding a parked bar, 2.17).
+		 *
+		 * @param {boolean} fresh The server's markup is kept: so is the height it printed for a
+		 *                        Breaking News bar (its longest headline), until the bar script measures it.
 		 */
-		function ensureLayout() {
-			if (root.dataset.hprnbLayout !== 'reserve' || !root.querySelector('.hprnb-bar')) {
+		function ensureLayout(fresh) {
+			if (root.dataset.hprnbLayout !== 'reserve' || root.hidden || !root.querySelector('.hprnb-bar')) {
 				return;
 			}
 			// Urgent articles in front (2.14): their bar has one height of its own on each device it is
@@ -112,12 +115,13 @@
 			var urgent = root.classList.contains('hprnb-root--urgent');
 			var ud = urgent && urgentOn('d');
 			var um = urgent && urgentOn('m');
+			var keep = fresh && urgent && root.classList.contains('hprnb-root--u-bn');
 			var height = root.style.getPropertyValue(ud ? '--hprnb-u-height' : '--hprnb-height') || root.style.getPropertyValue('--hprnb-height');
-			if (height) {
+			if (height && !(keep && ud)) {
 				document.body.style.setProperty('--hprnb-height', height);
 			}
 			var mobileHeight = root.style.getPropertyValue(um ? '--hprnb-u-m-height' : '--hprnb-m-height') || root.style.getPropertyValue('--hprnb-m-height');
-			if (mobileHeight) {
+			if (mobileHeight && !(keep && um)) {
 				document.body.style.setProperty('--hprnb-m-height', mobileHeight);
 			}
 			var gap = root.style.getPropertyValue('--hprnb-m-gap');
@@ -211,6 +215,13 @@
 			var known = devices && typeof devices === 'object';
 			var next = document.createElement('template');
 			next.innerHTML = (urgent ? p.urgent_html : '') + html;
+			// 2.17: the article being read is never announced (the server's rule): marked, not counted;
+			// with nothing left the URGENT bar is parked, still in the page for the next article.
+			var here = root.dataset.hprnbHere === '1' ? next.content.querySelector('.hprnb-bar--urgent .hprnb-bar__item[data-hprnb-id="' + (+root.dataset.hprnbPost || 0) + '"]') : null;
+			if (here) {
+				here.classList.add('hprnb-bar__item--here');
+				urgent--;
+			}
 			// Nothing new (same headlines, same devices): the bars already running keep going, without
 			// replaying their entrance.
 			if (signature(next.content) === ssrSig && (!known || ((devices.d !== false) === urgentOn('d') && (devices.m !== false) === urgentOn('m')))) {
@@ -241,10 +252,17 @@
 				root.dataset.hprnbUrgent = '0';
 				root.classList.remove('hprnb-root--urgent');
 				document.body.classList.remove('hprnb-reserve');
+				if (here) {
+					// Parked, hidden: the script brings it back when the theme moves on to another article.
+					ensureCss();
+					root.appendChild(next.content);
+					ensureJs();
+				}
 				return;
 			}
 			ensureCss();
-			root.innerHTML = (urgent ? p.urgent_html : '') + html;
+			root.innerHTML = '';
+			root.appendChild(next.content);
 			root.hidden = false;
 			root.dataset.hprnbEmpty = '0';
 			root.dataset.hprnbCount = String(html === '' ? 0 : p.count);
@@ -276,18 +294,19 @@
 
 		// 1. Fresh SSR: keep it, remember it for later pages when useful, stop.
 		if (age <= stale) {
-			ensureLayout();
+			ensureLayout(true);
 			var stored = readSession();
 			// Only a page that shows everything the payload carries may stand for the others.
 			if (show === 'all' && (!stored || stored.generated_at < ssrGen)) {
 				var ssrUrgent = root.querySelector('.hprnb-bar--urgent');
 				var ssrBar = root.querySelector('.hprnb-bar:not(.hprnb-bar--urgent)');
+				// The article being read (2.17) is only set aside on its own page: every headline counts for the others.
 				saveSession({
 					generated_at: ssrGen,
 					count: ssrBar ? (+root.dataset.hprnbCount || 1) : 0,
 					html: ssrBar ? ssrBar.outerHTML : '',
-					urgent_count: ssrUrgent ? (+root.dataset.hprnbUrgent || 1) : 0,
-					urgent_html: ssrUrgent ? ssrUrgent.outerHTML : '',
+					urgent_count: ssrUrgent ? ssrUrgent.querySelectorAll('.hprnb-bar__list > .hprnb-bar__item').length : 0,
+					urgent_html: ssrUrgent ? ssrUrgent.outerHTML.replace(/ hprnb-bar__item--here/g, '') : '',
 					urgent_devices: { d: urgentOn('d'), m: urgentOn('m') }
 				});
 			}

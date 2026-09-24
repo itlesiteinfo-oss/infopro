@@ -61,7 +61,8 @@ final class Shortcode {
 			return '';
 		}
 
-		$payload = Payload::get( $settings );
+		// Without the article being read in the URGENT bar (2.17), as the body classes have it.
+		$payload = Frontend::without_here( Payload::get( $settings ), $settings );
 		$count   = (int) $payload['count'];
 
 		if ( 'php' === $settings['render_mode'] && $count < 1 ) {
@@ -76,6 +77,9 @@ final class Shortcode {
 		}
 		if ( $count > 0 ) {
 			Frontend::enqueue_bar_assets( $settings );
+		}
+		if ( ! empty( $payload['urgent_here'] ) ) {
+			Assets::enqueue_bar_script(); // A parked URGENT bar comes back with the next article.
 		}
 
 		return Renderer::root( $payload, $settings );

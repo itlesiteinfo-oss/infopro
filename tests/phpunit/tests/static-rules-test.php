@@ -168,6 +168,14 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 		}
 	}
 
+	public function test_the_minified_scripts_are_ascii_only() {
+		// 2.17: a page whose charset is not UTF-8 decodes the scripts in its own: a raw non-ASCII
+		// character in a regular expression would break the whole script there.
+		foreach ( glob( HPRNB_PATH . 'assets/js/*.min.js' ) as $file ) {
+			$this->assertDoesNotMatchRegularExpression( '/[\x80-\xFF]/', (string) file_get_contents( $file ), basename( $file ) );
+		}
+	}
+
 	public function test_no_translation_before_init() {
 		$this->assertSame( 10, has_action( 'init', array( \HorizonPress\NewsBar\Plugin::instance(), 'load_textdomain' ) ) );
 		$this->assertFalse( has_action( 'plugins_loaded', array( \HorizonPress\NewsBar\Plugin::instance(), 'load_textdomain' ) ) );

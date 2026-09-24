@@ -2699,6 +2699,8 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 	color: inherit;
 	text-decoration: none;
 	white-space: normal;
+	/* A word longer than the line (a compound, an address) breaks instead of running under the buttons. */
+	overflow-wrap: anywhere;
 	text-wrap: pretty;
 }
 
@@ -2769,8 +2771,9 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 	visibility: hidden;
 }
 
-/* A single headline never rotates: no pause button, from the first paint. */
-.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not(:has(.hprnb-bar__item + .hprnb-bar__item)) .hprnb-bar__btn--toggle {
+/* A single headline never rotates: no pause button, from the first paint (the article being read,
+   set aside, does not count). */
+.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not(:has(.hprnb-bar__item:not(.hprnb-bar__item--here) ~ .hprnb-bar__item:not(.hprnb-bar__item--here))) .hprnb-bar__btn--toggle {
 	display: none;
 }
 
@@ -2896,5 +2899,13 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
 	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent :is(.hprnb-bar__label, .hprnb-bar__btn svg) {
 		outline: 1px solid CanvasText;
 		outline-offset: -1px;
+	}
+
+	/* The keyboard ring in the system colours too (the icon keeps its author colours otherwise). */
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__btn:focus-visible svg {
+		background: Canvas;
+		color: CanvasText;
+		outline: 2px solid CanvasText;
+		outline-offset: 2px;
 	}
 }

@@ -299,7 +299,7 @@ final class Settings_Page {
 					),
 					array(
 						'title'       => __( 'Colours of the URGENT bar', 'horizon-press-news-bar' ),
-						'description' => __( 'The red of the reference site and white text. The label is a plate in the two colours swapped, with a live dot; the headline is bold. The contrast of the pair is checked as you type. The preview on the right shows the bar while this tab is open.', 'horizon-press-news-bar' ),
+						'description' => __( 'The red of the reference site and white text. The label is a plate in the two colours swapped (with a live dot in the chyron); the headline is bold. The contrast of the pair is checked as you type. The preview on the right shows the bar while this tab is open.', 'horizon-press-news-bar' ),
 						'keys'        => array( 'urgent_bg_color', 'urgent_text_color' ),
 					),
 				),
@@ -1160,20 +1160,20 @@ final class Settings_Page {
 				'section' => 'urgent',
 				'type'    => 'text',
 				'label'   => __( 'Label of the red bar', 'horizon-press-news-bar' ),
-				'desc'    => __( 'In capitals on a plate before the headline, with a live dot. "URGENT" by default.', 'horizon-press-news-bar' ),
+				'desc'    => __( 'In capitals on the plate of the bar: the white cartouche of Breaking News, the plate with a live dot of the chyron. "URGENT" by default.', 'horizon-press-news-bar' ),
 				'attrs'   => array( 'maxlength' => 40 ),
 			),
 			'urgent_font_size'            => array(
 				'section' => 'urgent',
 				'type'    => 'number',
-				'label'   => __( 'Headline size on desktop (one line)', 'horizon-press-news-bar' ),
-				'desc'    => __( 'From 14 to 22 px, 17 by default. The bar is at least 48 px tall (more from 19 px, or with a taller news bar).', 'horizon-press-news-bar' ),
+				'label'   => __( 'Headline size on desktop', 'horizon-press-news-bar' ),
+				'desc'    => __( 'From 14 to 22 px, 17 by default. The bar is at least 48 px tall (more from 19 px, or with a taller news bar); Breaking News grows with its longest headline.', 'horizon-press-news-bar' ),
 			),
 			'urgent_mobile_font_size'     => array(
 				'section' => 'urgent',
 				'type'    => 'number',
 				'label'   => __( 'Headline size on phones', 'horizon-press-news-bar' ),
-				'desc'    => __( 'From 14 to 20 px, 17 by default; also used by the phone design on desktop. The bar keeps the height of the mobile news bar (76 px by default) while two lines fit in it.', 'horizon-press-news-bar' ),
+				'desc'    => __( 'From 14 to 20 px, 17 by default; also used by the chyron\'s phone design on desktop. Breaking News is as tall as its longest headline (78 px for one line at 17 px); the chyron keeps the height of the mobile news bar (76 px by default) while two lines fit in it.', 'horizon-press-news-bar' ),
 			),
 			'bar_font'                    => array(
 				'section' => 'appearance',

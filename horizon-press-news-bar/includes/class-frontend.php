@@ -253,6 +253,11 @@ final class Frontend {
 				$front['m'] ? 0 : Renderer::mobile_gap( $settings )
 			)
 		);
+		if ( $front['m'] && Renderer::urgent_breaking( $settings ) ) {
+			// A phone in landscape: the Breaking News bar keeps its headline whole there, not the
+			// one-line 44px of the short-screen rule (2.17).
+			wp_add_inline_style( 'hprnb-bar', sprintf( '@media (max-height:480px) and (max-width:1023.98px){body.hprnb-reserve{--hprnb-m-height:%dpx !important}}', Renderer::breaking_height( $settings, $payload, 's' ) ) );
+		}
 		if ( $urgent || Renderer::needs_interactive_js( $settings ) ) {
 			Assets::enqueue_bar_script();
 		}
@@ -310,7 +315,7 @@ final class Frontend {
 			return $classes;
 		}
 
-		$payload = self::renders() ? self::shown_payload() : Payload::get( $settings );
+		$payload = self::renders() ? self::shown_payload() : self::without_here( Payload::get( $settings ), $settings );
 		$urgent  = self::urgent_count( $payload ) > 0;
 		if ( ( (int) $payload['count'] > 0 || $urgent ) && ! in_array( 'hprnb-reserve', $classes, true ) ) {
 			$classes[] = 'hprnb-reserve';
@@ -326,6 +331,10 @@ final class Frontend {
 			if ( ! empty( self::$settings['theme_offset'] ) ) {
 				$classes[] = 'hprnb-theme-offset';
 			}
+		} elseif ( ! empty( $payload['urgent_here'] ) && ! empty( self::$settings['theme_offset'] ) && ! in_array( 'hprnb-theme-offset', $classes, true ) ) {
+			// A parked URGENT bar (2.17) comes back with the next article (the script then adds
+			// hprnb-reserve): the theme's corner buttons are lifted with it.
+			$classes[] = 'hprnb-theme-offset';
 		}
 		return $classes;
 	}

@@ -714,7 +714,9 @@
 		var sent = {};
 
 		function recommended() {
-			var item = aside.querySelector( '.hprnb-bar__item:not([hidden])' );
+			// The headline on screen: Breaking News marks it .is-current (its memory before it starts), rotation unhides it.
+			var memory = aside.hprnbBn;
+			var item = aside.querySelector( '.hprnb-bar__item.is-current' ) || ( memory && memory.id && aside.querySelector( '.hprnb-bar__item[data-hprnb-id="' + memory.id + '"]' ) ) || aside.querySelector( '.hprnb-bar__item:not([hidden])' );
 			return item ? ( parseInt( item.getAttribute( 'data-hprnb-id' ), 10 ) || 0 ) : 0;
 		}
 
@@ -1365,7 +1367,8 @@
 			// The two phone designs carry their buttons in a tab above the bar: what sits in the
 			// corner (Jannah's "go to top") must clear it too.
 			var controls = aside.querySelector( '.hprnb-bar__controls' );
-			var tabbed = ( !! state.urgent && !! state.uFlow ) || ( mobile && ( root.classList.contains( 'hprnb-root--m-ctrl-tab' ) || root.classList.contains( 'hprnb-root--m-card' ) ) );
+			// The URGENT bar has a tab in the chyron's phone design only (Breaking News keeps its buttons in the band).
+			var tabbed = state.urgent ? !! state.uFlow : ( mobile && ( root.classList.contains( 'hprnb-root--m-ctrl-tab' ) || root.classList.contains( 'hprnb-root--m-card' ) ) );
 			var tab = ( hidden || inflow || ! tabbed || ! controls ) ? 0 : controls.offsetHeight;
 			return { mobile: mobile, collapsed: collapsed, height: full, offset: offset, tab: tab };
 		}
@@ -1440,7 +1443,8 @@
 			if ( state.urgent ) {
 				// Closed for this set of urgent articles: a newer flag brings the red bar back.
 				try {
-					localStorage.setItem( URGENT_KEY, String( newestUrgent( aside.querySelectorAll( '.hprnb-bar__item' ) ) ) );
+					// The headline of the article being read, set aside (2.17), belongs to the set closed too.
+					localStorage.setItem( URGENT_KEY, String( newestUrgent( Array.prototype.slice.call( aside.querySelectorAll( '.hprnb-bar__item' ) ).concat( aside.hprnbOut || [] ) ) ) );
 				} catch ( e ) {
 					// Storage unavailable: closed for this page.
 				}
@@ -1807,10 +1811,14 @@
 		if ( root.classList.contains( 'hprnb-root--preview' ) ) {
 			return;
 		}
-		if ( ! root.querySelector( '.hprnb-bar:not(.hprnb-bar--urgent)' ) ) {
+		// A news bar the reader has closed does not count: nothing would show in the space kept.
+		if ( ! root.querySelector( '.hprnb-bar:not(.hprnb-bar--urgent):not([hidden])' ) ) {
 			root.hidden = true;
+			root.setAttribute( 'data-hprnb-empty', '1' );
 			document.body.classList.remove( 'hprnb-reserve' );
 		} else if ( was ) {
+			// The news bar takes the page as the server would have rendered it: with its wait.
+			restorePending( root );
 			reserveFor( root, false );
 		}
 	}
@@ -2031,7 +2039,8 @@
 			}
 			var before = aside.querySelectorAll( '.hprnb-bar__item' ).length;
 			if ( ! urgentLive( root, aside ) ) {
-				retireUrgent( root, aside );
+				// Nothing left on screen: init() parks the bar if the article being read is still urgent (2.17), retires it otherwise.
+				destroyAside( aside );
 				init( root );
 				return;
 			}
@@ -2140,11 +2149,11 @@
 		try {
 			return new RegExp( '[\\p{Script=Arabic}\\p{Script=Syriac}\\p{Script=Nko}\\p{Script=Mandaic}\\p{Script=Mongolian}\\p{Script=Phags_Pa}\\p{Script=Adlam}\\p{Script=Hebrew}]', 'u' );
 		} catch ( e ) {
-			return /[֐-ࣿ᠀-᢯ꡀ-꡿יִ-﷿ﹰ-﻿]/;
+			return /[\u0590-\u08FF\u1800-\u18AF\uA840-\uA87F\uFB1D-\uFDFF\uFE70-\uFEFF]/;
 		}
 	}() );
 
-	var BREATH = /[,;:.!?…،؛؟۔]\s*$/;
+	var BREATH = /[,;:.!?\u2026\u060C\u061B\u061F\u06D4]\s*$/;
 
 	/**
 	 * The graphemes of a text: an accented letter or an emoji is one.
@@ -2509,12 +2518,14 @@
 			var id = li.getAttribute( 'data-hprnb-id' );
 			var title = li.querySelector( '.hprnb-bar__title' );
 			var p = planOf( index );
-			// Already typed before a re-initialisation, already on screen, or nothing to type: whole at once.
-			var whole = still() || memory.late || ( memory.id === id && memory.done === id ) || ( ctrl && ctrl.paused() ) || ! p.times.length || ! title || ! reveal.attach( title );
+			// Already typed (or being typed) before a re-initialisation, already on screen, or nothing to type: whole at once.
+			var whole = still() || memory.late || ( memory.id === id && ( memory.done === id || memory.started === id ) ) || ( ctrl && ctrl.paused() ) || ! p.times.length || ! title || ! reveal.attach( title );
 			memory.late = false;
 			memory.id = id;
 			memory.done = null;
+			memory.started = null;
 			if ( ! whole ) {
+				memory.started = id;
 				// Everything transparent in the same task as the swap: one paint shows the empty headline.
 				reveal.set( 0, 0, 0, p.length );
 				shown = '0,0,0';
