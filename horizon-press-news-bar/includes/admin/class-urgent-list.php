@@ -167,11 +167,23 @@ final class Urgent_List {
 		} elseif ( 'armed' === $state ) {
 			$note = __( 'when published', 'horizon-press-news-bar' );
 		}
-		$icon = $on ? self::ICON_ON : self::ICON_OFF;
-		$text = $on ? __( 'URGENT', 'horizon-press-news-bar' ) : __( 'Urgent', 'horizon-press-news-bar' );
+		$icon   = $on ? self::ICON_ON : self::ICON_OFF;
+		$text   = $on ? __( 'URGENT', 'horizon-press-news-bar' ) : __( 'Urgent', 'horizon-press-news-bar' );
+		$locker = self::locked_by( $id );
+		if ( $locker ) {
+			// Someone has it open: their edit screen's box would write over the switch (as core hides Quick Edit).
+			$note = __( 'being edited', 'horizon-press-news-bar' );
+		}
 
-		$html = '<div class="hprnb-urgent-cell" data-hprnb-state="' . esc_attr( $state ) . '">';
-		if ( 'trash' !== $post->post_status && current_user_can( 'edit_post', $id ) ) {
+		// Seconds left in the red bar: the list asks the server again when they run out.
+		$left = 'active' === $state ? max( 0, Urgent::until( $id ) - time() ) : 0;
+		$html = sprintf(
+			'<div class="hprnb-urgent-cell" data-hprnb-post="%1$d" data-hprnb-state="%2$s"%3$s>',
+			$id,
+			esc_attr( $state ),
+			$left ? ' data-hprnb-left="' . (int) $left . '"' : ''
+		);
+		if ( 'trash' !== $post->post_status && ! $locker && current_user_can( 'edit_post', $id ) ) {
 			$html .= sprintf(
 				'<button type="button" class="hprnb-urgent-switch" aria-pressed="%1$s" aria-label="%2$s" data-hprnb-post="%3$d" data-hprnb-state="%4$s">%5$s<span class="hprnb-urgent-switch__text">%6$s</span></button>',
 				$on ? 'true' : 'false',
@@ -182,12 +194,43 @@ final class Urgent_List {
 				esc_html( $text )
 			);
 		} else {
-			$html .= sprintf( '<span class="hprnb-urgent-switch is-static" data-hprnb-state="%1$s">%2$s<span class="hprnb-urgent-switch__text">%3$s</span></span>', esc_attr( $state ), $icon, esc_html( $text ) );
+			// A badge, its state spelled out for screen readers (its looks carry it for the eye).
+			$spoken = array(
+				'active' => __( 'Urgent: in the red bar', 'horizon-press-news-bar' ),
+				'armed'  => __( 'Urgent: when published', 'horizon-press-news-bar' ),
+				'off'    => __( 'Not urgent', 'horizon-press-news-bar' ),
+			);
+			$html  .= sprintf(
+				'<span class="hprnb-urgent-switch is-static" data-hprnb-state="%1$s">%2$s<span class="hprnb-urgent-switch__text" aria-hidden="true">%3$s</span><span class="screen-reader-text">%4$s</span></span>',
+				esc_attr( $state ),
+				$icon,
+				esc_html( $text ),
+				esc_html( $spoken[ $state ] )
+			);
 		}
 		if ( '' !== $note ) {
 			$html .= '<span class="hprnb-urgent-cell__note">' . esc_html( $note ) . '</span>';
 		}
 		return $html . '</div>';
+	}
+
+	/**
+	 * Who else has the article open in its edit screen (its post lock, read as wp_check_post_lock()
+	 * does — that function is not loaded in REST requests): a user ID, 0 when nobody else.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return int
+	 */
+	public static function locked_by( int $post_id ): int {
+		$lock = explode( ':', (string) get_post_meta( $post_id, '_edit_lock', true ) );
+		$time = (int) $lock[0];
+		$user = isset( $lock[1] ) ? (int) $lock[1] : (int) get_post_meta( $post_id, '_edit_last', true );
+		/** This filter is documented in wp-admin/includes/ajax-actions.php */
+		$window = (int) apply_filters( 'wp_check_post_lock_window', 150 ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core's own filter, read as core reads it.
+		if ( ! $time || $time <= time() - $window || ! $user || get_current_user_id() === $user || ! get_userdata( $user ) ) {
+			return 0;
+		}
+		return $user;
 	}
 
 	/**
@@ -390,23 +433,44 @@ final class Urgent_List {
 			array(
 				'endpoint' => esc_url_raw( rest_url( Rest_Controller::NAMESPACE . '/urgent/' ) ),
 				'nonce'    => wp_create_nonce( 'wp_rest' ),
+				// Core's own renewal of an expired REST nonce (as wp.apiFetch does).
+				'renew'    => esc_url_raw( add_query_arg( 'action', 'rest-nonce', admin_url( 'admin-ajax.php' ) ) ),
 				'i18n'     => array(
-					'error'  => __( 'The Urgent switch could not be saved. Nothing was changed; please try again.', 'horizon-press-news-bar' ),
-					'on'     => __( 'Marked as urgent.', 'horizon-press-news-bar' ),
-					'armed'  => __( 'Marked as urgent: the countdown starts when it is published.', 'horizon-press-news-bar' ),
-					'off'    => __( 'No longer urgent.', 'horizon-press-news-bar' ),
-					'saving' => __( 'Saving…', 'horizon-press-news-bar' ),
+					'error'   => __( 'The Urgent switch could not be saved. Nothing was changed; please try again.', 'horizon-press-news-bar' ),
+					'refused' => __( 'The Urgent switch could not be saved; nothing was changed.', 'horizon-press-news-bar' ),
+					'unsure'  => __( 'The Urgent switch could not be confirmed. Reload the page to see what was saved.', 'horizon-press-news-bar' ),
+					'on'      => __( 'Marked as urgent.', 'horizon-press-news-bar' ),
+					'armed'   => __( 'Marked as urgent: the countdown starts when it is published.', 'horizon-press-news-bar' ),
+					'off'     => __( 'No longer urgent.', 'horizon-press-news-bar' ),
+					'saving'  => __( 'Saving…', 'horizon-press-news-bar' ),
 				),
 			)
 		);
 	}
 
 	/**
-	 * POST /hprnb/v1/urgent/<id> { urgent: bool }.
+	 * POST /hprnb/v1/urgent/<id> { urgent: bool } ticks or unticks; GET reads where the article stands
+	 * (after a reply that could not be read, and when a countdown runs out while the list is open).
 	 *
 	 * @return void
 	 */
 	public static function register_routes(): void {
+		register_rest_route(
+			Rest_Controller::NAMESPACE,
+			'/urgent/(?P<id>\d+)',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( self::class, 'read' ),
+				'permission_callback' => array( self::class, 'can_read' ),
+				'args'                => array(
+					'id' => array(
+						'type'     => 'integer',
+						'required' => true,
+						'minimum'  => 1,
+					),
+				),
+			)
+		);
 		register_rest_route(
 			Rest_Controller::NAMESPACE,
 			'/urgent/(?P<id>\d+)',
@@ -447,6 +511,54 @@ final class Urgent_List {
 	}
 
 	/**
+	 * Reading where an article stands: someone who works on the posts list and may read that article.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool|WP_Error
+	 */
+	public static function can_read( WP_REST_Request $request ) {
+		$post = get_post( (int) $request['id'] );
+		if ( ! $post instanceof WP_Post || 'post' !== $post->post_type ) {
+			return new WP_Error( 'hprnb_urgent_not_found', __( 'No such article.', 'horizon-press-news-bar' ), array( 'status' => 404 ) );
+		}
+		if ( ! current_user_can( 'edit_posts' ) || ! current_user_can( 'read_post', (int) $post->ID ) ) {
+			return new WP_Error( 'hprnb_urgent_forbidden', __( 'You may not edit this article.', 'horizon-press-news-bar' ), array( 'status' => rest_authorization_required_code() ) );
+		}
+		return true;
+	}
+
+	/**
+	 * Where the article stands, with its cell as the list renders it.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public static function read( WP_REST_Request $request ): WP_REST_Response {
+		self::reset();
+		return self::reply( get_post( (int) $request['id'] ) );
+	}
+
+	/**
+	 * The answer of both methods: the state, until when, the cell and the view's count.
+	 *
+	 * @param WP_Post $post The article.
+	 * @return WP_REST_Response
+	 */
+	private static function reply( WP_Post $post ): WP_REST_Response {
+		$state = Urgent::state( (int) $post->ID );
+		return new WP_REST_Response(
+			array(
+				'id'    => (int) $post->ID,
+				'state' => $state,
+				'until' => 'active' === $state ? Urgent::until( (int) $post->ID ) : 0,
+				'html'  => self::cell( $post ),
+				'count' => count( self::ticked_ids() ),
+			),
+			200
+		);
+	}
+
+	/**
 	 * Ticks or unticks the article (the rule of the edit screen's box: never a restart of a countdown
 	 * already running), and answers with its new cell, rendered as the list renders it.
 	 *
@@ -462,18 +574,18 @@ final class Urgent_List {
 		if ( ! $post instanceof WP_Post || 'trash' === $post->post_status ) {
 			return new WP_Error( 'hprnb_urgent_not_found', __( 'No such article.', 'horizon-press-news-bar' ), array( 'status' => 404 ) );
 		}
+		$locker = self::locked_by( (int) $post->ID );
+		if ( $locker ) {
+			$user = get_userdata( $locker );
+			return new WP_Error(
+				'hprnb_urgent_locked',
+				/* translators: 1: title of the article, 2: name of the user editing it. */
+				sprintf( __( '“%1$s” is being edited by %2$s: change it from its edit screen.', 'horizon-press-news-bar' ), wp_strip_all_tags( get_the_title( $post ) ), $user ? $user->display_name : '' ),
+				array( 'status' => 409 )
+			);
+		}
 		Urgent::apply( $post, (bool) $request['urgent'], false, $settings );
 		self::reset();
-		$state = Urgent::state( (int) $post->ID );
-		return new WP_REST_Response(
-			array(
-				'id'    => (int) $post->ID,
-				'state' => $state,
-				'until' => 'active' === $state ? Urgent::until( (int) $post->ID ) : 0,
-				'html'  => self::cell( $post ),
-				'count' => count( self::ticked_ids() ),
-			),
-			200
-		);
+		return self::reply( $post );
 	}
 }

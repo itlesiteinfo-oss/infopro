@@ -84,6 +84,86 @@ class Urgent_List_Test extends HPRNB_Test_Case {
 		$cell = Urgent_List::cell( get_post( $off ) );
 		$this->assertStringNotContainsString( '<button', $cell );
 		$this->assertStringContainsString( 'hprnb-urgent-switch is-static', $cell );
+		// Its state spelled out for screen readers.
+		$this->assertStringContainsString( '<span class="screen-reader-text">Urgent: in the red bar</span>', $cell );
+		$this->assertStringContainsString( '<span class="screen-reader-text">Not urgent</span>', Urgent_List::cell( get_post( self::factory()->post->create() ) ) );
+		$this->assertStringContainsString( '<span class="screen-reader-text">Urgent: when published</span>', Urgent_List::cell( get_post( $draft ) ) );
+	}
+
+	public function test_the_cell_says_how_long_is_left_and_an_unpublished_article_is_not_in_the_red_bar() {
+		$this->editor();
+		$post = self::factory()->post->create();
+		Urgent::flag( $post, Settings::get() );
+		$this->assertMatchesRegularExpression( '/data-hprnb-left="(59\d|600)"/', Urgent_List::cell( get_post( $post ) ) );
+		$this->assertStringNotContainsString( 'data-hprnb-left', Urgent_List::cell( get_post( self::factory()->post->create() ) ) );
+
+		// Unpublished while its countdown runs: out of the red bar, still ticked (back when published again).
+		wp_update_post(
+			array(
+				'ID'          => $post,
+				'post_status' => 'draft',
+			)
+		);
+		$this->assertSame( 'armed', Urgent::state( $post ) );
+		$cell = Urgent_List::cell( get_post( $post ) );
+		$this->assertStringContainsString( 'aria-pressed="true"', $cell );
+		$this->assertStringContainsString( 'when published', $cell );
+		$this->assertStringNotContainsString( 'data-hprnb-left', $cell );
+		set_current_screen( 'edit-post' );
+		$this->assertNotContains( 'hprnb-urgent-row', Urgent_List::row_class( array(), '', $post ), 'Not tinted: it is not in the red bar.' );
+		set_current_screen( 'front' );
+		$this->assertContains( $post, Urgent_List::ticked_ids(), 'Still counted as ticked.' );
+		$this->assertSame( 'off', $this->toggle( $post, false )->get_data()['state'] );
+	}
+
+	public function test_an_article_open_in_someone_elses_editor_is_left_to_them() {
+		$other = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$me    = $this->editor();
+		$post  = self::factory()->post->create( array( 'post_title' => 'Séisme' ) );
+		update_post_meta( $post, '_edit_lock', time() . ':' . $other );
+		$this->assertSame( $other, Urgent_List::locked_by( $post ) );
+		$cell = Urgent_List::cell( get_post( $post ) );
+		$this->assertStringNotContainsString( '<button', $cell );
+		$this->assertStringContainsString( 'being edited', $cell );
+		$response = $this->toggle( $post, true );
+		$this->assertSame( 409, $response->get_status() );
+		$this->assertSame( 'hprnb_urgent_locked', $response->get_data()['code'] );
+		$this->assertStringContainsString( '“Séisme” is being edited by', $response->get_data()['message'] );
+		$this->assertSame( 'off', Urgent::state( $post ) );
+		// One's own lock, or an old one, does not count.
+		update_post_meta( $post, '_edit_lock', time() . ':' . $me );
+		$this->assertSame( 0, Urgent_List::locked_by( $post ) );
+		update_post_meta( $post, '_edit_lock', ( time() - 200 ) . ':' . $other );
+		$this->assertSame( 0, Urgent_List::locked_by( $post ) );
+		$this->assertSame( 'active', $this->toggle( $post, true )->get_data()['state'] );
+	}
+
+	public function test_the_route_reads_where_an_article_stands_for_whoever_may_read_it() {
+		$this->editor();
+		$post = self::factory()->post->create();
+		Urgent::flag( $post, Settings::get() );
+		$request  = new WP_REST_Request( 'GET', '/hprnb/v1/urgent/' . $post );
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertSame( array( 'id', 'state', 'until', 'html', 'count' ), array_keys( $data ) );
+		$this->assertSame( 'active', $data['state'] );
+		$this->assertStringContainsString( 'aria-pressed="true"', $data['html'] );
+		$this->assertSame( 'active', Urgent::state( $post ), 'Reading writes nothing.' );
+		// A contributor reads it (their badge), a subscriber and a visitor may not.
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'contributor' ) ) );
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertStringContainsString( 'is-static', $response->get_data()['html'] );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+		$this->assertSame( 403, rest_get_server()->dispatch( $request )->get_status() );
+		wp_set_current_user( 0 );
+		$this->assertSame( 401, rest_get_server()->dispatch( $request )->get_status() );
+		// Someone else's private article, for someone who may not read it.
+		$this->editor();
+		$private = self::factory()->post->create( array( 'post_status' => 'private' ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'author' ) ) );
+		$this->assertSame( 403, rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/hprnb/v1/urgent/' . $private ) )->get_status() );
 	}
 
 	public function test_the_route_writes_what_the_edit_screen_box_writes() {

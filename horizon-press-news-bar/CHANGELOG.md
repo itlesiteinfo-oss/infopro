@@ -2,6 +2,24 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.19.0] — 2026-09-24
+
+### Ajouté — la colonne « Urgent » dans Articles → Tous les articles
+
+- **Une colonne « Urgent », juste après le titre**, avec un petit interrupteur par article : un vrai bouton (`aria-pressed`), nommé pour les lecteurs d'écran « Marquer « Titre » comme actualité urgente » ou « Retirer « Titre » des actualités urgentes ». **Éteint** : une pastille gris clair « ○ Urgent ». **Allumé** : une pastille au rouge du bandeau URGENT (celui des réglages), texte blanc en semi-gras « ⚡ URGENT », et dessous l'heure de fin (« jusqu'à 18:10 »). **Coché sur un brouillon ou un article planifié** : la pastille rouge en contour, « dès la publication » (le compte à rebours part à la publication, comme depuis l'écran d'édition). Transition de 150 ms (aucune sous « mouvement réduit »), focus clavier visible, Entrée et Espace, utilisable en couleurs forcées.
+- **Un clic suffit, sans recharger** : l'interrupteur passe en attente (grisé, `aria-busy`, un second clic n'envoie rien, la colonne garde sa largeur), l'extension enregistre par sa route REST, puis la case est remplacée par celle que le serveur rend d'après ce qu'il a enregistré : la page montre toujours l'état réel. **En cas d'échec** (réseau coupé, session expirée, droits, bandeau URGENT désactivé entre-temps) : rien ne change, ni sur la page ni sur le serveur, et un message dit que l'enregistrement a échoué, avec la raison donnée par le serveur quand il y en a une ; le lecteur d'écran l'annonce.
+- **La ligne d'un article présent dans le bandeau rouge** est teintée d'un rouge très pâle (le rouge des réglages à 6 % sur blanc) avec un **liseré rouge de 4 px** sur le bord de début (à droite en arabe). Une « Modification rapide » garde la teinte et l'interrupteur.
+- **Une vue « ⚡ Urgents (N) »** à côté de « Tous », « Publiés », « Brouillons »… : les articles cochés (dans le bandeau rouge ou en attente de publication), comptés comme la liste les montre (un article privé qu'on ne peut pas lire n'est pas compté). **Recherche, filtres par date et par catégorie, auteur, statut, tri et pages s'y appliquent**, et le formulaire de la liste garde la vue. Le nombre suit chaque clic.
+- **Une seule source de vérité** : l'interrupteur écrit exactement ce qu'écrit la case URGENT de l'écran d'édition (les mêmes métadonnées, par la même règle `Urgent::apply()` : cocher un article déjà urgent ne relance pas son compte à rebours, décocher l'arrête, un brouillon attend sa publication). L'écran d'édition montre donc ce que la liste a coché, et inversement ; plusieurs articles peuvent être urgents à la fois ; le bandeau rouge garde toutes ses règles (article consulté écarté, rotation, expiration, fermeture mémorisée) et le cache du site est renouvelé à chaque changement.
+- **Sécurité** : route `POST /wp-json/hprnb/v1/urgent/<id>` (authentification WordPress par cookie et jeton `wp_rest`), identifiant validé, valeur booléenne exigée, article de type « article » uniquement, **`current_user_can( 'edit_post', $id )` vérifié par le serveur** (un contributeur voit un badge et non un bouton sur les articles des autres, et la route les lui refuse), erreurs structurées (401/403, 404 pour un article inexistant, une page ou un article à la corbeille, 409 si le bandeau URGENT est désactivé).
+- **La colonne « VAR ARTICLE »** (ou toute autre colonne ajoutée par un thème ou une extension) n'est pas touchée : la colonne « Urgent » s'insère juste après le titre, à côté d'elle.
+- La colonne, la vue et le script n'existent que si le bandeau URGENT est activé sur au moins un appareil, et seulement sur la liste des articles (pas des pages).
+
+### Modifié — une ouverture plus nerveuse, des lettres directement blanches
+
+- **L'ouverture du bandeau Breaking News resserrée à 0,7 s**, sans rien changer à son design : le rouge se découvre de 0 à 320 ms (`clip-path`, courbe `cubic-bezier(.22, 1, .36, 1)`, le bandeau ne glisse pas), le cartouche s'installe de 190 à 440 ms (24 px et fondu), le filet se trace de 300 à 580 ms (depuis le cartouche sur téléphone, depuis son milieu pour le petit trait vertical sur ordinateur), le bouton fermer apparaît de 480 à 650 ms (fondu et échelle de 0,92 à 1), **le titre commence à s'écrire à 700 ms** — à la première image après la fin de l'ouverture (le script attend désormais la première image réelle de l'animation, qu'il lisait une image trop tôt). Toujours jouée une seule fois, en miroir en arabe, et rien sous « mouvement réduit ».
+- **Chaque lettre tapée apparaît directement en blanc** : plus de traîne grise sur les deux dernières lettres (la partie pas encore tapée reste en place, transparente, et ne fait donc jamais bouger la hauteur).
+
 ## [2.18.0] — 2026-09-24
 
 ### Ajouté — l'ouverture du bandeau Breaking News

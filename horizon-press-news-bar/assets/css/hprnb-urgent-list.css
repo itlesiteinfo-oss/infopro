@@ -75,12 +75,17 @@
 	color: var(--hprnb-ul-ink);
 }
 
+/* Waiting for its publication: the red outline and lightning, the text dark (any bar colour stays readable on white). */
 .hprnb-urgent-switch[data-hprnb-state="armed"] {
 	border-color: var(--hprnb-ul-red);
 	background: #fff;
-	color: var(--hprnb-ul-red);
+	color: #1d2327;
 	font-weight: 600;
 	letter-spacing: .04em;
+}
+
+.hprnb-urgent-switch[data-hprnb-state="armed"] svg {
+	color: var(--hprnb-ul-red);
 }
 
 .hprnb-urgent-switch.is-static {
@@ -132,6 +137,11 @@
 }
 
 @media (forced-colors: active) {
+	/* The tint and the shadow are dropped in forced colours: a border in a system colour marks the row. */
+	.wp-list-table tr.hprnb-urgent-row > :first-child {
+		border-inline-start: 4px solid Highlight;
+	}
+
 	.hprnb-urgent-switch[aria-pressed="true"] {
 		border-width: 2px;
 		forced-color-adjust: none;

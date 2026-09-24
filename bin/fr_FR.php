@@ -615,4 +615,11 @@ return array(
 	'No such article.' => 'Article introuvable.',
 	'You may not edit this article.' => 'Vous ne pouvez pas modifier cet article.',
 	'The URGENT bar is switched off in Settings → News Bar.' => 'Le bandeau URGENT est désactivé dans Réglages → News Bar.',
+	'being edited' => 'en cours de modification',
+	'Urgent: in the red bar' => 'Urgent : dans le bandeau rouge',
+	'Urgent: when published' => 'Urgent : dès la publication',
+	'Not urgent' => 'Pas urgent',
+	'The Urgent switch could not be saved; nothing was changed.' => 'Le bouton Urgent n’a pas pu être enregistré ; rien n’a été modifié.',
+	'The Urgent switch could not be confirmed. Reload the page to see what was saved.' => 'Le bouton Urgent n’a pas pu être confirmé. Rechargez la page pour voir ce qui a été enregistré.',
+	'“%1$s” is being edited by %2$s: change it from its edit screen.' => '« %1$s » est en cours de modification par %2$s : modifiez-le depuis son écran d’édition.',
 );

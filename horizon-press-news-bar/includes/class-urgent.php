@@ -166,9 +166,9 @@ final class Urgent {
 	}
 
 	/**
-	 * Where an article stands (2.19): 'active' while its countdown runs, 'armed' while it waits for its
-	 * publication, 'off' otherwise (never flagged, over, or unticked). What the edit screen's box and the
-	 * posts list both show.
+	 * Where an article stands (2.19): 'active' while it is in the red bar (published, its countdown
+	 * running), 'armed' while it is ticked but waits for its publication (or was unpublished while its
+	 * countdown ran), 'off' otherwise (never flagged, over, or unticked). What the posts list shows.
 	 *
 	 * @param int      $post_id Post ID.
 	 * @param int|null $now     Reference instant (tests).
@@ -176,7 +176,7 @@ final class Urgent {
 	 */
 	public static function state( int $post_id, ?int $now = null ): string {
 		if ( self::is_active( $post_id, $now ) ) {
-			return 'active';
+			return 'publish' === get_post_status( $post_id ) ? 'active' : 'armed';
 		}
 		return self::is_armed( $post_id ) ? 'armed' : 'off';
 	}

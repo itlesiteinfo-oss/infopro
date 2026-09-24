@@ -4174,7 +4174,8 @@ test( 'v2.19: the Urgent column of Posts → All Posts — a switch per article 
 			expect( [ armed( id ), until( id ) ] ).toEqual( [ '1', undefined ] );
 		}
 		await page.mouse.move( 5, 5 );
-		await expect.poll( () => sw( d ).evaluate( ( el ) => [ getComputedStyle( el ).backgroundColor, getComputedStyle( el ).color ] ) ).toEqual( [ 'rgb(255, 255, 255)', 'rgb(225, 29, 43)' ] );
+		// The red outline and lightning, the text dark (readable whatever the bar's colour).
+		await expect.poll( () => sw( d ).evaluate( ( el ) => [ getComputedStyle( el ).backgroundColor, getComputedStyle( el ).borderColor, getComputedStyle( el ).color, getComputedStyle( el.querySelector( 'svg' ) ).color ] ) ).toEqual( [ 'rgb(255, 255, 255)', 'rgb(225, 29, 43)', 'rgb(29, 35, 39)', 'rgb(225, 29, 43)' ] );
 		expect( await count() ).toBe( base + 4 );
 
 		// Off again: the meta gone, the row back to normal.
@@ -4185,8 +4186,8 @@ test( 'v2.19: the Urgent column of Posts → All Posts — a switch per article 
 		await expect( page.locator( '#a11y-speak-polite' ) ).toContainText( 'No longer urgent.' );
 		expect( await count() ).toBe( base + 3 );
 
-		// A network failure: nothing changes on the page nor on the server, an error says so; the next click works.
-		await page.route( REST, ( route ) => route.abort( 'failed' ) );
+		// A network failure: nothing changes on the page nor on the server (read again to be sure), an error says so; the next click works.
+		await page.route( REST, ( route ) => ( route.request().method() === 'POST' ? route.abort( 'failed' ) : route.continue() ) );
 		await sw( b ).click();
 		await expect( row( b ).locator( '.hprnb-urgent-cell__error' ) ).toHaveText( 'The Urgent switch could not be saved. Nothing was changed; please try again.' );
 		await expect( row( b ).locator( '.hprnb-urgent-cell__error' ) ).toHaveAttribute( 'role', 'alert' );
@@ -4197,10 +4198,46 @@ test( 'v2.19: the Urgent column of Posts → All Posts — a switch per article 
 		expect( until( b ) ).toBeUndefined();
 		expect( await count() ).toBe( base + 3 );
 		await page.unroute( REST );
+		// Not even the reading back: the result cannot be confirmed, and the page says so.
+		await page.route( REST, ( route ) => route.abort( 'failed' ) );
+		await sw( b ).click();
+		await expect( row( b ).locator( '.hprnb-urgent-cell__error' ) ).toHaveText( 'The Urgent switch could not be confirmed. Reload the page to see what was saved.' );
+		expect( await look( b ) ).toMatchObject( { pressed: 'false', state: 'off' } );
+		await expect( sw( b ) ).not.toHaveAttribute( 'aria-busy', 'true' );
+		await page.unroute( REST );
+		// Saved, but the reply lost on its way back (a proxy's 502): the page shows what the server holds — on.
+		await page.route( REST, async ( route ) => {
+			if ( route.request().method() !== 'POST' ) {
+				return route.continue();
+			}
+			await route.fetch();
+			return route.fulfill( { status: 502, contentType: 'text/html', body: '<html>Bad gateway</html>' } );
+		} );
+		await sw( b ).click();
+		await expect( sw( b ) ).toHaveAttribute( 'aria-pressed', 'true' );
+		expect( await look( b ) ).toMatchObject( { state: 'active', tinted: true } );
+		await expect( row( b ).locator( '.hprnb-urgent-cell__error' ) ).toHaveCount( 0 );
+		expect( Number( until( b ) ) ).toBeGreaterThan( now() );
+		expect( await count() ).toBe( base + 4 );
+		await page.unroute( REST );
+		await sw( b ).click();
+		await expect( sw( b ) ).toHaveAttribute( 'aria-pressed', 'false' );
+		// An expired REST nonce (a list left open for hours): renewed by core, then the click goes through.
+		await page.evaluate( () => {
+			window.hprnbUrgentList.nonce = 'expired';
+		} );
+		const renewals = countRequests( page, /admin-ajax\.php\?action=rest-nonce/ );
+		await sw( b ).click();
+		await expect( sw( b ) ).toHaveAttribute( 'aria-pressed', 'true' );
+		expect( renewals.length ).toBe( 1 );
+		expect( await page.evaluate( () => window.hprnbUrgentList.nonce ) ).not.toBe( 'expired' );
+		await sw( b ).click();
+		await expect( sw( b ) ).toHaveAttribute( 'aria-pressed', 'false' );
+		expect( until( b ) ).toBeUndefined();
 		// A refusal from the server (the URGENT bar switched off meanwhile): its reason is shown too.
 		setDefaultSettings( { urgent_enabled: false } );
 		await sw( b ).click();
-		await expect( row( b ).locator( '.hprnb-urgent-cell__error' ) ).toContainText( 'switched off in Settings' );
+		await expect( row( b ).locator( '.hprnb-urgent-cell__error' ) ).toHaveText( 'The Urgent switch could not be saved; nothing was changed. The URGENT bar is switched off in Settings → News Bar.' );
 		expect( await look( b ) ).toMatchObject( { pressed: 'false', state: 'off' } );
 		expect( until( b ) ).toBeUndefined();
 		setDefaultSettings();
@@ -4232,6 +4269,31 @@ test( 'v2.19: the Urgent column of Posts → All Posts — a switch per article 
 		await page.locator( '#edit-' + a + ' button.save' ).click();
 		await expect( row( a ).locator( '.row-title' ) ).toContainText( '(mis à jour)' );
 		expect( await look( a ) ).toMatchObject( { pressed: 'true', state: 'active', tinted: true, label: 'Remove “Liste A — séisme au large d’Al Hoceïma (mis à jour)” from urgent news' } );
+
+		// Open in someone else's editor: a badge "being edited" (as core hides Quick Edit), and a switch
+		// pressed after the lock came is refused with the name of who has it (their box would write over it).
+		wp( [ 'post', 'meta', 'update', c, '_edit_lock', now() + ':' + user ] );
+		await page.reload();
+		await expect( row( c ).locator( 'button.hprnb-urgent-switch' ) ).toHaveCount( 0 );
+		await expect( row( c ).locator( '.hprnb-urgent-cell__note' ) ).toHaveText( 'being edited' );
+		wp( [ 'post', 'meta', 'update', a, '_edit_lock', now() + ':' + user ] );
+		await sw( a ).click();
+		await expect( row( a ).locator( '.hprnb-urgent-cell__error' ) ).toContainText( 'is being edited by e2e-contrib: change it from its edit screen.' );
+		expect( await look( a ) ).toMatchObject( { pressed: 'true', state: 'active' } );
+		expect( Number( until( a ) ) ).toBeGreaterThan( now() );
+		wp( [ 'post', 'meta', 'delete', a, '_edit_lock' ] );
+		wp( [ 'post', 'meta', 'delete', c, '_edit_lock' ] );
+
+		// The countdown runs out while the list is open: the row leaves the red on its own.
+		const t0 = now();
+		wp( [ 'post', 'meta', 'update', b, '_hprnb_urgent_since', String( t0 - 600 ) ] );
+		wp( [ 'post', 'meta', 'update', b, '_hprnb_urgent_until', String( t0 + 3 ) ] );
+		await page.reload();
+		expect( await look( b ) ).toMatchObject( { state: 'active', tinted: true } );
+		const ticking = await count();
+		await expect.poll( async () => ( await look( b ) ).tinted, { timeout: 12000 } ).toBe( false );
+		expect( await look( b ) ).toMatchObject( { pressed: 'false', state: 'off', text: 'Urgent' } );
+		expect( await count() ).toBe( ticking - 1 );
 
 		// The edit screen reads the same data: A ticked there, and unticked there, the list follows.
 		await page.goto( '/wp-admin/post.php?post=' + a + '&action=edit&hprnb_classic=1' );
@@ -4353,8 +4415,9 @@ test( 'v2.19: the Urgent column of Posts → All Posts — a switch per article 
 		await expect( page.locator( 'script#hprnb-urgent-list-js' ) ).toHaveCount( 0 );
 		await expect( page.locator( 'th#var_article' ) ).toHaveCount( 1 );
 		setDefaultSettings();
-		// Only the two failures provoked above, as the browser logs them.
-		expect( errors.map( ( e ) => e.replace( /\/urgent\/\d+/, '/urgent/ID' ).replace( /^.*(ERR_FAILED|status of \d+).* @ http:\/\/127\.0\.0\.1:8080/, '$1 ' ) ) ).toEqual( [ 'ERR_FAILED /wp-json/hprnb/v1/urgent/ID?_locale=user', 'status of 409 /wp-json/hprnb/v1/urgent/ID?_locale=user' ] );
+		// Only the failures provoked above (aborted, 502, expired nonce, 409, a locked article), as the browser logs them.
+		expect( errors.filter( ( e ) => ! /Failed to load resource: .* @ http:\/\/127\.0\.0\.1:8080\/wp-json\/hprnb\/v1\/urgent\/\d+\?_locale=user$/.test( e ) ) ).toEqual( [] );
+		expect( errors.length ).toBe( 7 );
 
 		// A contributor: a badge on the articles of others (and the route refuses them anyway), a switch on their own.
 		const contrib = await browser.newContext( { viewport: { width: 1400, height: 1000 } } );
@@ -4368,7 +4431,8 @@ test( 'v2.19: the Urgent column of Posts → All Posts — a switch per article 
 		await cp.goto( '/wp-admin/edit.php?all_posts=1' );
 		await expect( cp.locator( '#post-' + a + ' .hprnb-urgent-switch.is-static' ) ).toHaveCount( 1 );
 		await expect( cp.locator( '#post-' + a + ' button.hprnb-urgent-switch' ) ).toHaveCount( 0 );
-		await expect( cp.locator( '#post-' + a + ' .hprnb-urgent-switch' ) ).toHaveText( 'URGENT' );
+		await expect( cp.locator( '#post-' + a + ' .hprnb-urgent-switch .hprnb-urgent-switch__text' ) ).toHaveText( 'URGENT' );
+		await expect( cp.locator( '#post-' + a + ' .hprnb-urgent-switch .screen-reader-text' ) ).toHaveText( 'Urgent: in the red bar' );
 		await expect( cp.locator( '#post-' + own + ' button.hprnb-urgent-switch' ) ).toHaveCount( 1 );
 		const refused = await cp.evaluate( async ( id ) => {
 			const r = await fetch( window.hprnbUrgentList.endpoint + id, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': window.hprnbUrgentList.nonce }, body: JSON.stringify( { urgent: false } ) } );
