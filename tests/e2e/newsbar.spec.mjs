@@ -3461,8 +3461,11 @@ test( 'v2.17 review: analytics of the headline shown, closing mid-typing, no pho
 
 		// Analytics name the headline on screen; closing while it types leaves no highlight, no timer.
 		let { context, page, errors, urgent } = await open( 1366 );
-		await expect.poll( async () => ( await state( page ) ).id, { timeout: 15000 } ).toBe( x );
-		await expect.poll( async () => ( await state( page ) ).typed, { intervals: [ 30 ], timeout: 3000 } ).toBeGreaterThan( 0 );
+		// X, the second headline, caught while it types (it types in well under a second, after Y's hold).
+		await expect.poll( async () => {
+			const s = await state( page );
+			return s.id === x && s.typed > 0;
+		}, { intervals: [ 30 ], timeout: 20000 } ).toBe( true );
 		await jsClick( page, '.hprnb-bar--urgent .hprnb-bar__btn--close' );
 		await expect( urgent ).toHaveCount( 0 );
 		expect( await page.evaluate( () => CSS.highlights.size ) ).toBe( 0 );
@@ -3660,7 +3663,8 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 			if ( u ) {
 				const all = u.getAnimations( { subtree: true } ).filter( ( a ) => /^hprnb-u-bn-(open|in|rule|ctrl)$/.test( a.animationName ) );
 				const open = all.find( ( a ) => a.animationName === 'hprnb-u-bn-open' );
-				if ( open && t0 === null ) {
+				// 2.19: from the band's first frame (while pending, its clock has not started yet).
+				if ( open && t0 === null && ! open.pending ) {
 					t0 = document.timeline.currentTime - ( ( open.effect.getComputedTiming().localTime || 0 ) - open.effect.getTiming().delay );
 					window.hprnbOpen.parts = Object.fromEntries( all.map( ( a ) => [ a.animationName, [ Math.round( a.effect.getTiming().delay - open.effect.getTiming().delay ), Math.round( a.effect.getTiming().duration ) ] ] ) );
 				}
@@ -3720,11 +3724,12 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 	const checkOpening = ( run, width, rtl ) => {
 		// 2.19: 0–320, 190–440, 300–580, 480–650ms, the headline from ~700ms.
 		expect( run.parts ).toEqual( { 'hprnb-u-bn-open': [ 0, 700 ], 'hprnb-u-bn-in': [ 190, 250 ], 'hprnb-u-bn-rule': [ 300, 280 ], 'hprnb-u-bn-ctrl': [ 480, 170 ] } );
+		// The first letter on the first frame after 700ms (seen here a frame or two later at most).
 		const first = run.frames.find( ( f ) => f.typed > 0 );
-		expect( first.t ).toBeGreaterThanOrEqual( 680 );
-		expect( first.t ).toBeLessThan( 1100 );
+		expect( first.t ).toBeGreaterThanOrEqual( 699 );
+		expect( first.t ).toBeLessThan( 800 );
 		// Before it: the headline laid out but not painted (never shown whole meanwhile).
-		expect( run.frames.filter( ( f ) => f.init && f.t < 680 ).every( ( f ) => f.typed === 0 ) ).toBe( true );
+		expect( run.frames.filter( ( f ) => f.init && f.t < 699 ).every( ( f ) => f.typed === 0 ) ).toBe( true );
 		// The letters typed show at once in white: no other highlight than the part not typed yet.
 		expect( run.frames.every( ( f ) => f.marks <= 1 ) ).toBe( true );
 		// Nothing moves: the band keeps its box; it is only ever uncovered further, from the reading start, within 450ms.

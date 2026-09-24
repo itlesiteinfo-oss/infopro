@@ -2336,6 +2336,18 @@
 	}
 
 	/**
+	 * Whether the band's opening is about to start: created, but waiting for its first frame (2.19).
+	 *
+	 * @param {Element} aside The URGENT bar.
+	 * @return {boolean} Pending.
+	 */
+	function openingPending( aside ) {
+		return typeof aside.getAnimations === 'function' && aside.getAnimations().some( function ( animation ) {
+			return 'hprnb-u-bn-open' === animation.animationName && true === animation.pending;
+		} );
+	}
+
+	/**
 	 * How long the band's opening (stylesheet 17 quater, 2.18) still runs before a headline may type:
 	 * its clock is the band's own animation, which lasts the whole opening (700ms), read where it is (a
 	 * re-initialisation or a late start waits only for what is left); 0 once it is over, under reduced
@@ -2457,6 +2469,12 @@
 				return;
 			}
 			if ( ! start ) {
+				if ( openingPending( aside ) ) {
+					// The band's opening starts with the next frame (the script ran before the first paint):
+					// its clock is read from there, so the first letter is not one frame early.
+					frame = requestAnimationFrame( tick );
+					return;
+				}
 				// The first letter shows on the first frame after the band's opening (and the buttons' fade).
 				start = now + Math.max( openingLeft( aside ), lead );
 				lead = 0;
