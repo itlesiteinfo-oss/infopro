@@ -38,6 +38,13 @@ final class Post_Controls {
 	const FIELD_RESTART = 'hprnb_urgent_restart';
 
 	/**
+	 * 2.19: what the article carried when the box was shown, and whether the box was touched since —
+	 * so an untouched box does not write back over a change made meanwhile from the posts list.
+	 */
+	const FIELD_SEEN    = 'hprnb_urgent_seen';
+	const FIELD_TOUCHED = 'hprnb_urgent_touched';
+
+	/**
 	 * The URGENT box of its own (2.15): id, and its nonce action and field name.
 	 */
 	const URGENT_BOX   = 'hprnb-urgent-postbox';
@@ -70,6 +77,23 @@ final class Post_Controls {
 			return;
 		}
 		wp_enqueue_style( 'hprnb-post', HPRNB_URL . 'assets/css/hprnb-post' . Assets::suffix() . '.css', array(), HPRNB_VERSION );
+		// 2.19: the URGENT box marks itself touched when one of its boxes changes (a handle with no file).
+		wp_register_script( 'hprnb-post', false, array(), HPRNB_VERSION, true );
+		wp_enqueue_script( 'hprnb-post' );
+		wp_add_inline_script(
+			'hprnb-post',
+			'document.addEventListener("change",function(e){var t=e.target,f=document.getElementById("hprnb-urgent-touched");if(f&&t&&("hprnb-urgent"===t.id||"hprnb-urgent-restart"===t.id)){f.value="1";}});'
+		);
+	}
+
+	/**
+	 * What the article carries for the URGENT box (2.19): since, until and armed, in one string.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string
+	 */
+	public static function marker( int $post_id ): string {
+		return Urgent::since( $post_id ) . '|' . Urgent::until( $post_id ) . '|' . ( Urgent::is_armed( $post_id ) ? '1' : '0' );
 	}
 
 	/**
@@ -207,6 +231,8 @@ final class Post_Controls {
 			<p>
 				<label for="hprnb-urgent" class="hprnb-urgent-box__label">
 					<input type="checkbox" id="hprnb-urgent" name="<?php echo esc_attr( self::FIELD_URGENT ); ?>" value="1" <?php checked( $active || $armed ); ?> />
+					<input type="hidden" name="<?php echo esc_attr( self::FIELD_SEEN ); ?>" value="<?php echo esc_attr( self::marker( $id ) ); ?>" />
+					<input type="hidden" id="hprnb-urgent-touched" name="<?php echo esc_attr( self::FIELD_TOUCHED ); ?>" value="0" />
 					<strong><?php esc_html_e( 'Urgent article', 'horizon-press-news-bar' ); ?></strong>
 				</label>
 				<span class="description">
@@ -345,7 +371,16 @@ final class Post_Controls {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by save() through verified().
 		$want    = isset( $_POST[ self::FIELD_URGENT ] ) && Settings::to_bool_loose( sanitize_key( wp_unslash( $_POST[ self::FIELD_URGENT ] ) ) );
 		$restart = isset( $_POST[ self::FIELD_RESTART ] ) && Settings::to_bool_loose( sanitize_key( wp_unslash( $_POST[ self::FIELD_RESTART ] ) ) );
+		$touched = isset( $_POST[ self::FIELD_TOUCHED ] ) && '1' === sanitize_key( wp_unslash( $_POST[ self::FIELD_TOUCHED ] ) );
+		$seen    = isset( $_POST[ self::FIELD_SEEN ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::FIELD_SEEN ] ) ) : null;
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		// 2.19: a box nobody touched, on an article changed since the screen was loaded (from the posts
+		// list, by someone else, or by its own publication just now): what it shows is stale, it is left
+		// alone.
+		if ( ! $touched && null !== $seen && ! $restart && self::marker( $post_id ) !== $seen ) {
+			return;
+		}
 
 		// The same rule as the posts list's Urgent switch (2.19).
 		Urgent::apply( $post, $want, $restart, $settings );

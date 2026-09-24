@@ -4278,19 +4278,33 @@ test( 'v2.19: the Urgent column of Posts → All Posts — a switch per article 
 		await expect( row( a ).locator( '.row-title' ) ).toContainText( '(mis à jour)' );
 		expect( await look( a ) ).toMatchObject( { pressed: 'true', state: 'active', tinted: true, label: 'Remove “Liste A — séisme au large d’Al Hoceïma (mis à jour)” from urgent news' } );
 
-		// Open in someone else's editor: a badge "being edited" (as core hides Quick Edit), and a switch
-		// pressed after the lock came is refused with the name of who has it (their box would write over it).
+		// Open in someone else's editor: said beside a switch that still works.
 		wp( [ 'post', 'meta', 'update', c, '_edit_lock', now() + ':' + user ] );
 		await page.reload();
-		await expect( row( c ).locator( 'button.hprnb-urgent-switch' ) ).toHaveCount( 0 );
+		await expect( row( c ).locator( 'button.hprnb-urgent-switch' ) ).toHaveCount( 1 );
 		await expect( row( c ).locator( '.hprnb-urgent-cell__note' ) ).toHaveText( 'being edited' );
-		wp( [ 'post', 'meta', 'update', a, '_edit_lock', now() + ':' + user ] );
-		await sw( a ).click();
-		await expect( row( a ).locator( '.hprnb-urgent-cell__error' ) ).toContainText( 'is being edited by e2e-contrib: change it from its edit screen.' );
-		expect( await look( a ) ).toMatchObject( { pressed: 'true', state: 'active' } );
-		expect( Number( until( a ) ) ).toBeGreaterThan( now() );
-		wp( [ 'post', 'meta', 'delete', a, '_edit_lock' ] );
 		wp( [ 'post', 'meta', 'delete', c, '_edit_lock' ] );
+
+		// An edit screen left open in another tab: the list switches C on, then that screen's Update
+		// (its box untouched, still showing C off) leaves C urgent; touched, its choice wins.
+		const editor = await page.context().newPage();
+		await editor.goto( '/wp-admin/post.php?post=' + c + '&action=edit&hprnb_classic=1' );
+		await expect( editor.locator( '#hprnb-urgent' ) ).not.toBeChecked();
+		await sw( c ).click();
+		await expect( sw( c ) ).toHaveAttribute( 'data-hprnb-state', 'active' );
+		const cUntil = until( c );
+		await editor.click( '#publish' );
+		await editor.waitForLoadState();
+		await expect( editor.locator( '#hprnb-urgent' ) ).toBeChecked();
+		expect( until( c ) ).toBe( cUntil );
+		await editor.locator( '#hprnb-urgent' ).uncheck();
+		await editor.click( '#publish' );
+		await editor.waitForLoadState();
+		await expect( editor.locator( '#hprnb-urgent' ) ).not.toBeChecked();
+		expect( until( c ) ).toBeUndefined();
+		await editor.close();
+		await page.reload();
+		expect( await look( c ) ).toMatchObject( { pressed: 'false', state: 'off' } );
 
 		// The countdown runs out while the list is open: the row leaves the red on its own.
 		const t0 = now();
@@ -4425,7 +4439,7 @@ test( 'v2.19: the Urgent column of Posts → All Posts — a switch per article 
 		setDefaultSettings();
 		// Only the failures provoked above (aborted, 502, expired nonce, 409, a locked article), as the browser logs them.
 		expect( errors.filter( ( e ) => ! /Failed to load resource: .* @ http:\/\/127\.0\.0\.1:8080\/wp-json\/hprnb\/v1\/urgent\/\d+\?_locale=user$/.test( e ) ) ).toEqual( [] );
-		expect( errors.length ).toBe( 7 );
+		expect( errors.length ).toBe( 6 );
 
 		// A contributor: a badge on the articles of others (and the route refuses them anyway), a switch on their own.
 		const contrib = await browser.newContext( { viewport: { width: 1400, height: 1000 } } );

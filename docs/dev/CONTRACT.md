@@ -1154,23 +1154,27 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   untouched. Cell `.hprnb-urgent-cell[data-hprnb-post][data-hprnb-state][data-hprnb-left]` (seconds left
   while active) holding `button.hprnb-urgent-switch[aria-pressed][aria-label][data-hprnb-post]
   [data-hprnb-state]` — or `span.hprnb-urgent-switch.is-static` with a `.screen-reader-text` state when the
-  user may not `edit_post`, the post is trashed, or `locked_by()` (another user's `_edit_lock` younger than
-  `wp_check_post_lock_window`) — and `.hprnb-urgent-cell__note` ("until H:i", "when published", "being
-  edited"). Row class `hprnb-urgent-row` from `post_class` on `edit-post` or Quick Edit's `inline-save`
+  user may not `edit_post` or the post is trashed — and `.hprnb-urgent-cell__note` ("until H:i", "when
+  published", plus " · being edited" when `locked_by()`: another user's `_edit_lock` younger than
+  `wp_check_post_lock_window`; the switch still works). Row class `hprnb-urgent-row` from `post_class` on `edit-post` or Quick Edit's `inline-save`
   for `edit-post`, only for `state === 'active'`.
 - `Urgent::state()`: `active` = `is_active()` and published; `armed` = armed, or `is_active()` while
   unpublished; `off` otherwise. `Urgent::apply( $post, $want, $restart, $settings )` is the one rule of
   the edit screen's box (`Post_Controls::save_urgent()`) and of the switch: unticked → `unflag()`;
-  unpublished → `arm()` (once); published → `flag()` when `$restart` or not active.
+  unpublished → `arm()` (once); published → `flag()` when `$restart` or not active. The box also posts
+  `hprnb_urgent_seen` (`Post_Controls::marker()` = since|until|armed at render) and
+  `hprnb_urgent_touched` (set to 1 by an inline script on change): untouched, not restarting, with a
+  marker that changed since, `save_urgent()` leaves the article alone. `on_transition_post_status()`:
+  an active article leaving `publish` is `arm()`ed (`unflag()`ed for `trash`).
 - Route `hprnb/v1/urgent/(?P<id>\d+)`: `POST` (`urgent` boolean, required) — permission: a `post`, else
   404 `hprnb_urgent_not_found`; `edit_post`, else 401/403 `hprnb_urgent_forbidden`; callback: 409
-  `hprnb_urgent_off` when the URGENT bar is off, 404 when trashed, 409 `hprnb_urgent_locked` when
-  another user holds the lock, then `Urgent::apply( …, false, … )`. `GET` — permission: a `post`,
+  `hprnb_urgent_off` when the URGENT bar is off, 404 when trashed, then `Urgent::apply( …, false, … )`. `GET` — permission: a `post`,
   `edit_posts` and `read_post`. Both answer `{ id, state, until, html (the cell), count }`.
 - View `edit.php?post_type=post&hprnb_urgent=1`: `ticked_ids()` = two id-only `get_posts()` (statuses of
   the All view, `perm => readable`, at most 500 each): `_hprnb_urgent_until > time()` NUMERIC, and
   `_hprnb_urgent_armed = 1`. `filter_query()` sets `post__in` (or `[0]`) on the main query of
-  `edit.php`; `keep_view()` prints the hidden `hprnb_urgent` field in the list's form.
+  `edit.php`, and clamps `paged` to the view's last page (redirects to page 1 when the view is empty);
+  `keep_view()` prints the hidden `hprnb_urgent` field in the list's form.
 - Script `hprnb-urgent-list.js` (`wp-a11y`), localised `hprnbUrgentList { endpoint, nonce, renew, i18n }`:
   busy guard (`aria-busy`), `_locale=user`, a 4xx JSON refusal keeps the cell and shows its message, any
   other failure `GET`s the state and renders it (error message "could not be confirmed" when that fails

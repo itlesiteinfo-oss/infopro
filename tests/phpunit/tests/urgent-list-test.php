@@ -178,26 +178,131 @@ class Urgent_List_Test extends HPRNB_Test_Case {
 		set_current_screen( 'front' );
 	}
 
-	public function test_an_article_open_in_someone_elses_editor_is_left_to_them() {
+	public function test_an_article_open_in_someone_elses_editor_can_still_be_switched() {
 		$other = self::factory()->user->create( array( 'role' => 'editor' ) );
 		$me    = $this->editor();
 		$post  = self::factory()->post->create( array( 'post_title' => 'Séisme' ) );
 		update_post_meta( $post, '_edit_lock', time() . ':' . $other );
 		$this->assertSame( $other, Urgent_List::locked_by( $post ) );
 		$cell = Urgent_List::cell( get_post( $post ) );
-		$this->assertStringNotContainsString( '<button', $cell );
-		$this->assertStringContainsString( 'being edited', $cell );
-		$response = $this->toggle( $post, true );
-		$this->assertSame( 409, $response->get_status() );
-		$this->assertSame( 'hprnb_urgent_locked', $response->get_data()['code'] );
-		$this->assertStringContainsString( '“Séisme” is being edited by', $response->get_data()['message'] );
-		$this->assertSame( 'off', Urgent::state( $post ) );
-		// One's own lock, or an old one, does not count.
+		$this->assertStringContainsString( '<button', $cell, 'Said, not blocked.' );
+		$this->assertStringContainsString( 'hprnb-urgent-cell__note">being edited<', $cell );
+		$this->assertSame( 'active', $this->toggle( $post, true )->get_data()['state'] );
+		$this->assertMatchesRegularExpression( '/hprnb-urgent-cell__note">until [^<]+ · being edited</', Urgent_List::cell( get_post( $post ) ) );
+		// One's own lock, or an old one, is not mentioned.
 		update_post_meta( $post, '_edit_lock', time() . ':' . $me );
 		$this->assertSame( 0, Urgent_List::locked_by( $post ) );
 		update_post_meta( $post, '_edit_lock', ( time() - 200 ) . ':' . $other );
 		$this->assertSame( 0, Urgent_List::locked_by( $post ) );
-		$this->assertSame( 'active', $this->toggle( $post, true )->get_data()['state'] );
+		$this->assertStringNotContainsString( 'being edited', Urgent_List::cell( get_post( $post ) ) );
+	}
+
+	/**
+	 * The URGENT box as its screen posts it: the marker it was shown with, touched or not.
+	 *
+	 * @param int         $post_id Post ID.
+	 * @param bool        $ticked  The checkbox.
+	 * @param string|null $seen    The marker printed with the box (null: an older form without it).
+	 * @param bool        $touched The box changed on that screen.
+	 * @return void
+	 */
+	private function submit_box( int $post_id, bool $ticked, ?string $seen, bool $touched = false ): void {
+		$_POST = array(
+			Post_Controls::URGENT_NONCE  => wp_create_nonce( Post_Controls::URGENT_NONCE ),
+			Post_Controls::FIELD_TOUCHED => $touched ? '1' : '0',
+		);
+		if ( $ticked ) {
+			$_POST[ Post_Controls::FIELD_URGENT ] = '1';
+		}
+		if ( null !== $seen ) {
+			$_POST[ Post_Controls::FIELD_SEEN ] = $seen;
+		}
+		Post_Controls::save( $post_id, get_post( $post_id ) );
+		$_POST = array();
+		Invalidation::reset_guard();
+	}
+
+	public function test_an_edit_screen_left_open_does_not_write_back_over_the_list() {
+		$this->editor();
+		$post = self::factory()->post->create();
+		// The box is shown unticked, with the marker of what the article carried.
+		ob_start();
+		Post_Controls::render_urgent_box( get_post( $post ) );
+		$box = (string) ob_get_clean();
+		$this->assertMatchesRegularExpression( '/name="hprnb_urgent_seen" value="([^"]*)"/', $box );
+		$this->assertStringContainsString( 'id="hprnb-urgent-touched" name="hprnb_urgent_touched" value="0"', $box );
+		preg_match( '/name="hprnb_urgent_seen" value="([^"]*)"/', $box, $m );
+		$seen = html_entity_decode( $m[1] );
+
+		// Ticked from the list meanwhile; the untouched box is sent with Update: the article stays urgent.
+		$this->toggle( $post, true );
+		$until = Urgent::until( $post );
+		$this->submit_box( $post, false, $seen );
+		$this->assertSame( 'active', Urgent::state( $post ) );
+		$this->assertSame( $until, Urgent::until( $post ) );
+
+		// The other way round: shown ticked, unticked from the list, the box sent untouched: it stays off.
+		$seen = Post_Controls::marker( $post );
+		$this->toggle( $post, false );
+		$this->submit_box( $post, true, $seen );
+		$this->assertSame( 'off', Urgent::state( $post ) );
+
+		// Touched on that screen: its choice is the editor's, as before.
+		$this->submit_box( $post, true, $seen, true );
+		$this->assertSame( 'active', Urgent::state( $post ) );
+		$seen = Post_Controls::marker( $post );
+		$this->submit_box( $post, false, $seen, true );
+		$this->assertSame( 'off', Urgent::state( $post ) );
+
+		// Nothing changed elsewhere: an untouched ticked box on Update starts the red bar again (2.14's rule).
+		update_post_meta( $post, Urgent::META_SINCE, (string) ( time() - 900 ) );
+		update_post_meta( $post, Urgent::META_UNTIL, (string) ( time() - 300 ) );
+		$this->submit_box( $post, true, Post_Controls::marker( $post ) );
+		$this->assertSame( 'active', Urgent::state( $post ) );
+		$this->assertGreaterThan( time() + 500, Urgent::until( $post ) );
+
+		// "Start over" ticked always restarts; an older form without the marker keeps the old behaviour.
+		update_post_meta( $post, Urgent::META_UNTIL, (string) ( time() + 30 ) );
+		$_POST = array(
+			Post_Controls::URGENT_NONCE  => wp_create_nonce( Post_Controls::URGENT_NONCE ),
+			Post_Controls::FIELD_URGENT  => '1',
+			Post_Controls::FIELD_RESTART => '1',
+			Post_Controls::FIELD_SEEN    => 'stale',
+		);
+		Post_Controls::save( $post, get_post( $post ) );
+		$_POST = array();
+		$this->assertGreaterThan( time() + 500, Urgent::until( $post ) );
+		$this->submit_box( $post, false, null );
+		$this->assertSame( 'off', Urgent::state( $post ) );
+	}
+
+	public function test_an_emptied_view_past_its_first_page_goes_back_to_it() {
+		$this->editor();
+		$_GET['hprnb_urgent'] = '1';
+		$GLOBALS['pagenow']   = 'edit.php';
+		set_current_screen( 'edit-post' );
+		$to       = null;
+		$redirect = static function ( $location ) use ( &$to ) {
+			$to = $location;
+			return false; // Caught: no exit.
+		};
+		add_filter( 'wp_redirect', $redirect );
+		$uri                    = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : null;
+		$_SERVER['REQUEST_URI'] = '/wp-admin/edit.php?post_type=post&hprnb_urgent=1&paged=3';
+		$query                  = new WP_Query();
+		$query->query_vars      = array(
+			'post_type'      => 'post',
+			'posts_per_page' => 2,
+			'paged'          => 3,
+		);
+		$GLOBALS['wp_the_query'] = $query;
+		Urgent_List::filter_query( $query );
+		$this->assertSame( '/wp-admin/edit.php?post_type=post&hprnb_urgent=1', $to );
+		$this->assertSame( array( 0 ), $query->get( 'post__in' ) );
+		remove_filter( 'wp_redirect', $redirect );
+		$_SERVER['REQUEST_URI'] = $uri;
+		unset( $_GET['hprnb_urgent'] );
+		set_current_screen( 'front' );
 	}
 
 	public function test_the_route_reads_where_an_article_stands_for_whoever_may_read_it() {

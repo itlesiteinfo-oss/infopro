@@ -167,12 +167,11 @@ final class Urgent_List {
 		} elseif ( 'armed' === $state ) {
 			$note = __( 'when published', 'horizon-press-news-bar' );
 		}
-		$icon   = $on ? self::ICON_ON : self::ICON_OFF;
-		$text   = $on ? __( 'URGENT', 'horizon-press-news-bar' ) : __( 'Urgent', 'horizon-press-news-bar' );
-		$locker = self::locked_by( $id );
-		if ( $locker ) {
-			// Someone has it open: their edit screen's box would write over the switch (as core hides Quick Edit).
-			$note = __( 'being edited', 'horizon-press-news-bar' );
+		$icon = $on ? self::ICON_ON : self::ICON_OFF;
+		$text = $on ? __( 'URGENT', 'horizon-press-news-bar' ) : __( 'Urgent', 'horizon-press-news-bar' );
+		if ( self::locked_by( $id ) ) {
+			// Someone else has it open: said, not blocked (an untouched box there no longer writes over the switch).
+			$note = '' === $note ? __( 'being edited', 'horizon-press-news-bar' ) : $note . ' · ' . __( 'being edited', 'horizon-press-news-bar' );
 		}
 
 		// Seconds left in the red bar: the list asks the server again when they run out.
@@ -183,7 +182,7 @@ final class Urgent_List {
 			esc_attr( $state ),
 			$left ? ' data-hprnb-left="' . (int) $left . '"' : ''
 		);
-		if ( 'trash' !== $post->post_status && ! $locker && current_user_can( 'edit_post', $id ) ) {
+		if ( 'trash' !== $post->post_status && current_user_can( 'edit_post', $id ) ) {
 			$html .= sprintf(
 				'<button type="button" class="hprnb-urgent-switch" aria-pressed="%1$s" aria-label="%2$s" data-hprnb-post="%3$d" data-hprnb-state="%4$s">%5$s<span class="hprnb-urgent-switch__text">%6$s</span></button>',
 				$on ? 'true' : 'false',
@@ -390,6 +389,12 @@ final class Urgent_List {
 			return;
 		}
 		$ids = self::ticked_ids();
+		// Nothing left in the view past its first page: back to the first one, as core does for its own
+		// views (it would otherwise page by the size of the whole list). The list's query runs before
+		// any output of edit.php.
+		if ( ! $ids && (int) $query->get( 'paged' ) > 1 && wp_safe_redirect( remove_query_arg( 'paged' ) ) ) {
+			exit;
+		}
 		$query->set( 'post__in', $ids ? $ids : array( 0 ) );
 		// A page past the view's last one (rows gone meanwhile) falls back on it, so core redirects there
 		// instead of paging by the size of the whole list.
@@ -579,16 +584,6 @@ final class Urgent_List {
 		$post = get_post( (int) $request['id'] );
 		if ( ! $post instanceof WP_Post || 'trash' === $post->post_status ) {
 			return new WP_Error( 'hprnb_urgent_not_found', __( 'No such article.', 'horizon-press-news-bar' ), array( 'status' => 404 ) );
-		}
-		$locker = self::locked_by( (int) $post->ID );
-		if ( $locker ) {
-			$user = get_userdata( $locker );
-			return new WP_Error(
-				'hprnb_urgent_locked',
-				/* translators: 1: title of the article, 2: name of the user editing it. */
-				sprintf( __( '“%1$s” is being edited by %2$s: change it from its edit screen.', 'horizon-press-news-bar' ), wp_strip_all_tags( get_the_title( $post ) ), $user ? $user->display_name : '' ),
-				array( 'status' => 409 )
-			);
 		}
 		Urgent::apply( $post, (bool) $request['urgent'], false, $settings );
 		self::reset();
