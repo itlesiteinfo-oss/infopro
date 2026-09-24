@@ -347,18 +347,7 @@ final class Post_Controls {
 		$restart = isset( $_POST[ self::FIELD_RESTART ] ) && Settings::to_bool_loose( sanitize_key( wp_unslash( $_POST[ self::FIELD_RESTART ] ) ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
-		if ( ! $want ) {
-			Urgent::unflag( $post_id );
-			return;
-		}
-		if ( 'publish' !== $post->post_status ) {
-			if ( ! Urgent::is_armed( $post_id ) ) {
-				Urgent::arm( $post_id );
-			}
-			return;
-		}
-		if ( $restart || ! Urgent::is_active( $post_id ) ) {
-			Urgent::flag( $post_id, $settings );
-		}
+		// The same rule as the posts list's Urgent switch (2.19).
+		Urgent::apply( $post, $want, $restart, $settings );
 	}
 }

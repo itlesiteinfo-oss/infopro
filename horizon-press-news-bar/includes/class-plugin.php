@@ -71,11 +71,13 @@ final class Plugin {
 		Rest_Controller::register();
 		Shortcode::register();
 		Admin\Preview::register();
+		Admin\Urgent_List::register_rest();
 
 		if ( is_admin() ) {
 			Admin\Admin::register();
 			Admin\Import_Export::register();
 			Admin\Post_Controls::register();
+			Admin\Urgent_List::register();
 		}
 	}
 

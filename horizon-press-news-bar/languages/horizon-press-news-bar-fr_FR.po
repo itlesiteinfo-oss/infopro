@@ -6,10 +6,10 @@ msgstr ""
 "Language-Team: Français\n"
 "Last-Translator: Horizon Press\n"
 "MIME-Version: 1.0\n"
-"PO-Revision-Date: 2026-09-24 14:33+0000\n"
-"POT-Creation-Date: 2026-09-24 14:33+0000\n"
+"PO-Revision-Date: 2026-09-24 16:36+0000\n"
+"POT-Creation-Date: 2026-09-24 16:36+0000\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"Project-Id-Version: Horizon Press News Bar 2.18.0\n"
+"Project-Id-Version: Horizon Press News Bar 2.19.0\n"
 "Report-Msgid-Bugs-To: https://horizonpress.example/news-bar\n"
 "X-Domain: horizon-press-news-bar\n"
 "X-Generator: bin/build-i18n.php\n"
@@ -285,6 +285,9 @@ msgid "Headline details"
 msgstr "Détails des titres"
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:258
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:109
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:113
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:163
 msgid "Urgent"
 msgstr "Urgent"
 
@@ -1902,16 +1905,81 @@ msgstr "Rejouer l’animation"
 msgid "Colours, sizes and label update instantly. Content criteria are applied by \"Refresh preview posts\" (also triggered automatically shortly after a change). Nothing is saved until you click \"Save settings\"."
 msgstr "Les couleurs, tailles et le label se mettent à jour instantanément. Les critères de contenu sont appliqués par « Actualiser les articles de l’aperçu » (également déclenché automatiquement peu après un changement). Rien n’est enregistré tant que vous ne cliquez pas sur « Enregistrer les réglages »."
 
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:147
+msgid "(no title)"
+msgstr "(sans titre)"
+
+#. translators: %s: title of the article.
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:149
+msgid "Mark “%s” as urgent news"
+msgstr "Marquer « %s » comme actualité urgente"
+
+#. translators: %s: title of the article.
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:151
+msgid "Remove “%s” from urgent news"
+msgstr "Retirer « %s » des actualités urgentes"
+
+#. translators: %s: time, e.g. 18:10.
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:156
+msgid "until %s"
+msgstr "jusqu’à %s"
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:158
+msgid "when published"
+msgstr "dès la publication"
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:163
+msgid "URGENT"
+msgstr "URGENT"
+
+#. translators: the view of Posts → All Posts listing the urgent articles.
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:310
+msgid "⚡ Urgent"
+msgstr "⚡ Urgents"
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:375
+msgid "The Urgent switch could not be saved. Nothing was changed; please try again."
+msgstr "Le bouton Urgent n’a pas pu être enregistré. Rien n’a été modifié ; réessayez."
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:376
+msgid "Marked as urgent."
+msgstr "Marqué comme urgent."
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:377
+msgid "Marked as urgent: the countdown starts when it is published."
+msgstr "Marqué comme urgent : le compte à rebours démarrera à la publication."
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:378
+msgid "No longer urgent."
+msgstr "N’est plus urgent."
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:379
+msgid "Saving…"
+msgstr "Enregistrement…"
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:422
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:444
+msgid "No such article."
+msgstr "Article introuvable."
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:425
+msgid "You may not edit this article."
+msgstr "Vous ne pouvez pas modifier cet article."
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:440
+msgid "The URGENT bar is switched off in Settings → News Bar."
+msgstr "Le bandeau URGENT est désactivé dans Réglages → News Bar."
+
 #. translators: %s: human-readable time difference, e.g. "2 hours".
 #: horizon-press-news-bar/includes/class-renderer.php:1108
 msgid "%s ago"
 msgstr "il y a %s"
 
-#: horizon-press-news-bar/includes/class-urgent.php:334
+#: horizon-press-news-bar/includes/class-urgent.php:380
 msgid "Example: the prime minister announces a snap election for next month"
 msgstr "Exemple : le Premier ministre annonce des élections anticipées le mois prochain"
 
-#: horizon-press-news-bar/includes/class-urgent.php:335
+#: horizon-press-news-bar/includes/class-urgent.php:381
 msgid "Example: the airport is evacuated after a security alert"
 msgstr "Exemple : l’aéroport est évacué après une alerte de sécurité"
 

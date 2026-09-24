@@ -11,9 +11,11 @@ const files = [
   ['css/hprnb-bar-rtl.css', 'css'],
   ['css/hprnb-admin.css', 'css'],
   ['css/hprnb-post.css', 'css'],
+  ['css/hprnb-urgent-list.css', 'css'],
   ['js/hprnb-bootstrap.js', 'js'],
   ['js/hprnb-bar.js', 'js'],
   ['js/hprnb-admin.js', 'js'],
+  ['js/hprnb-urgent-list.js', 'js'],
 ];
 
 // The RTL stylesheet is a copy of the LTR one: every rule already uses logical

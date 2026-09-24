@@ -4,9 +4,9 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
-"POT-Creation-Date: 2026-09-24 14:33+0000\n"
+"POT-Creation-Date: 2026-09-24 16:36+0000\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
-"Project-Id-Version: Horizon Press News Bar 2.18.0\n"
+"Project-Id-Version: Horizon Press News Bar 2.19.0\n"
 "Report-Msgid-Bugs-To: https://horizonpress.example/news-bar\n"
 "X-Domain: horizon-press-news-bar\n"
 "X-Generator: bin/build-i18n.php\n"
@@ -278,6 +278,9 @@ msgid "Headline details"
 msgstr ""
 
 #: horizon-press-news-bar/includes/admin/class-settings-page.php:258
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:109
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:113
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:163
 msgid "Urgent"
 msgstr ""
 
@@ -1894,16 +1897,81 @@ msgstr ""
 msgid "Colours, sizes and label update instantly. Content criteria are applied by \"Refresh preview posts\" (also triggered automatically shortly after a change). Nothing is saved until you click \"Save settings\"."
 msgstr ""
 
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:147
+msgid "(no title)"
+msgstr ""
+
+#. translators: %s: title of the article.
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:149
+msgid "Mark “%s” as urgent news"
+msgstr ""
+
+#. translators: %s: title of the article.
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:151
+msgid "Remove “%s” from urgent news"
+msgstr ""
+
+#. translators: %s: time, e.g. 18:10.
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:156
+msgid "until %s"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:158
+msgid "when published"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:163
+msgid "URGENT"
+msgstr ""
+
+#. translators: the view of Posts → All Posts listing the urgent articles.
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:310
+msgid "⚡ Urgent"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:375
+msgid "The Urgent switch could not be saved. Nothing was changed; please try again."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:376
+msgid "Marked as urgent."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:377
+msgid "Marked as urgent: the countdown starts when it is published."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:378
+msgid "No longer urgent."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:379
+msgid "Saving…"
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:422
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:444
+msgid "No such article."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:425
+msgid "You may not edit this article."
+msgstr ""
+
+#: horizon-press-news-bar/includes/admin/class-urgent-list.php:440
+msgid "The URGENT bar is switched off in Settings → News Bar."
+msgstr ""
+
 #. translators: %s: human-readable time difference, e.g. "2 hours".
 #: horizon-press-news-bar/includes/class-renderer.php:1108
 msgid "%s ago"
 msgstr ""
 
-#: horizon-press-news-bar/includes/class-urgent.php:334
+#: horizon-press-news-bar/includes/class-urgent.php:380
 msgid "Example: the prime minister announces a snap election for next month"
 msgstr ""
 
-#: horizon-press-news-bar/includes/class-urgent.php:335
+#: horizon-press-news-bar/includes/class-urgent.php:381
 msgid "Example: the airport is evacuated after a security alert"
 msgstr ""
 

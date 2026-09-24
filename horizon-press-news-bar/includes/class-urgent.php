@@ -166,6 +166,52 @@ final class Urgent {
 	}
 
 	/**
+	 * Where an article stands (2.19): 'active' while its countdown runs, 'armed' while it waits for its
+	 * publication, 'off' otherwise (never flagged, over, or unticked). What the edit screen's box and the
+	 * posts list both show.
+	 *
+	 * @param int      $post_id Post ID.
+	 * @param int|null $now     Reference instant (tests).
+	 * @return string
+	 */
+	public static function state( int $post_id, ?int $now = null ): string {
+		if ( self::is_active( $post_id, $now ) ) {
+			return 'active';
+		}
+		return self::is_armed( $post_id ) ? 'armed' : 'off';
+	}
+
+	/**
+	 * Ticks or unticks an article (2.19: one rule for the edit screen's box and the posts list). Ticked
+	 * on a published article: the countdown starts, unless it is already running and $restart is false
+	 * — a typo fixed two minutes in does not give the red bar a fresh ten minutes. Ticked on an
+	 * unpublished article: the countdown waits for the publication. Unticked: over at once. The caller
+	 * checks the nonce, the capability and that the feature is on.
+	 *
+	 * @param WP_Post $post     The article.
+	 * @param bool    $want     Ticked.
+	 * @param bool    $restart  Start the countdown over when it is already running.
+	 * @param array   $settings Settings.
+	 * @return void
+	 */
+	public static function apply( WP_Post $post, bool $want, bool $restart, array $settings ): void {
+		$post_id = (int) $post->ID;
+		if ( ! $want ) {
+			self::unflag( $post_id );
+			return;
+		}
+		if ( 'publish' !== $post->post_status ) {
+			if ( ! self::is_armed( $post_id ) ) {
+				self::arm( $post_id );
+			}
+			return;
+		}
+		if ( $restart || ! self::is_active( $post_id ) ) {
+			self::flag( $post_id, $settings );
+		}
+	}
+
+	/**
 	 * A scheduled (or otherwise unpublished) article with the box ticked reaches `publish`: the
 	 * countdown starts now, whoever or whatever published it.
 	 *
