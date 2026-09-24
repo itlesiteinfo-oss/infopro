@@ -583,4 +583,15 @@ return array(
 	'From 14 to 22 px, 17 by default. The bar is at least 48 px tall (more from 19 px, or with a taller news bar).' => 'De 14 à 22 px, 17 par défaut. Le bandeau mesure au moins 48 px de haut (davantage à partir de 19 px, ou avec une barre d’actualités plus haute).',
 	'From 14 to 20 px, 17 by default; also used by the phone design on desktop. The bar keeps the height of the mobile news bar (76 px by default) while two lines fit in it.' => 'De 14 à 20 px, 17 par défaut ; sert aussi au design mobile sur ordinateur. Le bandeau garde la hauteur de la barre d’actualités mobile (76 px par défaut) tant que deux lignes y tiennent.',
 	'The plate, then one headline at a time on a single line, with pause and close at the end of the bar.' => 'La plaque, puis un titre à la fois sur une seule ligne, avec pause et fermer au bout du bandeau.',
+	// 2.17: Breaking News, the article being read.
+	'Design of the URGENT bar' => 'Design du bandeau URGENT',
+	'The look of the red bar on every device. The preview on the right shows it at once.' => 'L’apparence du bandeau rouge sur tous les appareils. L’aperçu à droite la montre aussitôt.',
+	'For the chyron design. On phones it always has its two-line design with the close button in the tab above the corner. From 768 px, choose between one line and that same design.' => 'Pour le design « Chyron ». Sur mobile, il garde son design sur deux lignes avec le bouton fermer dans l’onglet au-dessus du coin. À partir de 768 px, choisissez entre une seule ligne et ce même design.',
+	'Breaking News — recommended' => 'Breaking News — recommandé',
+	'A white cartouche with the label, then the whole headline, typed in letter by letter; several headlines follow one another, each shown long enough to be read. The close button sits in the band.' => 'Un cartouche blanc avec le libellé, puis le titre en entier, saisi lettre par lettre ; plusieurs titres se succèdent, chacun affiché assez longtemps pour être lu. Le bouton fermer est dans le bandeau.',
+	'Chyron' => 'Chyron',
+	'The design of 2.16: the plate and one headline at a time, on two lines at most on phones (fading at the end), the close button in the tab above the corner.' => 'Le design de la 2.16 : la plaque et un titre à la fois, sur deux lignes au plus sur mobile (en fondu à la fin), le bouton fermer dans l’onglet au-dessus du coin.',
+	'Article being read' => 'Article consulté',
+	'Never show the article the reader is on' => 'Ne jamais afficher l’article que le lecteur consulte',
+	'Recognised by its ID, or else by its address, also when the theme moves on to the next article without reloading the page. With nothing else left, the red bar stays hidden and the news bar takes its place.' => 'Reconnu par son identifiant, ou à défaut par son adresse, y compris quand le thème passe à l’article suivant sans recharger la page. S’il ne reste rien d’autre, le bandeau rouge reste masqué et la barre d’actualités prend sa place.',
 );
