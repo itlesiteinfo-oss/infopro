@@ -295,7 +295,6 @@ final class Urgent_List {
 			'ignore_sticky_posts'    => true,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
-			'suppress_filters'       => true,
 			'orderby'                => 'ID',
 		);
 		$active    = get_posts(
