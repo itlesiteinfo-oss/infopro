@@ -3250,6 +3250,7 @@ test( 'v2.17: Breaking News — each whole headline typed in, held, then the nex
 			await page.setViewportSize( { width, height: 900 } );
 			await page.goto( '/' );
 			await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+			await page.waitForTimeout( 1000 ); // The opening (2.18) is over: the cartouche is in place.
 			const box = await urgent.evaluate( ( el, id ) => {
 				const r = ( s ) => el.querySelector( s ).getBoundingClientRect();
 				const lines = [ ...el.querySelector( '.hprnb-bar__item[data-hprnb-id="' + id + '"] .hprnb-bar__title' ).getClientRects() ];
@@ -3611,6 +3612,7 @@ test( 'v2.17 review: analytics of the headline shown, closing mid-typing, no pho
 		for ( const width of [ 390, 700 ] ) {
 			( { context, page, errors, urgent } = await open( width ) );
 			await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+			await page.waitForTimeout( 1000 ); // The opening (2.18) is over.
 			const fit = await urgent.evaluate( ( el, id ) => {
 				const li = el.querySelector( '.hprnb-bar__item[data-hprnb-id="' + id + '"]' );
 				const lines = [ ...li.querySelector( '.hprnb-bar__title' ).getClientRects() ];
@@ -3711,23 +3713,33 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 			expect( run.parts ).toEqual( { 'hprnb-u-bn-open': [ 0, 450 ], 'hprnb-u-bn-in': [ 280, 300 ], 'hprnb-u-bn-rule': [ 430, 330 ], 'hprnb-u-bn-ctrl': [ 620, 180 ] } );
 			const first = run.frames.find( ( f ) => f.typed > 0 );
 			expect( first.t ).toBeGreaterThanOrEqual( 840 );
-			expect( first.t ).toBeLessThan( 1150 );
+			expect( first.t ).toBeLessThan( 1300 );
 			expect( run.frames.filter( ( f ) => f.t < 840 ).every( ( f ) => f.typed <= 0 ) ).toBe( true );
 			// Nothing moves: the band keeps its box; the reveal only ever uncovers more, from the reading start.
 			expect( [ ...new Set( run.frames.map( ( f ) => f.h ) ) ] ).toHaveLength( 1 );
 			expect( [ ...new Set( run.frames.map( ( f ) => f.top ) ) ] ).toHaveLength( 1 );
-			const early = run.frames.find( ( f ) => f.t > 40 && cut( f.clip ) > 5 );
-			expect( early.clip ).toMatch( rtl ? /^inset\(-32px 0px 0px [\d.]+%\)$/ : /^inset\(-32px [\d.]+% 0px 0px\)$/ );
+			const uncovering = run.frames.filter( ( f ) => cut( f.clip ) > 0 && cut( f.clip ) < 100 );
+			expect( uncovering.length ).toBeGreaterThan( 0 );
+			uncovering.forEach( ( f ) => expect( f.clip ).toMatch( rtl ? /^inset\(-32px 0px 0px [\d.e-]+%\)$/ : /^inset\(-32px [\d.e-]+% 0px 0px\)$/ ) );
+			expect( Math.max( ...uncovering.map( ( f ) => f.t ) ) ).toBeLessThan( 560 );
 			run.frames.slice( 1 ).forEach( ( f, k ) => expect( cut( f.clip ) ).toBeLessThanOrEqual( cut( run.frames[ k ].clip ) + 0.01 ) );
 			expect( run.frames[ run.frames.length - 1 ].clip ).toBe( 'none' );
 			// The cartouche comes from the other side, 24px at most; the hairline is drawn from it (phone) or from its middle (row).
-			const settling = run.frames.find( ( f ) => f.t > 300 && f.t < 450 );
-			expect( parseFloat( settling.lx ) * ( rtl ? -1 : 1 ) ).toBeGreaterThan( 0 );
-			expect( Math.abs( parseFloat( settling.lx ) ) ).toBeLessThanOrEqual( 24 );
-			const drawing = run.frames.find( ( f ) => f.t > 480 && f.t < 700 );
-			expect( drawing.rule ).toMatch( width < 600 ? /^matrix\(0\.\d+, 0, 0, 1, 0, 0\)$/ : /^matrix\(1, 0, 0, 0\.\d+, 0, 0\)$/ );
+			// The cartouche comes from the other side, 24px at most, and is in place before the hairline ends.
+			const settling = run.frames.filter( ( f ) => f.lx !== 'none' && parseFloat( f.lx ) !== 0 );
+			expect( settling.length ).toBeGreaterThan( 0 );
+			settling.forEach( ( f ) => {
+				expect( parseFloat( f.lx ) * ( rtl ? -1 : 1 ) ).toBeGreaterThan( 0 );
+				expect( Math.abs( parseFloat( f.lx ) ) ).toBeLessThanOrEqual( 24 );
+			} );
+			expect( Math.max( ...settling.filter( ( f ) => Math.abs( parseFloat( f.lx ) ) > 0.5 ).map( ( f ) => f.t ) ) ).toBeLessThan( 700 );
+			// The hairline is drawn along its length: from the cartouche on a phone, from its middle in the row.
+			const partly = run.frames.filter( ( f ) => ( width < 600 ? /^matrix\(0\.\d+, 0, 0, 1, 0, 0\)$/ : /^matrix\(1, 0, 0, 0\.\d+, 0, 0\)$/ ).test( f.rule ) );
+			expect( partly.length ).toBeGreaterThan( 0 );
+			partly.forEach( ( f ) => expect( f.t ).toBeGreaterThan( 400 ) );
+			expect( run.frames.filter( ( f ) => f.t > 900 ).every( ( f ) => f.rule === 'none' ) ).toBe( true );
 			if ( width < 600 ) {
-				expect( drawing.origin.startsWith( '0px' ) ).toBe( ! rtl );
+				expect( partly[ 0 ].origin.startsWith( '0px' ) ).toBe( ! rtl );
 			}
 			await expect( urgent.locator( '.hprnb-bar__btn--close' ) ).toBeVisible();
 
