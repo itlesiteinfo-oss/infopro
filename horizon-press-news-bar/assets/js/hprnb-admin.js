@@ -85,8 +85,22 @@
 			return;
 		}
 		window.hprnbBar.destroy( previewRoot );
-		aside.parentNode.replaceChild( aside.cloneNode( true ), aside );
+		var fresh = aside.cloneNode( true );
+		// A new bar, not yet opened.
+		fresh.removeAttribute( 'data-hprnb-opened' );
+		fresh.style.removeProperty( '--hprnb-u-bn-t' );
+		aside.parentNode.replaceChild( fresh, aside );
 		window.hprnbBar.init( previewRoot );
+	}
+
+	/** "Replay the animation" shows only while the preview shows a Breaking News bar on its device tab. */
+	function updateReplay() {
+		if ( ! replayButton || ! previewRoot ) {
+			return;
+		}
+		var tab = document.getElementById( 'hprnb-preview-stage' );
+		var device = tab && 'mobile' === tab.getAttribute( 'data-hprnb-device' ) ? 'm' : 'd';
+		replayButton.hidden = ! ( previewRoot.classList.contains( 'hprnb-root--u-bn' ) && previewRoot.classList.contains( 'hprnb-root--urgent' ) && previewRoot.querySelector( '.hprnb-bar--urgent' ) && ! previewRoot.classList.contains( 'hprnb-root--u-no-' + device ) );
 	}
 
 	/** Single-quoted CSS string literal, mirroring Renderer::css_string(). */
@@ -312,9 +326,7 @@
 		if ( chosen ) {
 			replayPreview();
 		}
-		if ( replayButton ) {
-			replayButton.hidden = ! ( breaking && previewRoot.classList.contains( 'hprnb-root--urgent' ) && previewRoot.querySelector( '.hprnb-bar--urgent' ) );
-		}
+		updateReplay();
 		// 2.15: the chyron in its phone design from 768px.
 		previewRoot.classList.toggle( 'hprnb-root--u-d-flow', ! breaking && valueOf( 'urgent_desktop_layout' ) === 'mobile' );
 		// 2.16: its sizes and heights, exactly like Renderer::urgent_font() / urgent_metrics() / urgent_height().
@@ -756,6 +768,7 @@
 			tab.classList.toggle( 'is-active', active );
 			tab.setAttribute( 'aria-selected', active ? 'true' : 'false' );
 		} );
+		updateReplay();
 		reinitPreview();
 	}
 

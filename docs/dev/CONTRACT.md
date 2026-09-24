@@ -1114,7 +1114,7 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   !important}}`. Stylesheet: the single-headline pause rule ignores `--here` items; the link wraps
   `overflow-wrap: anywhere`; forced colours give the buttons' focus ring `CanvasText`. The minified
   scripts are ASCII-only (static test).
-- Budgets: CSS 60 KB, bootstrap 6 KB, interactive script 38 KB.
+- Budgets: CSS 60 KB, bootstrap 6 KB, interactive script 38 KB (2.18: CSS 64 KB, script 40 KB).
 
 ## 32. The opening of the Breaking News bar (2.18.0)
 

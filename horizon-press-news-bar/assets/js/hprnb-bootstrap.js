@@ -231,8 +231,9 @@
 			// The wait of each device, and where the URGENT bar was in front (the server then left the
 			// news bar's wait out), read before the running bars stop: stopping reveals them.
 			var was = root.classList.contains('hprnb-root--urgent');
-			// 2.18: how far the Breaking News bar on screen is into its opening (5s: long over); the bar
-			// replacing it carries on from there instead of opening again.
+			// 2.18: how far the Breaking News bar on screen is into its opening (its band's animation lasts
+			// the whole of it; 5s: long over); the bar replacing it, if it stays in front, carries on from
+			// there instead of opening again.
 			var old = was && root.querySelector('.hprnb-bar--urgent');
 			var clock = -1;
 			if (old && old.getClientRects().length) {
@@ -274,8 +275,9 @@
 			}
 			ensureCss();
 			var fresh = next.content.querySelector('.hprnb-bar--urgent');
-			if (fresh && clock >= 0) {
-				fresh.style.setProperty('--hprnb-u-bn-t', -Math.round(clock) + 'ms');
+			if (fresh && clock >= 0 && urgent > 0) {
+				// A new animation starts on the next frame: one frame ahead, so the band never steps back.
+				fresh.style.setProperty('--hprnb-u-bn-t', -Math.round(clock + 16) + 'ms');
 			}
 			root.innerHTML = '';
 			root.appendChild(next.content);

@@ -3631,17 +3631,29 @@ test( 'v2.17 review: analytics of the headline shown, closing mid-typing, no pho
 } );
 
 test( 'v2.18: Breaking News opening — the band uncovered from the reading start, then the cartouche, the hairline, the buttons and the headline; once; mirrored in RTL; none under reduced motion; carried across a hybrid refresh; replayable in the preview', async ( { browser } ) => {
+	test.setTimeout( 360000 );
 	const now = () => Math.floor( Date.now() / 1000 );
 	const flag = ( id, since, until ) => {
 		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_since', String( since ) ] );
 		wp( [ 'post', 'meta', 'update', id, '_hprnb_urgent_until', String( until ) ] );
 		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
 	};
-	const OPEN = /^hprnb-u-bn-(open|in|rule|ctrl)$/;
-	const ids = [ 'Séisme au large d’Al Hoceïma', 'Le gouvernement annonce un plan d’urgence de 12 milliards de dirhams pour l’automobile' ].map( ( title ) => wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=' + title, '--porcelain' ] ) );
-	// Every frame from the band's first one: the parts of the opening, the first letter, the band's box.
+	const unflag = ( id ) => {
+		wp( [ 'post', 'meta', 'delete', id, '_hprnb_urgent_since' ] );
+		wp( [ 'post', 'meta', 'delete', id, '_hprnb_urgent_until' ] );
+		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+	};
+	const ids = [ 'Séisme au large d’Al Hoceïma', 'Le gouvernement annonce un plan d’urgence de 12 milliards de dirhams pour l’automobile' ].map( ( title ) => wp( [ 'post', 'create', '--post_type=post', '--post_status=publish', '--post_title=' + title, '--post_content=' + '<p>Un paragraphe de lecture.</p>'.repeat( 8 ), '--porcelain' ] ) );
+	const pathA = new URL( wp( [ 'post', 'url', ids[ 0 ] ] ) ).pathname;
+	// Every frame from the band's first one (the parts of the opening, the first letter, the boxes), and
+	// every start of an opening animation.
 	const sampler = () => {
-		window.hprnbOpen = { parts: null, frames: [] };
+		window.hprnbOpen = { parts: null, frames: [], starts: {} };
+		document.addEventListener( 'animationstart', ( event ) => {
+			if ( /^hprnb-u-bn-(open|in|rule|ctrl)$/.test( event.animationName ) ) {
+				window.hprnbOpen.starts[ event.animationName ] = ( window.hprnbOpen.starts[ event.animationName ] || 0 ) + 1;
+			}
+		}, true );
 		let t0 = null;
 		const tick = () => {
 			const u = document.querySelector( '.hprnb-bar--urgent' );
@@ -3649,8 +3661,8 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 				const all = u.getAnimations( { subtree: true } ).filter( ( a ) => /^hprnb-u-bn-(open|in|rule|ctrl)$/.test( a.animationName ) );
 				const open = all.find( ( a ) => a.animationName === 'hprnb-u-bn-open' );
 				if ( open && t0 === null ) {
-					t0 = document.timeline.currentTime - ( open.effect.getComputedTiming().localTime - open.effect.getTiming().delay );
-					window.hprnbOpen.parts = Object.fromEntries( all.map( ( a ) => [ a.animationName, [ Math.round( a.effect.getTiming().delay - ( open.effect.getTiming().delay ) ), Math.round( a.effect.getTiming().duration ) ] ] ) );
+					t0 = document.timeline.currentTime - ( ( open.effect.getComputedTiming().localTime || 0 ) - open.effect.getTiming().delay );
+					window.hprnbOpen.parts = Object.fromEntries( all.map( ( a ) => [ a.animationName, [ Math.round( a.effect.getTiming().delay - open.effect.getTiming().delay ), Math.round( a.effect.getTiming().duration ) ] ] ) );
 				}
 				if ( t0 !== null ) {
 					const title = u.querySelector( '.hprnb-bar__item.is-current .hprnb-bar__title' );
@@ -3662,11 +3674,12 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 					}
 					const box = u.getBoundingClientRect();
 					const label = u.querySelector( '.hprnb-bar__label' );
+					const controls = u.querySelector( '.hprnb-bar__controls' );
 					const rule = getComputedStyle( u.querySelector( '.hprnb-bar__inner' ), '::before' );
-					window.hprnbOpen.frames.push( { t: document.timeline.currentTime - t0, clip: getComputedStyle( u ).clipPath, lx: getComputedStyle( label ).translate, rule: rule.transform, origin: rule.transformOrigin, typed, h: Math.round( box.height ), top: Math.round( box.top ), lt: Math.round( label.getBoundingClientRect().left ) } );
+					window.hprnbOpen.frames.push( { t: document.timeline.currentTime - t0, init: u.hasAttribute( 'data-hprnb-init' ), clip: getComputedStyle( u ).clipPath, lx: getComputedStyle( label ).translate, lo: +getComputedStyle( label ).opacity, rule: rule.transform, origin: rule.transformOrigin, co: +getComputedStyle( controls ).opacity, cs: getComputedStyle( controls ).scale, cv: getComputedStyle( controls ).visibility, typed, band: [ Math.round( box.left ), Math.round( box.top ), Math.round( box.width ), Math.round( box.height ) ].join( ',' ) } );
 				}
 			}
-			if ( ! window.hprnbOpen.frames.length || window.hprnbOpen.frames[ window.hprnbOpen.frames.length - 1 ].t < 1400 ) {
+			if ( ! window.hprnbOpen.frames.length || window.hprnbOpen.frames[ window.hprnbOpen.frames.length - 1 ].t < 1500 ) {
 				requestAnimationFrame( tick );
 			}
 		};
@@ -3685,9 +3698,9 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 			await init( page );
 		}
 		await page.goto( path, { waitUntil } );
-		return { context, page, errors, urgent: page.locator( '.hprnb-bar--urgent' ) };
+		return { context, page, errors, urgent: page.locator( '.hprnb-bar--urgent' ), root: page.locator( '#hprnb-root' ) };
 	};
-	const running = ( page ) => page.evaluate( () => document.querySelector( '.hprnb-bar--urgent' ).getAnimations( { subtree: true } ).filter( ( a ) => /^hprnb-u-bn-(open|in|rule|ctrl)$/.test( a.animationName ) ).map( ( a ) => a.animationName ) );
+	const starts = ( page ) => page.evaluate( () => window.hprnbOpen.starts[ 'hprnb-u-bn-open' ] || 0 );
 	const typedNow = ( page ) => page.evaluate( () => {
 		const title = document.querySelector( '.hprnb-bar--urgent .hprnb-bar__item.is-current .hprnb-bar__title' );
 		let typed = -1;
@@ -3698,86 +3711,165 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 		}
 		return { id: title && title.closest( 'li' ).getAttribute( 'data-hprnb-id' ), typed };
 	} );
+	const reinit = ( page ) => page.evaluate( () => {
+		const root = document.getElementById( 'hprnb-root' );
+		window.hprnbBar.destroy( root );
+		window.hprnbBar.init( root );
+	} );
+	// The opening as specified: its parts, the headline from ~860ms, nothing moving, the reading direction.
+	const checkOpening = ( run, width, rtl ) => {
+		expect( run.parts ).toEqual( { 'hprnb-u-bn-open': [ 0, 860 ], 'hprnb-u-bn-in': [ 280, 300 ], 'hprnb-u-bn-rule': [ 430, 330 ], 'hprnb-u-bn-ctrl': [ 620, 180 ] } );
+		const first = run.frames.find( ( f ) => f.typed > 0 );
+		expect( first.t ).toBeGreaterThanOrEqual( 840 );
+		expect( first.t ).toBeLessThan( 1300 );
+		// Before it: the headline laid out but not painted (never shown whole meanwhile).
+		expect( run.frames.filter( ( f ) => f.init && f.t < 840 ).every( ( f ) => f.typed === 0 ) ).toBe( true );
+		// Nothing moves: the band keeps its box; it is only ever uncovered further, from the reading start, within 450ms.
+		expect( [ ...new Set( run.frames.map( ( f ) => f.band ) ) ] ).toHaveLength( 1 );
+		run.frames.slice( 1 ).forEach( ( f, k ) => expect( cut( f.clip ) ).toBeLessThanOrEqual( cut( run.frames[ k ].clip ) + 0.01 ) );
+		const uncovering = run.frames.filter( ( f ) => cut( f.clip ) > 0 && cut( f.clip ) < 100 );
+		expect( uncovering.length ).toBeGreaterThan( 0 );
+		uncovering.forEach( ( f ) => expect( f.clip ).toMatch( rtl ? /^inset\(-32px 0px 0px [\d.e-]+%\)$/ : /^inset\(-32px [\d.e-]+% 0px 0px\)$/ ) );
+		expect( Math.max( ...uncovering.map( ( f ) => f.t ) ) ).toBeLessThan( 560 );
+		// The cartouche: from the other side, 24px at most, fading in, in place before the hairline ends.
+		const settling = run.frames.filter( ( f ) => f.lx !== 'none' && parseFloat( f.lx ) !== 0 );
+		expect( settling.length ).toBeGreaterThan( 0 );
+		settling.forEach( ( f ) => {
+			expect( parseFloat( f.lx ) * ( rtl ? -1 : 1 ) ).toBeGreaterThan( 0 );
+			expect( Math.abs( parseFloat( f.lx ) ) ).toBeLessThanOrEqual( 24 );
+		} );
+		expect( run.frames.some( ( f ) => f.lo > 0 && f.lo < 1 ) ).toBe( true );
+		expect( run.frames.filter( ( f ) => f.t < 250 ).every( ( f ) => f.lo === 0 ) ).toBe( true );
+		expect( Math.max( ...settling.filter( ( f ) => Math.abs( parseFloat( f.lx ) ) > 0.5 ).map( ( f ) => f.t ) ) ).toBeLessThan( 700 );
+		// The hairline, drawn along its length after the cartouche: from it on a phone, from its middle in the row.
+		const partly = run.frames.filter( ( f ) => ( width < 600 ? /^matrix\(0\.\d+, 0, 0, 1, 0, 0\)$/ : /^matrix\(1, 0, 0, 0\.\d+, 0, 0\)$/ ).test( f.rule ) );
+		expect( partly.length ).toBeGreaterThan( 0 );
+		partly.forEach( ( f ) => expect( f.t ).toBeGreaterThan( 400 ) );
+		if ( width < 600 ) {
+			expect( partly[ 0 ].origin.startsWith( '0px' ) ).toBe( ! rtl );
+		}
+		// The buttons last: faded in and scaled from .9, from 600ms.
+		expect( run.frames.filter( ( f ) => f.t < 600 ).every( ( f ) => f.co === 0 ) ).toBe( true );
+		expect( run.frames.some( ( f ) => f.co > 0 && f.co < 1 && parseFloat( f.cs ) > 0.9 && parseFloat( f.cs ) < 1 ) ).toBe( true );
+		// Over: no clip, the hairline whole, the buttons whole.
+		const last = run.frames[ run.frames.length - 1 ];
+		expect( [ last.clip, last.rule, last.co, last.lo ] ).toEqual( [ 'none', 'none', 1, 1 ] );
+	};
 	try {
 		const t = now();
 		flag( ids[ 0 ], t - 60, t + 900 );
 		flag( ids[ 1 ], t - 30, t + 900 );
 
-		for ( const [ width, rtl ] of [ [ 390, false ], [ 1366, false ], [ 390, true ] ] ) {
+		for ( const [ width, rtl ] of [ [ 390, false ], [ 1366, false ], [ 390, true ], [ 1366, true ] ] ) {
 			setDefaultSettings( { urgent_label: rtl ? 'عاجل' : 'DERNIÈRE MINUTE' } );
 			const { context, page, errors, urgent } = await open( width );
 			await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
-			await page.waitForTimeout( 1600 );
-			const run = await page.evaluate( () => window.hprnbOpen );
-			// The five steps, overlapping: 0–450, 280–580, 430–760, 620–800ms; the headline from ~860ms.
-			expect( run.parts ).toEqual( { 'hprnb-u-bn-open': [ 0, 450 ], 'hprnb-u-bn-in': [ 280, 300 ], 'hprnb-u-bn-rule': [ 430, 330 ], 'hprnb-u-bn-ctrl': [ 620, 180 ] } );
-			const first = run.frames.find( ( f ) => f.typed > 0 );
-			expect( first.t ).toBeGreaterThanOrEqual( 840 );
-			expect( first.t ).toBeLessThan( 1300 );
-			expect( run.frames.filter( ( f ) => f.t < 840 ).every( ( f ) => f.typed <= 0 ) ).toBe( true );
-			// Nothing moves: the band keeps its box; the reveal only ever uncovers more, from the reading start.
-			expect( [ ...new Set( run.frames.map( ( f ) => f.h ) ) ] ).toHaveLength( 1 );
-			expect( [ ...new Set( run.frames.map( ( f ) => f.top ) ) ] ).toHaveLength( 1 );
-			const uncovering = run.frames.filter( ( f ) => cut( f.clip ) > 0 && cut( f.clip ) < 100 );
-			expect( uncovering.length ).toBeGreaterThan( 0 );
-			uncovering.forEach( ( f ) => expect( f.clip ).toMatch( rtl ? /^inset\(-32px 0px 0px [\d.e-]+%\)$/ : /^inset\(-32px [\d.e-]+% 0px 0px\)$/ ) );
-			expect( Math.max( ...uncovering.map( ( f ) => f.t ) ) ).toBeLessThan( 560 );
-			run.frames.slice( 1 ).forEach( ( f, k ) => expect( cut( f.clip ) ).toBeLessThanOrEqual( cut( run.frames[ k ].clip ) + 0.01 ) );
-			expect( run.frames[ run.frames.length - 1 ].clip ).toBe( 'none' );
-			// The cartouche comes from the other side, 24px at most; the hairline is drawn from it (phone) or from its middle (row).
-			// The cartouche comes from the other side, 24px at most, and is in place before the hairline ends.
-			const settling = run.frames.filter( ( f ) => f.lx !== 'none' && parseFloat( f.lx ) !== 0 );
-			expect( settling.length ).toBeGreaterThan( 0 );
-			settling.forEach( ( f ) => {
-				expect( parseFloat( f.lx ) * ( rtl ? -1 : 1 ) ).toBeGreaterThan( 0 );
-				expect( Math.abs( parseFloat( f.lx ) ) ).toBeLessThanOrEqual( 24 );
-			} );
-			expect( Math.max( ...settling.filter( ( f ) => Math.abs( parseFloat( f.lx ) ) > 0.5 ).map( ( f ) => f.t ) ) ).toBeLessThan( 700 );
-			// The hairline is drawn along its length: from the cartouche on a phone, from its middle in the row.
-			const partly = run.frames.filter( ( f ) => ( width < 600 ? /^matrix\(0\.\d+, 0, 0, 1, 0, 0\)$/ : /^matrix\(1, 0, 0, 0\.\d+, 0, 0\)$/ ).test( f.rule ) );
-			expect( partly.length ).toBeGreaterThan( 0 );
-			partly.forEach( ( f ) => expect( f.t ).toBeGreaterThan( 400 ) );
-			expect( run.frames.filter( ( f ) => f.t > 900 ).every( ( f ) => f.rule === 'none' ) ).toBe( true );
-			if ( width < 600 ) {
-				expect( partly[ 0 ].origin.startsWith( '0px' ) ).toBe( ! rtl );
-			}
+			await page.waitForTimeout( 1700 );
+			checkOpening( await page.evaluate( () => window.hprnbOpen ), width, rtl );
+			await expect( urgent ).toHaveAttribute( 'data-hprnb-opened', '' );
 			await expect( urgent.locator( '.hprnb-bar__btn--close' ) ).toBeVisible();
 
 			if ( ! rtl && width === 390 ) {
-				// Once: a re-initialisation, a resize across 600 and 768px, the next headline — never the opening again.
-				expect( await running( page ) ).toEqual( [] );
-				await page.evaluate( () => {
-					const root = document.getElementById( 'hprnb-root' );
-					window.hprnbBar.destroy( root );
-					window.hprnbBar.init( root );
-				} );
+				// Once: a re-initialisation, resizes across 600 and 768px, the next headline — never the opening again.
+				await reinit( page );
 				for ( const w of [ 700, 1366, 390 ] ) {
 					await page.setViewportSize( { width: w, height: 900 } );
 					await page.waitForTimeout( 400 );
-					expect( await running( page ) ).toEqual( [] );
 				}
 				const before = ( await typedNow( page ) ).id;
 				await expect.poll( async () => ( await typedNow( page ) ).id, { timeout: 15000 } ).not.toBe( before );
-				expect( await running( page ) ).toEqual( [] );
-				expect( ( await page.evaluate( () => window.hprnbOpen.frames.filter( ( f ) => f.t > 900 ) ) ).every( ( f ) => f.clip === 'none' ) ).toBe( true );
+				await page.waitForTimeout( 500 );
+				expect( await starts( page ) ).toBe( 1 );
+			}
+			expect( errors ).toEqual( [] );
+			await context.close();
+		}
+		setDefaultSettings();
+
+		// A re-initialisation during the opening (a resize, a list refreshed): it goes on, and the headline still waits for it.
+		{
+			const { context, page, errors, urgent } = await open( 390, { waitUntil: 'domcontentloaded' } );
+			await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+			await page.waitForTimeout( 250 );
+			await reinit( page );
+			await page.waitForTimeout( 1500 );
+			const run = await page.evaluate( () => window.hprnbOpen );
+			expect( run.starts[ 'hprnb-u-bn-open' ] ).toBe( 1 );
+			expect( run.frames.find( ( f ) => f.typed > 0 ).t ).toBeGreaterThanOrEqual( 840 );
+			run.frames.slice( 1 ).forEach( ( f, k ) => expect( cut( f.clip ) ).toBeLessThanOrEqual( cut( run.frames[ k ].clip ) + 0.01 ) );
+			expect( errors ).toEqual( [] );
+			await context.close();
+		}
+
+		// The script after the buttons' fade (but within the stylesheet's wait): the buttons fade in when it
+		// arrives, then the headline types — the X never pops in.
+		{
+			const { context, page, errors, urgent } = await open( 390, { waitUntil: 'commit', init: ( p ) => p.route( '**/hprnb-bar.min.js*', async ( route ) => {
+				await new Promise( ( resolve ) => setTimeout( resolve, 1000 ) );
+				await route.continue();
+			} ) } );
+			await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
+			await page.waitForTimeout( 1500 );
+			const run = await page.evaluate( () => window.hprnbOpen );
+			const shown = run.frames.filter( ( f ) => f.cv === 'visible' );
+			expect( shown[ 0 ].co ).toBeLessThan( 0.5 );
+			const initAt = run.frames.find( ( f ) => f.init ).t;
+			const first = run.frames.find( ( f ) => f.typed > 0 );
+			if ( first ) {
+				expect( first.t - initAt ).toBeGreaterThanOrEqual( 200 );
 			}
 			expect( errors ).toEqual( [] );
 			await context.close();
 		}
 
-		// Reduced motion: no opening at all — everything in place at once, the headline whole.
-		setDefaultSettings();
+		// Reduced motion: no opening at all — everything in place at once, the headline whole; switched off
+		// afterwards, the band already shown does not open again.
 		{
 			const { context, page, errors, urgent } = await open( 390, { reduced: true } );
 			await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
-			expect( await running( page ) ).toEqual( [] );
+			expect( await urgent.evaluate( ( el ) => el.getAnimations( { subtree: true } ).filter( ( a ) => /^hprnb-u-bn-(open|in|rule|ctrl)$/.test( a.animationName ) ).length ) ).toBe( 0 );
 			expect( await urgent.evaluate( ( el ) => [ getComputedStyle( el ).clipPath, getComputedStyle( el.querySelector( '.hprnb-bar__label' ) ).opacity, getComputedStyle( el.querySelector( '.hprnb-bar__controls' ) ).opacity, getComputedStyle( el.querySelector( '.hprnb-bar__inner' ), '::before' ).transform ] ) ).toEqual( [ 'none', '1', '1', 'none' ] );
 			expect( ( await typedNow( page ) ).typed ).toBe( -1 );
+			await page.emulateMedia( { reducedMotion: 'no-preference' } );
+			await page.waitForTimeout( 400 );
+			expect( await starts( page ) ).toBe( 0 );
 			expect( errors ).toEqual( [] );
 			await context.close();
 		}
 
+		// A bar that opened, parked on the article it announces and back after an in-page navigation; and a
+		// bar on for desktop only, hidden by a resize under 768px and back: never opened again.
+		unflag( ids[ 1 ] );
+		{
+			const { context, page, errors, urgent, root } = await open( 1366 );
+			await page.waitForTimeout( 1200 );
+			await page.evaluate( ( path ) => history.pushState( {}, '', path ), pathA );
+			await expect( root ).not.toHaveClass( /hprnb-root--urgent/ );
+			await page.evaluate( () => history.pushState( {}, '', '/?hprnb-next-article=7' ) );
+			await expect( root ).toHaveClass( /hprnb-root--urgent/ );
+			await expect( urgent ).toBeVisible();
+			await page.waitForTimeout( 400 );
+			expect( await starts( page ) ).toBe( 1 );
+			expect( errors ).toEqual( [] );
+			await context.close();
+		}
+		setDefaultSettings( { urgent_mobile: false } );
+		{
+			const { context, page, errors, urgent } = await open( 1366 );
+			await page.waitForTimeout( 1200 );
+			await page.setViewportSize( { width: 390, height: 900 } );
+			await expect( urgent ).toBeHidden();
+			await page.setViewportSize( { width: 1366, height: 900 } );
+			await expect( urgent ).toBeVisible();
+			await page.waitForTimeout( 400 );
+			expect( await starts( page ) ).toBe( 1 );
+			expect( errors ).toEqual( [] );
+			await context.close();
+		}
+		setDefaultSettings();
+
 		// Closed during the opening: gone, nothing left running.
+		flag( ids[ 1 ], t - 30, t + 900 );
 		{
 			const { context, page, errors, urgent } = await open( 1366, { waitUntil: 'domcontentloaded' } );
 			await expect( urgent ).toHaveAttribute( 'data-hprnb-init', '1' );
@@ -3789,29 +3881,39 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 			await context.close();
 		}
 
-		// Hybrid, a page from a page cache with one urgent headline, the refresh bringing two: the new
-		// bar carries on with the opening where the old one was — it never closes and opens again.
-		wp( [ 'post', 'meta', 'delete', ids[ 1 ], '_hprnb_urgent_since' ] );
-		wp( [ 'post', 'meta', 'delete', ids[ 1 ], '_hprnb_urgent_until' ] );
-		wp( [ 'option', 'update', 'hprnb_cache_epoch', 'e2e-' + Date.now() ] );
+		// Hybrid, a page from a page cache with one urgent headline, the refresh (answered after 250ms, then
+		// after 600ms) bringing two: the new bar carries on with the opening where the old one was — never
+		// closed and opened again, no step skipped, the headline still after it.
+		unflag( ids[ 1 ] );
 		const cachedContext = await browser.newContext();
 		const cached = ( await ( await cachedContext.request.get( '/' ) ).text() ).replace( /data-hprnb-generated="\d+"/, 'data-hprnb-generated="' + ( now() - 3600 ) + '"' );
 		await cachedContext.close();
 		flag( ids[ 1 ], t - 30, t + 900 );
-		{
-			const { context, page, errors, urgent } = await open( 1366, { init: ( p ) => p.route( ( url ) => url.pathname === '/', ( route ) => route.fulfill( { status: 200, contentType: 'text/html; charset=UTF-8', body: cached } ) ) } );
+		for ( const delay of [ 250, 600 ] ) {
+			const { context, page, errors, urgent } = await open( 1366, { init: async ( p ) => {
+				await p.route( ( url ) => url.pathname === '/', ( route ) => route.fulfill( { status: 200, contentType: 'text/html; charset=UTF-8', body: cached } ) );
+				await p.route( /hprnb\/v1\/items/, async ( route ) => {
+					await new Promise( ( resolve ) => setTimeout( resolve, delay ) );
+					await route.continue();
+				} );
+			} } );
 			await expect( urgent.locator( '.hprnb-bar__list > .hprnb-bar__item' ) ).toHaveCount( 2 );
 			expect( await urgent.evaluate( ( el ) => parseFloat( el.style.getPropertyValue( '--hprnb-u-bn-t' ) ) ) ).toBeLessThan( 0 );
 			await page.waitForTimeout( 1600 );
 			const run = await page.evaluate( () => window.hprnbOpen );
-			run.frames.slice( 1 ).forEach( ( f, k ) => expect( cut( f.clip ) ).toBeLessThanOrEqual( cut( run.frames[ k ].clip ) + 0.01 ) );
-			const first = run.frames.find( ( f ) => f.typed > 0 );
-			expect( first.t ).toBeLessThan( 1300 );
+			run.frames.slice( 1 ).forEach( ( f, k ) => {
+				// Reopening would step back by up to 100%: a swap between frames may lag by a hair.
+				expect( cut( f.clip ) ).toBeLessThanOrEqual( cut( run.frames[ k ].clip ) + 0.5 );
+				// The buttons never jump: at most one fade step per frame.
+				expect( f.co - run.frames[ k ].co ).toBeLessThan( 0.6 );
+			} );
+			expect( run.frames.find( ( f ) => f.typed > 0 ).t ).toBeGreaterThanOrEqual( 840 );
 			expect( errors ).toEqual( [] );
 			await context.close();
 		}
 
-		// The settings preview plays the same opening, and replays it on demand; not for the chyron.
+		// The settings preview plays the same opening and replays it on demand; not for the chyron, nor on
+		// a device tab where the URGENT bar is off.
 		{
 			const context = await browser.newContext( { viewport: { width: 1366, height: 1000 } } );
 			const page = await context.newPage();
@@ -3841,13 +3943,26 @@ test( 'v2.18: Breaking News opening — the band uncovered from the reading star
 				}
 				return typed;
 			} );
-			expect( await previewTyped() ).toBeLessThanOrEqual( 0 );
+			expect( await previewTyped() ).toBe( 0 );
 			await expect.poll( previewTyped, { intervals: [ 50 ], timeout: 3000 } ).toBeGreaterThan( 0 );
+			await page.click( '#hprnb-preview-tab-mobile' );
+			await expect( replay ).toBeVisible();
+			await page.click( '#hprnb-preview-tab-desktop' );
 			await page.check( 'input[name="hprnb_settings[urgent_design]"][value="chyron"]' );
 			await expect( replay ).toBeHidden();
 			await page.check( 'input[name="hprnb_settings[urgent_design]"][value="breaking"]' );
 			await expect( replay ).toBeVisible();
 			expect( await previewRunning() ).toBe( 4 );
+			// The URGENT bar off on desktop: no replay on the Desktop tab, where the preview says it is off.
+			await page.click( '[data-hprnb-tab="content"]' );
+			await page.click( 'label[for="hprnb-field-urgent-desktop"]' );
+			await expect( page.locator( '#hprnb-field-urgent-desktop' ) ).not.toBeChecked();
+			await page.click( '[data-hprnb-tab="urgent"]' );
+			await expect( bar ).toHaveCount( 1 ); // Waiting, out of sight, for the other device.
+			await expect( page.locator( '#hprnb-preview-root' ) ).toHaveClass( /hprnb-root--u-no-d/ );
+			await expect( replay ).toBeHidden();
+			await page.click( '#hprnb-preview-tab-mobile' );
+			await expect( replay ).toBeVisible();
 			expect( errors ).toEqual( [] );
 			await context.close();
 		}

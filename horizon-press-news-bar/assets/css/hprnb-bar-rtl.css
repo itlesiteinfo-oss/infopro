@@ -2931,39 +2931,45 @@ html.hprnb-dismissed #hprnb-root.hprnb-root--urgent {
  *     uncovered from the reading start (clip-path: nothing moves, nothing reflows); the cartouche
  *     settles from 24px on the other side while fading in; the hairline is drawn from the cartouche
  *     (a phone held upright) or from its middle (the vertical one of the row); the buttons come in;
- *     then the headline types — the script waits for the opening (860ms after its start). They
- *     overlap: 0–450ms, 280–580ms, 430–760ms, 620–800ms. CSS animations on elements that stay in the
- *     page: a new headline, a re-initialisation, a resize or a class change never play them again.
- *     One clock, --hprnb-u-bn-t (0 by default): the hybrid bootstrap sets it negative on a bar that
- *     replaces one already open, which then carries on where the other one was. Mirrored in a
- *     right-to-left bar. Reduced motion: none of it.
+ *     then the headline types. They overlap: 0–450ms, 280–580ms, 430–760ms, 620–800ms. The band's
+ *     own animation lasts the whole opening (860ms: uncovered in the first 450ms, then held open) and
+ *     is its clock: the script types the first headline when it ends, and the hybrid bootstrap reads
+ *     it to carry the opening over to a bar that replaces one being opened (--hprnb-u-bn-t, a negative
+ *     delay). Once a bar has opened (or showed at once), the script marks it data-hprnb-opened, which
+ *     takes these animations off: a bar that is hidden and shown again (a resize past 768px with the
+ *     bar on one device, a parked bar coming back, printing, the root moved), or a preference that
+ *     changes, never opens again; only a new bar does. Mirrored in a right-to-left bar. Reduced
+ *     motion: none of it.
  * ------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: no-preference) {
 	/* The band: uncovered from the reading start (32px above it for its shadow). */
-	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent {
-		animation: hprnb-u-bn-open .45s var(--hprnb-u-bn-t, 0ms) var(--hprnb-u-bn-ease) backwards;
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-opened]) {
+		animation: hprnb-u-bn-open .86s var(--hprnb-u-bn-t, 0ms) linear backwards;
 	}
 
-	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__label {
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-opened]) .hprnb-bar__label {
 		animation: hprnb-u-bn-in .3s calc(var(--hprnb-u-bn-t, 0ms) + 280ms) var(--hprnb-u-bn-ease) backwards;
 	}
 
-	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__inner::before {
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-opened]) .hprnb-bar__inner::before {
 		transform-origin: var(--hprnb-u-bn-rule-at);
 		animation: hprnb-u-bn-rule .33s calc(var(--hprnb-u-bn-t, 0ms) + 430ms) var(--hprnb-u-bn-ease) backwards;
 	}
 
-	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent .hprnb-bar__controls {
+	.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent:not([data-hprnb-opened]) .hprnb-bar__controls {
 		animation: hprnb-u-bn-ctrl .18s calc(var(--hprnb-u-bn-t, 0ms) + 620ms) ease-out backwards;
 	}
 }
 
+/* 450ms of 860ms: the uncovering, eased; then the band stays open until the headline takes over. */
 @keyframes hprnb-u-bn-open {
-	from {
+	0% {
 		clip-path: var(--hprnb-u-bn-open-0);
+		animation-timing-function: cubic-bezier(.22, 1, .36, 1);
 	}
 
-	to {
+	52.33%,
+	100% {
 		clip-path: inset(-32px 0 0 0);
 	}
 }

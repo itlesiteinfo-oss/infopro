@@ -73,10 +73,11 @@ class Static_Rules_Test extends HPRNB_Test_Case {
 		// shape on both devices (CSS), its timers and hand-over (script), its payload (bootstrap); 2.15: the
 		// phone design of the URGENT bar on desktop too (CSS); 2.16: one switch per device for the URGENT bar
 		// (which bar is in front, per device, in the script and the bootstrap); 2.17: the Breaking News
-		// design of the URGENT bar (CSS), its typing engine and the article being read left out (script).
-		$this->assertLessThanOrEqual( 60 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
+		// design of the URGENT bar (CSS), its typing engine and the article being read left out (script);
+		// 2.18: its opening (CSS, and the script's clock and the opened mark).
+		$this->assertLessThanOrEqual( 64 * 1024, filesize( HPRNB_PATH . 'assets/css/hprnb-bar.min.css' ) );
 		$this->assertLessThanOrEqual( 6 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bootstrap.min.js' ) ); // 2.16: the device switches from REST, an unchanged refresh kept, the waits kept.
-		$this->assertLessThanOrEqual( 38 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
+		$this->assertLessThanOrEqual( 40 * 1024, filesize( HPRNB_PATH . 'assets/js/hprnb-bar.min.js' ) );
 	}
 
 	/**

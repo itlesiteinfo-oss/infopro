@@ -2345,8 +2345,9 @@
 
 	/**
 	 * How long the band's opening (stylesheet 17 quater, 2.18) still runs before a headline may type:
-	 * its clock is the band's own animation, read where it is (a re-initialisation or a late start
-	 * waits only for what is left); 0 once it is over, under reduced motion, or without it.
+	 * its clock is the band's own animation, which lasts the whole opening (860ms), read where it is (a
+	 * re-initialisation or a late start waits only for what is left); 0 once it is over, under reduced
+	 * motion, or without it.
 	 *
 	 * @param {Element} aside The URGENT bar.
 	 * @return {number} Milliseconds.
@@ -2423,6 +2424,7 @@
 		var started = false;
 		var reduce = window.matchMedia ? window.matchMedia( '(prefers-reduced-motion: reduce)' ) : null;
 		var forced = window.matchMedia ? window.matchMedia( '(forced-colors: active)' ) : null;
+		var lead = 0;
 		forEach( items, function ( li, k ) {
 			if ( li.getAttribute( 'data-hprnb-id' ) === memory.id ) {
 				index = k;
@@ -2463,7 +2465,9 @@
 				return;
 			}
 			if ( ! start ) {
-				start = now + openingLeft( aside ); // The first letter shows on the first frame after the band's opening.
+				// The first letter shows on the first frame after the band's opening (and the buttons' fade).
+				start = now + Math.max( openingLeft( aside ), lead );
+				lead = 0;
 			}
 			var p = planOf( index );
 			var elapsed = now - start;
@@ -2595,6 +2599,32 @@
 			}
 		} );
 
+		// The opening plays once (2.18): the bar is marked when it ends, or at once when it is over or not
+		// played. Kept by a re-initialisation, so a bar hidden and shown again, or a preference that
+		// changes, never opens again.
+		var opening = openingLeft( aside );
+		var opened = function () {
+			aside.setAttribute( 'data-hprnb-opened', '' );
+		};
+		var controls = aside.querySelector( '.hprnb-bar__controls' );
+		if ( ! memory.shown && ! still() && ! aside.hasAttribute( 'data-hprnb-opened' ) && ! aside.style.getPropertyValue( '--hprnb-u-bn-t' ) && controls && typeof controls.animate === 'function' && ! controls.getAnimations().some( function ( animation ) {
+			return 'hprnb-u-bn-ctrl' === animation.animationName;
+		} ) ) {
+			// The script came after the buttons' fade, which ran out of sight (they wait for it): they fade in now.
+			controls.animate( [ { opacity: 0, scale: '.9' }, { opacity: 1, scale: '1' } ], { duration: 180, easing: 'ease-out' } );
+			lead = 260;
+		}
+		memory.shown = true;
+		if ( still() || ( ! opening && aside.getClientRects().length ) ) {
+			opened();
+		} else if ( opening ) {
+			state.on( aside, 'animationend', function ( event ) {
+				if ( event.target === aside && 'hprnb-u-bn-open' === event.animationName ) {
+					opened();
+				}
+			} );
+		}
+
 		// Reduced motion or forced colours switched on meanwhile: the headline being typed is whole at once.
 		forEach( [ reduce, forced ], function ( query ) {
 			if ( query && query.addEventListener ) {
@@ -2687,7 +2717,11 @@
 			// One shape, in front at once, never folding, never leaving for the next article, always closable.
 			profile = merge( merge( {}, profile ), { collapse: false, next: false, deep: false, place: 'fixed', close: true, counter: false } );
 		}
-		relocate( root, mobile );
+		// The URGENT bar is fixed wherever the root is: moving the root would only replay its opening (2.18);
+		// the news bar puts the root in its place when it takes over.
+		if ( ! urgent ) {
+			relocate( root, mobile );
+		}
 		measureBleed( root );
 		state.on( window, 'resize', debounce( function () {
 			if ( aside.hprnbState === state ) {
