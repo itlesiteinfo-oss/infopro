@@ -65,6 +65,10 @@ A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `h
 
 == Changelog ==
 
+= 2.18.0 =
+* An opening for the Breaking News bar, played once when it appears: the red band, already in place, is uncovered in the reading direction, the cartouche settles, the hairline is drawn, the buttons come in, then the headline types. Mirrored in right-to-left; nothing moves under reduced motion; never replayed by a new headline, a resize or a navigation.
+* The settings preview plays the same opening and has a "Replay the animation" button.
+
 = 2.17.0 =
 * A new design for the URGENT bar, "Breaking News", now the default (Urgent tab → Design of the URGENT bar; the 2.16 design stays available as "Chyron"): a flat red band, a still white cartouche with the label in bold red, the whole headline in bold white, the close button in the band.
 * Each headline is revealed letter by letter without a cursor, stays at least 5 seconds (longer for a long one), then the next one types in; a single headline is typed once and stays. The bar keeps the height of the longest headline from the first paint; screen readers get the whole headline; reduced motion shows it at once.
@@ -199,6 +203,9 @@ A single `hprnb_settings` option, two technical options (`hprnb_cache_epoch`, `h
 * Initial release: sliding-window news bar, transient cache, hybrid mode, REST endpoint, shortcode, settings page with live preview, import / export, accessible optional ticker, RTL and i18n.
 
 == Upgrade Notice ==
+
+= 2.18.0 =
+The Breaking News bar opens with a short animation. Purge your page cache after updating.
 
 = 2.17.0 =
 The URGENT bar switches to the new "Breaking News" design. To keep the previous one, choose "Chyron" in Urgent → Design of the URGENT bar. Purge your page cache after updating.

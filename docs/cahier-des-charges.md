@@ -2442,6 +2442,13 @@ mode hybrid:
 5. **Accessibilité et fiabilité** : bouton fermer et sa mémorisation conservés ; clavier avec focus visible ; « mouvement réduit » : titre entier tout de suite, sans transition animée ; lecteurs d'écran : le titre entier, jamais lettre par lettre ; minuteurs nettoyés à la fermeture ; styles limités à la variante.
 6. **Vérifications** : design par défaut actif et anciens sélectionnables ; aucun article ; un article (consulté ou non) ; plusieurs (avec ou sans celui consulté) ; navigation et changement de liste ; fermeture ; titres longs sur mobile et ordinateur ; clavier ; mouvement réduit.
 
+### 15.8.3 octodecies — L'ouverture du bandeau Breaking News (2.18.0)
+
+1. **Aucune refonte graphique** : dimensions, rouge, cartouche, titre, filet, bouton fermer, espacements, arrondis, ombres, responsive, articles, filtrage, rotation et frappe conservés.
+2. **Le bandeau ne glisse pas** : déjà à sa place, il se découvre horizontalement dans le sens de lecture en 400 à 500 ms (`clip-path`, `transform`, `opacity` seulement, aucun recalcul de mise en page).
+3. **Séquence** : rouge (0–450 ms), cartouche de droite à gauche sur ~24 px avec fondu (250–320 ms), filet tracé depuis le cartouche (300–400 ms), bouton fermer en fondu et échelle 0,9 → 1 (150–200 ms), titre 80 à 150 ms après ; le tout se chevauche, ~0,8 s avant le titre.
+4. **RTL** : tout en miroir. **Une seule fois** à l'apparition, jamais sur un changement de titre, un rafraîchissement, un redimensionnement ; rejouée si le bandeau est réellement recréé. **Mouvement réduit** : tout visible tout de suite, aucune frappe. **Accessibilité** : rien d'annoncé lettre par lettre, fermer accessible. **Aperçu** : la même animation et un bouton « Rejouer l'animation ».
+
 ---
 
 # ANNEXE C — CONSIGNE FINALE À CLAUDE CODE

@@ -1115,3 +1115,27 @@ Actions: `hprnb_before_bar( array $items, array $settings )`, `hprnb_after_bar( 
   `overflow-wrap: anywhere`; forced colours give the buttons' focus ring `CanvasText`. The minified
   scripts are ASCII-only (static test).
 - Budgets: CSS 60 KB, bootstrap 6 KB, interactive script 38 KB.
+
+## 32. The opening of the Breaking News bar (2.18.0)
+
+- Stylesheet 17 quater, under `@media (prefers-reduced-motion: no-preference)`, every selector under
+  `.hprnb-root.hprnb-root--u-bn .hprnb-bar.hprnb-bar--urgent`: the aside `hprnb-u-bn-open` (.45s,
+  `clip-path` from `--hprnb-u-bn-open-0` — `inset(-32px 100% 0 0)`, RTL `inset(-32px 0 0 100%)` — to
+  `inset(-32px 0 0 0)`), `.hprnb-bar__label` `hprnb-u-bn-in` (.3s, +280ms, `translate` from
+  `--hprnb-u-bn-in` — 24px, RTL −24px — and opacity 0), `.hprnb-bar__inner::before` `hprnb-u-bn-rule`
+  (.33s, +430ms, `transform` from `--hprnb-u-bn-rule-0` — `scaleY(0)` from `center`, and under 600px
+  `scaleX(0)` from `--hprnb-u-bn-start` —), `.hprnb-bar__controls` `hprnb-u-bn-ctrl` (.18s, +620ms, opacity
+  and `scale` .9); easing `--hprnb-u-bn-ease` `cubic-bezier(.22, 1, .36, 1)`, fill `backwards`, every delay
+  offset by `--hprnb-u-bn-t` (default 0ms). The variables live in 17 ter's base aside rule, its RTL rule
+  and its `@container hprnb (max-width: 599.98px)` block (copied onto the flat preview root).
+- Replays: only a new element or one that goes from `display: none` to shown plays them (a parked bar
+  that comes back, a device where the bar was off); no animation name changes with the layout, so a
+  resize, a container crossing, a re-initialisation or a rotation never replays them.
+- Script: `BN.open` = 860; `openingLeft( aside )` = `max(0, 860 − (localTime − delay))` of the aside's
+  running `hprnb-u-bn-open`, 0 otherwise; the first frame of each typing starts at `now + openingLeft()`.
+  `memory.started` is set when letters are painted. Bootstrap `apply()`: when an URGENT bar on screen is
+  replaced, the new one gets `--hprnb-u-bn-t: −<active time of the old opening>ms` (5000 when it was over).
+- Admin: `replayPreview()` (destroy, the urgent aside replaced by a clone, init) — the
+  `#hprnb-preview-replay` button (hidden unless a Breaking News urgent bar is previewed) and a newly
+  chosen Breaking News design call it.
+

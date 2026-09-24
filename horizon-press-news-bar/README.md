@@ -361,6 +361,10 @@ Onglet Urgent → **Design du bandeau URGENT** : `urgent_design` = `breaking` (d
 
 **Article consulté** (`urgent_exclude_current`, coché par défaut, carte « Où s'affiche le bandeau URGENT ») : `Frontend::without_here()` marque son titre `hprnb-bar__item--here` et ne le compte plus (bandeau « garé », sans espace réservé, s'il ne reste rien) ; le script le retire de la rotation avant le premier affichage (`hereFilter()`, par identifiant `data-hprnb-post` ou adresse canonique normalisée) et refait le filtre après une navigation par l'API History (`followLocation()`).
 
+## 9 duovicies. L'ouverture du bandeau Breaking News (2.18)
+
+Section 17 quater de `hprnb-bar.css`, sous `@media (prefers-reduced-motion: no-preference)` et la classe `hprnb-root--u-bn` : `hprnb-u-bn-open` (le bandeau découvert par `clip-path`, 0–450 ms), `hprnb-u-bn-in` (le cartouche, 24 px et fondu, 280–580 ms), `hprnb-u-bn-rule` (le filet, `scaleX` depuis le cartouche sous 600 px, `scaleY` depuis son milieu au-delà, 430–760 ms), `hprnb-u-bn-ctrl` (les boutons, 620–800 ms). Ce sont des animations CSS sur des éléments qui restent dans la page : une rotation, une réinitialisation ou un redimensionnement ne les rejouent pas ; un élément nouveau (bandeau mis de côté qui revient, nouveau bandeau) les joue. Une seule horloge, `--hprnb-u-bn-t` (0 par défaut ; le script d'amorçage hybride la met à `-<ms>` sur un bandeau qui en remplace un déjà ouvert). Le moteur (`openingLeft()`) lit l'animation du bandeau et fait partir le premier titre 860 ms après son début. Sens de lecture : variables `--hprnb-u-bn-start`, `--hprnb-u-bn-open-0`, `--hprnb-u-bn-in` inversées sous `:dir(rtl)` / `.hprnb-bar--rtl`. Aperçu : `replayPreview()` et le bouton `#hprnb-preview-replay`.
+
 ## 10. Ticker (optionnel)
 
 Désactivé par défaut. Trois modes :

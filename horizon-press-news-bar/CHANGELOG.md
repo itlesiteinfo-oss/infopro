@@ -2,6 +2,21 @@
 
 Ce projet suit les principes de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le versionnage sémantique.
 
+## [2.18.0] — 2026-09-24
+
+### Ajouté — l'ouverture du bandeau Breaking News
+
+- **Une ouverture orchestrée, jouée une seule fois quand le bandeau apparaît**, sans rien changer à son design (dimensions, rouge, cartouche, titre, filet, bouton fermer, espacements, arrondis, ombre, versions mobile et ordinateur) :
+  1. **le rouge se découvre** dans le sens de lecture (de gauche à droite ; de droite à gauche en arabe) en 450 ms : le bandeau est déjà à sa place et ne glisse pas, il est découvert (`clip-path`), rien ne bouge ni ne se recalcule dans la page ;
+  2. **le cartouche « DERNIÈRE MINUTE » s'installe** : 24 px de course depuis l'autre côté et un fondu, en 300 ms, sans rebond (à partir de 280 ms) ;
+  3. **le filet se trace** depuis le cartouche vers le bouton fermer en 330 ms (à partir de 430 ms) ; sur ordinateur, où le filet est le petit trait vertical avant les boutons, il se trace depuis son milieu ;
+  4. **les boutons apparaissent** (fondu et échelle de 0,9 à 1, 180 ms, à partir de 620 ms) ; le bouton fermer est utilisable dès le début ;
+  5. **le titre commence à s'écrire** à 860 ms, lettre par lettre comme avant.
+- **Jamais rejouée** par un changement de titre, une rotation, une réinitialisation, un redimensionnement ou une navigation sans rechargement ; elle est rejouée quand le bandeau réapparaît réellement (bandeau mis de côté qui revient, nouveau bandeau). En mode hybride, un bandeau remplacé par le rafraîchissement continue l'ouverture là où en était le précédent au lieu de se refermer et se rouvrir.
+- **Arabe (droite à gauche)** : toute la chorégraphie en miroir (ouverture de droite à gauche, cartouche venant de la gauche, filet tracé vers la gauche).
+- **« Mouvement réduit »** : aucune animation — le bandeau, le cartouche, le filet, les boutons et le titre entier sont là tout de suite.
+- **Aperçu des réglages** : la même ouverture (mêmes styles, même moteur), jouée quand l'aperçu du bandeau est rechargé ou quand « Breaking News » est choisi, et un bouton **« Rejouer l'animation »**, visible dans l'aperçu seulement.
+
 ## [2.17.0] — 2026-09-24
 
 ### Ajouté — le design « Breaking News » du bandeau URGENT, par défaut
